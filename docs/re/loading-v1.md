@@ -1,0 +1,469 @@
+# Geist v1 load path and object serializers
+
+Static RE, 2026-11-02. Target: thin x86_64 engine `original/Geist-engine-x86_64`
+(sha256 `1751b602…8554`), Ghidra 12.1.4 via REA (image base 0, so addresses = `nm` addresses).
+Tags as in Dreist's ledger: [file] read from the binary's data, [sym] symbol name only,
+[decomp] Ghidra pseudocode (Evidence ID prefix given; full IDs in the REA evidence records).
+
+All save/load goes through one function per class: `SerializeAsXML(VXMLFile&)` both reads and
+writes, branching on `IsSaving()`/`IsLoading()`. Attribute types below come from the `VXMLFile`
+vtable slot each call uses (slot map dumped from `vtable for XMLFile`, see "Tooling") [file, decomp].
+
+Conventions for the tables:
+
+- **type**: `float`, `double`, `int`, `uint`, `bool` = `SerializeAttribute(name, T&)`;
+  `string` = `SerializeAttribute(name, VString&, default)`; `child X` = `SerializeObject(name, obj)`
+  (a child element; `FixedString` children hold one `string` attribute).
+- **default on load**: what the loader sets when the attribute is missing. "keep" means the
+  loader leaves the in-memory value alone, so the default is whatever the constructor /
+  `Initialize` set (not recovered here, see "Unknown").
+- `Ver` is written only when saving and is **not read back** unless noted: most v1 classes have no
+  load-time version branches. The only ones with version logic are `Grid` (`StateVersion`),
+  `Layer`, `Track`, `SliceAnalysis`.
+
+## Version constants [file]
+
+Static `g2*Version` floats in `__const` (current values a v1.1.1.2 save writes):
+
+| Writer | Attribute | Value |
+|---|---|---|
+| `Grid::SaveEntireState` | `StateVersion` | 2.1 (also written as immediate `0x40066666`) |
+| `Engine`, `Pad`, `EngineState`, `PadState`, `StepPattern`, `Step`, `SwingTemplate`, `MasterChannel`, `GlobalAux`, `Metronome`, `LayerVelocitySplit`, `AudioFileManager`, `SlicePoint` | `Ver` | 2.0 |
+| `Effect` | `EffectVersion` | 2.0 |
+| `EffectChain` | `FXVer` | 2.1 |
+| `AudioFileMarkers` | `FileMarkerVersion` | 2.0 |
+| `LayerModulationRouting` | `Ver` | 1.0 |
+| `InsertablePattern` | `PatternVersion` | 2.0 |
+| `Layer` | `Ver` | 3.2 (local, not a static) [decomp ev_7c48010c] |
+| `Track` | `Ver` | 2.2 (local) [decomp ev_2b2d8acb] |
+| `SliceAnalysis` | `Ver` | 2.1 (local) [decomp ev_3845204b] |
+| `AudioFileMetaData` | `Ver` | int 2 [decomp ev_3a1b344c] |
+
+Geist2 reads a layer `Ver` as `round(Ver*1000)` (Dreist ledger, `docs/re/formats.md` in
+`dreist-re`), so v1.1.1.2 layers land at 3200: Geist2's "below 3300" upgrade
+(`V2C`/`V2P`/`UsesTimestretch`/`TSTracksBPM`/`TSMode`/`Envelope%dParam%d`/`ModRouting%d`)
+applies to them and its "below 3200" cutoff/resonance remap does not. That matches v1's own
+`< 3.2` remap below. [decomp v1; Geist2 thresholds from Dreist's ledger, `Layer::Serialize`
+0x71c10 ev_e9e07b35…, not re-decompiled here]
+
+## File entry points [decomp]
+
+Every reader opens the file with `VXMLFile::OpenFileForRead(path, "root")`, so the document element
+is `<root>`, then calls `XMLFile::Initialize(saveSamplesWithChunks, path, AudioFileManager*,
+restoreOutputs, false)`.
+
+| File | Function | Root contents read | Evidence |
+|---|---|---|---|
+| `.geist` | `Grid::LoadEntireStateFromFile(path, isPreset)` → `Grid::LoadEntireState(XMLFile&)` | see below | ev_17865088, ev_b8366a5a |
+| `.geistkit` | `Grid::SerializeKitFileToEngine(path, Engine*)` | `Pad0`..`Pad15` via `ReadObject` into the engine's pads; a missing `Pad%d` leaves that pad unchanged | ev_6c2c28fd |
+| `.geistpad` | `Grid::SerializePadFileToPad(path, Pad*)` | one child named by the class, `Pad` | ev_fcee998d |
+| `.geistengine` | `Grid::SerializeEngineFiletoEngine(path, Engine*)` | one child `Engine` | ev_fecb1e63 |
+
+Kit/pad/engine readers pass `restoreOutputs = Options "AllocatorRestoreOutputs"` (default true)
+and `saveSamplesWithChunks = Options "SaveSamplesWithChunks"` (default false). There is no file
+version for kits, pads or engines.
+
+`LoadEntireStateFromFile` passes `saveSamplesWithChunks = true` and
+`restoreOutputs = AllocatorRestoreOutputs || !isPreset`. When `isPreset` and the path equals
+`Paths::GetDefaultPresetPath()`, it temporarily clears the binding-map flag at `BindingMap+0xc3c0`
+so the default preset always loads `Bindings`.
+
+### `Grid::LoadEntireState` (`.geist` root) [decomp ev_b8366a5a]
+
+1. `StateVersion` float, default 0. **If `StateVersion < 2.0` the function returns false and loads
+   nothing** (no older-format branch). Saves write 2.1.
+2. `TimeInfo::Reset`, `ForceClearAllSamples`.
+3. In this order: `FileManager` (child, `AudioFileManager`), `MasterChannel`, `Bindings` (only if
+   `BindingMap+0xc3c0 == 0`), `Scenes` (`SceneManager`), `Song` (`SongSequencer`), `TimeInfo`,
+   `Sampler`, `Metronome`.
+4. `CurrentEngine` int (default 0), `PreviewVolume` float (keep), `PreviewOutput` string →
+   `AudioOutputs::GetOutputLocationForName`.
+5. `SendMIDINotes`, `SendMIDICCs` bool, **default true** when missing.
+6. `Engine0`..`Engine7`, `GlobalAux0`..`GlobalAux3`.
+7. `AudioFileManager::UnloadSingleRefSamples`, `StartFileRequestRoutine`, a virtual post-load
+   hook (`Grid` vtable +0x9e8), editor message 0x10c.
+
+`Grid::SaveEntireState` (ev_a13c55d8) writes the same names in the same order, except
+`SendMIDINotes`/`SendMIDICCs` come before `CurrentEngine`.
+
+Note the sample table (`FileManager`) is read **before** the engines, so layer `AudioFileName`s
+usually hit the cache.
+
+## Sample paths: `XMLFile` + `AudioFileManager` [decomp]
+
+`XMLFile::Initialize` (ev_5c50de29) sets four flags and two paths:
+
+| Field | Meaning |
+|---|---|
+| `+0x30` relative mode | `Options "AudioDeveloperMode"` && `Options "SaveRelativePathsWithChunks"` && !arg5 |
+| `+0x31` restore outputs | arg4 (read by `SerializeOutputState`) |
+| `+0x32` / `+0x33` | absolute paths / copy samples ("with chunks"); `= !arg1 / arg1`, both 0 in relative mode |
+| `+0x38` | the document path |
+| `+0x70` | the document path with its extension replaced by `samples` (`Song.geist` → `Song.samples`) |
+
+`XMLFile::ConvertSamplePath(path)` (ev_e162a1c9), load direction:
+
+1. A REX path ending in `.truncated` is stripped of that extension (and re-added at the end).
+2. If the path exists on disk as given, use it.
+3. Else start from the `.samples` folder path (`+0x70`), make the stored path use host separators
+   (so v1's `\` separators work), then for each leading `../` drop one component of the base
+   (the first drop removes `.samples` itself, so `../x.wav` is relative to the document's folder,
+   `../../x.wav` to its parent).
+4. A `_RELATIVE_` prefix drops the `.samples` component and is removed (path relative to the
+   document's folder).
+5. Append the rest. If that file exists return it, else return the empty string.
+
+So a bare file name resolves into `<doc>.samples/`, `_RELATIVE_sub/x.wav` to `<doc dir>/sub/x.wav`.
+
+Save direction: relative mode writes `MakePathRelative(doc dir, path)`, prefixed `_RELATIVE_` when
+it does not start with `../`; "with chunks" mode writes only the file name and
+`XMLFile::SaveAudioFile` (ev_62ec1379) copies the sample into `<doc>.samples/` (creating it,
+mode 0777) unless already there; otherwise the absolute path is written. A path that does not
+exist is written as empty.
+
+`AudioFileManager::SerializeAsXML` (ev_3b365518), the root `FileManager` child:
+
+| Attribute | Type | Notes |
+|---|---|---|
+| `Ver` | float | 2.0, write only |
+| `NumberOfSamples` | int | read with `ReadAttribute`, default 0 |
+| `AudioFile%dPath` | child `VString` (`string` attr) | 0..N-1 |
+
+Load: `UnloadSingleRefSamples`, clear the missing-files list (`+0xe0`), set "loading" (`+0xc1`).
+For each path: `ConvertSamplePath`; if it resolves, `LoadSample` (preload into the cache); if it
+does not resolve or the load fails, push the **original** path string onto the missing-files list.
+Save: skips `InMemorySamplerFile.sampler` (the sampler's recording buffer) and files the delegate
+(`+0x28`, vtable +0x10) rejects ("Skipping audio file on path…"), writes the converted path,
+then `SaveAudioFile`. Only works when the archive is an `XMLFile` (`IsKindOfClass` check).
+
+`Layer` `AudioFileName` load (ev_7c48010c): string; if non-empty, `ConvertSamplePath`, then
+`AudioFileManager::GetFileWithIdentity(path, true, engineIndex)` (ev_a54b476f: strips
+`.truncated`; if the file exists → `LoadSample`, else look it up in the cache by identity).
+If still nothing, queue `AudioFileManager::RequestAudioFileLoad` with the layer's
+`StartEndMarkers`/`LoopMarkers` (async load). Saving with no sample writes `AudioFileName=""`.
+
+## Shared helpers [decomp]
+
+| Function | Attributes | Load behaviour | Evidence |
+|---|---|---|---|
+| `MixableObject::SerializeMixState` | `Gain` float, `Pan` float, `Mute` bool, `Solo` bool | keep; sets an internal field `+0x1c = 2` on load | ev_93a99c2e |
+| `AudioOutputObject::SerializeOutputState` | `OutputLocation` string | read **only** if the archive is not an `XMLFile` or its restore-outputs flag (`+0x31`) is set; missing → `"Parent"`. Names below | ev_ac6800d7 |
+| `AuxSendingObject::SerializeAuxSends` | `AuxSend0`..`AuxSend3` float | keep | ev_d8194a7f |
+| `LockableObject::SerializeLockState` | `LockState` bool | keep | ev_3f50143c |
+| `FixedString::SerializeAsXML` | `string` (char*) | set only if present and non-null | ev_458852d7 |
+
+Output location names (`AudioOutputs::GetNameOfOutputLocation(id, false)`, ev_a80119bf; the
+`true` form gives the short `S n`/`B n` labels for the UI): 0 `Parent`, 1 `Master`,
+2..16 `Sub output 1`..`Sub output 15`, 17..20 `Buss 1`..`Buss 4`, else `ERROR`.
+
+## Objects [decomp]
+
+Order = file order. "keep" as defined above.
+
+### `Engine` (ev_b56901c0)
+
+| Name | Type | Notes |
+|---|---|---|
+| `Ver` | float | 2.0, write only |
+| mix, output | helpers | |
+| `EffectChain` | child | |
+| aux sends | helper | |
+| `SwingTemplate` | child | |
+| `EngineState` | child | |
+| `Pitch` | float | keep |
+| `TempoNumerator`, `TempoDenominator` | int | keep |
+| `SwingTemplateDepth` | double | keep |
+| `StepPattern0`..`StepPattern23` | child | 24 patterns. Save writes only patterns where `!StepPattern::IsDefaulted()`; a missing one is reset with `StepPattern::Initialize(engine, index)` |
+| `Pad0`..`Pad15` | child | |
+| `EnginePadMode` | string | `Normal`(0) `Chromatic`(1) `Velocity`(2) `Engine M+S`(3); unknown → 0 (ev_0b154fe7, ev_3c4003b1) |
+
+### `EngineState` (ev_1e21bd43)
+
+Load first calls `EngineState::Initialize()`, so every missing attribute gets its init default.
+
+| Name | Type | Notes |
+|---|---|---|
+| `Ver` | float | 2.0, write only |
+| `PatternPower` | bool | |
+| `CurrentPattern`, `CurrentPad`, `CurrentStep`, `FullLevels` | int | |
+| `FullLevelEnabled`, `NoteEraseEnabled`, `NoteRepeatEnabled`, `NoteRepeatSynced` | bool | |
+| `PadState0`..`PadState15` | child | |
+| `P%dZR` (0..23) | int | per pattern (probably editor zoom); default 1, written only if ≠ 1 |
+| `P%dSP` (0..23) | float | per pattern (probably editor scroll); default 0, written only if ≠ 0 |
+
+### `PadState` (ev_d9a27c1e)
+
+| Name | Type | Default on load |
+|---|---|---|
+| `Ver` | float | 2.0, write only |
+| `Avis` | bool | false |
+| `CurrentLayer` | uint | 0 |
+| `Atype` | int | -1 |
+| `MTrack0`..`MTrack3` | int | -1 (written only if ≠ -1) |
+
+### `Pad` (ev_c1a9a96d)
+
+| Name | Type | Notes |
+|---|---|---|
+| `Ver` | float | 2.0, write only |
+| lock, mix, output | helpers | |
+| `EffectChain` | child | |
+| aux sends | helper | |
+| `V2A` | float | velocity → amp |
+| `Layer0`..`Layer7` | child | save writes only layers with `Layer::IsWaveformValid()`; a missing layer is reset (layer vtable +0x78 called with `true`) |
+| `PadMode` | string | `All layers`(0) `Velocity split` `Round robin` `Round robin reset` `Random`(4); unknown → 0 (ev_be45bacf, ev_d7d418d6) |
+| `PadName` | child `FixedString` | missing or empty → `Pad::SetNameToDefault` |
+
+### `Layer` (ev_7c48010c)
+
+`Ver` is read: local initialised to **3.2**, so a missing `Ver` counts as current.
+
+| Name | Type | Notes |
+|---|---|---|
+| `Ver` | float | read; see upgrades |
+| lock, mix, output | helpers | |
+| `EffectChain` | child | |
+| aux sends | helper | |
+| `VelocitySplit` | child `LayerVelocitySplit` | |
+| `StartEndMarkers`, `LoopMarkers` | child `AudioFileMarkers` | |
+| `LayerName` | child `FixedString` | |
+| `IsReversed` | bool | |
+| `PhasePosition` | float | |
+| `UsesTimestretch`, `TSTracksBPM` | bool | |
+| `SourceBPM`, `DestinationBPM` | float | |
+| `V2C`, `V2P` | float | velocity → cutoff / pitch |
+| `EnvTracksPitch` | bool | missing on load → false |
+| `LayerGain` `LayerPan` `CoarseTune` `FineTune` `PreDelayTime` `Cutoff` `Resonance` `FilterType` `FilterDrive` `FilterAlgorithm` `FilterActive` | float | names from `Layer::GetNameOfParameter` 0..10 (ev_163ab894); all stored as float |
+| `Envelope%dParam%d` | float | envelope 0..1 (0 = amp, 1 = free env), param 0..7 = Attack, Decay, Sustain, Hold, Release, Attack curve, Decay curve, Release curve (ev_04997009) |
+| `ModRouting0`..`ModRouting3` | child `LayerModulationRouting` | |
+| `EnvelopeType0`, `EnvelopeType1` | string | written as `AHR`(0)/`ADSR`(1). **On load the value is read and ignored: both are forced to 1 (ADSR)** |
+| `CutMode` | string | `Not cut`(0) `Self` `Pad` `By other pads` `Self + Other` `Pad type` `Engine group 1` `Engine group 2` `Global group 1` `Global group 2`(9) (ev_6fd388e9, ev_dadf09bb) |
+| `PlaybackMode` | string | `One shot`(0) `Gated`(1) `Looping`(2) (ev_72c3636e) |
+| `TSMode` | string | `Default`(0) `Fast`(1) (ev_c7e1ef23) |
+| `AudioFileName` | string | see "Sample paths"; only on `XMLFile` archives |
+
+Load-time upgrades (only when loading):
+
+- `Ver < 3.2`: `Cutoff` c → clamp01((3·ln2 + ln((c⁴·22020 + 30)/55)) / (12·ln2)), i.e. the old
+  value meant f = c⁴·22020 + 30 Hz and the new one is log2(f/55)/12 + 0.25.
+  `Resonance` r → clamp01((r·1200 − 101)/909).
+- `Ver < 3.0`: after reading each envelope, its Hold (`Param3`) is set to −1. Then, for each
+  envelope whose A=0, D=0.5, S=1, R=0.001 (the old defaults), Decay is set to 0.02.
+- Finally `Layer::ResetHoldTime(true)` if `Ver < 3.0` or either Hold is negative;
+  `UpdateAllAudioMarkers` always.
+
+### `LayerVelocitySplit` (ev_33d709c0)
+
+`Ver` 2.0 (write only); `LowPoint`, `LowTurn`, `HighTurn`, `Highest` int, each clamped to ≤ 127 on load.
+
+### `LayerModulationRouting` (ev_60a0a2a7)
+
+`Ver` 1.0 (write only); `ModulationDepth` float; `ModulationDestination` string:
+`No destination`(0) `Pitch` `Cutoff` `Resonance` `Drive`(4), unknown → 0 (ev_89296b88, ev_27270727).
+
+### `AudioFileMarkers` (ev_86482fb7)
+
+`FileMarkerVersion` 2.0 (write only); `StartSample`, `EndSample`, `SampleLength` int.
+
+### `StepPattern` (ev_5f8961fe)
+
+| Name | Type | Notes |
+|---|---|---|
+| `Ver` | float | 2.0, write only |
+| lock | helper | |
+| `PatternName` | child `FixedString` | |
+| `PatternSteps` | int | |
+| `MonoModeActive` | bool | |
+| `Track0`..`Track15` | child | load: each track is first sized to `PatternSteps` (`AllocateSteps` or `InitializeSteps`). Save: no `Track%d` at all if all 16 are `IsEmpty(true)` |
+| `SyncMode` | string | written `Slave`(0) `Slave restart`(1) `Gate`(2) `Gate restart`(3); read also accepts the older names `Sync`→0, `Trigger`→1, `Shot`→3; unknown → 0 (ev_9fa80493, ev_693f3175) |
+| `Resolution` | string | `1` `1T` `1/2` `1/2T` `1/4` `1/4T` `1/8` `1/8T` `1/16` `1/16T` `1/32` `1/32T` `1/64` `1/64T` (0..13); name default `1/16` (ev_3ee069b1) |
+
+### `Track` (ev_2b2d8acb)
+
+v1 has a `Track` class (16 per pattern).
+
+| Name | Type | Notes |
+|---|---|---|
+| `Ver` | float | read; local default 2.2. If `Ver` is missing, `TrackVersion` is read instead |
+| lock, mix | helpers | `Gain Pan Mute Solo` per track |
+| `NumberOfSteps` | int | |
+| `S%d` | child `Step` | save: only steps with `IsStepOn()`. Load: steps sized to `NumberOfSteps`; a missing `S%d` is reset |
+| `Steps` | child `VObjectArray` of `Step` | legacy: read instead of `S%d` when `Ver ≠ 2.1` and the child exists |
+| `<Lane>Rand`, `<Lane>Scal`, `<Lane>Comp` | float | per step lane (77, names below with spaces removed); default 0.5, written only if ≠ 0.5 |
+
+### `Step` (ev_f1c8d4e3)
+
+`Ver` 2.0 (write only); `State` bool; then one float per step lane, attribute name =
+`Step::GetNameOfStepGraphItem(i)` with all white space removed (ev_3060d6bc), written only if it
+differs from the lane default; missing → default.
+
+| i | Lane | Default | | i | Lane | Default |
+|---|---|---|---|---|---|---|
+| 0 | `Velocity` | 1.0 | | 12 | `FilterType` | 0.0 |
+| 1 | `Pan` | 0.5 | | 13 | `FilterDrive` | 0.5 |
+| 2 | `Repeats` | 0.0 | | 14 | `ForceLayer` | 0.0 |
+| 3 | `Shift` | 0.5 | | 15..18 | `Send1`..`Send4` | 0.5 |
+| 4 | `Reverse` | 0.0 | | 19, 20 | `Ampenvdepth1`, `Ampenvdepth2` | 0.5 |
+| 5 | `CoarsePitch` | 0.5 | | 21, 22 | `Freeenvdepth1`, `Freeenvdepth2` | 0.5 |
+| 6 | `FinePitch` | 0.5 | | 23 + 9k + 0 | `FX{k+1}Active` | 1.0 |
+| 7 | `StartPoint` | 0.5 | | 23 + 9k + 1 | `FX{k+1}Mix` | 1.0 |
+| 8 | `Duration` | 1.0 | | 23 + 9k + 2 | `FX{k+1}OutputLevel` | 1.0 |
+| 9 | `LinkToPrevious` | 0.0 | | 23 + 9k + 3..8 | `FX{k+1}Param1`..`Param6` | 1.0 |
+| 10 | `FilterCutoff` | 0.5 | | | (k = 0..5, i up to 76) | |
+| 11 | `FilterResonance` | 0.5 | | | | |
+
+(Source strings: `Amp env depth 1`, `Free env depth 1`, `FX1 Output Level`, … .)
+`GetStepGraphItemForName` also accepts `Volume` for lane 0 (ev_fa1a72f5).
+
+### `SwingTemplate` (ev_75db4209)
+
+`Ver` 2.0 (write only); `SwingTemplateName` child `FixedString`; `NumberOfSteps` int;
+`S0`..`S127` double, written only if ≠ 0; load falls back to `Step%d`, then 0.
+
+### `SongSequencer` = `.geist` root `Song` (ev_688e9ad0)
+
+| Name | Type | Notes |
+|---|---|---|
+| `Song` | child `Song` (pointer) | |
+| `SongActive`, `SongLoopEnabled` | bool (`SerializeBoolAttribute`, default false) | |
+| `SongLoopStart`, `SongLoopEnd` | double | `SongPart::QuantizeTimeRound` on load |
+| `SongEditorZoom`, `SongEditorStart` | double | |
+
+`Song` (ev_861f90dc): `Track0`..`Track7` = `SongTrack` (one per engine). `SongTrack`
+(ev_9826a77c): `Part0`..`PartN` until the first missing one (load clears first). `SongPart`
+(ev_406c5fa4, cleared on load): `mute` bool, `starttime` double, `length` double, `patt` uint,
+`phase` double.
+
+### `SceneManager` = `.geist` root `Scenes` (ev_fd4e6e22)
+
+`Scene0`..`Scene71` (72 scenes), `CurrentScene` int, `EditorBase` uint.
+`Scene` (ev_6ee860cd): `used` bool (default false; unused scenes are cleared on load and write
+only `used` and `name`), `name` child `FixedString`, then only if used: `mode` enum
+`both`/`pat`/`mix`, `start` enum `imm`/`beat`/`bar` (`SerializeEnumAttribute` with
+`Scene::kModeStrings` / `kStartModeStrings` [file]), `Eng0`..`Eng7` = `SceneEngine`
+(ev_2c1f657b): `patt` uint, `pattpower` bool.
+
+### `MasterChannel`, `GlobalAux`, `Metronome`, `TimeInfo`
+
+- `MasterChannel` (ev_47d5e525): `Ver` 2.0, mix, output, `EffectChain`, `Pitch` float.
+- `GlobalAux` (ev_f6de6e53): `Ver` 2.0, mix, output, `EffectChain`, `IsPreFade` bool.
+- `Metronome` (ev_9fd05cf9): `Ver` 2.0, mix, output.
+- `TimeInfo` (ev_89f6ee6c): `Tempo` double, `TSN` uint, `TSD` uint, `Metro` bool,
+  `Quantize` bool; load recomputes 1/tempo.
+
+### `EffectChain` and `Effect`
+
+`EffectChain` (ev_597a41f8): `FXVer` 2.1 (write only); `Effect0`..`Effect5` (save only slots
+whose type ≠ 0; a missing slot loads as type 0, "No Effect"); `IsActive` bool;
+`ChainPresetName` child `FixedString`; `ChainMix` float, default 1.0.
+
+`Effect` (ev_82ed17a2): `EffectVersion` 2.0 (write only); `IsActive` bool, `Mix` float,
+`Level` float, `PresetName` child `FixedString`, `Parameter0`..`Parameter5` float,
+`EffectType` string. Load: `GetEffectTypeForType(name)` → `SetEffectType(type, songInfo, false)`
+then pushes the six parameter values; the bypass/mix/level state is mirrored into the
+"previous" fields. Same shape as the factory `.fxpreset`/`.fxchain` files and Geist2.
+
+### Other serializers seen
+
+- `SlicePoint` (ev_3fa78e20): `Ver` 2.0; `Start` `End` int; `Locked` `Deleted` bool; `Pos` int;
+  `Strength` `DynSense` `Mean` float; `Type` string (`GetNameOfSliceType`).
+  `SliceAnalysis` (ev_3845204b): `Ver` read (default 2.1); `Slices`, `ZX`, `Meta` children
+  read only if `Ver ≥ 2.1`.
+- `AudioFileMetaData` (ev_3a1b344c): `Ver` int 2; `Name` `Author` `Desc` children; `BPM`
+  `Beats` `Bars` `Pitch` float.
+- `CEngine`, `CPad`, `CLayer`, `CPattern`, `CTrack`, `CStep`, `CGroove`, `CScene` are the
+  Guru import (`GuruFileImporter`, `GuruConversionJob`), not v1's own format.
+
+## Effect types and the v1-only DSP [decomp]
+
+`Effect::EffectTypeToString` (ev_16b78c41), `GetEffectTypeForType` (ev_eca51da3),
+`GetNumberOfParametersForEffect` (ev_b3c0e875), `GetCategoryForEffect` (ev_6494cf3e),
+`GetParameterNameForEffect` (ev_d5606ed0). DSP class from `Effect::AddAllSupportedEffects`
+(0xf6aa0, ev_0be0368e), which registers `VDSPNodeAdaptor::AddStaticEffectType(EffectTypeToString(t),
+class)` for t = 1..32; `Effect::SetEffectType` (ev_12d86655) selects node `t − 1`.
+
+Categories (`GetCategoryForEffect`; group labels are my reading): 0 = types 14–16,
+1 = 1, 2, 6–9 (gain/dynamics), 2 = 3–5 (EQ), 3 = 18–26 (filters), 5 = 28–32 (reverbs),
+4 = everything else (10–13, 17, 27).
+
+| t | Name | DSP class | Params (`Parameter0..`) |
+|---|---|---|---|
+| 0 | No Effect | — | — |
+| 1 | Gain | **`VAmpM`** (v1-only) | Gain |
+| 2 | Stereo Width | `VStereoMixer` | Gain, Width |
+| 3 | Parametric EQ | `VEQSSLESeriesS` | Low Q, Low frequency, Low gain, High Q, High frequency, High gain |
+| 4 | DJ EQ | `VEQSSLESeriesS` (same class) | Low gain, Mid gain, Mid frequency, High gain |
+| 5 | Vari-EQ | **`VFilterEQ2`** (v1-only) | Mode, Frequency, Q, Gain |
+| 6 | Channel Compressor | `VCompressorUrei1176S` | Input, Attack, Release, Ratio, Output |
+| 7 | Bus Compressor | `VCompressorSSLMixbusS` | Threshold, Attack, Ratio, Release, Makeup, Analogue limit |
+| 8 | Noise Gate | `VNoiseGateS` | Attack, Hold, Release, Threshold, Hysteresis, LPF |
+| 9 | Envelope Shaper | **`VDSPTransientDesigner`** (v1-only) | Attack, Sustain, Gain, Sensitivity, Linked |
+| 10 | Delay | `VDelayStereo` | Delay time, Feedback, Low cut, Hi cut, Swing, Sync |
+| 11 | Flanger | `VFlangerS` | Frequency, Depth, Position, Feedback, Spread, Phase |
+| 12 | Chorus | `VChorusS` | Frequency, Depth, Spread |
+| 13 | Phaser | `VFilterPhaser8` | Drive, Mode, Pitch, Resonance, Frequency, Depth |
+| 14 | Distortion | `VAudioShaperS` | Mode, Drive, Hi Cut, Low Cut, Tone, Clean |
+| 15 | Bit Crusher | `VBitCrusherS` | Drive, Frequency, Bits, Hi Cut, Low Cut, Tone |
+| 16 | Ring Mod | `VRingModS` | Drive, Type, Pitch |
+| 17 | Frequency Shifter | `VFreqShifterS` | Pitch, Drive |
+| 18 | Filter | `VFiltersSSLChanS` | HP active, HP frequency, LP active, LP frequency |
+| 19 | Modulated Filter | `VFilterAutoS` | Mode, Cutoff, Resonance, Attack, Decay, Env depth |
+| 20 | Comb Filter | `VFilterComb` | Drive, Mode, Pitch, Resonance |
+| 21 | Three Oh! Three Filter | `VFilterTB303` | Drive, Mode, Pitch, Resonance |
+| 22 | Hoover Filter | `VFilterJuno106` | Drive, Mode, Pitch, Resonance |
+| 23 | Grandad Filter | `VFilterMoog4` | Drive, Mode, Pitch, Resonance |
+| 24 | Little Fatty Filter | `VFilterMS20` | Drive, Mode, Pitch, Resonance |
+| 25 | Child Genius Filter | `VFilterMoogProdigy` | Drive, Mode, Pitch, Resonance |
+| 26 | Japan Filter | `VFilterSH101` | Drive, Mode, Pitch, Resonance |
+| 27 | Audio Freezer | `VAudioFreeze` | Gate, Loop Length, Grain Length, Smooth, Scratch, Speed |
+| 28–31 | Breverb Hall / Plate / Room / Inverse | `VDSPBreverbHall` / `Plate` / `Room` / `Inverse` | Reverb Time, Pre Delay, Diffusion, Size, Spread, Shape |
+| 32 | Tin Can Verb | `VReverbS` | Decay, Size, Damping, Pinch, Squeeze |
+
+`GetNumberOfParametersForEffect` agrees with these name lists, except that the reverbs share one
+six-name list while the counts differ: Breverb Hall 6, Plate 5, Room 5, Inverse 3, Tin Can Verb 5.
+
+v1-only DSP, per class [decomp, sym]:
+
+- **`VAmpM`** (Gain, t = 1): mono voice. Gain parameter clamped to ±10, turned into a linear
+  gain with a cubic 2^x approximation (`((x·0.0794 + 0.2245)·x + 0.6961)·x + 1` on the fraction,
+  exponent bits for the integer part, −0.01637), negative results clamped to 0, then a one-pole
+  smoother (coefficient from `SongInfo+0x2c`) per sample (ev_9b98b0fe).
+- **`VFilterEQ2`** (Vari-EQ, t = 5): `VFilterEQCommon::SetCoeffs(mode clamped 0..8,
+  freq = 2^(p1+1)·400·SongInfo[+0x24], Q, gain)` then a double-precision biquad with an
+  alternating ±tiny anti-denormal term (ev_b33db815). Also used directly by the GUI curve
+  (`EditorEffectVariEQ::ATC_Tick`, 0x341550).
+- **`VDSPTransientDesigner`** (Envelope Shaper, t = 9): a node wrapper around a
+  `TransientDesigner` object (`CreateNewTransientDesigner`, `TDImpl`): forwards changed
+  parameters through its vtable (+0x40), processes (+0x60), and reports a meter value (+0x70)
+  (ev_ed247fe9, ev_2726447b). Editor panel: `EditorEffectTransientDesigner`.
+
+Geist2 has the stereo counterparts `VAmpS`, `VFilterEQ2S` and `VDSPTransientDesignerS` (plus the
+shared `VFilterEQCommon` and `VDSPTransientDesignerConvertParam`) [sym, Dreist `re/out/symbols.txt`].
+So the v1-only classes are mono versions of DSP Dreist already ports; what differs is to be
+checked in the DSP diff (PROGRESS "Next" 3–4).
+
+## Unknown / not done
+
+- Constructor and `Initialize` defaults for attributes marked "keep" (Engine, Pad, Layer,
+  StepPattern, Track, Effect constructors were not decompiled). Needed to fill missing attributes.
+- The layer virtual at vtable +0x78 used to reset a missing `Layer%d` (assumed reset/clear).
+- `BindingMap+0xc3c0` (the flag that skips `Bindings` on load), presumably "keep current MIDI
+  bindings"; the option behind it is not traced.
+- `AudioFileManager` delegate at `+0x28` that decides which samples are saved.
+- `Sampler`, `BindingMap`/`Binding`, `MIDIMap` bodies are decompiled (ev_3df21e0a, ev_e4e57dbe,
+  ev_1e06779d, ev_93038a78) but not written up; the attribute names are in `re/object-model.md`.
+- Geist2's legacy branch was not re-decompiled; thresholds above come from Dreist's ledger.
+- No real v1 user files exist to check these against (the factory install has none).
+
+## Tooling
+
+The first Ghidra analysis of this 14 MB engine takes about 4 minutes. A direct REA MCP call from
+the desktop Code tab times out on the client side before that and the timeout closes the target,
+so this pass drove `rea mcp` over stdio from a small script (`re/scripts/rea_drive.py`): it opens the
+binary once and runs queued job lists (`procedure_pseudo_code`, `xrefs`, `procedure_callers`,
+`resolve_containing_procedure`) against the same Ghidra session. Same REA 6.7.0 + Ghidra 12.1.4
+provider and env as Dreist (`GHIDRA_INSTALL_DIR`, `JAVA_HOME`,
+`REA_GHIDRA_STARTUP_TIMEOUT_MS=3600000`). Pseudocode calls `VXMLFile` methods through the vtable;
+offsets map to names via `vtable for XMLFile` (e.g. 0x1d0 `ReadAttribute(float&)`,
+0x1f0 `SerializeAttribute(VString&, default)`, 0x228 `SerializeAttribute(float&)`,
+0x2e8 `SerializeObject(VObject&)`, 0x320 `IsLoading`, 0x328 `IsSaving`).

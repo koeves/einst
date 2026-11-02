@@ -37,3 +37,7 @@ All writers go through `XMLFile::Initialize(bool, VString, AudioFileManager*, bo
 
 `Ver` is a per-object float; Geist2 reads a legacy layer `Ver` as `round(Ver*1000)` and upgrades
 layers below 3300 (Dreist `docs/re/formats.md`), which matches these v1 field names.
+
+Types, defaults, version branches, enum strings and sample-path rules: `loading-v1.md` [decomp].
+The document element of every v1 file is `<root>`; a `.geist` with `StateVersion < 2.0` is
+rejected.

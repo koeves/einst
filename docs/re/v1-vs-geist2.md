@@ -22,7 +22,9 @@ Tags as in Dreist's ledger: [file] [sym] [decomp] [runtime].
   names `StateVersion`, `FileManager`, `TimeInfo`, `Scenes`, `Bindings`, `Envelope%dParam%d`,
   `ModRouting%d`, `V2C`/`V2P`. Dreist's formats.md notes that Geist2 upgrades layers below version 3300
   (`V2C`/`V2P`/`UsesTimestretch`/`TSTracksBPM`/`TSMode`/`Envelope%dParam%d`/`ModRouting%d`).
-  So Geist2's legacy load path is the reference for reading v1 files [sym, decomp needed].
+  v1 itself is now decompiled: `loading-v1.md` has the full load path and every serializer
+[decomp]. v1.1.1.2 writes layer `Ver` 3.2 (= Geist2's 3200), so Geist2's "below 3300" layer
+upgrade applies to v1 layers.
 
 ## What einst needs beyond Dreist
 
@@ -30,10 +32,9 @@ Tags as in Dreist's ledger: [file] [sym] [decomp] [runtime].
    `Scenes`, `Song`, `TimeInfo`, `Bindings`), `.geistkit` (`Pad0..15`), `.geistpad`, `.geistengine`,
    `.geistpattern`, `.geistbank` (`StepPattern%d`). Field list: `re/object-model.md`.
    Port Geist2's upgrade code where it exists, and decompile v1's `SerializeAsXML` for the rest.
-2. v1-only DSP: TransientDesigner (v1 "Envelope Shaper"?), `VAmpM`, `VFilterEQ2`. Check which
-   effect types they back.
+2. v1-only DSP: `VAmpM` backs Gain, `VFilterEQ2` Vari-EQ, `VDSPTransientDesigner` Envelope
+   Shaper (`Effect::AddAllSupportedEffects`). Geist2 has stereo `S` versions of all three
+   [decomp, see `loading-v1.md`].
 3. v1 behaviour differences in voice, sequencer and mixer: diff the decompiled functions that both
    versions have.
 4. v1 layout, feature set and branding (Einst), as Dreist did for Geist2.
-
-Blocked: decompilation needs rea's Ghidra provider (`GHIDRA_INSTALL_DIR` unset in this rea connection).
