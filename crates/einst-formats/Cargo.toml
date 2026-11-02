@@ -1,0 +1,13 @@
+[package]
+name = "einst-formats"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+description = "Readers for Geist v1 (1.1.1.2) files, mapped onto Dreist's Geist2 document model"
+
+[dependencies]
+geist-formats.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,33 @@
+[workspace]
+resolver = "2"
+# einst-plugin and xtask join once the plugin shell lands (see docs/PROGRESS.md).
+members = ["crates/einst-formats"]
+
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+
+# Same lint policy as Dreist: DSP and parsers follow the decompiled original.
+[workspace.lints.clippy]
+approx_constant = "allow"
+excessive_precision = "allow"
+manual_clamp = "allow"
+needless_range_loop = "allow"
+collapsible_if = "allow"
+collapsible_else_if = "allow"
+too_many_arguments = "allow"
+type_complexity = "allow"
+manual_range_contains = "allow"
+
+[workspace.dependencies]
+# Dreist (Geist2 port) lives next to this repo: ~/Documents/projects/geist.
+geist-formats = { path = "../geist/crates/geist-formats" }
+roxmltree = "0.20"
+thiserror = "2"
+
+[profile.release]
+strip = false
+
+[profile.test]
+opt-level = 2
