@@ -374,6 +374,72 @@ then pushes the six parameter values; the bypass/mix/level state is mirrored int
 - `CEngine`, `CPad`, `CLayer`, `CPattern`, `CTrack`, `CStep`, `CGroove`, `CScene` are the
   Guru import (`GuruFileImporter`, `GuruConversionJob`), not v1's own format.
 
+## Defaults for attributes the loader leaves alone [decomp]
+
+Where a loader table above says "keep", a missing attribute keeps the value the object was
+constructed or reset with. These come from the constructors, `Initialize` and `ResetState`
+bodies. 1/∛2 means `0x3f4b2ff5` (0.7937, 0 dB on Geist's gain curve).
+
+| Object | Defaults | Evidence |
+|---|---|---|
+| mix (`MixableObject`) | `Gain` 0.7937, `Pan` 0.5, `Mute` false, `Solo` false | ev_7757985d |
+| output (`AudioOutputObject`) | `OutputLocation` 0 = `Parent` | ev_5ad33fc9 |
+| aux (`AuxSendingObject`) | `AuxSend0..3` 0 | ev_f087e40f |
+| lock (`LockableObject`) | `LockState` false | ev_5ba9be32 |
+| `Engine` | `Pitch` 0.5, `TempoNumerator` 1, `TempoDenominator` 1, `SwingTemplateDepth` 0, `EnginePadMode` 0 (`Normal`); `Engine::Initialize` also loads the factory swing template named `Default` | ev_68d18606, ev_c210c31c, ev_cdaeedeb, ev_5fe2883b |
+| `EngineState` | `PatternPower` true, `CurrentPattern`/`CurrentPad`/`CurrentStep` 0, `FullLevels` 127, `FullLevelEnabled` false, `NoteEraseEnabled` false, `NoteRepeatEnabled` false, `NoteRepeatSynced` true, `P%dZR` 1, `P%dSP` 0 | ev_ab61573a |
+| `PadState` | `Avis` false, `CurrentLayer` 0, `Atype` −1, `MTrack0..3` −1 | ev_7ceb4270 |
+| `Pad` | `PadMode` 0 (`All layers`), `V2A` 1.0, `PadName` `Pad %d` (index + 1) | ev_13a0dc00, ev_b70b3fed, ev_40363409 |
+| `Layer` | `CutMode` 1 (`Self`), `PlaybackMode` 0 (`One shot`), `IsReversed` false, `PhasePosition` 1.0, `EnvTracksPitch` false, `V2C` 0.5, `V2P` 0.5, `UsesTimestretch` false, `TSTracksBPM` false, `SourceBPM` 120, `DestinationBPM` 120, `TSMode` 0, both `EnvelopeType` 1 (ADSR) | ev_ab7a5d74 |
+| `Layer` parameters (`GetDefaultLayerParameter`) | `LayerGain` 0.7937, `LayerPan` 0.5, `CoarseTune` 0.5, `FineTune` 0.5, `PreDelayTime` 0, `Cutoff` 1.0, `Resonance` 0, `FilterType` 0, `FilterDrive` 0.3, `FilterAlgorithm` 0.3, `FilterActive` 0 | ev_d1ec4c75 |
+| `Layer` envelopes (`ConstructDefaultEnvelopes`, both) | Attack 0, Decay 0.02, Sustain 1, Hold −1, Release 0.001, the three curves 0.5 | ev_f6924262 |
+| `LayerVelocitySplit` | `LowPoint` 0, `LowTurn` 0, `HighTurn` 127, `Highest` 127 | ev_84c92766 |
+| `LayerModulationRouting` | `ModulationDestination` 0 (none), `ModulationDepth` 0.5 (centre = no modulation) | ev_59996834 |
+| `StepPattern` | `SyncMode` 0 (`Slave`), `Resolution` 8 (`1/16`), `PatternSteps` 16, `MonoModeActive` false, `PatternName` `Pattern %d` | ev_fcca7ebf, ev_455f32b7, ev_ba5f04d9 |
+| `Track` | `NumberOfSteps` 16, mix as above, every `<Lane>Rand/Scal/Comp` 0.5 | ev_879ae739 (the constructor body decompiles as bad data, ev_114428fa) |
+| `Step` | `State` false, lanes at `GetDefaultValueOfStepGraphItem` (= the Step table above) | ev_3c8afa7a, ev_21e856d3 |
+| `SwingTemplate` | `NumberOfSteps` 1, all `S%d` 0, name `Empty Template` after `ResetState` (the constructor sets `Default Template` first) | ev_379b41fb, ev_c3c41556 |
+| `Effect` | `IsActive` false, `Mix` 0.5, `Level` 1.0, type 0, `Parameter0..5` 0, `PresetName` `Default` | ev_ed96afed, ev_8a46e236 |
+| `EffectChain` | `IsActive` true, `ChainMix` 1.0, `ChainPresetName` `Default`, six empty effects | ev_5a12c4e5, ev_cbf18761 |
+| `MasterChannel` | `Pitch` 0.5 | ev_db8ccdc4 |
+| `GlobalAux` | `IsPreFade` = `Options "AuxesArePreFade"` (default false) | ev_4827433c |
+| `Metronome` | `Mute` true, `OutputLocation` 1 (`Master`) | ev_4c3098ed |
+| `TimeInfo` | `Tempo` 120, `TSN` 4, `TSD` 4, `Metro` false, `Quantize` false | ev_ff546833, ev_a274a319 |
+| `SongSequencer` | `SongActive` false, `SongLoopEnabled` false, `SongLoopStart` 0, `SongLoopEnd` 16, `SongEditorZoom` 16, `SongEditorStart` 0 | ev_38453b65, ev_ae907c41 |
+| `SongPart` | `mute` false, `starttime` 0, `length` 0, `patt` 9999 (none), `phase` 0 | ev_864aca4f |
+| `SceneManager` / `Scene` / `SceneEngine` | `CurrentScene` 0, `EditorBase` 0; scenes cleared (`used` false); `patt` 0, `pattpower` false | ev_89622fd1, ev_b6016faa, ev_96d7dd23 |
+| `Sampler` | `recordsource` 1, `inputgain` 1, `outputgain` 1, `startthreshold` 0.1, `stopthreshold` 0.005621 (`0x3bb827fa`), `inputthru` false, `beatsmode` true, `recbars` 1, `recbeats` 0, `recsecs` 2.0, `startmode` 0, `timedmode` 0 | ev_0be721ab |
+
+`Scene::ClearSelfOnly` and the `SceneManager` constructor body were not decompiled; the scene
+defaults above follow from `Scene::SerializeAsXML` clearing unused scenes. `Pattern %d` is the
+format string present in the binary; `SetNameOfPatternToDefault` itself was not decompiled
+(index base assumed 1, as for pads) [guess].
+
+## Sampler, BindingMap, MIDIMap [decomp]
+
+`Sampler` (`.geist` root `Sampler`, ev_3df21e0a): `version` int (written 2; missing → 1).
+`mitmsource` string (ManInTheMiddle producer, out of scope) else `recordsource` string
+(`GetRecordSourceFromName`). Only when `version ≥ 2`: `inputgain` `outputgain`
+`startthreshold` `stopthreshold` float, `inputthru` `beatsmode` bool, `recbars` `recbeats` uint,
+`recsecs` float, `startmode` enum `Immediate`/`MIDI`/`Host`/`Threshold`, `timedmode` enum
+`Free`/`Timed`/`Loop` (`strStartModes`/`strTimedModes` [file]). Loading also writes these to the
+`SamplerLast*` options.
+
+`BindingMap` (`.geist` root `Bindings`, ev_e4e57dbe):
+- `HostParameters`: child `VObjectArray` of 32 `VValue` (host automation values, missing → 0).
+- For each of 32 host parameters: `HostBindingCount%d` int, then `Auto%dBinding%d` `Binding` children.
+- For 16 MIDI channels × 128 CCs: `MIDI%dCC%dBindingCount` int, then `MIDI%dCC%dBinding%d`
+  `Binding` children.
+
+`Binding` (ev_1e06779d): `Min` `Max` float, `MIDI` bool, `MajorIndex` `MinorIndex` int,
+`TargetMode` `EnterTargetMode` `EditorOnly` bool, `Path` and `Name` `FixedString` children, then
+`MessageStuffer`, `MessagePopper` (child objects), a `Message` prototype and `Type`.
+`Message` (ev_aa4127e9): `EngineIndex` `PadIndex` `LayerIndex` `PatternIndex` `TrackIndex`
+`StepIndex` int, `MessageValue%d` children.
+
+`MIDIMap` (ev_93038a78) writes only `Ver` int 2; `MIDIMapItem` (ev_b99eacf2): `Engine` `Pad`
+`Pattern` `Scene` int, `DataPoint0..2` int.
+
 ## Effect types and the v1-only DSP [decomp]
 
 `Effect::EffectTypeToString` (ev_16b78c41), `GetEffectTypeForType` (ev_eca51da3),
@@ -444,14 +510,12 @@ checked in the DSP diff (PROGRESS "Next" 3–4).
 
 ## Unknown / not done
 
-- Constructor and `Initialize` defaults for attributes marked "keep" (Engine, Pad, Layer,
-  StepPattern, Track, Effect constructors were not decompiled). Needed to fill missing attributes.
 - The layer virtual at vtable +0x78 used to reset a missing `Layer%d` (assumed reset/clear).
 - `BindingMap+0xc3c0` (the flag that skips `Bindings` on load), presumably "keep current MIDI
   bindings"; the option behind it is not traced.
 - `AudioFileManager` delegate at `+0x28` that decides which samples are saved.
-- `Sampler`, `BindingMap`/`Binding`, `MIDIMap` bodies are decompiled (ev_3df21e0a, ev_e4e57dbe,
-  ev_1e06779d, ev_93038a78) but not written up; the attribute names are in `re/object-model.md`.
+- `Binding`'s `MessageStuffer`/`MessagePopper`/`Type` child objects are not traced, so v1
+  bindings are not converted.
 - Geist2's legacy branch was not re-decompiled; thresholds above come from Dreist's ledger.
 - No real v1 user files exist to check these against (the factory install has none).
 
