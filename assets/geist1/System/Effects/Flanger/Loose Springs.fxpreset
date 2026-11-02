@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.5" Level="1" Parameter0="0.00599999" Parameter1="1" Parameter2="0.99" Parameter3="1" Parameter4="0.21" Parameter5="0.774" EffectType="Flanger">
+        <FixedString name="PresetName" string="Loose Springs" />
+    </Effect>
+</root>

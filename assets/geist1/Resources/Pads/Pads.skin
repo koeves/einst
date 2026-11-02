@@ -1,0 +1,20 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:224 h:194]" id="0">
+        <CtrlPanel name="Pad12" overloadClass="EditorPad" rect="[x:0 y:0 w:56 h:46]" id="12" />
+        <CtrlPanel name="Pad13" overloadClass="EditorPad" rect="[x:56 y:0 w:56 h:46]" id="13" />
+        <CtrlPanel name="Pad14" overloadClass="EditorPad" rect="[x:112 y:0 w:56 h:46]" id="14" />
+        <CtrlPanel name="Pad15" overloadClass="EditorPad" rect="[x:168 y:0 w:56 h:46]" id="15" />
+        <CtrlPanel name="Pad8" overloadClass="EditorPad" rect="[x:0 y:49 w:56 h:46]" id="8" />
+        <CtrlPanel name="Pad9" overloadClass="EditorPad" rect="[x:56 y:49 w:56 h:46]" id="9" />
+        <CtrlPanel name="Pad10" overloadClass="EditorPad" rect="[x:112 y:49 w:56 h:46]" id="10" />
+        <CtrlPanel name="Pad11" overloadClass="EditorPad" rect="[x:168 y:49 w:56 h:46]" id="11" />
+        <CtrlPanel name="Pad4" overloadClass="EditorPad" rect="[x:0 y:98 w:56 h:46]" id="4" />
+        <CtrlPanel name="Pad5" overloadClass="EditorPad" rect="[x:56 y:98 w:56 h:46]" id="5" />
+        <CtrlPanel name="Pad6" overloadClass="EditorPad" rect="[x:112 y:98 w:56 h:46]" id="6" />
+        <CtrlPanel name="Pad7" overloadClass="EditorPad" rect="[x:168 y:98 w:56 h:46]" id="7" />
+        <CtrlPanel name="Pad0" overloadClass="EditorPad" rect="[x:0 y:147 w:56 h:46]" id="0" />
+        <CtrlPanel name="Pad1" overloadClass="EditorPad" rect="[x:56 y:147 w:56 h:46]" id="1" />
+        <CtrlPanel name="Pad2" overloadClass="EditorPad" rect="[x:112 y:147 w:56 h:46]" id="2" />
+        <CtrlPanel name="Pad3" overloadClass="EditorPad" rect="[x:168 y:147 w:56 h:46]" id="3" />
+    </CtrlPanel>
+</root>

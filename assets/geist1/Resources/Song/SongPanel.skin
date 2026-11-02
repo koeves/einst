@@ -1,0 +1,76 @@
+<root>
+    <CtrlPanelStyle name="SongBlackoutPanelStyle" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:0 g:0 b:0 a:100]" intSmartTileEdgeSize="5" intRoundedRectRadius="0">
+        <VFont name="font" vSize="14" fontName="true" />
+    </CtrlPanelStyle>
+    <CtrlLabelStyle name="BlackoutTextStyle" centeredText="true" colText="[r:255 g:255 b:255 a:255]">
+        <VFont name="font" vSize="24" fontName="true" />
+    </CtrlLabelStyle>
+    <CtrlButtonStyle name="SongSelectButtonStyle" optMomentary="false" optDrawText="true" imDown="..\Tools\SelectToolDown.png" imUp="..\Tools\SelectToolUp.png" colTextOn="[r:0 g:0 b:0 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="SongDrawButtonStyle" optMomentary="false" optDrawText="true" imDown="..\Tools\PenToolDown.png" imUp="..\Tools\PenToolUp.png" colTextOn="[r:0 g:0 b:0 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="SongEraseButtonStyle" optMomentary="false" optDrawText="true" imDown="..\Tools\DeleteToolDown.png" imUp="..\Tools\DeleteToolUp.png" colTextOn="[r:0 g:0 b:0 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="SongMultiButtonStyle" optMomentary="false" optDrawText="true" imDown="..\Tools\MultiToolDown.png" imUp="..\Tools\MultiToolUp.png" colTextOn="[r:0 g:0 b:0 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="SongPartMomentaryButtonStyle" optDrawText="true" colFillOff="[r:255 g:255 b:255 a:0]" colTextOn="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="SongDrawPopupButtonStyle" optMomentary="false" optDrawText="true" imDown="PenPopupToolDown.png" imUp="PenPopupToolUp.png" colTextOn="[r:0 g:0 b:0 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="SongPartNextButtonStyle" optDrawText="true" imDown="PartNext.png" imUp="PartNext.png" colFillOff="[r:255 g:255 b:255 a:0]" colTextOn="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="SongPartPrevButtonStyle" optDrawText="true" imDown="PartPrev.png" imUp="PartPrev.png" colFillOff="[r:255 g:255 b:255 a:0]" colTextOn="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="SongPartPopupButtonStyle" optDrawText="true" imDown="PartPopup.png" imUp="PartPopup.png" colFillOff="[r:255 g:255 b:255 a:0]" colTextOn="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlTextBoxStyle name="SongPatternEditBoxStyle" optEditable="true" optGreyOutDisabled="true" optSingleClickEdit="true" optSendValueWhenFocusLost="true">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>
+    <CtrlButtonStyle name="SongDrawPopupButtonStyleCopy0" optMomentary="false" optDrawText="true" imDown="PenPopupToolDown.png" imUp="PenPopupToolUp.png" colTextOn="[r:0 g:0 b:0 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="SongPenPopupButtonStyle" optDrawText="true" imDown="PenPopupToolDown.png" imUp="PenPopupToolUp.png" colFillOff="[r:255 g:255 b:255 a:0]" colTextOn="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:30 y:22 w:815 h:395]" id="0">
+        <CtrlPanel style="EmptyPanelStyle" rect="[x:2 y:2 w:811 h:38]" id="0">
+            <CtrlLabel name="TempTextLabel" rect="[x:762 y:-7 w:50 h:38]" id="100000" text="" />
+            <CtrlButton name="ShuffleButton" overloadClass="FlashingButton" rect="[x:109 y:-20 w:80 h:20]" id="100028" displayName="Shuffle Edit Mode" text="Shuffle Edit" />
+            <CtrlButtonGroup name="ToolButtonGroup" rect="[x:3 y:6 w:105 h:32]" id="100000">
+                <CtrlButton name="CtrlButton" style="SongDrawButtonStyle" rect="[x:2 y:8 w:19 h:17]" id="1" displayName="Draw Tool" />
+                <CtrlButton name="CtrlButton" style="SongEraseButtonStyle" rect="[x:38 y:8 w:19 h:17]" id="2" displayName="Erase Tool" />
+                <CtrlButton name="CtrlButton" style="SongSelectButtonStyle" rect="[x:59 y:8 w:19 h:17]" id="0" displayName="Select Tool" />
+                <CtrlButton name="CtrlButton" style="SongMultiButtonStyle" rect="[x:80 y:8 w:19 h:17]" id="3" displayName="Multi Tool" />
+            </CtrlButtonGroup>
+            <CtrlButton name="SetDrawPatternButton" overloadClass="FlashingButton" style="SongPenPopupButtonStyle" rect="[x:25 y:14 w:12 h:17]" id="100028" displayName="Change selected Parts to previous Pattern" />
+            <CtrlButton name="FollowButton" overloadClass="FlashingButton" style="LEDLatchingButtonStyle" rect="[x:150 y:14 w:50 h:17]" id="100028" displayName="Scroll to Follow" text="Follow" />
+            <CtrlButton name="PrevPatternButton" overloadClass="FlashingButton" style="StandardSubtractButtonStyle" rect="[x:263 y:14 w:15 h:17]" id="100028" displayName="Change selected Parts to previous Pattern" text="-" />
+            <CtrlButton name="SelectPatternButton" overloadClass="FlashingButton" style="LEDMenuButtonStyle" rect="[x:277 y:14 w:50 h:17]" id="100028" displayName="Change Pattern for selected Parts" text="Pattern" />
+            <CtrlButton name="NextPatternButton" overloadClass="FlashingButton" style="StandardAddButtonStyle" rect="[x:326 y:14 w:15 h:17]" id="100028" displayName="Change selected Parts to next Pattern" text="+" />
+            <CtrlButton name="EraseButton" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" rect="[x:559 y:14 w:50 h:17]" id="100028" displayName="Erase when Recording" text="Erase" />
+            <CtrlButton name="ClearAllButton" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" rect="[x:611 y:14 w:50 h:17]" id="100028" displayName="Clear Song" text="Clear All" />
+            <CtrlButton name="DuplicateButton" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" rect="[x:663 y:14 w:50 h:17]" id="100028" displayName="Duplicate selected Parts" text="Duplicate" />
+        </CtrlPanel>
+        <CtrlPanel name="TrackHeaderPanel" style="EmptyPanelStyle" rect="[x:2 y:41 w:48 h:340]" id="100003" />
+        <CtrlScrollView name="TrackScrollView" rect="[x:50 y:41 w:760 h:340]" id="100002" />
+        <CtrlTextBox name="PatternRenameTextBox" style="SongPatternEditBoxStyle" rect="[x:167 y:371 w:151 h:20]" id="100000" />
+        <CtrlButton name="ZoomOutButton" overloadClass="FlashingButton" style="ZoomOutButtonStyle" rect="[x:786 y:380 w:12 h:12]" id="100028" text="-" />
+        <CtrlButton name="ZoomInButton" overloadClass="FlashingButton" style="ZoomInButtonStyle" rect="[x:798 y:380 w:12 h:12]" id="100028" text="+" />
+        <CtrlButton name="PartNextPatternButton" style="SongPartNextButtonStyle" rect="[x:87 y:383 w:10 h:10]" id="100000" />
+        <CtrlButton name="PartPrevPatternButton" style="SongPartPrevButtonStyle" rect="[x:103 y:383 w:10 h:10]" id="100000" />
+        <CtrlButton name="PartSelectPatternButton" style="SongPartPopupButtonStyle" rect="[x:119 y:384 w:10 h:10]" id="100000" />
+        <CtrlPanel name="BlackoutPanel" style="SongBlackoutPanelStyle" rect="[x:50 y:41 w:760 h:340]" id="100001" zorder="2">
+            <CtrlLabel name="CtrlLabel" style="BlackoutTextStyle" rect="[x:87 y:38 w:500 h:264]" id="100002" text="Click to activate Song Mode" />
+            <CtrlButton name="PowerButton" style="LEDMomentaryButtonStyle" rect="[x:480 y:160 w:50 h:17]" id="100000" text="Activate" />
+        </CtrlPanel>
+    </CtrlPanel>
+</root>

@@ -1,0 +1,5 @@
+<root>
+    <SwingTemplate name="SwingTemplate" Ver="2" NumberOfSteps="4" S0="0.0" S1="0.3" S2="0.6" S3="0.3">
+        <FixedString name="SwingTemplateName" string="Triplet Feel" />
+    </SwingTemplate>
+</root>

@@ -1,0 +1,14 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:815 h:395]" id="0">
+        <CtrlPanel name="AuxChannel0" overloadClass="EditorMixerAuxChannel" rect="[x:1 y:232 w:193 h:161]" id="100001" />
+        <CtrlPanel name="AuxChannel1" overloadClass="EditorMixerAuxChannel" rect="[x:192 y:232 w:193 h:161]" id="100003" />
+        <CtrlPanel name="AuxChannel2" overloadClass="EditorMixerAuxChannel" rect="[x:383 y:232 w:193 h:161]" id="100004" />
+        <CtrlPanel name="AuxChannel3" overloadClass="EditorMixerAuxChannel" rect="[x:574 y:232 w:193 h:161]" id="100005" />
+        <CtrlPanel name="MasterChannel" overloadClass="EditorMixerMasterChannel" rect="[x:765 y:232 w:48 h:161]" id="100008" />
+        <!-- This must be after the others, higher z -->
+        <CtrlPanel name="FXPanel" overloadClass="EditorEffectChainPanel" rect="[x:1 y:2 w:812 h:245]" id="100009" />
+        <CtrlImageView name="LargeGlue" style="BackStyle" rect="[x:1 y:232 w:189 h:11]" id="0" image="GlueLarge.png" />
+        <CtrlImageView name="MasterGlue" style="BackStyle" rect="[x:767 y:235 w:44 h:15]" id="0" image="GlueMaster.png" />
+        <CtrlImageView name="GlueMicro" rect="[x:3 y:235 w:3 h:8]" id="0" image="GlueMicro.png" />
+    </CtrlPanel>
+</root>

@@ -1,0 +1,8 @@
+<root>
+    <InsertablePattern name="InsertablePattern" PatternVersion="2" Element0="true" Element1="false" Element2="false" Element3="true" Element4="false" Element5="false" Element6="false">
+        <VString name="PatternName">E(2,7)  X .  . X .  .  . </VString>
+    </InsertablePattern>
+</root>
+
+
+

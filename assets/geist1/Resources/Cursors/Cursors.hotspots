@@ -1,0 +1,32 @@
+<root>
+    <VObjectArray name="Hotspots" count="7">
+        <CursorHotspot>
+            <VPoint name="Hotspot" x="2" y="10" />
+            <VString name="CursorName">CursorResizeLeft.png</VString>
+        </CursorHotspot>
+        <CursorHotspot>
+            <VPoint name="Hotspot" x="4" y="10" />
+            <VString name="CursorName">CursorResizeRight.png</VString>
+        </CursorHotspot>
+        <CursorHotspot>
+            <VPoint name="Hotspot" x="8" y="2" />
+            <VString name="CursorName">CursorResizeRightThin.png</VString>
+        </CursorHotspot>
+        <CursorHotspot>
+            <VPoint name="Hotspot" x="10" y="10" />
+            <VString name="CursorName">CursorSelection.png</VString>
+        </CursorHotspot>
+        <CursorHotspot>
+            <VPoint name="Hotspot" x="20" y="20" />
+            <VString name="CursorName">CursorDragFile.png</VString>
+        </CursorHotspot>
+        <CursorHotspot>
+            <VPoint name="Hotspot" x="20" y="20" />
+            <VString name="CursorName">CursorDragFiles.png</VString>
+        </CursorHotspot>
+        <CursorHotspot>
+            <VPoint name="Hotspot" x="20" y="20" />
+            <VString name="CursorName">CursorDragFolder.png</VString>
+        </CursorHotspot>
+    </VObjectArray>
+</root>

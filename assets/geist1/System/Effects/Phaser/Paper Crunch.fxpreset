@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.07" Level="1" Parameter0="1" Parameter1="0.285714" Parameter2="0.1" Parameter3="0.36" Parameter4="0.13" Parameter5="0.72" EffectType="Phaser">
+        <FixedString name="PresetName" string="Paper Crunch" />
+    </Effect>
+</root>

@@ -1,0 +1,16 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlKnob name="Control4" style="LEDKnobSmallLR" rect="[x:21 y:35 w:24 h:26]" id="100012" />
+        <CtrlKnob name="Control6" style="LEDKnobSmallLR" rect="[x:82 y:35 w:24 h:26]" id="100013" />
+        <CtrlKnob name="Control5" style="LEDKnobSmallLR" rect="[x:144 y:35 w:24 h:26]" id="100011" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:65 w:50 h:10]" id="100015" text="Threshold" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:58 y:65 w:70 h:10]" id="100016" text="LPF" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:121 y:65 w:70 h:10]" id="100014" text="Hysteresis" />
+        <CtrlKnob name="Control1" style="LEDKnobSmallLR" rect="[x:21 y:90 w:24 h:26]" id="100020" />
+        <CtrlKnob name="Control3" style="LEDKnobSmallLR" rect="[x:82 y:90 w:24 h:26]" id="100021" />
+        <CtrlKnob name="Control2" style="LEDKnobSmallLR" rect="[x:144 y:90 w:24 h:26]" id="100009" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:5 y:120 w:50 h:10]" id="100026" text="Attack" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:58 y:120 w:70 h:10]" id="100027" text="Release" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:120 y:120 w:70 h:10]" id="100010" text="Hold" />
+    </CtrlPanel>
+</root>

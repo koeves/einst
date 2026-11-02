@@ -1,0 +1,16 @@
+<root>
+    <CtrlButtonStyle name="PenToolStyle" optMomentary="false" imDown="PenToolDown.png" imUp="PenToolUp.png" />
+    <CtrlButtonStyle name="BrushToolStyle" optMomentary="false" />
+    <CtrlButtonStyle name="DeleteToolStyle" optMomentary="false" imDown="DeleteToolDown.png" imUp="DeleteToolUp.png" />
+    <CtrlButtonStyle name="VelocityToolStyle" optMomentary="false" />
+    <CtrlButtonStyle name="SelectionToolStyle" optMomentary="false" imDown="SelectToolDown.png" imUp="SelectToolUp.png" />
+    <CtrlButtonStyle name="MultiToolStyle" optMomentary="false" imDown="MultiToolDown.png" imUp="MultiToolUp.png" />
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:86 h:35]" id="0">
+        <CtrlButtonGroup name="ButtonGroup" rect="[x:0 y:0 w:86 h:30]" id="100001">
+            <CtrlButton name="PenButton" style="PenToolStyle" rect="[x:4 y:10 w:19 h:17]" id="0" displayName="Pen Tool" />
+            <CtrlButton name="DeleteButton" style="DeleteToolStyle" rect="[x:24 y:10 w:19 h:17]" id="1" displayName="Erase Tool" />
+            <CtrlButton name="SelectionButton" style="SelectionToolStyle" rect="[x:44 y:10 w:19 h:17]" id="2" displayName="Select Tool" />
+            <CtrlButton name="MultiButton" style="MultiToolStyle" rect="[x:64 y:10 w:19 h:17]" id="3" displayName="Multi Tool" />
+        </CtrlButtonGroup>
+    </CtrlPanel>
+</root>

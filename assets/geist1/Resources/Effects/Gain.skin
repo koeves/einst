@@ -1,0 +1,6 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlKnob name="Control1" style="LEDKnobLargeLR" rect="[x:71 y:39 w:50 h:46]" id="100014" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:71 y:90 w:50 h:15]" id="100015" text="Gain" />
+    </CtrlPanel>
+</root>

@@ -1,0 +1,101 @@
+<root>
+    <CtrlPanelStyle name="SamplerPanelInnerBackgroundStyle" optSmartTile="true" imBackground="SamplerBackgroundInner.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:210 g:217 b:227 a:255]" intSmartTileEdgeSize="5" intRoundedRectRadius="0">
+        <VFont name="font" vSize="14" fontName="Arial" />
+    </CtrlPanelStyle>
+    <CtrlButtonStyle name="SamplerArmButtonStyle" imDown="SamplerArmButtonDown.png" imUp="SamplerArmButtonUp.png" imDisabled="SamplerArmButtonDisabled.png" />
+    <CtrlButtonStyle name="SamplerRecButtonStyle" imDown="SamplerRecButtonDown.png" imUp="SamplerRecButtonUp.png" imDisabled="SamplerRecButtonDisabled.png" />
+    <CtrlSliderStyle name="SamplerThresholdTopSliderStyle" noDefaultDrawing="true" optNoClickOutsideKnobMove="true" optNoClickOutsideKnobPage="true" imKnobOff="..\Images\SplitFader\SplitFaderArrowDown.png" imKnobOn="..\Images\SplitFader\SplitFaderArrowDownSelected.png" colSlider="[r:236 g:236 b:236 a:255]" snapSteps="0" fineScale="0.05" incDecButtonMode="off">
+        <VFont name="font" vSize="14" fontName="Arial" />
+    </CtrlSliderStyle>
+    <CtrlSliderStyle name="SamplerThresholdBottomSliderStyle" noDefaultDrawing="true" optNoClickOutsideKnobMove="true" optNoClickOutsideKnobPage="true" imKnobOff="..\Images\SplitFader\SplitFaderArrowUp.png" imKnobOn="..\Images\SplitFader\SplitFaderArrowUpSelected.png" colSlider="[r:236 g:236 b:236 a:255]" snapSteps="0" fineScale="0.05" incDecButtonMode="off">
+        <VFont name="font" vSize="14" fontName="Arial" />
+    </CtrlSliderStyle>
+    <CtrlPanelStyle name="SamplerPanelOuterBackgroundStyle" optSmartTile="true" imBackground="SamplerBackgroundOuter.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:76 g:83 b:111 a:255]" intSmartTileEdgeSize="5" intRoundedRectRadius="0">
+        <VFont name="font" vSize="14" fontName="Arial" />
+    </CtrlPanelStyle>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:820 h:395]" id="0">
+        <CtrlPanel style="EmptyPanelStyle" rect="[x:3 y:4 w:804 h:114]" id="0">
+            <CtrlButtonGroup name="TriggerModeButtonGroup" rect="[x:78 y:13 w:250 h:28]" id="100003">
+                <CtrlButton name="ImmediateButton" overloadClass="FlashingButton" style="RadioButtonLeftStyle" rect="[x:0 y:4 w:60 h:17]" id="1" displayName="Record Immediately" text="Immediate" />
+                <CtrlButton name="MIDIButton" overloadClass="FlashingButton" style="RadioButtonCenterStyle" rect="[x:58 y:4 w:60 h:17]" id="1" displayName="Record when MIDI received" text="MIDI" />
+                <CtrlButton name="HostButton" overloadClass="FlashingButton" style="RadioButtonCenterStyle" rect="[x:116 y:4 w:60 h:17]" id="1" displayName="Record while host playing" text="Host" />
+                <CtrlButton name="ThresholdButton" overloadClass="FlashingButton" style="RadioButtonRightStyle" rect="[x:174 y:4 w:60 h:17]" id="0" displayName="Record when signal above Threshold" text="Threshold" />
+            </CtrlButtonGroup>
+            <CtrlPanel name="ThresholdPanel" style="EmptyPanelStyle" rect="[x:317 y:13 w:300 h:25]" id="100001">
+                <CtrlLabel name="Label" style="StandardLabelRightAlignedStyle" rect="[x:10 y:-1 w:30 h:17]" id="100000" text="Start" />
+                <CtrlSlider name="StartThresholdSlider" style="SamplerThresholdTopSliderStyle" rect="[x:38 y:2 w:128 h:9]" id="100004" displayName="Start sampling at" />
+                <CtrlLevelStrip name="ThresholdVU" style="VU120Horizontal" rect="[x:42 y:11 w:120 h:3]" id="100004" />
+                <CtrlLabel name="Label" style="StandardLabelRightAlignedStyle" rect="[x:9 y:12 w:30 h:17]" id="100000" text="Stop" />
+                <CtrlSlider name="StopThresholdSlider" style="SamplerThresholdBottomSliderStyle" rect="[x:38 y:14 w:128 h:9]" id="100004" displayName="Stop sampling below" />
+            </CtrlPanel>
+            <CtrlLabel name="CtrlLabel" style="StandardLabelRightAlignedStyle" rect="[x:3 y:19 w:72 h:17]" id="100000" text="Trigger Mode" />
+            <CtrlButton name="ArmButton" overloadClass="FlashingButton" style="SamplerArmButtonStyle" rect="[x:719 y:23 w:40 h:41]" id="100027" displayName="Arm Recording" text="Arm" />
+            <CtrlButton name="RecButton" overloadClass="FlashingButton" style="SamplerRecButtonStyle" rect="[x:762 y:23 w:40 h:41]" id="100027" displayName="Start Recording" text="Rec" />
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:587 y:32 w:120 h:15]" id="100000" text="Source" />
+            <CtrlPanel name="SyncPanel" style="EmptyPanelStyle" rect="[x:262 y:35 w:310 h:30]" id="100005">
+                <CtrlPanel name="BeatsPanel" style="EmptyPanelStyle" rect="[x:153 y:10 w:160 h:21]" id="100002">
+                    <CtrlLabel name="CtrlLabel" style="StandardLabelRightAlignedStyle" rect="[x:19 y:2 w:30 h:17]" id="100000" text="Bars" />
+                    <CtrlTextBox name="BarsTextBox" style="LEDEditBoxStyle" rect="[x:53 y:2 w:30 h:17]" id="100000" displayName="Duration Bars" />
+                    <CtrlLabel name="CtrlLabel" style="StandardLabelRightAlignedStyle" rect="[x:86 y:2 w:30 h:17]" id="100000" text="Beats" />
+                    <CtrlTextBox name="BeatsTextBox" style="LEDEditBoxStyle" rect="[x:120 y:2 w:30 h:17]" id="100000" displayName="Duration Beats" />
+                </CtrlPanel>
+                <CtrlPanel name="SecondsPanel" style="EmptyPanelStyle" rect="[x:158 y:10 w:100 h:21]" id="100003">
+                    <CtrlLabel name="CtrlLabel" style="StandardLabelRightAlignedStyle" rect="[x:-6 y:2 w:50 h:17]" id="100000" text="Seconds" />
+                    <CtrlTextBox name="SecsTextBox" style="LEDEditBoxStyle" rect="[x:48 y:2 w:30 h:17]" id="100000" displayName="Duration Seconds" />
+                </CtrlPanel>
+                <CtrlButtonGroup name="SyncButtonGroup" rect="[x:35 y:12 w:125 h:19]" id="100003">
+                    <CtrlButton name="BeatsButton" overloadClass="FlashingButton" style="RadioButtonLeftStyle" rect="[x:0 y:-1 w:60 h:17]" id="1" displayName="Specify duration in Bars/Beats" text="Beats" />
+                    <CtrlButton name="SecsButton" overloadClass="FlashingButton" style="RadioButtonRightStyle" rect="[x:58 y:0 w:60 h:17]" id="0" displayName="Specify duration in Seconds" text="Seconds" />
+                </CtrlButtonGroup>
+            </CtrlPanel>
+            <CtrlButtonGroup name="TimedModeButtonGroup" rect="[x:78 y:38 w:180 h:29]" id="100003">
+                <CtrlButton name="FreeButton" overloadClass="FlashingButton" style="RadioButtonLeftStyle" rect="[x:0 y:9 w:60 h:17]" id="1" displayName="Record until manually stopped" text="Free" />
+                <CtrlButton name="TimedButton" overloadClass="FlashingButton" style="RadioButtonCenterStyle" rect="[x:58 y:9 w:60 h:17]" id="1" displayName="Record for specified time" text="Timed" />
+                <CtrlButton name="LoopedButton" overloadClass="FlashingButton" style="RadioButtonRightStyle" rect="[x:116 y:9 w:60 h:17]" id="0" displayName="Record timed loops" text="Looped" />
+            </CtrlButtonGroup>
+            <CtrlComboBox name="SourceList" style="LEDLargeComboBoxStyle" rect="[x:587 y:47 w:120 h:17]" id="100000" displayName="Select Audio Source" />
+            <CtrlLabel name="CtrlLabel" style="StandardLabelRightAlignedStyle" rect="[x:5 y:49 w:70 h:17]" id="100000" text="Record Mode" />
+            <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:2 y:75 w:812 h:48]" id="100009">
+                <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:4 y:5 w:75 h:15]" id="100000" text="Name" />
+                <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:81 y:5 w:75 h:15]" id="100000" text="Take" />
+                <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:298 y:5 w:105 h:15]" id="100000" text="Playback" />
+                <CtrlTextBox name="NameTextBox" style="LEDEditBoxStyle" rect="[x:4 y:19 w:75 h:17]" id="100000" displayName="Sample Name for Export" />
+                <CtrlComboBox name="TakeList" style="LEDComboBoxStyle" rect="[x:81 y:19 w:75 h:17]" id="100000" displayName="List of recorded Takes" />
+                <CtrlButton name="ClearAllButton" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" rect="[x:158 y:19 w:50 h:17]" id="100028" displayName="Clear all Takes" text="Clear All" />
+                <CtrlButton name="ClearButton" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" rect="[x:210 y:19 w:50 h:17]" id="100028" displayName="Clear current Take" text="Clear" />
+                <CtrlButton name="PreviewButton" overloadClass="FlashingButton" style="LEDLatchingButtonStyle" rect="[x:302 y:19 w:50 h:17]" id="100028" displayName="Preview current Take" text="Preview" />
+                <CtrlButton name="PreviewLoopButton" overloadClass="FlashingButton" style="LEDLatchingButtonStyle" rect="[x:353 y:19 w:50 h:17]" id="100028" displayName="Loop Previews" text="Loop" />
+                <CtrlButton name="CropButton" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" rect="[x:461 y:19 w:50 h:17]" id="100028" displayName="Crop current Take to markers" text="Crop" />
+                <CtrlButton name="NormalizeButton" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" rect="[x:513 y:19 w:50 h:17]" id="100028" displayName="Normalize current Take between markers" text="Normalize" />
+                <CtrlButton name="SaveButton" overloadClass="FlashingButton" style="LEDLargeMenuButtonStyle" rect="[x:582 y:19 w:75 h:17]" id="100028" displayName="Export current Take" text="Export/Send" />
+                <CtrlButton name="SliceButton" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" rect="[x:659 y:19 w:50 h:17]" id="100028" displayName="Slice current Take" text="Slice" />
+                <CtrlButton name="SendToPadButton" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" rect="[x:719 y:19 w:50 h:17]" id="100028" displayName="Send current Take to current Pad" text="-&gt; Pad" />
+                <CtrlButton name="SendAllToPadsButton" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" rect="[x:749 y:19 w:50 h:17]" id="100028" displayName="Send all Takes to free Pads" text="-&gt; Pads" />
+            </CtrlPanel>
+        </CtrlPanel>
+        <CtrlPanel name="CtrlPanel" style="SamplerPanelOuterBackgroundStyle" rect="[x:1 y:122 w:812 h:270]" id="100008">
+            <CtrlPanel name="CtrlPanel" style="SamplerPanelInnerBackgroundStyle" rect="[x:6 y:6 w:64 h:258]" id="100000">
+                <CtrlLevelStrip name="VUMeterLeft" style="VU106" rect="[x:28 y:7 w:4 h:106]" id="100003" />
+                <CtrlLevelStrip name="VUMeterRight" style="VU106" rect="[x:33 y:7 w:4 h:106]" id="100004" />
+                <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:2 y:116 w:60 h:15]" id="100000" text="Input Gain" />
+                <CtrlKnob name="InputGain" style="LEDKnobSmallLR" rect="[x:21 y:132 w:24 h:26]" id="100001" displayName="Input signal Gain" />
+                <CtrlButton name="MonoButton" overloadClass="FlashingButton" style="LEDLatchingButtonStyle" rect="[x:7 y:165 w:50 h:17]" id="100028" displayName="Sample in Mono" text="Mono" />
+                <CtrlButton name="ThruButton" overloadClass="FlashingButton" style="LEDLatchingButtonStyle" rect="[x:7 y:185 w:50 h:17]" id="100028" displayName="Audition input signal" text="Thru" />
+                <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:2 y:210 w:60 h:15]" id="100000" text="Preview vol" />
+                <CtrlKnob name="PreviewVolume" style="LEDKnobSmallLR" rect="[x:21 y:226 w:24 h:26]" id="100001" displayName="Thru Output Level" />
+            </CtrlPanel>
+            <CtrlPanel name="CtrlPanel" style="SamplerPanelInnerBackgroundStyle" rect="[x:74 y:6 w:732 h:258]" id="100008">
+                <CtrlPanel name="WaveArea" rect="[x:4 y:4 w:724 h:208]" id="100000" />
+                <CtrlButtonGroup name="AutoZoomGroup" rect="[x:650 y:214 w:52 h:12]" id="100000">
+                    <CtrlButton name="CtrlButton" style="ZoomOffButtonStyle" rect="[x:0 y:0 w:12 h:12]" id="100001" displayName="No auto zooming" />
+                    <CtrlButton name="CtrlButton" style="ZoomStartEndButtonStyle" rect="[x:13 y:0 w:12 h:12]" id="100002" displayName="Auto zoom to start and end" />
+                    <CtrlButton name="CtrlButton" style="ZoomStartButtonStyle" rect="[x:26 y:0 w:12 h:12]" id="100003" displayName="Auto zoom to start" />
+                    <CtrlButton name="CtrlButton" style="ZoomEndButtonStyle" rect="[x:39 y:0 w:12 h:12]" id="100004" displayName="Auto zoom to end" />
+                </CtrlButtonGroup>
+                <CtrlButton name="ZoomOutButton" style="ZoomOutButtonStyle" rect="[x:703 y:214 w:12 h:12]" id="100000" />
+                <CtrlButton name="ZoomInButton" style="ZoomInButtonStyle" rect="[x:716 y:214 w:12 h:12]" id="100000" />
+                <CtrlLabel name="RecordStatus" style="StandardLabelCenteredStyle" rect="[x:4 y:235 w:721 h:16]" id="100001" text="Idle" />
+            </CtrlPanel>
+        </CtrlPanel>
+    </CtrlPanel>
+</root>

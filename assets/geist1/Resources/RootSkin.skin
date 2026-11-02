@@ -1,0 +1,66 @@
+<root>
+    <CtrlPanelStyle name="RootPanelStyle" imBackground="Images/Global/Background.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="RootPanelSmallStyle" imBackground="Images/Global/BackgroundSmall.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+
+	<!-- MAIN TAB STYLES -->
+    <CtrlButtonStyle name="PatternTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnPattern.png" imUp="Images/Tabs/TabOffPattern.png" imDisabled="Images/Tabs/TabDisabledPattern.png" />
+    <CtrlButtonStyle name="SceneTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnScene.png" imUp="Images/Tabs/TabOffScene.png" imDisabled="Images/Tabs/TabDisabledScene.png" />
+    <CtrlButtonStyle name="SongTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnSong.png" imUp="Images/Tabs/TabOffSong.png" imDisabled="Images/Tabs/TabDisabledSong.png" />
+    <CtrlButtonStyle name="PadsTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnPads.png" imUp="Images/Tabs/TabOffPads.png" imDisabled="Images/Tabs/TabDisabledPads.png" />
+    <CtrlButtonStyle name="SamplerTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnSampler.png" imUp="Images/Tabs/TabOffSampler.png" imDisabled="Images/Tabs/TabDisabledSampler.png" />
+    <CtrlButtonStyle name="LMixerTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnLayerMixer.png" imUp="Images/Tabs/TabOffLayerMixer.png" imDisabled="Images/Tabs/TabDisabledLayerMixer.png" />
+    <CtrlButtonStyle name="PMixerTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnPadMixer.png" imUp="Images/Tabs/TabOffPadMixer.png" imDisabled="Images/Tabs/TabDisabledPadMixer.png" />
+    <CtrlButtonStyle name="EMixerTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnEngineMixer.png" imUp="Images/Tabs/TabOffEngineMixer.png" imDisabled="Images/Tabs/TabDisabledEngineMixer.png" />
+    <CtrlButtonStyle name="GMixerTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnGlobalMixer.png" imUp="Images/Tabs/TabOffGlobalMixer.png" imDisabled="Images/Tabs/TabDisabledGlobalMixer.png" />
+    <CtrlButtonStyle name="BrowserTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnBrowser.png" imUp="Images/Tabs/TabOffBrowser.png" imDisabled="Images/Tabs/TabDisabledBrowser.png" />
+    <CtrlButtonStyle name="MappingTabStyle" optMomentary="false" optDrawText="false" imDown="Images/Tabs/TabOnMapping.png" imUp="Images/Tabs/TabOffMapping.png" imDisabled="Images/Tabs/TabDisabledMapping.png" />
+    
+    <!-- EXPOSE BUTTON STYLE -->
+    <CtrlButtonStyle name="ExposeButtonStyle" optMomentary="false" imDown="Images/Tabs/Show.png" imUp="Images/Tabs/Hide.png" />
+    
+    <CtrlImageViewStyle name="LogoStyle" optBorder="false" optBackground="false" />
+    <CtrlImageViewStyle name="BackStyle" optBorder="false" optBackground="false" />
+    <CtrlPanel name="BackPanel" style="RootPanelStyle" rect="[x:0 y:0 w:1135 h:640]" id="0">
+        <CtrlPanel name="BrowsePanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:308 h:640]" id="0">
+            <CtrlImageView name="BackBrowser" style="BackStyle" rect="[x:2 y:3 w:304 h:633]" id="0" image="Images/Global/Browser.png" />
+            <CtrlImageView name="Logo" style="LogoStyle" rect="[x:5 y:6 w:40 h:17]" id="0" image="Images/Global/Logo.png" />
+            <CtrlButtonGroup name="BrowserTabButtons" rect="[x:140 y:4 w:160 h:19]" id="0">
+                <CtrlButton style="BrowserTabStyle" rect="[x:0 y:0 w:78 h:19]" id="0" text="Browser" />
+                <CtrlButton style="MappingTabStyle" rect="[x:80 y:0 w:78 h:19]" id="0" text="Mapping" />
+            </CtrlButtonGroup>
+            <CtrlLabel name="FPSLabel" style="StandardFXLabelCenteredStyle" rect="[x:80 y:5 w:30 h:20]" id="100000" text="FPS" />
+            <CtrlPanel name="BrowserTabs" overloadClass="GeistTabbedPanel" rect="[x:7 y:23 w:295 h:608]" id="0" />
+        </CtrlPanel>
+        <CtrlPanel name="MovePanel" style="EmptyPanelStyle" rect="[x:306 y:0 w:829 h:640]" id="0">
+            <CtrlImageView name="BackMain" style="BackStyle" rect="[x:1 y:3 w:827 h:420]" id="0" image="Images/Global/Screen.png" />
+            <CtrlImageView name="BackEng" style="BackStyle" rect="[x:288 y:442 w:396 h:57]" id="0" image="Images/Global/StatusStrip.png" />
+            <CtrlImageView name="EngText" style="BackStyle" rect="[x:633 y:429 w:45 h:9]" id="0" image="Images/Global/EngineText.png" />
+            <CtrlImageView name="PatText" style="BackStyle" rect="[x:626 y:501 w:54 h:9]" id="0" image="Images/Global/PatternText.png" />
+            <CtrlImageView name="MasterText" style="BackStyle" rect="[x:780 y:429 w:42 h:9]" id="0" image="Images/Global/MasterText.png" />
+            <CtrlImageView name="PadText" style="BackStyle" rect="[x:256 y:429 w:27 h:9]" id="0" image="Images/Global/PadText.png" />
+            <CtrlImageView name="ModesText" style="BackStyle" rect="[x:17 y:429 w:37 h:9]" id="0" image="Images/Global/ModesText.png" />
+            <CtrlButtonGroup name="MainTabButtons" rect="[x:32 y:4 w:795 h:19]" id="0">
+                <CtrlButton style="PatternTabStyle" rect="[x:0 y:0 w:78 h:19]" id="0" text="Pattern" />
+                <CtrlButton style="SceneTabStyle" rect="[x:80 y:0 w:78 h:19]" id="0" text="Scene" />
+                <CtrlButton style="SongTabStyle" rect="[x:160 y:0 w:78 h:19]" id="0" text="Song" />
+                <CtrlButton style="PadsTabStyle" rect="[x:260 y:0 w:78 h:19]" id="0" text="Pad/Layers" />
+                <CtrlButton style="LMixerTabStyle" rect="[x:366 y:0 w:78 h:19]" id="0" text="Layer mixer" />
+                <CtrlButton style="PMixerTabStyle" rect="[x:446 y:0 w:78 h:19]" id="0" text="Pad mixer" />
+                <CtrlButton style="EMixerTabStyle" rect="[x:526 y:0 w:78 h:19]" id="0" text="Engine mixer" />
+                <CtrlButton style="GMixerTabStyle" rect="[x:615 y:0 w:78 h:19]" id="0" text="Global mixer" />
+                <CtrlButton style="SamplerTabStyle" rect="[x:715 y:0 w:78 h:19]" id="0" text="Sampler" />
+            </CtrlButtonGroup>
+            <CtrlButton name="ShowHideButton" style="ExposeButtonStyle" rect="[x:8 y:4 w:19 h:19]" id="100000" />
+            <CtrlPanel name="MainTabs" overloadClass="GeistTabbedPanel" rect="[x:5 y:23 w:820 h:395]" id="0" />
+            <CtrlPanel name="PadModePanel" overloadClass="PadModeControlsPanel" rect="[x:2 y:437 w:70 h:200]" id="0" />
+            <CtrlPanel name="EditorEngineSelectors" overloadClass="EditorEngineSelectors" rect="[x:291 y:442 w:393 h:56]" id="0" />
+            <CtrlPanel name="EditorPads" overloadClass="EditorPads" rect="[x:65 y:442 w:224 h:194]" id="0" />
+            <CtrlPanel name="PatternSelectors" overloadClass="PatternSelectors" rect="[x:344 y:511 w:340 h:85]" id="0" />
+            <CtrlPanel name="EngineControls" overloadClass="EngineControls" rect="[x:290 y:498 w:57 h:100]" id="0" />
+            <CtrlPanel name="MasterControls" overloadClass="MasterControlsPanel" rect="[x:690 y:440 w:135 h:156]" id="0" />
+            <CtrlPanel name="UtilityControls" overloadClass="UtilityControlsPanel" rect="[x:690 y:447 w:135 h:12]" id="100002" />
+            <CtrlPanel name="Transport" overloadClass="Transport" rect="[x:295 y:600 w:532 h:39]" id="0" />
+        </CtrlPanel>
+        <Ctrl name="Overlay" overloadClass="OverlayImage" rect="[x:0 y:0 w:1135 h:640]" id="0" />
+    </CtrlPanel>
+</root>

@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.4" Level="1" Parameter0="0.241135" Parameter1="0.0813891" Parameter2="0.586207" Parameter3="0.161021" Parameter4="0.133725" Parameter5="0.772414" EffectType="Breverb Hall">
+        <FixedString name="PresetName" string="Small Hall" />
+    </Effect>
+</root>

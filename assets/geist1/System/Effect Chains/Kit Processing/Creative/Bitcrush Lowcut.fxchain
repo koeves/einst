@@ -1,0 +1,17 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2.1" IsActive="true" ChainMix="1">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="0.68" Level="1" Parameter0="0.6" Parameter1="0.68" Parameter2="0.6" Parameter3="0.916667" Parameter4="0.447917" Parameter5="1" EffectType="Bit Crusher">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.570148" Parameter1="0.3282" Parameter2="0" Parameter3="0.56994" Parameter4="0.76" Parameter5="0.74" EffectType="Parametric EQ">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="5.96047e-10" Level="1" Parameter0="0.16" Parameter1="0.26" Parameter2="0.31" Parameter3="0.81" Parameter4="1" Parameter5="0" EffectType="Flanger">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect3" EffectVersion="2" IsActive="true" Mix="1" Level="0.45" Parameter0="0" Parameter1="0" Parameter2="0.64" Parameter3="1" Parameter4="1" Parameter5="1" EffectType="Noise Gate">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="$U$/-Bitcrush Lowcut" />
+    </EffectChain>
+</root>

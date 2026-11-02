@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.62" Level="0.82" Parameter0="0.227024" Parameter1="0.89" Parameter2="0.86" Parameter3="0.74" Parameter4="0.26" Parameter5="0.738565" EffectType="Bit Crusher">
+        <FixedString name="PresetName" string="$U$/Hissy Tape" />
+    </Effect>
+</root>

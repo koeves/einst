@@ -1,0 +1,5 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="SongTrackPanelSelectedStyle" rect="[x:30 y:22 w:48 h:40]" id="0">
+        <CtrlLabel name="TrackNumberLabel" style="StandardLargeLabelCenteredNotificationStyle" rect="[x:14 y:8 w:20 h:24]" id="100000" text="8" />
+    </CtrlPanel>
+</root>

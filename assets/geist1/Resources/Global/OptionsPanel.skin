@@ -1,0 +1,61 @@
+<root>
+    <CtrlSliderStyle name="OptionsSliderStyle" optHistogram="true" optScaleKnob="true" colBorder="[r:18 g:25 b:60 a:255]" colSlider="[r:189 g:196 b:205 a:255]" colFill="[r:255 g:255 b:255 a:0]" snapSteps="0" fineScale="0.05" incDecButtonMode="off">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlSliderStyle>
+    <CtrlPanel name="CtrlPanel" style="ModalPanelStyle" rect="[x:437 y:155 w:405 h:450]" id="0">
+        <CtrlPanel name="CtrlPanel" style="ModalPanelCollectionStyle" rect="[x:8 y:6 w:389 h:365]" id="100000">
+            <CtrlButton name="InvertButton" style="ModalCheckButtonStyle" rect="[x:211 y:9 w:14 h:15]" id="100000" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:6 y:10 w:200 h:15]" id="100001" text="Invert Y axis (zoom) in wave displays" />
+            <CtrlButton name="InvertXButton" style="ModalCheckButtonStyle" rect="[x:211 y:31 w:14 h:15]" id="100000" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:6 y:32 w:200 h:15]" id="100001" text="Invert X axis (scroll) in wave displays" />
+            <CtrlButton name="MultiButton" style="ModalCheckButtonStyle" rect="[x:211 y:53 w:14 h:15]" id="100000" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:61 y:54 w:145 h:15]" id="100001" text="Multitool Right click opens menu" />
+            <CtrlButton name="ForceModeButton" style="ModalCheckButtonStyle" rect="[x:211 y:75 w:14 h:15]" id="100000" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:6 y:76 w:200 h:15]" id="100001" text="Forced layers fall through if none found" />
+            <CtrlButton name="AutoAssign" style="ModalCheckButtonStyle" rect="[x:211 y:97 w:14 h:15]" id="100000" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:16 y:98 w:190 h:15]" id="100001" text="Auto assign MIDI CC&apos;s to graphs for export" />
+            <CtrlButton name="QuantizeREXButton" style="ModalCheckButtonStyle" rect="[x:211 y:119 w:14 h:15]" id="100001" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:101 y:120 w:105 h:15]" id="100002" text="Quantize loops on load" />
+            <CtrlButton name="PreFadeButton" style="ModalCheckButtonStyle" rect="[x:211 y:141 w:14 h:15]" id="100000" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:71 y:142 w:135 h:15]" id="100001" text="Auxes are pre fade by default" />
+            <CtrlButton name="ResetLayersButton" style="ModalCheckButtonStyle" rect="[x:211 y:163 w:14 h:15]" id="100000" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:56 y:164 w:150 h:15]" id="100001" text="Reset layer settings on load" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:56 y:185 w:150 h:15]" id="100001" text="Send Active Sensing Messages" />
+            <CtrlButton name="ActiveSensingButton" style="ModalCheckButtonStyle" rect="[x:211 y:185 w:14 h:15]" id="100000" />
+            <CtrlButton name="RestoreOutputsButton" style="ModalCheckButtonStyle" rect="[x:211 y:207 w:14 h:15]" id="6000" />
+            <CtrlLabel style="ModalLabelRightAlignedStyle" rect="[x:57 y:208 w:150 h:15]" id="6000" text="Restore outputs on preset load" />
+            <CtrlButton name="RetardButton" style="ModalCheckButtonStyle" rect="[x:211 y:229 w:14 h:15]" id="100000" />
+            <CtrlLabel name="RetardLabel" style="ModalLabelRightAlignedStyle" rect="[x:28 y:230 w:178 h:15]" id="100001" text="Use Audio Unit host timing correction" />
+            <CtrlButtonGroup name="MIDIModeGroup" rect="[x:211 y:251 w:90 h:17]" id="100000">
+                <CtrlButton name="CtrlButton" style="ModalLatchingButtonStyle" rect="[x:0 y:0 w:25 h:17]" id="0" text="0" />
+                <CtrlButton name="CtrlButton" style="ModalLatchingButtonStyle" rect="[x:24 y:0 w:25 h:17]" id="1" text="-2" />
+                <CtrlButton name="CtrlButton" style="ModalLatchingButtonStyle" rect="[x:48 y:0 w:25 h:17]" id="2" text="-1" />
+            </CtrlButtonGroup>
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:134 y:252 w:72 h:17]" id="100004" text="MIDI numbering" />
+            <CtrlTextBox name="UndoStages" style="ModalEditBoxStyle" rect="[x:211 y:273 w:50 h:17]" id="100001" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:101 y:274 w:105 h:17]" id="100000" text="Number of undo stages" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:156 y:295 w:50 h:17]" id="100014" text="Metronome" />
+            <CtrlComboBox name="MetroType" style="ModalComboBoxStyle" rect="[x:211 y:295 w:75 h:17]" id="100008" />
+            <CtrlComboBox name="ShadingMode" style="ModalComboBoxStyle" rect="[x:211 y:317 w:75 h:17]" id="100000" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:106 y:318 w:100 h:17]" id="100001" text="Pattern shading mode" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:106 y:339 w:100 h:17]" id="100001" text="Screen Theme" />
+            <CtrlComboBox name="ThemeCombo" style="ModalComboBoxStyle" rect="[x:211 y:339 w:75 h:17]" id="100000" />
+        </CtrlPanel>
+        <CtrlPanel name="CtrlPanel" style="ModalPanelCollectionStyle" rect="[x:8 y:376 w:389 h:42]" id="100000">
+            <CtrlTextBox name="DocumentsPath" style="ModalNonEditableEditBoxStyle" rect="[x:78 y:14 w:200 h:17]" id="100001" />
+            <CtrlButton name="BrowseButton" style="ModalMomentaryButtonStyle" rect="[x:281 y:14 w:50 h:17]" id="100000" text="Browse" />
+            <CtrlButton name="ResetPathButton" style="ModalMomentaryButtonStyle" rect="[x:334 y:14 w:50 h:17]" id="100000" text="Reset" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:-7 y:15 w:80 h:17]" id="100000" text="Documents path" />
+        </CtrlPanel>
+        <CtrlPanel name="DirectWritePanel" style="ModalPanelCollectionStyle" rect="[x:8 y:422 w:280 h:30]" id="100007">
+            <CtrlButton name="DirectWriteButton" style="ModalCheckButtonStyle" rect="[x:154 y:6 w:14 h:15]" id="100000" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:5 y:7 w:145 h:17]" id="100001" text="DirectWrite text (experimental)" />
+        </CtrlPanel>
+        <CtrlButton name="ConfirmButton" style="ModalMomentaryButtonStyle" rect="[x:320 y:426 w:75 h:17]" id="100007" text="Finished" />
+        <CtrlPanel name="LaunchpadPanel" style="ModalPanelCollectionStyle" rect="[x:-10 y:443 w:280 h:30]" id="100000">
+            <CtrlButton name="LaunchpadButton" style="ModalCheckButtonStyle" rect="[x:154 y:6 w:14 h:15]" id="100000" />
+            <CtrlButton name="ResetLaunchpadButton" style="ModalMomentaryButtonStyle" rect="[x:176 y:6 w:50 h:17]" id="100000" text="Reset" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:4 y:8 w:145 h:17]" id="100001" text="Launchpad Active (experimental)" />
+        </CtrlPanel>
+    </CtrlPanel>
+</root>

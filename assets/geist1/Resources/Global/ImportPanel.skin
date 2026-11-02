@@ -1,0 +1,9 @@
+<root>
+    <CtrlPanelStyle name="ImportPanelStyle" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:180]" intSmartTileEdgeSize="5" intRoundedRectRadius="0">
+        <VFont name="font" vSize="10" fontName="Arial" />
+    </CtrlPanelStyle>
+    <CtrlPanel name="CtrlPanel" style="ModalPanelStyle" rect="[x:0 y:0 w:400 h:175]" id="0">
+        <CtrlLabel name="Label" style="ModalLargeLabelCenteredNotificationStyle" rect="[x:0 y:16 w:400 h:50]" id="100001" text="Converting file. Please wait..." />
+        <CtrlKnob name="Spinner" style="LargeSpinnerStyle" rect="[x:167 y:90 w:50 h:50]" id="100002" />
+    </CtrlPanel>
+</root>

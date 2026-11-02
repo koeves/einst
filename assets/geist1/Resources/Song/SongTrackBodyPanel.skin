@@ -1,0 +1,3 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:30 y:22 w:800 h:40]" id="0" />
+</root>

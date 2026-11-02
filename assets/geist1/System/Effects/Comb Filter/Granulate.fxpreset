@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.393141" Parameter1="1" Parameter2="0" Parameter3="0.51" Parameter4="0.50996" Parameter5="1" EffectType="Comb Filter">
+        <FixedString name="PresetName" string="$U$\Granulate" />
+    </Effect>
+</root>

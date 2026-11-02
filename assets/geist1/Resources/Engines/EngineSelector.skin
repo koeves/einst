@@ -1,0 +1,31 @@
+<root>
+    <CtrlButtonStyle name="EngineButtonStyle1" optMomentary="false" optDrawText="false" imDown="EngineButtonDown1.png" imUp="EngineButtonUp1.png" imDisabled="EngineButtonDisabled1.png" />
+    <CtrlButtonStyle name="EngineButtonStyle2" optMomentary="false" optDrawText="false" imDown="EngineButtonDown2.png" imUp="EngineButtonUp2.png" imDisabled="EngineButtonDisabled2.png" />
+    <CtrlButtonStyle name="EngineButtonStyle3" optMomentary="false" optDrawText="false" imDown="EngineButtonDown3.png" imUp="EngineButtonUp3.png" imDisabled="EngineButtonDisabled3.png" />
+    <CtrlButtonStyle name="EngineButtonStyle4" optMomentary="false" optDrawText="false" imDown="EngineButtonDown4.png" imUp="EngineButtonUp4.png" imDisabled="EngineButtonDisabled4.png" />
+    <CtrlButtonStyle name="EngineButtonStyle5" optMomentary="false" optDrawText="false" imDown="EngineButtonDown5.png" imUp="EngineButtonUp5.png" imDisabled="EngineButtonDisabled5.png" />
+    <CtrlButtonStyle name="EngineButtonStyle6" optMomentary="false" optDrawText="false" imDown="EngineButtonDown6.png" imUp="EngineButtonUp6.png" imDisabled="EngineButtonDisabled6.png" />
+    <CtrlButtonStyle name="EngineButtonStyle7" optMomentary="false" optDrawText="false" imDown="EngineButtonDown7.png" imUp="EngineButtonUp7.png" imDisabled="EngineButtonDisabled7.png" />
+    <CtrlButtonStyle name="EngineButtonStyle8" optMomentary="false" optDrawText="false" imDown="EngineButtonDown8.png" imUp="EngineButtonUp8.png" imDisabled="EngineButtonDisabled8.png" />
+    <CtrlButtonStyle name="EngineButtonPowerOffStyle1" optMomentary="false" optDrawText="false" imDown="EngineButtonDownPowerOff1.png" imUp="EngineButtonUpPowerOff1.png" imDisabled="EngineButtonDisabled1.png" />
+    <CtrlButtonStyle name="EngineButtonPowerOffStyle2" optMomentary="false" optDrawText="false" imDown="EngineButtonDownPowerOff2.png" imUp="EngineButtonUpPowerOff2.png" imDisabled="EngineButtonDisabled2.png" />
+    <CtrlButtonStyle name="EngineButtonPowerOffStyle3" optMomentary="false" optDrawText="false" imDown="EngineButtonDownPowerOff3.png" imUp="EngineButtonUpPowerOff3.png" imDisabled="EngineButtonDisabled3.png" />
+    <CtrlButtonStyle name="EngineButtonPowerOffStyle4" optMomentary="false" optDrawText="false" imDown="EngineButtonDownPowerOff4.png" imUp="EngineButtonUpPowerOff4.png" imDisabled="EngineButtonDisabled4.png" />
+    <CtrlButtonStyle name="EngineButtonPowerOffStyle5" optMomentary="false" optDrawText="false" imDown="EngineButtonDownPowerOff5.png" imUp="EngineButtonUpPowerOff5.png" imDisabled="EngineButtonDisabled5.png" />
+    <CtrlButtonStyle name="EngineButtonPowerOffStyle6" optMomentary="false" optDrawText="false" imDown="EngineButtonDownPowerOff6.png" imUp="EngineButtonUpPowerOff6.png" imDisabled="EngineButtonDisabled6.png" />
+    <CtrlButtonStyle name="EngineButtonPowerOffStyle7" optMomentary="false" optDrawText="false" imDown="EngineButtonDownPowerOff7.png" imUp="EngineButtonUpPowerOff7.png" imDisabled="EngineButtonDisabled7.png" />
+    <CtrlButtonStyle name="EngineButtonPowerOffStyle8" optMomentary="false" optDrawText="false" imDown="EngineButtonDownPowerOff8.png" imUp="EngineButtonUpPowerOff8.png" imDisabled="EngineButtonDisabled8.png" />
+    <CtrlButtonStyle name="EnginePatternPowerStyle" optMomentary="false" imDown="PatternPowerUp.png" imUp="PatternPowerDown.png" imDisabled="PatternPowerDisabled.png" />
+    <CtrlSliderStyle name="EngineVUStyle" optHistogram="true" optScaleKnob="true" imBackingStrip="EngineVUOff.png" imAltBackingStrip="EngineVUOn.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" colSlider="[r:236 g:236 b:236 a:255]" />
+    <CtrlButtonStyle name="MuteIndiStyle" optMomentary="false" optDrawText="true" imDown="MuteIndiOn.png" imUp="MuteIndiOff.png" />
+    <CtrlButtonStyle name="SoloIndiStyle" optMomentary="false" optDrawText="true" imDown="SoloIndiOn.png" imUp="SoloIndiOff.png" />
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:49 h:56]" id="0">
+        <CtrlButton name="EngineSelectionButton" style="EngineButtonStyle1" rect="[x:3 y:1 w:38 h:37]" id="100001" displayName="Engine selector" />
+        <CtrlLevelStrip name="VULeft" style="EngineVUStyle" rect="[x:41 y:3 w:5 h:34]" id="100004" />
+            <CtrlButton name="EngineMutedIcon" style="MuteIndiStyle" rect="[x:4 y:36 w:15 h:3]" id="100000" />
+            <CtrlButton name="EngineSoloedIcon" style="SoloIndiStyle" rect="[x:18 y:36 w:15 h:3]" id="100001" />
+        <CtrlButton name="MuteButton" style="HARDMuteButtonStyle" rect="[x:5 y:39 w:13 h:13]" id="100002" displayName="Mute" text="M" />
+        <CtrlButton name="SoloButton" style="HARDSoloButtonStyle" rect="[x:19 y:39 w:13 h:13]" id="100003" displayName="Solo" text="S" />
+        <CtrlButton name="PatternPower" style="EnginePatternPowerStyle" rect="[x:33 y:39 w:13 h:13]" id="100001" displayName="Pattern Power" />
+    </CtrlPanel>
+</root>

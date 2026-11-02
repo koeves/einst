@@ -1,0 +1,9 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:295 h:125]" id="0">
+        <CtrlPanel name="OptionsPlaceHolder" style="EmptyPanelStyle" rect="[x:2 y:2 w:291 h:95]" id="100005" />
+        <CtrlKnob name="Spinner" style="SpinnerStyle" rect="[x:215 y:98 w:20 h:20]" id="100000" />
+        <CtrlButton name="DoSearchButton" style="LEDMomentaryButtonStyle" rect="[x:239 y:99 w:50 h:17]" id="100003" text="Search" />
+        <CtrlButton name="MatchAllButton" style="StandardCheckButtonStyle" rect="[x:5 y:101 w:14 h:15]" id="100005" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:23 y:103 w:80 h:15]" id="100006" text="Match all options" />
+    </CtrlPanel>
+</root>

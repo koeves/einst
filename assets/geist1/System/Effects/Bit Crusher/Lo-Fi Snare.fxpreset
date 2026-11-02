@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.44" Level="0.57" Parameter0="0.347024" Parameter1="0.63" Parameter2="0.24" Parameter3="0.85" Parameter4="0.58" Parameter5="0.818565" EffectType="Bit Crusher">
+        <FixedString name="PresetName" string="$U$/Lo-Fi Snare" />
+    </Effect>
+</root>

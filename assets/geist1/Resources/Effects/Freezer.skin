@@ -1,0 +1,16 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlKnob name="Control3" style="LEDKnobLargeLR" rect="[x:71 y:3 w:50 h:46]" id="100021" />
+        <CtrlKnob name="Control2" style="LEDKnobLargeLR" rect="[x:136 y:3 w:50 h:46]" id="100009" />
+        <CtrlButton name="Control1" style="LEDSmallLatchingButtonStyle" rect="[x:24 y:24 w:16 h:17]" id="100000" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:53 w:50 h:15]" id="100026" text="Gate" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:66 y:53 w:60 h:15]" id="100027" text="Grain Length" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:131 y:53 w:60 h:15]" id="100010" text="Loop Length" />
+        <CtrlKnob name="Control6" style="LEDKnobLargeLR" rect="[x:7 y:79 w:50 h:46]" id="100013" />
+        <CtrlKnob name="Control5" style="LEDKnobLargeLR" rect="[x:71 y:79 w:50 h:46]" id="100011" />
+        <CtrlKnob name="Control4" style="LEDKnobLargeLR" rect="[x:136 y:79 w:50 h:46]" id="100012" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:129 w:50 h:15]" id="100016" text="Speed" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:71 y:129 w:50 h:15]" id="100014" text="Scratch" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:136 y:129 w:50 h:15]" id="100015" text="Smoothing" />
+    </CtrlPanel>
+</root>

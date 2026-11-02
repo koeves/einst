@@ -1,0 +1,13 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlPlot name="Plot" style="EQGraphStyle" rect="[x:43 y:2 w:107 h:50]" id="100000" />
+        <CtrlKnob name="Control1" style="LEDKnobSmallLR" rect="[x:14 y:80 w:24 h:26]" id="100009" />
+        <CtrlKnob name="Control4" style="LEDKnobSmallLR" rect="[x:155 y:80 w:24 h:26]" id="100011" />
+        <CtrlKnob name="Control2" style="LEDKnobSmallLR" rect="[x:61 y:80 w:24 h:26]" id="100020" />
+        <CtrlKnob name="Control3" style="LEDKnobSmallLR" rect="[x:108 y:80 w:24 h:26]" id="100021" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:0 y:110 w:50 h:15]" id="100010" text="L Gain" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:141 y:110 w:50 h:15]" id="100014" text="H Gain" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:47 y:110 w:50 h:15]" id="100026" text="M Gain" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:93 y:110 w:50 h:15]" id="100027" text="M Freq" />
+    </CtrlPanel>
+</root>

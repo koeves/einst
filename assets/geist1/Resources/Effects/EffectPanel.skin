@@ -1,0 +1,18 @@
+<root>
+    <CtrlPanelStyle name="EffectPanelBackground" imBackground="FXPanelBackground.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="EffectPanelBackgroundNoFX" imBackground="FXPanelBackgroundNoFX.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanel name="CtrlPanel" style="EffectPanelBackgroundNoFX" rect="[x:0 y:0 w:199 h:196]" id="0">
+        <CtrlPanel name="SetupPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:199 h:50]" id="100001">
+            <CtrlKnob name="MixKnob" style="LEDKnobMicroLR" rect="[x:158 y:4 w:18 h:19]" id="100004" displayName="Effect wet / dry mix" />
+            <CtrlButton name="EffectTypeCombo" style="LEDUltraMenuButtonStyle" rect="[x:4 y:5 w:130 h:17]" id="100002" displayName="Effect Type" />
+            <CtrlButton name="ActiveButton" style="LEDSmallLatchingButtonStyle" rect="[x:136 y:5 w:16 h:17]" id="100006" displayName="Effect active" />
+            <CtrlLabel name="Label1" style="StandardLabelStyle" rect="[x:178 y:8 w:20 h:10]" id="100009" text="Mix" />
+            <CtrlButton name="LastPresetButton" style="PrevFXPresetButtonStyle" rect="[x:135 y:26 w:9 h:11]" id="100000" displayName="Previous preset" />
+            <CtrlButton name="NextPresetButton" style="NextFXPresetButtonStyle" rect="[x:145 y:26 w:9 h:11]" id="100001" displayName="Next preset" />
+            <CtrlButton name="PresetCombo" style="LEDUltraMenuButtonStyle" rect="[x:4 y:23 w:130 h:17]" id="100006" displayName="Current preset" />
+            <CtrlKnob name="OutputKnob" style="LEDKnobMicroLR" rect="[x:158 y:23 w:18 h:19]" id="100005" displayName="Effect output level" />
+            <CtrlLabel name="Label2" style="StandardLabelStyle" rect="[x:178 y:28 w:15 h:10]" id="100010" text="Lvl" />
+        </CtrlPanel>
+        <CtrlPanel name="EffectPanel" style="EmptyPanelStyle" rect="[x:3 y:42 w:193 h:150]" id="100012" />
+    </CtrlPanel>
+</root>

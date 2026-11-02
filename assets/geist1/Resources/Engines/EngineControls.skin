@@ -1,0 +1,6 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:57 h:100]" id="0">
+        <CtrlKnob name="EngineSwingDepthKnob" style="HardKnobLargeLR" rect="[x:1 y:8 w:55 h:75]" id="100010" displayName="Swing Template Depth" />
+        <CtrlImageView name="SwingIcon" style="EmptyImageStyle" rect="[x:22 y:80 w:13 h:14]" id="0" image="../Images/Global/SwingIcon.png" />
+    </CtrlPanel>
+</root>

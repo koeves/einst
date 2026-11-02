@@ -1,0 +1,19 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlPanel name="Control3" style="EmptyPanelStyle" rect="[x:84 y:3 w:107 h:15]" id="100001">
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:0 y:0 w:107 h:15]" id="0" text="High Cut" />
+        </CtrlPanel>
+        <CtrlPanel name="SplitFader" overloadClass="SplitFader" rect="[x:84 y:20 w:107 h:19]" id="100000" />
+        <CtrlPanel name="Control4" style="EmptyPanelStyle" rect="[x:84 y:42 w:107 h:15]" id="100001">
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:0 y:0 w:107 h:15]" id="0" text="Low Cut" />
+        </CtrlPanel>
+        <CtrlButton name="Control6" style="LEDSmallLatchingButtonStyle" rect="[x:25 y:21 w:16 h:17]" id="100002" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:44 w:50 h:10]" id="100003" text="Sync" />
+        <CtrlKnob name="Control1" style="LEDKnobLargeLR" rect="[x:7 y:68 w:50 h:46]" id="100001" displayName="Delay time" />
+        <CtrlKnob name="Control2" style="LEDKnobLargeLR" rect="[x:71 y:68 w:50 h:46]" id="100021" />
+        <CtrlKnob name="Control5" style="LEDKnobLargeLR" rect="[x:136 y:68 w:50 h:46]" id="100027" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:118 w:50 h:15]" id="100020" text="Delay Time" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:71 y:118 w:50 h:15]" id="100022" text="Feedback" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:136 y:118 w:50 h:15]" id="100028" text="Swing" />
+    </CtrlPanel>
+</root>

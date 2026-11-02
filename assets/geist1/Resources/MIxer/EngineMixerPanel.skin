@@ -1,0 +1,21 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:815 h:395]" id="0">
+        <CtrlPanel name="Channel0" overloadClass="EditorEngineMixerChannel" rect="[x:51 y:232 w:97 h:161]" id="0" />
+        <CtrlPanel name="Channel1" overloadClass="EditorEngineMixerChannel" rect="[x:146 y:232 w:97 h:161]" id="1" />
+        <CtrlPanel name="Channel2" overloadClass="EditorEngineMixerChannel" rect="[x:241 y:232 w:97 h:161]" id="2" />
+        <CtrlPanel name="Channel3" overloadClass="EditorEngineMixerChannel" rect="[x:336 y:232 w:97 h:161]" id="3" />
+        <CtrlPanel name="Channel4" overloadClass="EditorEngineMixerChannel" rect="[x:431 y:232 w:97 h:161]" id="4" />
+        <CtrlPanel name="Channel5" overloadClass="EditorEngineMixerChannel" rect="[x:526 y:232 w:97 h:161]" id="5" />
+        <CtrlPanel name="Channel6" overloadClass="EditorEngineMixerChannel" rect="[x:621 y:232 w:97 h:161]" id="6" />
+        <CtrlPanel name="Channel7" overloadClass="EditorEngineMixerChannel" rect="[x:716 y:232 w:97 h:161]" id="7" />
+        <CtrlButtonGroup name="ModeGroup" rect="[x:4 y:248 w:46 h:150]" id="100001">
+            <CtrlButton name="MixButton" style="LEDMMixButton" rect="[x:0 y:0 w:46 h:49]" id="100001" displayName="View mixer" text="Mix" />
+            <CtrlButton name="SendButton" style="LEDMSendButton" rect="[x:0 y:48 w:46 h:49]" id="100002" displayName="View Sends" text="Send" />
+            <CtrlButton name="SetupButton" style="LEDMSetupButton" rect="[x:0 y:96 w:46 h:49]" id="100000" displayName="View engine settings" text="Setup" />
+        </CtrlButtonGroup>
+	    <!-- This must be after the others, higher z -->
+        <CtrlPanel name="FXPanel" overloadClass="EditorEffectChainPanel" rect="[x:1 y:2 w:812 h:245]" id="100009" />
+        <CtrlImageView name="EngineGlue" style="BackStyle" rect="[x:43 y:232 w:92 h:11]" id="0" image="GlueMedium.png" />
+        <CtrlImageView name="GlueMicro" rect="[x:808 y:235 w:3 h:8]" id="0" image="GlueMicro.png" />
+    </CtrlPanel>
+</root>

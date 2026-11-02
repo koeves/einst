@@ -1,0 +1,17 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlPlot name="Plot" style="EQGraphStyle" rect="[x:43 y:2 w:107 h:50]" id="100000" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:6 y:87 w:50 h:15]" id="100014" text="High Freq" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:66 y:87 w:50 h:15]" id="100015" text="High Q" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:131 y:87 w:50 h:15]" id="100016" text="High Gain" />
+        <CtrlKnob name="Control5" style="LEDKnobSmallLR" rect="[x:21 y:57 w:24 h:26]" id="100011" />
+        <CtrlKnob name="Control4" style="LEDKnobSmallLR" rect="[x:82 y:57 w:24 h:26]" id="100012" />
+        <CtrlKnob name="Control6" style="LEDKnobSmallLR" rect="[x:144 y:57 w:24 h:26]" id="100013" />
+        <CtrlKnob name="Control2" style="LEDKnobSmallLR" rect="[x:21 y:107 w:24 h:26]" id="100009" />
+        <CtrlKnob name="Control1" style="LEDKnobSmallLR" rect="[x:82 y:107 w:24 h:26]" id="100020" />
+        <CtrlKnob name="Control3" style="LEDKnobSmallLR" rect="[x:144 y:107 w:24 h:26]" id="100021" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:137 w:50 h:15]" id="100010" text="Low Freq" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:68 y:137 w:50 h:15]" id="100026" text="Low Q" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:131 y:137 w:50 h:15]" id="100027" text="Low Gain" />
+    </CtrlPanel>
+</root>

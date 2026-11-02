@@ -1,0 +1,26 @@
+<root>
+    <CtrlButtonStyle name="FXLabelButtonStyle" optDrawText="true">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="LEDEffectCombo" imDown="LEDEffectComboDown.png" imUp="LEDEffectComboUp.png" imDisabled="LEDEffectComboDisabled.png" optMomentary="true" optDrawText="true" textOffset="7" optTextLeftJustify="true" colTextOn="[r:222 g:229 b:237 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]" >
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlPanelStyle name="ChainHeaderStyle" imBackground="ChainHeader.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlButtonStyle name="LargePrevPresetButtonStyle" imDown="LargePresetBackButtonDown.png" imUp="LargePresetBackButtonUp.png" imDisabled="LargePresetBackButtonDisabled.png"/>
+    <CtrlButtonStyle name="LargeNextPresetButtonStyle" imDown="LargePresetNextButtonDown.png" imUp="LargePresetNextButtonUp.png" imDisabled="LargePresetNextButtonDisabled.png" />
+    <CtrlSliderStyle name="FXScrollerStyle" optScaleKnob="true" colBorder="[r:88 g:62 b:30 a:255]" colSlider="[r:132 g:120 b:107 a:200]" colFill="[r:255 g:255 b:255 a:0]" snapSteps="0" fineScale="0.05" incDecButtonMode="off" />
+    <CtrlPanel name="CtrlPanel" style="FXGlobalBackgroundPanelStyle" rect="[x:0 y:0 w:812 h:245]" id="0">
+        <CtrlPanel name="ToolsPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:812 h:40]" id="100002">
+        	<CtrlPanel name="HeaderPanel" style="ChainHeaderStyle" rect="[x:10 y:3 w:306 h:35]" id="0">
+            	<CtrlKnob name="MixKnob" style="LEDKnobMicroLR" rect="[x:40 y:4 w:18 h:19]" id="100000" displayName="Wet / Dry Mix" />
+            	<CtrlButton name="PresetCombo" style="LEDEffectCombo" rect="[x:70 y:5 w:190 h:24]" id="100006" />
+            	<CtrlButton name="PresetPrev" style="LargePrevPresetButtonStyle" rect="[x:264 y:8 w:16 h:18]" id="100000" displayName="Previous preset" />
+            	<CtrlButton name="PresetNext" style="LargeNextPresetButtonStyle" rect="[x:283 y:8 w:16 h:18]" id="100001" displayName="Next preset" />
+            	<CtrlButton name="ActiveButton" style="LargePowerButtonStyle" rect="[x:6 y:5 w:24 h:24]" id="100006" displayName="Chain active" />
+            	<CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:37 y:23 w:20 h:10]" id="100002" text="Mix" />
+            </CtrlPanel>
+            <CtrlScrollViewSlider name="ScrollBar" overloadClass="EditorEffectPanelScrollbar" style="FXScrollerStyle" rect="[x:353 y:3 w:450 h:35]" id="100003" />
+        </CtrlPanel>
+        <CtrlScrollView name="ScrollView" style="EmptyScrollViewStyle" rect="[x:8 y:39 w:796 h:196]" id="100000" />
+    </CtrlPanel>
+</root>

@@ -1,0 +1,14 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2.1" IsActive="true" ChainMix="1">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="0.68" Parameter0="0.666667" Parameter1="0.1" Parameter2="0.822917" Parameter3="0.395833" Parameter4="1" Parameter5="0" EffectType="Distortion">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="0.16" Level="0.64" Parameter0="0.473484" Parameter1="0.857143" Parameter2="0.64" Parameter3="0.42" Parameter4="0.68" Parameter5="0.95" EffectType="Phaser">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="0.5" Level="1" Parameter0="0" Parameter1="0.72" Parameter2="0.270833" Parameter3="0.822917" Parameter4="1" Parameter5="1" EffectType="Delay">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="$U$/Drunk Drainpipe" />
+    </EffectChain>
+</root>

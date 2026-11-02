@@ -1,0 +1,20 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:150 h:75]" id="0">
+        <CtrlButton name="GraphCombo" style="LEDUltraMenuButtonStyle" rect="[x:2 y:1 w:130 h:17]" id="100009" />
+        <CtrlButton name="InsertButton" style="LEDMenuButtonStyle" rect="[x:2 y:20 w:50 h:17]" id="100009" text="Insert" />
+        <CtrlButton name="Div2Button" style="Div2ButtonStyle" rect="[x:53 y:20 w:19 h:17]" id="100000" />
+        <CtrlButton name="x2Button" style="x2ButtonStyle" rect="[x:73 y:20 w:19 h:17]" id="100001" />
+        <CtrlButton name="LearnButton" style="LEDLatchingButtonStyle" rect="[x:93 y:20 w:50 h:17]" id="100014" text="Learn" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:3 y:40 w:26 h:12]" id="100002" text="Offset" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:32 y:40 w:26 h:12]" id="100006" text="Comp" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:65 y:40 w:26 h:12]" id="100003" text="Rand" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:93 y:40 w:50 h:12]" id="100002" text="Mode" />
+        <CtrlKnob name="ScaleKnob" overloadClass="TimedKnob" style="LEDKnobMicroLR" rect="[x:5 y:52 w:17 h:17]" id="100001" displayName="Offset" />
+        <CtrlKnob name="CompKnob" overloadClass="TimedKnob" style="LEDKnobMicroLR" rect="[x:37 y:52 w:17 h:17]" id="100005" displayName="Compression" />
+        <CtrlKnob name="RandKnob" overloadClass="TimedKnob" style="LEDKnobMicroLR" rect="[x:69 y:52 w:17 h:17]" id="100002" displayName="Randomisation" />
+        <CtrlButtonGroup name="ModeGroup" rect="[x:93 y:52 w:50 h:19]" id="100000">
+            <CtrlButton name="CtrlButton" style="MicroRadioButtonLeftStyle" rect="[x:0 y:0 w:25 h:17]" id="100000" text="Edit" />
+            <CtrlButton name="CtrlButton" style="MicroRadioButtonRightStyle" rect="[x:23 y:0 w:25 h:17]" id="100001" text="Live" />
+        </CtrlButtonGroup>
+    </CtrlPanel>
+</root>

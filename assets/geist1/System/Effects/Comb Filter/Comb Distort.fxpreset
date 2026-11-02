@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.81" Level="0.53" Parameter0="0.57" Parameter1="0" Parameter2="0.92" Parameter3="0.34" Parameter4="0.50996" Parameter5="1" EffectType="Comb Filter">
+        <FixedString name="PresetName" string="$U$/Comb Distort" />
+    </Effect>
+</root>

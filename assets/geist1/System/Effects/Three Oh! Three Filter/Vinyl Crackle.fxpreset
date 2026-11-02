@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.44" Level="1" Parameter0="0.237717" Parameter1="0.304348" Parameter2="0.80559" Parameter3="0.385827" Parameter4="0.50996" Parameter5="1" EffectType="Three Oh! Three Filter">
+        <FixedString name="PresetName" string="$U$\Vinyl Crackle" />
+    </Effect>
+</root>

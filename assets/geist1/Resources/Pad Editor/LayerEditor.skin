@@ -1,0 +1,21 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:815 h:396]" id="0">
+        <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:145 h:395]" id="100000">
+            <CtrlPanel name="PadSelection" overloadClass="PadSelectionButton" rect="[x:2 y:-2 w:145 h:70]" id="100001" />
+            <CtrlPanel name="LayerSelectionButton0" overloadClass="LayerSelectionButton" rect="[x:2 y:70 w:144 h:40]" id="0" />
+            <CtrlPanel name="LayerSelectionButton1" overloadClass="LayerSelectionButton" rect="[x:2 y:110 w:144 h:40]" id="1" />
+            <CtrlPanel name="LayerSelectionButton2" overloadClass="LayerSelectionButton" rect="[x:2 y:150 w:144 h:40]" id="2" />
+            <CtrlPanel name="LayerSelectionButton3" overloadClass="LayerSelectionButton" rect="[x:2 y:190 w:144 h:40]" id="3" />
+            <CtrlPanel name="LayerSelectionButton4" overloadClass="LayerSelectionButton" rect="[x:2 y:230 w:144 h:40]" id="4" />
+            <CtrlPanel name="LayerSelectionButton5" overloadClass="LayerSelectionButton" rect="[x:2 y:270 w:144 h:40]" id="5" />
+            <CtrlPanel name="LayerSelectionButton6" overloadClass="LayerSelectionButton" rect="[x:2 y:310 w:144 h:40]" id="6" />
+            <CtrlPanel name="LayerSelectionButton7" overloadClass="LayerSelectionButton" rect="[x:2 y:350 w:144 h:40]" id="7" />
+        </CtrlPanel>
+        <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:134 y:0 w:682 h:396]" id="100006">
+            <CtrlPanel name="PadControls" overloadClass="EditorPadControlsPanel" rect="[x:0 y:0 w:681 h:396]" id="100007" />
+            <CtrlPanel name="LayerControls" overloadClass="EditorPadWaveDisplayPanel" rect="[x:0 y:0 w:682 h:396]" id="100007" />
+        </CtrlPanel>
+        <CtrlImageView name="PadGlue" rect="[x:133 y:25 w:10 h:36]" id="0" image="PadGlue.png" />
+        <CtrlImageView name="LayerGlue" rect="[x:133 y:72 w:10 h:38]" id="0" image="LayerGlue.png" />
+    </CtrlPanel>
+</root>

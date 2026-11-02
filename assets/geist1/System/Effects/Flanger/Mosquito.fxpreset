@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.5" Level="1" Parameter0="0.08" Parameter1="0.009" Parameter2="0.0830002" Parameter3="0.94" Parameter4="0.378" Parameter5="0.00399994" EffectType="Flanger">
+        <FixedString name="PresetName" string="Mosquito" />
+    </Effect>
+</root>

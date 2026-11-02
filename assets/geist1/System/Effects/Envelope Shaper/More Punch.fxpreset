@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.62" Parameter1="0.49" Parameter2="0.508912" Parameter3="0.88" Parameter4="1" Parameter5="5.96046e-10" EffectType="Envelope Shaper">
+        <FixedString name="PresetName" string="$U$/More Punch" />
+    </Effect>
+</root>

@@ -1,0 +1,12 @@
+<root>
+    <CtrlPanelStyle name="BreverbPanelStyle" noDefaultDrawing="true" imBackground="BreverbBackground.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanel name="CtrlPanel" style="BreverbPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlLabel name="CtrlLabel" style="StandardFXLabelCenteredStyle" rect="[x:67 y:0 w:100 h:20]" id="100000" text="INVERSE" />
+        <CtrlKnob name="Control1" style="LEDKnobSmallLR" rect="[x:21 y:62 w:24 h:26]" id="100022" />
+        <CtrlKnob name="Control2" style="LEDKnobSmallLR" rect="[x:82 y:62 w:24 h:26]" id="100023" />
+        <CtrlKnob name="Control3" style="LEDKnobSmallLR" rect="[x:144 y:62 w:24 h:26]" id="100024" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:12 y:92 w:40 h:15]" id="100028" text="Time" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:72 y:92 w:42 h:15]" id="100029" text="Predelay" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:136 y:92 w:40 h:15]" id="100030" text="Diffusion" />
+    </CtrlPanel>
+</root>

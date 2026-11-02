@@ -1,0 +1,32 @@
+<root>
+    <CtrlButtonStyle name="PadModePadsStyle" optMomentary="false" imDown="PadModePadDown.png" imUp="PadModePadUp.png" />
+    <CtrlButtonStyle name="PadModeChromaticStyle" optMomentary="false" imDown="PadModeChroDown.png" imUp="PadModeChroUp.png" />
+    <CtrlButtonStyle name="PadModeVelocityStyle" optMomentary="false" imDown="PadModeVelDown.png" imUp="PadModeVelUp.png" imDisabled="PadModeVelDisabled.png" />
+    <CtrlButtonStyle name="PadModeEMSStyle" optMomentary="false" imDown="PadModeEMSDown.png" imUp="PadModeEMSUp.png" imDisabled="PadModeEMSDisabled.png" />
+    <CtrlButtonStyle name="FullLevelStyle" optMomentary="false" imDown="FullLevelDown.png" imUp="FullLevelUp.png" imDisabled="FullLevelDisabled.png" />
+    <CtrlButtonStyle name="EraseButtonStyle" optMomentary="false" imDown="EraseDown.png" imUp="EraseUp.png" imDisabled="FullLevelDisabled.png" />
+    <CtrlImageViewStyle name="IconStyle" optBorder="false" optBackground="false" />
+    <CtrlButtonStyle name="RepeatButtonStyle" optMomentary="false" imDown="RepeatDown.png" imUp="RepeatUp.png" imDisabled="RepeatDisabled.png" colTextOn="[r:0 g:0 b:0 a:255]" />
+    <CtrlButtonStyle name="RepeatOptionStyle" optDrawText="true" optTextLeftJustify="true" imDown="RepeatOptionsDown.png" imUp="RepeatOptionsUp.png" imDisabled="RepeatOptionsDisabled.png" textOffset="5">
+        <VFont name="font" vSize="11" fontName="Verdana" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="FollowModeButtonStyle" optMomentary="false" imDown="FollowDown.png" imUp="FollowUp.png">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:70 h:200]" id="0">
+        <CtrlButtonGroup name="PadMode" rect="[x:4 y:9 w:52 h:55]" id="100001">
+            <CtrlButton name="CtrlButton" style="PadModePadsStyle" rect="[x:0 y:0 w:25 h:27]" id="0" displayName="Sample trigger mode" />
+            <CtrlButton name="CtrlButton" style="PadModeChromaticStyle" rect="[x:26 y:0 w:25 h:27]" id="1" displayName="Chromatic playback mode" />
+            <CtrlButton name="CtrlButton" style="PadModeVelocityStyle" rect="[x:0 y:24 w:25 h:27]" id="2" displayName="Velocity playback mode" />
+            <CtrlButton name="CtrlButton" style="PadModeEMSStyle" rect="[x:26 y:24 w:25 h:27]" id="3" displayName="Engine Mute / Solo mode" />
+        </CtrlButtonGroup>
+        <CtrlButton name="FullLevelButton" style="FullLevelStyle" rect="[x:4 y:69 w:25 h:27]" id="100000" displayName="Full level mode" text="Full level" />
+        <CtrlKnob name="FullLevelKnob" style="HardKnobSmallLR" rect="[x:31 y:69 w:24 h:26]" id="100001" displayName="Full level" />
+        <CtrlButton name="EraseButton" style="EraseButtonStyle" rect="[x:4 y:95 w:25 h:27]" id="100002" displayName="Note erase" text="Note erase" />
+        <CtrlButton name="FollowButton" style="FollowModeButtonStyle" rect="[x:30 y:95 w:25 h:27]" id="100000" displayName="Pad selection follows MIDI notes" />
+        <CtrlButton name="RepeatButton" style="RepeatButtonStyle" rect="[x:4 y:123 w:51 h:27]" id="100001" displayName="Pad repeat" />
+        <CtrlButton name="RepeatCount" style="RepeatOptionStyle" rect="[x:4 y:147 w:51 h:27]" id="100000" displayName="Repeat Count" text="1/16" />
+        <CtrlKnob name="InstoSlider" style="HardKnobSmallLR" rect="[x:31 y:174 w:24 h:26]" id="100000" displayName="Focus Graph" />
+        <CtrlImageView name="IconStyle" style="IconStyle" rect="[x:8 y:180 w:17 h:12]" id="0" image="GraphIcon.png" />
+    </CtrlPanel>
+</root>

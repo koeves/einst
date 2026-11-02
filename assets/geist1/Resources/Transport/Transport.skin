@@ -1,0 +1,32 @@
+<root>
+    <CtrlButtonStyle name="RetroButtonStyle" imDown="RetroButtonDown.png" imUp="RetroButtonUp.png" />
+    <CtrlButtonStyle name="PlayButtonStyle" optMomentary="false" imDown="PlayButtonDown.png" imUp="PlayButtonUp.png" />
+    <CtrlButtonStyle name="RecButtonStyle" optMomentary="false" imDown="RecButtonDown.png" imUp="RecButtonUp.png" />
+    <CtrlButtonStyle name="MetroButtonStyle" optMomentary="false" imDown="MetroButtonDown.png" imUp="MetroButtonUp.png" />
+    <CtrlButtonStyle name="QuantizeButtonStyle" optMomentary="false" imDown="QuantizeDown.png" imUp="QuantizeUp.png" />
+    <CtrlButtonStyle name="PanicButtonStyle" imDown="PanicButtonDown.png" imUp="PanicButtonUp.png" />
+    <CtrlButtonStyle name="SongButtonStyle" optMomentary="false" imDown="SongButtonDown.png" imUp="SongButtonUp.png" imDisabled="SongButtonDisabled.png" />
+    <CtrlButtonStyle name="RestartButtonStyle" imDown="RestartButtonDown.png" imUp="RestartButtonUp.png" imDisabled="RestartButtonDisabled.png" />
+    <CtrlButtonStyle name="LoopButtonStyle" optMomentary="false" imDown="LoopButtonDown.png" imUp="LoopButtonUp.png" imDisabled="LoopButtonDisabled.png" />
+    <CtrlButtonStyle name="LearnButtonStyle" optMomentary="false" imDown="LearnButtonDown.png" imUp="LearnButtonUp.png" imDisabled="LearnButtonDisabled.png" />
+    <CtrlButtonStyle name="UndoButtonStyle" imDown="UndoButtonDown.png" imUp="UndoButtonUp.png" imDisabled="UndoButtonDisabled.png" />
+    <CtrlButtonStyle name="RedoButtonStyle" imDown="RedoButtonDown.png" imUp="RedoButtonUp.png" imDisabled="RedoButtonDisabled.png" />
+    <CtrlButtonStyle name="UndoRedoDropButtonStyle" imDown="UndoRedoDropArrowDown.png" imUp="UndoRedoDropArrowUp.png" imDisabled="UndoRedoDropArrowDisabled.png" />
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:532 h:39]" id="0">
+        <CtrlButton name="LearnButton" style="LearnButtonStyle" rect="[x:130 y:5 w:33 h:33]" id="100000" displayName="Learn" />
+        <CtrlButton name="QuantizeButton" style="QuantizeButtonStyle" rect="[x:162 y:5 w:33 h:33]" id="100003" displayName="Quantize incoming MIDI" />
+        <CtrlButton name="MetroButton" style="MetroButtonStyle" rect="[x:194 y:5 w:33 h:33]" id="100003" displayName="Metronome" />
+        <CtrlButton name="RestartButton" style="RestartButtonStyle" rect="[x:262 y:5 w:33 h:33]" id="0" displayName="Return to song start" />
+        <CtrlButton name="PlayButton" style="PlayButtonStyle" rect="[x:294 y:5 w:42 h:33]" id="100002" displayName="Play" />
+        <CtrlButton name="LoopButton" style="LoopButtonStyle" rect="[x:335 y:5 w:33 h:33]" id="100000" displayName="Song looping" />
+        <CtrlButton name="RecButton" style="RecButtonStyle" rect="[x:367 y:5 w:42 h:33]" id="100003" displayName="Record" />
+        <CtrlButton name="RetroButton" style="RetroButtonStyle" rect="[x:408 y:5 w:33 h:33]" id="100002" displayName="Retro record" />
+        <CtrlButton name="SongButton" style="SongButtonStyle" rect="[x:448 y:5 w:42 h:33]" id="0" displayName="Song mode" />
+        <CtrlButton name="PanicButton" style="PanicButtonStyle" rect="[x:496 y:5 w:33 h:33]" id="100001" displayName="Panic! (Stop all audio)" text="Panic" />
+        <CtrlButton name="UndoButton" style="UndoButtonStyle" rect="[x:1 y:7 w:43 h:27]" id="100000" displayName="Undo previous action" text="Undo" />
+        <CtrlButton name="UndoHistory" style="UndoRedoDropButtonStyle" rect="[x:44 y:7 w:16 h:27]" id="100000" displayName="Show undo history" />
+        <CtrlButton name="RedoButton" style="RedoButtonStyle" rect="[x:62 y:7 w:43 h:27]" id="100001" displayName="Redo previous action" text="Redo" />
+        <CtrlButton name="RedoHistory" style="UndoRedoDropButtonStyle" rect="[x:105 y:7 w:16 h:27]" id="100001" displayName="Show redo history" />
+        <CtrlKnob name="MetroVol" style="HardKnobSmallLR" rect="[x:231 y:9 w:24 h:26]" id="100015" displayName="Metronome volume" />
+    </CtrlPanel>
+</root>

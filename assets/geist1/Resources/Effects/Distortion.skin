@@ -1,0 +1,19 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlPanel name="Control3" style="EmptyPanelStyle" rect="[x:84 y:3 w:107 h:15]" id="100001">
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:0 y:0 w:107 h:15]" id="0" text="High Cut" />
+        </CtrlPanel>
+        <CtrlPanel name="SplitFader" overloadClass="SplitFader" rect="[x:84 y:20 w:107 h:19]" id="100000" />
+        <CtrlComboBox name="Control1" style="LEDComboBoxStyle" rect="[x:5 y:21 w:75 h:17]" id="100002" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:5 y:44 w:75 h:15]" id="100001" text="Type" />
+        <CtrlPanel name="Control4" style="EmptyPanelStyle" rect="[x:84 y:42 w:107 h:15]" id="100001">
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:0 y:0 w:107 h:15]" id="0" text="Low Cut" />
+        </CtrlPanel>
+        <CtrlKnob name="Control5" style="LEDKnobLargeLR" rect="[x:7 y:68 w:50 h:46]" id="100021" />
+        <CtrlKnob name="Control2" style="LEDKnobLargeLR" rect="[x:71 y:68 w:50 h:46]" id="100020" />
+        <CtrlKnob name="Control6" style="LEDKnobLargeLR" rect="[x:136 y:68 w:50 h:46]" id="100001" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:118 w:50 h:15]" id="100027" text="Tone" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:71 y:118 w:50 h:15]" id="100026" text="Drive" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:136 y:118 w:50 h:15]" id="100002" text="Clean" />
+    </CtrlPanel>
+</root>

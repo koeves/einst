@@ -1,0 +1,35 @@
+<root>
+    <CtrlButtonStyle name="SongPatternSelectorStyleNotAllocated" optMomentary="false" imDown="..\Patterns\PatternButtonOff.png" imUp="..\Patterns\PatternButtonOff.png" imDisabled="..\Patterns\PatternButtonOffDisabled.png" />
+    <CtrlButtonStyle name="SongSelectorStyleAllocated" optMomentary="false" imDown="..\Patterns\PatternButtonOn.png" imUp="..\Patterns\PatternButtonOn.png" imDisabled="..\Patterns\PatternButtonOnDisabled.png" />
+    <CtrlButtonStyle name="SongSelectorStyleEditing" optMomentary="false" imDown="..\Patterns\PatternButtonEditing.png" imUp="..\Patterns\PatternButtonEditing.png" imDisabled="..\Patterns\PatternButtonEditingDisabled.png" />
+    <CtrlButtonStyle name="SongSelectorStyleSelected" optMomentary="false" imDown="..\Patterns\PatternButtonSelected.png" imUp="..\Patterns\PatternButtonSelected.png" imDisabled="..\Patterns\PatternButtonSelectedDisabled.png" />
+    <CtrlPanelStyle name="SongPatternPopupPanelStyle" colFill="[r:255 g:255 b:255 a:150]" intSmartTileEdgeSize="5" intRoundedRectRadius="0">
+        <VFont name="font" vSize="14" fontName="Arial" />
+    </CtrlPanelStyle>
+    <CtrlPanel name="CtrlPanel" style="SongPatternPopupPanelStyle" rect="[x:0 y:0 w:339 h:93]" id="0">
+        <CtrlButton name="Key1" style="SongPatternSelectorStyleNotAllocated" rect="[x:18 y:6 w:24 h:41]" id="100003" />
+        <CtrlButton name="Key3" style="SongPatternSelectorStyleNotAllocated" rect="[x:41 y:6 w:24 h:41]" id="100004" />
+        <CtrlButton name="Key6" style="SongPatternSelectorStyleNotAllocated" rect="[x:86 y:6 w:24 h:41]" id="100005" />
+        <CtrlButton name="Key8" style="SongPatternSelectorStyleNotAllocated" rect="[x:109 y:6 w:24 h:41]" id="100006" />
+        <CtrlButton name="Key10" style="SongPatternSelectorStyleNotAllocated" rect="[x:132 y:6 w:24 h:41]" id="100007" />
+        <CtrlButton name="Key13" style="SongPatternSelectorStyleNotAllocated" rect="[x:179 y:6 w:24 h:41]" id="100008" />
+        <CtrlButton name="Key15" style="SongPatternSelectorStyleNotAllocated" rect="[x:202 y:6 w:24 h:41]" id="100009" />
+        <CtrlButton name="Key18" style="SongPatternSelectorStyleNotAllocated" rect="[x:246 y:6 w:24 h:41]" id="100010" />
+        <CtrlButton name="Key20" style="SongPatternSelectorStyleNotAllocated" rect="[x:269 y:6 w:24 h:41]" id="100011" />
+        <CtrlButton name="Key22" style="SongPatternSelectorStyleNotAllocated" rect="[x:292 y:6 w:24 h:41]" id="100012" />
+        <CtrlButton name="Key0" style="SongPatternSelectorStyleNotAllocated" rect="[x:6 y:46 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key2" style="SongPatternSelectorStyleNotAllocated" rect="[x:29 y:46 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key4" style="SongPatternSelectorStyleNotAllocated" rect="[x:52 y:46 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key5" style="SongPatternSelectorStyleNotAllocated" rect="[x:75 y:46 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key7" style="SongPatternSelectorStyleNotAllocated" rect="[x:98 y:46 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key9" style="SongPatternSelectorStyleNotAllocated" rect="[x:121 y:46 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key11" style="SongPatternSelectorStyleNotAllocated" rect="[x:144 y:46 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key12" style="SongPatternSelectorStyleNotAllocated" rect="[x:167 y:46 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key14" style="SongPatternSelectorStyleNotAllocated" rect="[x:190 y:46 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key16" style="SongPatternSelectorStyleNotAllocated" rect="[x:213 y:46 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key17" style="SongPatternSelectorStyleNotAllocated" rect="[x:236 y:46 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key19" style="SongPatternSelectorStyleNotAllocated" rect="[x:259 y:46 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key21" style="SongPatternSelectorStyleNotAllocated" rect="[x:282 y:46 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key23" style="SongPatternSelectorStyleNotAllocated" rect="[x:305 y:46 w:24 h:41]" id="100001" />
+    </CtrlPanel>
+</root>

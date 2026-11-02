@@ -1,0 +1,20 @@
+<root>
+    <CtrlPanelStyle name="AuxChannelBackgroundOdd" imBackground="AuxBackgroundOdd.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="AuxChannelBackgroundEven" imBackground="AuxBackgroundEven.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="AuxChannelBackgroundSelected" imBackground="AuxBackgroundSelected.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanel name="CtrlPanel" style="AuxChannelBackgroundOdd" rect="[x:0 y:0 w:193 h:161]" id="0">
+        <CtrlPanel name="ClickPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:161]" id="0">
+            <CtrlLabel name="NameLabel" style="StandardLabelCenteredStyle" rect="[x:2 y:18 w:189 h:10]" id="100011" text="Global aux" />
+            <CtrlButton name="MuteButton" style="LEDMuteButtonStyle" rect="[x:17 y:30 w:19 h:17]" id="100019" displayName="Mute" text="M" />
+            <CtrlButton name="SoloButton" style="LEDSoloButtonStyle" rect="[x:37 y:30 w:19 h:17]" id="100018" displayName="Solo" text="S" />
+            <CtrlButtonGroup name="PrePostButton" rect="[x:64 y:30 w:120 h:17]" id="100000">
+                <CtrlButton name="PreButton" style="RadioButtonLeftStyle" rect="[x:0 y:0 w:60 h:17]" id="100001" displayName="Pre fade" text="Pre" />
+                <CtrlButton name="PostButton" style="RadioButtonRightStyle" rect="[x:58 y:0 w:60 h:17]" id="100002" displayName="Post fade" text="Post" />
+            </CtrlButtonGroup>
+            <CtrlSlider name="GainSlider" style="SmallVerticalFaderStyle" rect="[x:89 y:63 w:15 h:75]" id="100012" displayName="Gain" />
+            <CtrlLevelStrip name="VUMeterLeft" style="VU75Dark" rect="[x:106 y:63 w:4 h:75]" id="100000" />
+            <CtrlLevelStrip name="VUMeterRight" style="VU75Dark" rect="[x:111 y:63 w:4 h:75]" id="100001" />
+            <CtrlComboBox name="OutputCombo" style="LEDComboBoxStyle" rect="[x:59 y:140 w:75 h:17]" id="100010" />
+        </CtrlPanel>
+    </CtrlPanel>
+</root>

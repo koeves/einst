@@ -1,0 +1,25 @@
+<root>
+    <CtrlPanelStyle name="PadChannelBackgroundOdd" imBackground="PadBackgroundOdd.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="PadChannelBackgroundEven" imBackground="PadBackgroundEven.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="PadChannelBackgroundSelected" imBackground="PadBackgroundSelected.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="PadChannelBackgroundNS" imBackground="PadBackgroundSelected.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="PadChannelBackgroundSecondary" imBackground="PadBackgroundSelected.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanel name="CtrlPanel" style="PadChannelBackgroundOdd" rect="[x:0 y:0 w:48 h:161]" id="0">
+        <CtrlLabel name="NameLabel" style="StandardLabelCenteredStyle" overloadClass="AutoShorteningLabel" rect="[x:0 y:18 w:46 h:10]" id="100011" displayName="Sample name" text="Pad X" />
+        <CtrlPanSlider name="PanKnob" style="SmallPanStyle" rect="[x:4 y:49 w:41 h:12]" id="100000" displayName="Pan" />
+        <CtrlButton name="MuteButton" style="LEDMuteButtonStyle" rect="[x:5 y:30 w:19 h:17]" id="100019" displayName="Mute" text="M" />
+        <CtrlButton name="SoloButton" style="LEDSoloButtonStyle" rect="[x:25 y:30 w:19 h:17]" id="100018" displayName="Solo" text="S" />
+        <CtrlSlider name="GainSlider" style="SmallVerticalFaderStyle" rect="[x:17 y:63 w:15 h:75]" id="100003" displayName="Gain" />
+        <CtrlLevelStrip name="VUMeterLeft" style="VU75Dark" rect="[x:34 y:63 w:4 h:75]" id="100016" />
+        <CtrlLevelStrip name="VUMeterRight" style="VU75Dark" rect="[x:39 y:63 w:4 h:75]" id="100017" />
+        <CtrlLabel name="SendLabel0" style="StandardLabelStyle" rect="[x:33 y:49 w:35 h:17]" id="100013" text="S1" />
+        <CtrlLabel name="SendLabel1" style="StandardLabelStyle" rect="[x:33 y:72 w:35 h:17]" id="100013" text="S2" />
+        <CtrlLabel name="SendLabel2" style="StandardLabelStyle" rect="[x:33 y:95 w:35 h:17]" id="100013" text="S3" />
+        <CtrlLabel name="SendLabel3" style="StandardLabelStyle" rect="[x:33 y:118 w:35 h:17]" id="100013" text="S4" />
+        <CtrlKnob name="Send0" style="LEDKnobMicroLR" rect="[x:13 y:49 w:17 h:17]" id="0" displayName="Send 1" />
+        <CtrlKnob name="Send1" style="LEDKnobMicroLR" rect="[x:13 y:72 w:17 h:17]" id="1" displayName="Send 2" />
+        <CtrlKnob name="Send2" style="LEDKnobMicroLR" rect="[x:13 y:95 w:17 h:17]" id="2" displayName="Send 3" />
+        <CtrlKnob name="Send3" style="LEDKnobMicroLR" rect="[x:13 y:118 w:17 h:17]" id="3" displayName="Send 4" />
+        <CtrlComboBox name="OutputCombo" style="LEDSmallComboBoxStyle" rect="[x:4 y:140 w:40 h:17]" id="100010" />
+    </CtrlPanel>
+</root>

@@ -1,0 +1,10 @@
+<root>
+    <CtrlButtonStyle name="LoadButtonStyle" imDown="LoadButtonDown.png" imUp="LoadButtonUp.png" imDisabled="LoadButtonDisabled.png" />
+    <CtrlButtonStyle name="SaveButtonStyle" imDown="SaveButtonDown.png" imUp="SaveButtonUp.png" imDisabled="SaveButtonDisabled.png" />
+    <CtrlButtonStyle name="GeistButtonStyle" imDown="GeistButtonDown.png" imUp="GeistButtonUp.png" imDisabled="GeistButtonDisabled.png" />
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:135 h:12]" id="0">
+        <CtrlButton name="LoadButton" style="LoadButtonStyle" rect="[x:6 y:1 w:40 h:10]" id="100001" displayName="Load files" text="Load..." />
+        <CtrlButton name="SaveButton" style="SaveButtonStyle" rect="[x:48 y:1 w:40 h:10]" id="100003" displayName="Save files" text="Save..." />
+        <CtrlButton name="GridButton" style="GeistButtonStyle" rect="[x:90 y:1 w:40 h:10]" id="100002" displayName="Geist options" text="Grid..." />
+    </CtrlPanel>
+</root>

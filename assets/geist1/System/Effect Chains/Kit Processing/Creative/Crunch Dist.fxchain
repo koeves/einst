@@ -1,0 +1,17 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2.1" IsActive="true" ChainMix="1">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.273141" Parameter1="1" Parameter2="0.16" Parameter3="0.388" Parameter4="0.50996" Parameter5="1" EffectType="Comb Filter">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="0.35" Level="0.86" Parameter0="0.51377" Parameter1="0.666667" Parameter2="0.914908" Parameter3="0.535938" Parameter4="0.53631" Parameter5="0" EffectType="Ring Mod">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="1" Level="0.5" Parameter0="0.5" Parameter1="0.59" Parameter2="0.99" Parameter3="0.4" Parameter4="0.367785" Parameter5="0" EffectType="Modulated Filter">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect3" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.25" Parameter1="0.5" Parameter2="0.43" Parameter3="0.325" Parameter4="1" Parameter5="1" EffectType="Noise Gate">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="$U$/-Crunch Dist" />
+    </EffectChain>
+</root>

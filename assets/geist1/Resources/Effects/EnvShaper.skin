@@ -1,0 +1,13 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlKnob name="Control1" style="LEDKnobLargeLR" rect="[x:7 y:5 w:50 h:46]" id="100020" displayName="Drive" />
+        <CtrlKnob name="Control2" style="LEDKnobLargeLR" rect="[x:136 y:5 w:50 h:46]" id="100009" displayName="Mode" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:55 w:50 h:15]" id="100026" text="Attack" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:136 y:55 w:50 h:15]" id="100010" text="Sustain" />
+        <CtrlButton name="Control5" style="LEDLatchingButtonStyle" rect="[x:72 y:66 w:50 h:17]" id="100000" text="Linked" />
+        <CtrlKnob name="Control4" style="LEDKnobLargeLR" rect="[x:7 y:79 w:50 h:46]" id="100012" displayName="Resonance" />
+        <CtrlKnob name="Control3" style="LEDKnobLargeLR" rect="[x:136 y:79 w:50 h:46]" id="100021" displayName="Pitch" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:129 w:50 h:15]" id="100015" text="Sensitivy" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:136 y:129 w:50 h:15]" id="100027" text="Gain" />
+    </CtrlPanel>
+</root>

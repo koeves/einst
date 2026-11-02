@@ -1,0 +1,52 @@
+<root>
+    <CtrlButtonStyle name="FlashingButtonLayerStyle" optNoGraphics="true" />
+    <CtrlButtonStyle name="PhaseButtonStyle" optMomentary="false" imDown="PhaseButtonDown.png" imUp="PhaseButtonUp.png" imDisabled="PhaseButtonDisabled.png" />
+    <CtrlButtonStyle name="ReverseButtonStyle" optMomentary="false" imDown="ReverseButtonDown.png" imUp="ReverseButtonUp.png" imDisabled="ReverseButtonDisabled.png" />
+    <CtrlButtonStyle name="AlgoButtonStyle" optMomentary="false" imDown="AlgoButtonDown.png" imUp="AlgoButtonUp.png" imDisabled="AlgoButtonDisabled.png" />
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:1 w:650 h:191]" id="0">
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:15 y:-1 w:75 h:10]" id="100002" text="Pan" />
+        <CtrlButton name="FilterActiveButton" style="LEDSmallLatchingButtonStyle" rect="[x:382 y:5 w:16 h:17]" id="100023" displayName="Layer filter active" />
+        <CtrlComboBox name="FilterModeKnob" style="LEDComboBoxStyle" rect="[x:431 y:5 w:75 h:17]" id="100002" />
+        <CtrlPanSlider name="PanKnob" style="FatPanStyle" rect="[x:15 y:10 w:73 h:12]" id="100000" displayName="Pan" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:16 y:27 w:25 h:10]" id="100003" text="Gain" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:111 y:27 w:50 h:10]" id="100011" text="Tune" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:175 y:27 w:50 h:10]" id="100003" text="Fine" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:386 y:27 w:50 h:10]" id="100010" text="Cutoff " />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:450 y:27 w:50 h:10]" id="100000" text="Res" />
+        <CtrlKnob name="Send1Knob" style="LEDKnobSmallLR" rect="[x:61 y:39 w:24 h:26]" id="100025" displayName="Layer engine aux 1 send" />
+        <CtrlKnob name="TuneKnob" style="LEDKnobLargeC" rect="[x:111 y:39 w:50 h:46]" id="100009" displayName="Layer coarse tune" />
+        <CtrlKnob name="FineKnob" style="LEDKnobLargeC" rect="[x:175 y:39 w:50 h:46]" id="100011" displayName="Layer fine tune" />
+        <CtrlKnob name="CutoffKnob" style="LEDKnobLargeLR" rect="[x:386 y:39 w:50 h:46]" id="100017" displayName="Layer filter cutoff" />
+        <CtrlKnob name="ResKnob" style="LEDKnobLargeLR" rect="[x:450 y:39 w:50 h:46]" id="100019" displayName="Layer filter resonance" />
+        <CtrlSlider name="GainKnob" style="FatVerticalFaderStyle" rect="[x:20 y:40 w:18 h:106]" id="100000" displayName="Layer Gain" />
+        <CtrlImageView name="SendImage0" style="EmptyImageStyle" rect="[x:42 y:43 w:16 h:18]" id="0" image="SendArrow.png" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:42 y:43 w:16 h:18]" id="100000" text="S1" />
+        <CtrlKnob name="Send2Knob" style="LEDKnobSmallLR" rect="[x:61 y:67 w:24 h:26]" id="100026" displayName="Layer engine aux 2 send" />
+        <CtrlImageView name="SendImage1" style="EmptyImageStyle" rect="[x:42 y:71 w:16 h:18]" id="0" image="SendArrow.png" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:42 y:71 w:16 h:18]" id="100001" text="S2" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:111 y:89 w:50 h:10]" id="100003" text="Vel-Pitch" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:174 y:89 w:50 h:10]" id="100001" text="Pre delay" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:386 y:89 w:50 h:10]" id="100001" text="Drive" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:450 y:89 w:50 h:10]" id="100002" text="Vel-Cutoff" />
+        <CtrlKnob name="Send3Knob" style="LEDKnobSmallLR" rect="[x:61 y:95 w:24 h:26]" id="100027" displayName="Layer engine aux 3 send" />
+        <CtrlImageView name="SendImage2" style="EmptyImageStyle" rect="[x:42 y:99 w:16 h:18]" id="0" image="SendArrow.png" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:42 y:99 w:16 h:18]" id="100002" text="S3" />
+        <CtrlKnob name="V2P" style="LEDKnobLargeC" rect="[x:111 y:101 w:50 h:46]" id="100000" displayName="Velocity to Pitch" />
+        <CtrlKnob name="PreDelayKnob" style="LEDKnobLargeLR" rect="[x:174 y:101 w:50 h:46]" id="100000" displayName="Pre delay" />
+        <CtrlKnob name="DriveKnob" style="LEDKnobLargeLR" rect="[x:386 y:101 w:50 h:46]" id="100021" displayName="Layer filter drive" />
+        <CtrlKnob name="V2C" style="LEDKnobLargeC" rect="[x:450 y:101 w:50 h:46]" id="100001" displayName="Velocity to Cutoff" />
+        <CtrlKnob name="Send4Knob" style="LEDKnobSmallLR" rect="[x:61 y:123 w:24 h:26]" id="100028" displayName="Layer grid global send" />
+        <CtrlImageView name="SendImage3" style="EmptyImageStyle" rect="[x:42 y:127 w:16 h:18]" id="0" image="SendArrow.png" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:42 y:127 w:16 h:18]" id="100003" text="S4" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:103 y:158 w:75 h:10]" id="100006" text="Output" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:190 y:158 w:95 h:10]" id="100007" text="Choke mode" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:297 y:158 w:75 h:10]" id="100008" text="Play mode" />
+        <CtrlButton name="PhaseButton" style="PhaseButtonStyle" rect="[x:24 y:161 w:24 h:24]" id="100015" displayName="Layer phase" />
+        <CtrlButton name="RevButton" style="ReverseButtonStyle" rect="[x:55 y:161 w:24 h:24]" id="100013" displayName="Layer reverse" />
+        <CtrlComboBox name="OutputCombo" style="LEDComboBoxStyle" rect="[x:103 y:168 w:75 h:17]" id="100039" />
+        <CtrlComboBox name="CutModeCombo" style="LEDLargerComboBoxStyle" rect="[x:190 y:168 w:95 h:17]" id="100041" />
+        <CtrlComboBox name="PlayModeCombo" style="LEDComboBoxStyle" rect="[x:297 y:168 w:75 h:17]" id="100043" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:406 y:158 w:75 h:10]" id="100008" text="Algorithm" />
+        <CtrlComboBox name="FilterAlgoButton" style="LEDComboBoxStyle" rect="[x:406 y:168 w:75 h:17]" id="100002" />
+    </CtrlPanel>
+</root>

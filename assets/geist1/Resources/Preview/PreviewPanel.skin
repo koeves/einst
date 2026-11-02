@@ -1,0 +1,36 @@
+<root>
+    <CtrlPanelStyle name="PreviewPanelBackgroundStyle" imBackground="PreviewBackground.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanel name="CtrlPanel" style="PreviewPanelBackgroundStyle" rect="[x:0 y:0 w:820 h:395]" id="0">
+        <CtrlImageView name="PatternPreview" overloadClass="EditorPreviewPanelPatternDisplay" rect="[x:7 y:12 w:800 h:112]" id="100001" />
+        <CtrlPanel name="WaveDisplay" overloadClass="EditorPreviewWaveEditor" rect="[x:8 y:131 w:799 h:194]" id="100000" />
+        <CtrlButton name="ZoomOutButton" style="ZoomOutButtonStyle" rect="[x:782 y:327 w:12 h:12]" id="100001" />
+        <CtrlButton name="ZoomInButton" style="ZoomInButtonStyle" rect="[x:795 y:327 w:12 h:12]" id="100001" />
+        <CtrlPanel name="Controls" style="EmptyPanelStyle" rect="[x:9 y:345 w:800 h:40]" id="0">
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:0 y:2 w:50 h:12]" id="100000" text="File BPM" />
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:59 y:2 w:50 h:12]" id="100017" text="BPM" />
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:112 y:2 w:50 h:12]" id="100018" text="Bars" />
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:165 y:2 w:50 h:12]" id="100019" text="Beats" />
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:224 y:2 w:120 h:12]" id="100006" text="Detection Mode" />
+            <CtrlLabel name="SenseLabel" style="StandardLabelCenteredStyle" rect="[x:346 y:2 w:65 h:12]" id="100013" text="Sensitivity" />
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:414 y:2 w:105 h:12]" id="100000" text="Assignment mode" />
+            <CtrlLabel name="ExtractLabel" style="StandardLabelCenteredStyle" rect="[x:529 y:2 w:155 h:12]" id="100005" text="Extract..." />
+            <CtrlLabel name="SrcBPM" style="StandardLabelCenteredStyle" rect="[x:0 y:15 w:50 h:17]" id="100002" displayName="The original BPM of the file, detected from the file" />
+            <CtrlTextBox name="BPMBox" style="LEDEditBoxStyle" rect="[x:59 y:15 w:50 h:17]" id="100014" />
+            <CtrlTextBox name="BarsBox" style="LEDEditBoxStyle" rect="[x:112 y:15 w:50 h:17]" id="100015" />
+            <CtrlTextBox name="BeatsBox" style="LEDEditBoxStyle" rect="[x:165 y:15 w:50 h:17]" id="100016" />
+            <CtrlButtonGroup name="SliceModeButtonGroup" rect="[x:224 y:15 w:122 h:17]" id="100007">
+                <CtrlButton name="CtrlButton" style="RadioButtonLeftStyle" rect="[x:0 y:0 w:60 h:20]" id="100008" displayName="Slice audio based on transient detection" text="Transient" />
+                <CtrlButton name="CtrlButton" style="RadioButtonRightStyle" rect="[x:58 y:0 w:60 h:20]" id="100009" displayName="Divide audio in to an equal number of sections" text="Divide" />
+            </CtrlButtonGroup>
+            <CtrlValueBox name="ChopDivisionBox" style="LEDSmallNonDragableValueBoxStyle" rect="[x:350 y:15 w:50 h:17]" id="100011" />
+            <CtrlKnob name="SensitivitySlider" style="LEDKnobMicroLR" rect="[x:370 y:15 w:17 h:17]" id="100026" displayName="Transient detection threshold" />
+            <CtrlButton name="AnalyzeButton" style="LEDLatchingButtonStyle" rect="[x:414 y:15 w:50 h:17]" id="100023" displayName="Classify slices as a specific type of drum and allocate to pads based on this analysis" text="Classify" />
+            <CtrlButton name="MultiLayersButton" style="LEDLatchingButtonStyle" rect="[x:466 y:15 w:50 h:17]" id="100000" displayName="Use multiple layers on each pad when allocating slices" text="Use layers" />
+            <CtrlButton name="BothButton" style="LEDMomentaryButtonStyle" rect="[x:529 y:15 w:50 h:17]" id="0" displayName="Send both audio to pads and the pattern" text="Audio+Ptn" />
+            <CtrlButton name="AudioButton" style="LEDMomentaryButtonStyle" rect="[x:581 y:15 w:50 h:17]" id="0" displayName="Send audio slices to pads" text="Audio" />
+            <CtrlButton name="PatternButton" style="LEDMomentaryButtonStyle" rect="[x:633 y:15 w:50 h:17]" id="0" displayName="Send pattern" text="Pattern" />
+            <CtrlButton name="CancelButton" style="LEDMomentaryButtonStyle" rect="[x:694 y:15 w:50 h:17]" id="100000" displayName="Cancel slicing" text="Cancel" />
+            <CtrlButton name="DoneButton" style="LEDMomentaryButtonStyle" rect="[x:747 y:15 w:50 h:17]" id="100000" displayName="Confirm slicing" text="Done" />
+        </CtrlPanel>
+    </CtrlPanel>
+</root>

@@ -1,0 +1,14 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="ModalPanelStyle" rect="[x:50 y:34 w:164 h:141]" id="0">
+        <CtrlPanel name="CtrlPanel" style="ModalPanelCollectionStyle" rect="[x:8 y:9 w:150 h:97]" id="0">
+            <CtrlLabel name="CtrlLabel" style="ModalLabelStyle" rect="[x:23 y:15 w:75 h:17]" id="100003" text="Number of steps" />
+            <CtrlTextBox name="NumStepsBox" style="ModalEditBoxStyle" rect="[x:99 y:15 w:40 h:17]" id="100001" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelStyle" rect="[x:53 y:39 w:45 h:17]" id="100005" text="Grid Type" />
+            <CtrlComboBox name="RezCombo" style="ModalComboBoxStyle" rect="[x:99 y:39 w:40 h:17]" id="100004" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelStyle" rect="[x:8 y:62 w:90 h:17]" id="100009" text="Apply to all patterns" />
+            <CtrlButton name="ApplyToAll" style="ModalCheckButtonStyle" rect="[x:99 y:62 w:14 h:15]" id="100008" />
+        </CtrlPanel>
+        <CtrlButton name="CancelButton" style="ModalMomentaryButtonStyle" rect="[x:36 y:118 w:50 h:17]" id="100007" text="Cancel" />
+        <CtrlButton name="ApplyButton" style="ModalMomentaryButtonStyle" rect="[x:90 y:118 w:50 h:17]" id="100006" text="Apply" />
+    </CtrlPanel>
+</root>

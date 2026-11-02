@@ -1,0 +1,14 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:295 h:598]" id="0">
+        <CtrlPanel name="MapControls" style="EmptyPanelStyle" rect="[x:0 y:0 w:295 h:21]" id="0">
+            <CtrlButton name="Clear" style="StandardClearButtonStyle" rect="[x:5 y:2 w:19 h:17]" id="100016" displayName="Clear all mappings" text="X" />
+            <CtrlButton name="Lock" style="StandardLockButtonStyle" rect="[x:25 y:2 w:19 h:17]" id="100017" displayName="Lock map" text="L" />
+            <CtrlButton name="Select" style="LEDLatchingButtonStyle" rect="[x:138 y:2 w:50 h:17]" id="10000" text="Auto-sel" displayName="Automatically select bindings when recieving MIDI" />
+            <CtrlButton name="SendNotesButton" style="LEDLatchingButtonStyle" rect="[x:190 y:2 w:50 h:17]" id="100000" text="Send Note" />
+            <CtrlButton name="SendCCButton" style="LEDLatchingButtonStyle" rect="[x:242 y:2 w:50 h:17]" id="100001" text="Send CC" />
+        </CtrlPanel>
+        <CtrlTableView name="TableView" style="GlobalTableStyleAlwaysVisibleHSlider" rect="[x:0 y:21 w:295 h:577]" id="100001">
+            <CtrlScrollView name="ScrollView" rect="[x:0 y:15 w:295 h:562]" id="0" />
+        </CtrlTableView>
+    </CtrlPanel>
+</root>

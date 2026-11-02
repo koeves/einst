@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.8" Parameter0="0.407149" Parameter1="0.333333" Parameter2="0.24" Parameter3="0.61" Parameter4="0.50996" Parameter5="1" EffectType="Little Fatty Filter">
+        <FixedString name="PresetName" string="$U$/Little Fatty Bass Treat" />
+    </Effect>
+</root>

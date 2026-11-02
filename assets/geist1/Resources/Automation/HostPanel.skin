@@ -1,0 +1,37 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:295 h:210]" id="0">
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:0 y:0 w:295 h:15]" id="100001" text="Host parameters" />
+        <CtrlButton name="Param0" style="LEDMomentaryButtonStyle" rect="[x:21 y:18 w:50 h:17]" id="100002" text="1" />
+        <CtrlButton name="Param1" style="LEDMomentaryButtonStyle" rect="[x:88 y:18 w:50 h:17]" id="100010" text="2" />
+        <CtrlButton name="Param2" style="LEDMomentaryButtonStyle" rect="[x:155 y:18 w:50 h:17]" id="100004" text="3" />
+        <CtrlButton name="Param3" style="LEDMomentaryButtonStyle" rect="[x:222 y:18 w:50 h:17]" id="100005" text="4" />
+        <CtrlButton name="Param4" style="LEDMomentaryButtonStyle" rect="[x:21 y:41 w:50 h:17]" id="100006" text="5" />
+        <CtrlButton name="Param5" style="LEDMomentaryButtonStyle" rect="[x:88 y:41 w:50 h:17]" id="100007" text="6" />
+        <CtrlButton name="Param6" style="LEDMomentaryButtonStyle" rect="[x:155 y:41 w:50 h:17]" id="100008" text="7" />
+        <CtrlButton name="Param7" style="LEDMomentaryButtonStyle" rect="[x:222 y:41 w:50 h:17]" id="100009" text="8" />
+        <CtrlButton name="Param8" style="LEDMomentaryButtonStyle" rect="[x:21 y:65 w:50 h:17]" id="100002" text="9" />
+        <CtrlButton name="Param9" style="LEDMomentaryButtonStyle" rect="[x:88 y:65 w:50 h:17]" id="100010" text="10" />
+        <CtrlButton name="Param10" style="LEDMomentaryButtonStyle" rect="[x:155 y:65 w:50 h:17]" id="100004" text="11" />
+        <CtrlButton name="Param11" style="LEDMomentaryButtonStyle" rect="[x:222 y:65 w:50 h:17]" id="100005" text="12" />
+        <CtrlButton name="Param12" style="LEDMomentaryButtonStyle" rect="[x:21 y:88 w:50 h:17]" id="100006" text="13" />
+        <CtrlButton name="Param13" style="LEDMomentaryButtonStyle" rect="[x:88 y:88 w:50 h:17]" id="100007" text="14" />
+        <CtrlButton name="Param14" style="LEDMomentaryButtonStyle" rect="[x:155 y:88 w:50 h:17]" id="100008" text="15" />
+        <CtrlButton name="Param15" style="LEDMomentaryButtonStyle" rect="[x:222 y:88 w:50 h:17]" id="100009" text="16" />
+        <CtrlButton name="Param16" style="LEDMomentaryButtonStyle" rect="[x:21 y:110 w:50 h:17]" id="100002" text="17" />
+        <CtrlButton name="Param17" style="LEDMomentaryButtonStyle" rect="[x:88 y:110 w:50 h:17]" id="100010" text="18" />
+        <CtrlButton name="Param18" style="LEDMomentaryButtonStyle" rect="[x:155 y:110 w:50 h:17]" id="100004" text="19" />
+        <CtrlButton name="Param19" style="LEDMomentaryButtonStyle" rect="[x:222 y:110 w:50 h:17]" id="100005" text="20" />
+        <CtrlButton name="Param20" style="LEDMomentaryButtonStyle" rect="[x:21 y:133 w:50 h:17]" id="100006" text="21" />
+        <CtrlButton name="Param21" style="LEDMomentaryButtonStyle" rect="[x:88 y:133 w:50 h:17]" id="100007" text="22" />
+        <CtrlButton name="Param22" style="LEDMomentaryButtonStyle" rect="[x:155 y:133 w:50 h:17]" id="100008" text="23" />
+        <CtrlButton name="Param23" style="LEDMomentaryButtonStyle" rect="[x:222 y:133 w:50 h:17]" id="100009" text="24" />
+        <CtrlButton name="Param24" style="LEDMomentaryButtonStyle" rect="[x:21 y:156 w:50 h:17]" id="100002" text="25" />
+        <CtrlButton name="Param25" style="LEDMomentaryButtonStyle" rect="[x:88 y:156 w:50 h:17]" id="100010" text="26" />
+        <CtrlButton name="Param26" style="LEDMomentaryButtonStyle" rect="[x:155 y:156 w:50 h:17]" id="100004" text="27" />
+        <CtrlButton name="Param27" style="LEDMomentaryButtonStyle" rect="[x:222 y:156 w:50 h:17]" id="100005" text="28" />
+        <CtrlButton name="Param28" style="LEDMomentaryButtonStyle" rect="[x:21 y:179 w:50 h:17]" id="100006" text="29" />
+        <CtrlButton name="Param29" style="LEDMomentaryButtonStyle" rect="[x:88 y:179 w:50 h:17]" id="100007" text="30" />
+        <CtrlButton name="Param30" style="LEDMomentaryButtonStyle" rect="[x:155 y:179 w:50 h:17]" id="100008" text="31" />
+        <CtrlButton name="Param31" style="LEDMomentaryButtonStyle" rect="[x:222 y:179 w:50 h:17]" id="100009" text="32" />
+    </CtrlPanel>
+</root>

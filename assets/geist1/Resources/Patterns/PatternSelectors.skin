@@ -1,0 +1,32 @@
+<root>
+    <CtrlButtonStyle name="SelectorStyleNotAllocated" optMomentary="false" optDrawText="true" imDown="PatternButtonOff.png" imUp="PatternButtonOff.png" imDisabled="PatternButtonOffDisabled.png" />
+    <CtrlButtonStyle name="SelectorStyleAllocated" optMomentary="false" optDrawText="true" imDown="PatternButtonOn.png" imUp="PatternButtonOn.png" imDisabled="PatternButtonOnDisabled.png" />
+    <CtrlButtonStyle name="SelectorStyleEditing" optMomentary="false" optDrawText="true" imDown="PatternButtonEditing.png" imUp="PatternButtonEditing.png" imDisabled="PatternButtonEditingDisabled.png" />
+    <CtrlButtonStyle name="SelectorStyleSelected" optMomentary="false" optDrawText="true" imDown="PatternButtonSelected.png" imUp="PatternButtonSelected.png" imDisabled="PatternButtonSelectedDisabled.png" />
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:340 h:85]" id="0">
+        <CtrlButton name="Key1" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:12 y:1 w:24 h:41]" id="100003" />
+        <CtrlButton name="Key3" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:36 y:1 w:24 h:41]" id="100004" />
+        <CtrlButton name="Key6" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:86 y:1 w:24 h:41]" id="100005" />
+        <CtrlButton name="Key8" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:110 y:1 w:24 h:41]" id="100006" />
+        <CtrlButton name="Key10" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:134 y:1 w:24 h:41]" id="100007" />
+        <CtrlButton name="Key13" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:181 y:1 w:24 h:41]" id="100008" />
+        <CtrlButton name="Key15" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:205 y:1 w:24 h:41]" id="100009" />
+        <CtrlButton name="Key18" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:254 y:1 w:24 h:41]" id="100010" />
+        <CtrlButton name="Key20" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:278 y:1 w:24 h:41]" id="100011" />
+        <CtrlButton name="Key22" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:302 y:1 w:24 h:41]" id="100012" />
+        <CtrlButton name="Key0" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:1 y:44 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key2" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:25 y:44 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key4" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:49 y:44 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key5" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:73 y:44 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key7" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:97 y:44 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key9" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:121 y:44 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key11" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:145 y:44 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key12" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:169 y:44 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key14" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:193 y:44 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key16" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:217 y:44 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key17" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:241 y:44 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key19" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:265 y:44 w:24 h:41]" id="100001" />
+        <CtrlButton name="Key21" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:289 y:44 w:24 h:41]" id="100000" />
+        <CtrlButton name="Key23" overloadClass="PatternSelector" style="SelectorStyleNotAllocated" rect="[x:313 y:44 w:24 h:41]" id="100001" />
+    </CtrlPanel>
+</root>

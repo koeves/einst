@@ -1,0 +1,672 @@
+<root>
+
+	<!-- COLOURS -->
+	
+	<!-- 
+	DRAG AND DROP COLOURS....
+	These colours are used through out Guru2
+	-->
+	
+    <VColour 	name="DragAndDropOverlayColour"    		red="235"   	green="235" 	blue="235" 		alpha="180" />
+    <VColour 	name="DragAndDropOverlayHighlight"    	red="36"   		green="61" 		blue="88" 		alpha="255" />
+    <VColour	name="DragAndDropSourceColour"			red="240"		green="240"		blue="240"		alpha="180" />
+	
+	<!-- 
+	GENERAL USAGE COLOURS
+	These colours are used through out Guru2
+	-->
+    
+    <VColour	name="SplitViewDividerBarFillColour"				red="18" 		green="25"		blue="60"		alpha="165" />
+    <VColour	name="SplitViewDividerBarThumbColour"				red="18" 		green="25"		blue="60"		alpha="255" />
+    <VColour	name="SplitViewDividerBarBorderColour"				red="18" 		green="25"		blue="60"		alpha="255" />
+    <VColour	name="FlashingButtonOverlayColour"					red="226"		green="165"		blue="20"		alpha="120"	/>
+    
+    <VColour	name="SelectedObjectColour"				red="236"		green="189"		blue="47"		alpha="255" />
+    <VColour	name="DisabledObjectColour"				red="90"		green="90"		blue="90"		alpha="180"	/>
+    <VColour	name="HighlightedObjectColour"			red="226"		green="165"		blue="20"		alpha="120"	/>
+    <VColour	name="MuteOverlayColour"				red="255"		green="0"		blue="0"		alpha="120"	/>
+    <VColour	name="SoloOverlayColour"				red="255"		green="255"		blue="0"		alpha="120" />
+    <VColour	name="LearnOverlayColour"				red="54"		green="140"		blue="54"		alpha="200"	/>
+    <VColour	name="LearnTargetColour"				red="255"		green="240"		blue="0"		alpha="255"	/>
+    <VColour	name="TriggerColour"					red="216"		green="117"		blue="20"		alpha="120"	/>
+    
+    <VColour	name="WarningDisabledColour"			red="0"			green="0"		blue="0"		alpha="180" />
+    <VColour 	name="WarningTextColour"				red="230"		green="196"		blue="58"		alpha="255" />
+    
+    
+    
+    
+    <!-- 
+    ENVELOPE COLOURS
+    These colours are only used within the envelopes
+    -->
+    <VColour	name="EnvelopeLineColour"				red="18" 		green="25"		blue="60"		alpha="255" />
+    <VColour	name="EnvelopeCurveColour"				red="199"		green="206"		blue="217"		alpha="120"	/>
+    <VColour	name="EnvelopePointColour"				red="199"		green="206"		blue="217"		alpha="120"	/>
+    <VColour	name="EnvelopeGrabColour"				red="148" 		green="155"		blue="172"		alpha="200"	/>
+    <VColour	name="EnvelopeGrabBorderColour"			red="93"		green="100"		blue="125"		alpha="255"	/>
+    <VColour	name="EnvelopeOverlayColour"			red="224"		green="163"		blue="31"		alpha="80"	/>
+    
+    
+    <VColour	name="AmpEnvelopeBackColour"			red="76"		green="83"		blue="111"		alpha="80"	/>
+    <VColour	name="AmpEnvelopeLineColour"			red="45"		green="51"		blue="76"		alpha="255"	/>
+    <VColour	name="AmpEnvelopeGrabColour"			red="76"		green="83"		blue="111"		alpha="255"	/>
+    <VColour	name="FreeEnvelopeBackColour"			red="00"		green="00"		blue="00"		alpha="80"	/>
+    <VColour	name="FreeEnvelopeLineColour"			red="45"		green="51"		blue="76"		alpha="255"	/>
+    <VColour	name="FreeEnvelopeGrabColour"			red="76"		green="83"		blue="111"		alpha="255"	/>
+    
+       
+    <!-- 
+    BROWSER COLOURS
+    These colours are only used within the browser
+    -->
+    
+    <VColour	name="BrowserItemSelectionColour"		red="148" 		green="155"		blue="172"		alpha="255" />
+    <VColour	name="BrowserItemBorderColour"			red="18" 		green="25"		blue="60"		alpha="255" />
+    <VColour	name="BrowserDividerColour"				red="18" 		green="25"		blue="60"		alpha="255"	/>
+    <VColour	name="BrowserTextColour"				red="18" 		green="25"		blue="60"		alpha="255"	/>
+    <VColour	name="BrowserSelectedTextColour"		red="18" 		green="25"		blue="60"		alpha="255"	/>
+    <VColour	name="BrowserProgressBarColour"			red="210"		green="217"		blue="227"		alpha="200" />
+    <VColour	name="BrowserItemEvenRowColour"			red="169"		green="176"		blue="191"		alpha="140"	/>
+    <VColour	name="BrowserItemOddRowColour"			red="199"		green="206"		blue="217"		alpha="100"	/>
+      
+    <VColour	name="BrowserSelectionColour"			red="76" 		green="83"		blue="111"		alpha="200" />
+    <VColour	name="BrowserItemDividerColour"			red="20"		green="20"		blue="20"		alpha="255"	/>
+    <VColour	name="BrowserHeaderSelectionColour"		red="112" 		green="128"		blue="144"		alpha="128" />
+    
+    <VColour	name="BrowserHeaderBackgroundColour"	red="0" 		green="0"		blue="0"		alpha="0"	/>
+    <VColour	name="BrowserHeaderTextColour"			red="18" 		green="25"		blue="60"		alpha="255"	/>
+    <VColour	name="BrowserHeaderDividerColour"		red="18" 		green="25"		blue="60"		alpha="255"	/>
+      
+        
+    <!-- 
+    PAD COLOURS
+    These colours are only used by the pads
+    -->
+    
+    
+    <VColour	name="PadColour1"						red="120"		green="120"		blue="250"		alpha="255" />
+    <VColour	name="PadColour2"						red="244" 		green="116"		blue="116"		alpha="255"	/>
+    <VColour	name="PadColour3"						red="250"		green="250"		blue="5"		alpha="255"	/>
+    <VColour	name="PadColour4"						red="57"		green="254"		blue="57"		alpha="255"	/>
+    
+    
+    <!-- 
+    TRACK / PATTERN COLOURS
+    These colours are used by the tracks in the pattern view. Ideally they should match the Pad colours, but dont have to
+    -->
+      
+    
+    <VColour	name="TrackColour1"						red="18" 		green="25"		blue="60"		alpha="255" />
+    <VColour	name="TrackColour2"						red="18" 		green="25"		blue="60"		alpha="255"	/>
+    <VColour	name="TrackColour3"						red="18" 		green="25"		blue="60"		alpha="255"	/>
+    <VColour	name="TrackColour4"						red="18" 		green="25"		blue="60"		alpha="255"	/>
+    <VColour	name="TrackBorderColour"				red="18" 		green="25"		blue="60"		alpha="255" />
+    
+    <VColour	name="PatternBackground1Colour"			red="169"		green="176"		blue="191"		alpha="120"	/>
+    <VColour	name="PatternBackground2Colour"			red="199"		green="206"		blue="217"		alpha="80"	/>
+    <VColour	name="PatternPlaybackPositionColour"	red="158"		green="180"		blue="198"		alpha="255" />
+    <VColour	name="PatternGridColourLight"			red="76"		green="83"		blue="111"		alpha="255" />
+    <VColour	name="PatternGridColourDark"			red="18"		green="25"		blue="60"		alpha="255" />
+    <VColour	name="PatternBarTitleDiviColour"		red="18"		green="25"		blue="60"		alpha="255" />
+    <VColour	name="PatternBarTitleTextColour"		red="18"		green="25"		blue="60"		alpha="255" />
+    <VColour	name="PatternBarTitleBackColour"		red="210"		green="217"		blue="227"		alpha="255" />
+      
+    <VColour	name="AutomationBiDirDividerColour"		red="18"		green="25"		blue="60"		alpha="255"	/>
+   
+    <VColour	name="TrackSelectedHilighColour"		red="232"		green="204"		blue="91"		alpha="80" />   
+    
+    <VColour 	name="GraphColour"						red="18"		green="25"		blue="60"		alpha="255" />	
+	<VColour	name="GraphBorderColour"				red="18"		green="25"		blue="60"		alpha="255" />
+	
+	<VColour 	name="TrackMenuHilightColour"			red="237"		green="167"		blue="32"		alpha="100" />
+	<VColour	name="TrackLockedOverlayColour"			red="150"		green="150"		blue="150"		alpha="100"	/>
+	<VColour	name="TrackStepSelectionColour"			red="232"		green="204"		blue="91"		alpha="255"	/>
+    <VColour	name="ControlSurfaceBorderColour"		red="255"		green="0"		blue="0"		alpha="255" />
+	
+	
+	<!--
+	WAVE EDITOR COLOURS
+	These colours are used  by the wave editor.
+	-->    
+	     
+	<VColour	name="WaveEditorWaveColour"					red="18"		green="25"		blue="60"		alpha="255" />
+    <VColour	name="WaveEditorDisabledWaveColour"			red="169"		green="176"		blue="191"		alpha="180" />
+    <VColour	name="WaveEditorLoopWaveColour"				red="76"		green="83"		blue="111"		alpha="255" />
+	<VColour	name="WaveEditorBorderColour"				red="18"		green="25"		blue="60"		alpha="255" />
+	<VColour	name="WaveEditorSelectionColour"			red="128"		green="128"		blue="128"		alpha="120" />
+	<VColour	name="WaveEditorBackgroundColour"			red="178"		green="170"		blue="158"		alpha="255" />
+	<VColour	name="WaveEditorTextColour"					red="18"		green="25"		blue="60"		alpha="255" />
+	<VColour	name="WaveEditorStartMarkerColour"			red="250"		green="121"		blue="25"		alpha="255" />
+	<VColour	name="WaveEditorEndMarkerColour"			red="250"		green="121"		blue="25"		alpha="255" />
+	<VColour	name="WaveEditorLoopStartMarkerColour"		red="24"		green="41"		blue="62"		alpha="255" />
+	<VColour	name="WaveEditorLoopEndMarkerColour"		red="24"		green="41"		blue="62"		alpha="255" />
+	<VColour	name="WaveEditorPlaybackMarkerColour"		red="0"			green="0"		blue="0"		alpha="255" />
+	<VColour	name="PreviewEditorSliceMarkerColour"		red="24"		green="41"		blue="62"		alpha="255" />
+	<VColour	name="PreviewEditorSliceInsertColour"		red="18"		green="25"		blue="60"		alpha="255" />
+	
+	
+	<!-- 
+	OVERLAY COLOURS. 
+	Used by the PreviewEditor. These should probably match the pad colours, but with lower alpha
+	-->
+	
+    <VColour	name="KickOverlayColour"				red="76" 		green="76"		blue="201"		alpha="100" />
+    <VColour	name="SnareOverlayColour"				red="255"		green="0"		blue="0"		alpha="100"	/>
+    <VColour	name="HihatOverlayColour"				red="197"		green="205"		blue="71"		alpha="100"	/>
+    <VColour	name="PercOverlayColour"				red="98"		green="159"		blue="81"		alpha="100"	/>
+	
+	
+	<!--
+	EQ PLOT COLOURS
+	These colours are used by the EQ plot
+	-->
+	
+	<VColour	name="EQPlotSingleBandLine"				red="179"		green="170"		blue="135"		alpha="255" />
+	<VColour	name="EQPlotBand0Line"					red="124"		green="159"		blue="179"		alpha="220" />
+	<VColour	name="EQPlotBand1Line"					red="124"		green="179"		blue="125"		alpha="220" />
+	<VColour	name="EQPlotBand2Line"					red="207"		green="198"		blue="118"		alpha="220" />
+	<VColour	name="EQPlotBand3Line"					red="198"		green="102"		blue="102"		alpha="220" />
+
+    <VColour 	name="ProgressBarColour"				red="60"		green="60"		blue="60"		alpha="255"	/>
+    
+	<!--
+	SONG COLOURS
+	These colours are used by the song editor
+	-->
+	
+	<VColour	name="SongGridUberMajorColour"			red="18"		green="25"		blue="60"		alpha="255" />
+	<VColour	name="SongGridMajorColour"				red="18"		green="25"		blue="60"		alpha="180" />
+	<VColour	name="SongGridMinorColour"				red="76"		green="83"		blue="111"		alpha="75" />
+	     
+	<VColour	name="SongPositionColour"				red="18"		green="25"		blue="60"		alpha="255" />
+	<VColour	name="SongInsertMarkerColour"			red="18"		green="25"		blue="60"		alpha="255" />
+	<VColour	name="SongDrawMarkerColour"			    red="18" 		green="25"		blue="60"		alpha="255" />
+	
+	<VColour	name="SongNormalPartColour"				red="222"	    green="229"		blue="237"		alpha="255" />
+	<VColour	name="SongNormalBorderColour"		    red="18"	    green="25"		blue="60"		alpha="255" />
+	<VColour	name="SongNormalPhaseColour"		    red="18"	    green="25"		blue="60"		alpha="255" />
+	<VColour	name="SongNormalTextColour"		        red="18"	    green="25"		blue="60"		alpha="255" />
+	
+	<VColour	name="SongLoopBackgroundHostColour" 	red="200"		green="200"		blue="200"		alpha="255" />
+	<VColour	name="SongLoopBackgroundInternalColour" red="255"		green="255"		blue="255"		alpha="255" />
+	<VColour	name="SongLoopExteriorOverlayColour"    red="000"		green="000"		blue="000"		alpha="030" />
+	
+	<VColour	name="SongRecordingPartColour"			red="222"	    green="229"		blue="237"		alpha="200" />
+	<VColour	name="SongRetroPartColour"		        red="187"		green="081"		blue="081"		alpha="75" />
+	<VColour	name="SongSelectedPartColour"			red="229"	    green="216"		blue="158"		alpha="255" />
+	<VColour	name="SongEmptyPartColour"			    red="222"	    green="229"		blue="237"		alpha="150" />
+	<VColour	name="SongRubberBandColour" 			red="18"		green="25"		blue="60"		alpha="255" />
+	
+	<!-- SONG TRACK COLOURS - need to match those in header panel styles -->
+	<VColour	name="SongTrackBackgroundColour0" 	    red="169"		green="176"		blue="191"		alpha="120" />
+	<VColour	name="SongTrackBackgroundColour1" 	    red="199"		green="206"		blue="217"		alpha="80" />
+	<VColour	name="SongSelectedTrackColour" 	        red="232"		green="204"		blue="91"		alpha="80" />
+	<VColour	name="SongPreviewingTrackColour" 	    red="200"		green="000"		blue="000"		alpha="100" />
+    
+	<!--
+	SPLIT COLOURS
+	These colours are used by the velocty split editor
+	-->
+	<VColour	name="SplitLineColour"			red="18"		green="25"		blue="60"		alpha="255"	/>
+    <VColour	name="SplitGraphColour"			red="76"		green="83"		blue="111"		alpha="200"	/>
+    <VColour	name="SplitMinMaxColour"		red="18"		green="25"		blue="60"		alpha="255"	/>
+    <VColour	name="SplitTurnColour"			red="18"		green="25"		blue="60"		alpha="255" />
+    <VColour	name="SplitMouseColour"			red="232"		green="204"		blue="91"		alpha="255" />
+    
+    <!-- STYLES -->
+    
+    
+    
+    
+    <!--
+    BROWSER STYLES
+    These styles are used by controls in the browser
+    -->
+    
+    <CtrlButtonStyle name="BrowserHeaderViewOptionsButtonStyle" optMomentary="true" optDrawText="false" imDown="Browser/ViewOptionsButton.png" imUp="Browser/ViewOptionsButton.png">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="BrowserParentNavigationButtonStyle" optMomentary="true" optSmartTile="true" optDrawText="true" imDown="Browser/ParentButtonTileDown.png" imUp="Browser/ParentButtonTileUp.png" colTextOff="[r:18 g:25 b:60 a:255]" colTextOn="[r:222 g:229 b:237 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlTreeViewStyle name="BrowserTreeStyle" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" >
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTreeViewStyle>
+    <CtrlPanelStyle name="BrowserPanelStyle" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" noDefaultDrawing="true" />
+
+    <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // GLOBAL STYLES
+    // These styles are used globally through out Guru2.
+	// DO NOT ALTER THE "EMPTY PANEL STYLE!" 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+
+    <CtrlPanelStyle name="EmptyPanelStyle" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]"   intSmartTileEdgeSize="5" intRoundedRectRadius="0" noDefaultDrawing="true" />
+    <CtrlPanelStyle name="ModalPanelStyle" colBorder="[r:18 g:25 b:60 a:0]" colFill="[r:237 g:237 b:237 a:255]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" noDefaultDrawing="false" />
+    <CtrlPanelStyle name="BluePanelStyle"  colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:112 g:139 b:161 a:255]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" noDefaultDrawing="false" />
+    <CtrlPanelStyle name="FXGlobalBackgroundPanelStyle" imBackground="Effects/FXGlobalBackground.png"  colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]"   intSmartTileEdgeSize="5" intRoundedRectRadius="0" noDefaultDrawing="true" />
+    <CtrlPanelStyle name="ModalPanelCollectionStyle" colBorder="[r:137 g:137 b:137 a:255]" colFill="[r:229 g:229 b:229 a:255]" intSmartTileEdgeSize="5" intRoundedRectRadius="5" />
+    <CtrlPanelStyle name="ModalPanelTitleStyle" colBorder="[r:150 g:150 b:150 a:255]" colFill="[r:150 g:150 b:150 a:255]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="ModalPanelBackgroundStyle" colBorder="[r:150 g:150 b:150 a:255]" colFill="[r:150 g:150 b:150 a:255]" intSmartTileEdgeSize="5" intRoundedRectRadius="5" noDefaultDrawing="false" />
+
+     <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // KNOB STYLES
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+
+    <!-- Hardware small knob going from 0 - 100%. Knobs of this size should be 20px * 20px, in a film strip with 128 stages -->
+    <CtrlKnobStyle name="HardKnobSmallLR" optStripInverted="false" imKnobNormal="Images/Knobs/HARDKnobSmallLR.png" optShiftFineBehaviour="true" optXFineBehaviour="false" macroValueScaler="100" microValueScaler="1000" longDim="26"/>
+    
+    <!-- Hardware large knob going from 0 - 100%. Knobs of this size should be 50px * 50px, in a film strip with 128 stages -->
+    <CtrlKnobStyle name="HardKnobLargeLR" optStripInverted="false" imKnobNormal="Images/Knobs/HARDKnobLargeLR.png" optShiftFineBehaviour="true" optXFineBehaviour="false" macroValueScaler="100" microValueScaler="1000" longDim="75" />
+    
+    <!-- Hardware large knob going from -100% to +100%. Knobs of this size should be 50px * 50px, in a film strip with 128 stages -->
+    <CtrlKnobStyle name="HardKnobLargeC" optStripInverted="false" imKnobNormal="Images/Knobs/HARDKnobLargeC.png" optShiftFineBehaviour="true" optXFineBehaviour="false" macroValueScaler="100" microValueScaler="1000" longDim="75" />
+
+    <!-- Software small knob going from 0 - 100%. Knobs of this size should be 20px * 20px, in a film strip with 128 stages -->
+    <CtrlKnobStyle name="LEDKnobMicroLR" optStripInverted="false" imKnobNormal="Images/Knobs/LEDKnobMicroLR.png" optShiftFineBehaviour="true" optXFineBehaviour="false" macroValueScaler="100" microValueScaler="1000" longDim="17" />
+
+    <!-- Software small knob going from 0 - 100%. Knobs of this size should be 20px * 20px, in a film strip with 128 stages -->
+    <CtrlKnobStyle name="LEDKnobSmallLR" optStripInverted="false" imKnobNormal="Images/Knobs/LEDKnobSmallLR.png" optShiftFineBehaviour="true" optXFineBehaviour="false" macroValueScaler="100" microValueScaler="1000" longDim="26" />
+    
+    <!-- Software large knob going from 0 - 100%. Knobs of this size should be 50px * 50px, in a film strip with 128 stages -->
+    <CtrlKnobStyle name="LEDKnobLargeLR" optStripInverted="false" imKnobNormal="Images/Knobs/LEDKnobLargeLR.png" optShiftFineBehaviour="true" optXFineBehaviour="false" macroValueScaler="100" microValueScaler="1000" longDim="46" />
+    
+    <!-- Software large knob going from -100% to +100%. Knobs of this size should be 50px * 50px, in a film strip with 128 stages -->
+    <CtrlKnobStyle name="LEDKnobLargeC" optStripInverted="false" imKnobNormal="Images/Knobs/LEDKnobLargeC.png" optShiftFineBehaviour="true" optXFineBehaviour="false" macroValueScaler="100" microValueScaler="1000" longDim="46" />
+    
+    <!-- Spinner style 20px * 20px, in a film strip with 128 stages (the spinner is a progress bar to show indeterminate ends -->
+    <CtrlKnobStyle name="SpinnerStyle" imKnobNormal="Images/Knobs/LEDSpinner.png" />
+    
+    <!-- Spinner style 50px * 50px, in a film strip with 128 stages (the spinner is a progress bar to show indeterminate ends -->
+    <CtrlKnobStyle name="LargeSpinnerStyle" imKnobNormal="Images/Knobs/LEDSpinnerLarge.png" />
+
+    <!--
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // DEFAULT (NON GENERIC) BUTTONS
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+  
+  	<!-- Zoom in and zoom out buttons are 12px * 12px -->
+    <CtrlButtonStyle name="ZoomInButtonStyle" optMomentary="true" optDrawText="false" imDown="Images/Buttons/LEDZoomInDown.png" imUp="Images/Buttons/LEDZoomInUp.png" imDisabled="Images/Buttons/LEDZoomInDisabled.png" />
+    <CtrlButtonStyle name="ZoomOutButtonStyle" optMomentary="true" optDrawText="false" imDown="Images/Buttons/LEDZoomOutDown.png" imUp="Images/Buttons/LEDZoomOutUp.png" imDisabled="Images/Buttons/LEDZoomOutDisabled.png" />
+        
+    <CtrlButtonStyle name="LinkSmallButtonStyle" optMomentary="false" optDrawText="true" imDown="Images/Buttons/LEDLinkButtonDown.png" imUp="Images/Buttons/LEDLinkButtonUp.png" imDisabled="Images/Buttons/LEDLinkButtonDisabled.png" />
+    <CtrlButtonStyle name="LinkLargeButtonStyle" optMomentary="false" optDrawText="true" imDown="Mixer/LinkButtonDown.png" imUp="Mixer/LinkButtonUp.png" imDisabled="Mixer/LinkButtonDisabled.png" />
+    
+    <CtrlButtonStyle name="ZoomOffButtonStyle" optMomentary="false" optDrawText="false" imDown="Images/Buttons/LEDNoZoomDown.png" imUp="Images/Buttons/LEDNoZoomUp.png" />
+    <CtrlButtonStyle name="ZoomStartEndButtonStyle" optMomentary="false" optDrawText="false" imDown="Images/Buttons/LEDZoomStartEndDown.png" imUp="Images/Buttons/LEDZoomStartEndUp.png" />
+    <CtrlButtonStyle name="ZoomStartButtonStyle" optMomentary="false" optDrawText="false" imDown="Images/Buttons/LEDZoomStartDown.png" imUp="Images/Buttons/LEDZoomStartUp.png" />
+    <CtrlButtonStyle name="ZoomEndButtonStyle" optMomentary="false" optDrawText="false" imDown="Images/Buttons/LEDZoomEndDown.png" imUp="Images/Buttons/LEDZoomEndUp.png" />
+
+    <!-- Standard mute / solo buttons. Button of this type should be 20px * 20px -->
+    <CtrlButtonStyle name="LEDMuteButtonStyle" imDown="Images/Buttons/LEDMuteButtonDown.png" imUp="Images/Buttons/LEDMuteButtonUp.png" imDisabled="Images/Buttons/LEDMuteButtonDisabled.png" optMomentary="false" optDrawText="false" colTextOn="[r:210 g:217 b:227 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" />
+    <CtrlButtonStyle name="LEDSoloButtonStyle" imDown="Images/Buttons/LEDSoloButtonDown.png" imUp="Images/Buttons/LEDSoloButtonUp.png" imDisabled="Images/Buttons/LEDSoloButtonDisabled.png" optMomentary="false" optDrawText="false" colTextOn="[r:210 g:217 b:227 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" />
+    <CtrlButtonStyle name="HARDMuteButtonStyle" imDown="Images/Buttons/HARDMuteDown.png" imUp="Images/Buttons/HARDMuteUp.png" imDisabled="Images/Buttons/HARDMuteDisabled.png" optMomentary="false" optDrawText="false" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]" />
+    <CtrlButtonStyle name="HARDSoloButtonStyle" imDown="Images/Buttons/HARDSoloDown.png" imUp="Images/Buttons/HARDSoloUp.png" imDisabled="Images/Buttons/HARDSoloDisabled.png" optMomentary="false" optDrawText="false" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]" />
+
+    <!-- Standard lock, clear and check buttons. Button of this type should be 20px * 20px -->
+    <CtrlButtonStyle name="StandardLockButtonStyle" imDown="Images/Buttons/LEDLockDown.png" imUp="Images/Buttons/LEDLockUp.png" imDisabled="Images/Buttons/LEDLockDisabled.png" optMomentary="false" optDrawText="false" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]" />
+    <CtrlButtonStyle name="StandardClearButtonStyle" imDown="Images/Buttons/LEDClearDown.png" imUp="Images/Buttons/LEDClearUp.png" imDisabled="Images/Buttons/LEDClearDisabled.png" optMomentary="true" optDrawText="false" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]" />
+    <CtrlButtonStyle name="StandardSubtractButtonStyle" imDown="Images/Buttons/LEDSubtractButtonDown.png" imUp="Images/Buttons/LEDSubtractButtonUp.png" imDisabled="Images/Buttons/LEDSubtractButtonDisabled.png" optMomentary="true" optDrawText="false" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]" />
+    <CtrlButtonStyle name="StandardAddButtonStyle" imDown="Images/Buttons/LEDAddButtonDown.png" imUp="Images/Buttons/LEDAddButtonUp.png" imDisabled="Images/Buttons/LEDAddButtonDisabled.png" optMomentary="true" optDrawText="false" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]" />
+    <CtrlButtonStyle name="StandardCheckButtonStyle" imDown="Images/Buttons/LEDCheckDown.png" imUp="Images/Buttons/LEDCheckUp.png" imDisabled="Images/Buttons/LEDCheckDisabled.png" optMomentary="false" optDrawText="false" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]" />
+    
+    <CtrlButtonStyle name="ModalCheckButtonStyle" imDown="Images/Buttons/ModalCheckBoxDown.png" imUp="Images/Buttons/ModalCheckBoxUp.png" imDisabled="Images/Buttons/LEDCheckDisabled.png" optMomentary="false" optDrawText="false" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]" />
+    
+    <CtrlButtonStyle name="x2ButtonStyle" imDown="Images/Buttons/LEDx2ButtonDown.png" imUp="Images/Buttons/LEDx2ButtonUp.png" imDisabled="Images/Buttons/LEDx2ButtonDisabled.png" optMomentary="true" optDrawText="false" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]" />
+    <CtrlButtonStyle name="Div2ButtonStyle" imDown="Images/Buttons/LEDDiv2ButtonDown.png" imUp="Images/Buttons/LEDDiv2ButtonUp.png" imDisabled="Images/Buttons/LEDDiv2ButtonDisabled.png" optMomentary="true" optDrawText="false" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]" />
+
+    <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // RADIO BUTTONS
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    <!-- Standard Radio button styles. Button of this type should be 50px * 20px -->
+    <CtrlButtonStyle name="RadioButtonLeftStyle" imDown="Images/RadioButtons/LEDRadioLargeLeftDown.png" imUp="Images/RadioButtons/LEDRadioLargeLeftUp.png" imDisabled="Images/RadioButtons/LEDRadioLargeLeftDisabled.png" optMomentary="false" optDrawText="true" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="RadioButtonCenterStyle" imDown="Images/RadioButtons/LEDRadioLargeCenterDown.png" imUp="Images/RadioButtons/LEDRadioLargeCenterUp.png" imDisabled="Images/RadioButtons/LEDRadioLargeCenterDisabled.png" optMomentary="false" optDrawText="true" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="RadioButtonRightStyle" imDown="Images/RadioButtons/LEDRadioLargeRightDown.png" imUp="Images/RadioButtons/LEDRadioLargeRightUp.png" imDisabled="Images/RadioButtons/LEDRadioLargeRightDisabled.png" optMomentary="false" optDrawText="true" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    
+    
+    <CtrlButtonStyle name="MicroRadioButtonLeftStyle" imDown="Images/RadioButtons/LEDRadioMicroLeftDown.png" imUp="Images/RadioButtons/LEDRadioMicroLeftUp.png" imDisabled="Images/RadioButtons/LEDRadioMicroLeftDisabled.png" optMomentary="false" optDrawText="true" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="MicroRadioButtonRightStyle" imDown="Images/RadioButtons/LEDRadioMicroRightDown.png" imUp="Images/RadioButtons/LEDRadioMicroRightUp.png" imDisabled="Images/RadioButtons/LEDRadioMicroRightDisabled.png" optMomentary="false" optDrawText="true" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+
+	<!--
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// LABEL STYLES
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	-->
+	
+	<!-- Default label, black text, left aligned -->
+    <CtrlLabelStyle name="StandardLabelStyle" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlLabelStyle>  
+	
+	<!-- Default label, black text, centered -->
+    <CtrlLabelStyle name="StandardLabelCenteredStyle" colText="[r:18 g:25 b:60 a:255]" centeredText="true">
+        <VFont name="font" vSize="12" fontName="Arial" />	
+    </CtrlLabelStyle>  
+    
+    
+    <CtrlLabelStyle name="ModalLabelStyle" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlLabelStyle>  
+	
+	<!-- Default label, black text, centered -->
+    <CtrlLabelStyle name="ModalLabelCenteredStyle" colText="[r:18 g:25 b:60 a:255]" centeredText="true">
+        <VFont name="font" vSize="12" fontName="Arial" />	
+    </CtrlLabelStyle>  
+    
+    <CtrlLabelStyle name="ModalTitleLabelStyle" colText="[r:18 g:25 b:60 a:255]" centeredText="true">
+        <VFont name="font" vSize="18" fontName="Arial" />	
+    </CtrlLabelStyle>  
+    
+    <!-- Default label, black text, right aligned -->
+    <CtrlLabelStyle name="ModalLabelRightAlignedStyle" colText="[r:18 g:25 b:60 a:255]" rightAlignText="true">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlLabelStyle>  
+    
+    
+    <CtrlLabelStyle name="StandardLabelSelectedStyle" colText="[r:210 g:217 b:227 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlLabelStyle> 
+    
+    <!-- Default label, black text, centered -->
+    <CtrlLabelStyle name="StandardLabelCenteredSelectedStyle" colText="[r:210 g:217 b:227 a:255]" centeredText="true">
+        <VFont name="font" vSize="12" fontName="Arial" />	
+    </CtrlLabelStyle>  
+    
+    <CtrlLabelStyle name="StandardFXLabelCenteredStyle" colText="[r:210 g:217 b:227 a:255]" centeredText="true">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlLabelStyle>  
+	
+	<!-- Default label, black text, right aligned -->
+    <CtrlLabelStyle name="StandardLabelRightAlignedStyle" colText="[r:18 g:25 b:60 a:255]" rightAlignText="true">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlLabelStyle>  
+    
+    <!-- Large, 'notification' label, black text, centered -->
+    <CtrlLabelStyle name="StandardLargeLabelCenteredNotificationStyle" colText="[r:18 g:25 b:60 a:255]" centeredText="true">
+        <VFont name="font" vSize="32" fontName="Arial" />
+    </CtrlLabelStyle>
+    
+    <!-- Large, 'notification' label, black text, centered -->
+    <CtrlLabelStyle name="ModalLargeLabelCenteredNotificationStyle" colText="[r:18 g:25 b:60 a:255]" centeredText="true">
+        <VFont name="font" vSize="32" fontName="Arial" />
+    </CtrlLabelStyle>
+    
+    <!-- Large, 'notification' label, black text, centered -->
+    <CtrlLabelStyle name="StandardLargeLabelCenteredNotificationStyleLight" colText="[r:255 g:255 b:255 a:255]" centeredText="true">
+        <VFont name="font" vSize="32" fontName="Arial" />
+    </CtrlLabelStyle>
+
+    
+
+    <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// TABLE STYLES
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+
+    <CtrlTableViewStyle name="GlobalTableStyle" optVSlider="true" optHeader="true" optAltRowColours="true" optColumnDividers="true" optRowDividers="true" colBorder="[r:18 g:25 b:60 a:255]" colFill="[r:0 g:0 b:0 a:0]" colSelect="[r:76 g:83 b:111 a:0]" colRow="[r:169 g:176 b:191 a:80]" colRowAlt="[r:199 g:206 b:217 a:40]" colHeaderBackground="[r:0 g:0 b:0 a:0]" colHeaderSelBackground="[r:148 g:155 b:172 a:175]" colHeaderText="[r:18 g:25 b:60 a:255]" colHeaderDivider="[r:18 g:25 b:60 a:255]" colColumnDivider="[r:18 g:25 b:60 a:255]" colColumnText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTableViewStyle>
+    
+    <CtrlTableViewStyle name="GlobalTableStyleAlwaysVisibleHSlider" optVSlider="true" optHSlider="true" optHeader="true" optAltRowColours="true" optColumnDividers="true" optRowDividers="true" colBorder="[r:18 g:25 b:60 a:255]" colFill="[r:0 g:0 b:0 a:0]" colSelect="[r:197 g:151 b:34 a:120]" colRow="[r:169 g:176 b:191 a:80]" colRowAlt="[r:199 g:206 b:217 a:40]" colHeaderBackground="[r:0 g:0 b:0 a:0]" colHeaderSelBackground="[r:148 g:155 b:172 a:175]" colHeaderText="[r:18 g:25 b:60 a:255]" colHeaderDivider="[r:18 g:25 b:60 a:255]" colColumnDivider="[r:18 g:25 b:60 a:255]" colColumnText="[r:18 g:25 b:60 a:255]">
+	<VFont name="font" vSize="12" fontName="Arial" />
+</CtrlTableViewStyle>
+
+    <!--
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// SCROLLING STYLES
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+ 
+    <!-- Scaling scroll bar fader -->
+    <CtrlSliderStyle name="VerticalScrollbarStyle" optScaleKnob="true" snapSteps="0" fineScale="0.05" incDecButtonMode="off" colBorder="[r:18 g:25 b:60 a:255]" colSlider="[r:18 g:25 b:60 a:255]" colFill="[r:222 g:229 b:237 a:255]" optIsScrollbar="true" />
+    <CtrlSliderStyle name="HorizontalScrollbarStyle" optScaleKnob="true" snapSteps="0" fineScale="0.05" incDecButtonMode="off" colBorder="[r:18 g:25 b:60 a:255]" colSlider="[r:18 g:25 b:60 a:255]" colFill="[r:222 g:229 b:237 a:255]" optIsScrollbar="true" />
+    
+    <!-- Scroll view style -->
+    <CtrlScrollViewStyle name="StandardScrollViewStyle" alwaysShowVSlider="true" alwaysHideHSlider="true" intSmartTileEdgeSize="5" intRoundedRectRadius="0" colBorder="[r:36 g:61 b:88 a:0]" colFill="[r:36 g:61 b:88 a:0]"/>
+    <CtrlScrollViewStyle name="EmptyScrollViewStyle" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" noDefaultDrawing="true" />
+
+    <!--
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// FADER STYLES
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    
+    <CtrlSliderStyle name="FieldEditorHistogramStyle" optHistogram="true" optScaleKnob="true" optXFineBehaviour="true" colSlider="[r:255 g:0 b:0 a:180]" colFill="[r:183 g:191 b:199 a:0]" colBorder="[r:0 g:0 b:0 a:0]" fineScale="0.05" incDecButtonMode="off" />
+    
+    <!-- Small vertical mixer fader style. Sliders of this type should be 20px * 50px -->
+    <CtrlSliderStyle name="SmallVerticalFaderStyle" imBackingStrip="Images/Sliders/LEDSmVSliderBack.png" imKnobOff="Images/Sliders/LEDSmVSliderHeadOff.png" imKnobOn="Images/Sliders/LEDSmVSliderHeadOn.png" noDefaultDrawing="true" optFlipDirection="true" optNoClickOutsideKnobMove="true" optNoClickOutsideKnobPage="true"/>
+    <CtrlSliderStyle name="FatVerticalFaderStyle" imBackingStrip="Images/Sliders/LEDFatSliderBack.png" imKnobOff="Images/Sliders/LEDFatSliderHeadOff.png" imKnobOn="Images/Sliders/LEDFatSliderHeadOn.png" noDefaultDrawing="true" optFlipDirection="true" optNoClickOutsideKnobMove="true" optNoClickOutsideKnobPage="true"/>
+
+    <!--
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// PAN STYLES
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+
+    
+    <!-- Pan slider standard 46px * 12px -->
+    <CtrlPanSliderStyle name="SmallPanStyle" noDefaultDrawing="true" imKnobOff="Images/Pan/LEDSmallPanKnob.png" imKnobOn="Images/Pan/LEDSmallPanKnob.png" imBackingStrip="Images/Pan/LEDSmallPanBase.png" imAltBackingStrip="Images/Pan/LEDSmallPanBaseAlt.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" faderHeadSize="10" optNoClickOutsideKnobMove="true" optNoClickOutsideKnobPage="true"/>
+    <CtrlPanSliderStyle name="LargePanStyle" noDefaultDrawing="true" imKnobOff="Images/Pan/LEDSmallPanKnob.png" imKnobOn="Images/Pan/LEDSmallPanKnob.png" imBackingStrip="Images/Pan/LEDLargePanBase.png" imAltBackingStrip="Images/Pan/LEDLargePanBaseAlt.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" faderHeadSize="10" optNoClickOutsideKnobMove="true" optNoClickOutsideKnobPage="true" />
+    <CtrlPanSliderStyle name="FatPanStyle" noDefaultDrawing="true" imKnobOff="Images/Pan/LEDFatPanKnob.png" imKnobOn="Images/Pan/LEDFatPanKnob.png" imBackingStrip="Images/Pan/LEDFatPanBase.png" imAltBackingStrip="Images/Pan/LEDFatPanBaseAlt.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" faderHeadSize="10" optNoClickOutsideKnobMove="true" optNoClickOutsideKnobPage="true" />
+
+    <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // EDIT BOXES / VALUE BOXES / COMBO BOXES
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+
+    <!-- Software Edit box (editable). Edit box of this type can be variety of sizes, the background image is tiled to match -> Suggest an image of 75px * 20px as a good start -->
+    <CtrlTextBoxStyle name="LEDEditBoxStyle" imBackground="Images/EditBoxes/LEDEditBox.png" optSmartTile="true" optEditable="true" optSendValueWhenFocusLost="true" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]" >
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>
+    <CtrlTextBoxStyle name="ModalEditBoxStyle" optEditable="true" optSendValueWhenFocusLost="true" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:243 g:243 b:243 a:255]" colText="[r:18 g:25 b:60 a:255]" colBorder="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>
+    <CtrlTextBoxStyle name="ModalNonEditableEditBoxStyle" optEditable="false" optSendValueWhenFocusLost="true" optSingleClickEdit="false" optAlphaDisabled="true" colBackground="[r:243 g:243 b:243 a:255]" colText="[r:18 g:25 b:60 a:255]" colBorder="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>
+    
+    <CtrlTextBoxStyle name="LEDEditBoxCenteredStyle" imBackground="Images/EditBoxes/LEDEditBox.png" centeredText="true" optSmartTile="true" optEditable="true" optSendValueWhenFocusLost="true" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>
+    
+    <!-- Software Edit box (non editable). Uses the same image as the style above... -->
+    <CtrlTextBoxStyle name="LEDEditBoxNonEditableStyle" imBackground="Images/EditBoxes/LEDEditBox.png" optSmartTile="true" optEditable="false" optSendValueWhenFocusLost="false" optSingleClickEdit="false" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>
+
+    <!-- Software Combo box. Combo box of this type can be variety of sizes, the background image is tiled to match -> Suggest an image of 75px * 20px as a good start -->
+    <CtrlTextBoxStyle name="LEDComboBoxStyle" imBackground="Images/EditBoxes/LEDComboBox.png" optSmartTile="false" centeredText="false" optEditable="false" dragable="false" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]" clippingRect="[x:2 y:0 w:61 h:17]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle> 
+    <CtrlTextBoxStyle name="ModalComboBoxStyle" centeredText="false" optEditable="false"  optSmartTile="true" dragable="false" optSingleClickEdit="true" colBackground="[r:243 g:243 b:243 a:255]" colText="[r:18 g:25 b:60 a:255]" colBorder="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle> 
+    <CtrlTextBoxStyle name="LEDMediumComboBoxStyle" imBackground="Images/EditBoxes/LEDMediumComboBox.png" optSmartTile="false" centeredText="false" optEditable="false" dragable="false" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]" clippingRect="[x:0 y:0 w:52 h:17]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle> 
+    <CtrlTextBoxStyle name="LEDLargeComboBoxStyle" imBackground="Images/EditBoxes/LEDLargeComboBox.png" optSmartTile="false" centeredText="false" optEditable="false" dragable="false" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]" clippingRect="[x:0 y:0 w:109 h:17]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle> 
+    <CtrlTextBoxStyle name="LEDLargerComboBoxStyle" imBackground="Images/EditBoxes/LEDLargerComboBox.png" optSmartTile="false" centeredText="false" optEditable="false" dragable="false" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]" clippingRect="[x:2 y:0 w:82 h:17]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle> 
+    
+    <CtrlTextBoxStyle name="LEDSmallComboBoxStyle" imBackground="Images/EditBoxes/LEDSmallComboBox.png" optSmartTile="false" centeredText="false" optEditable="false" dragable="false" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]" clippingRect="[x:0 y:0 w:27 h:17]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle> 
+    <CtrlTextBoxStyle name="FieldEditorComboBoxStyle" imBackground="Images/EditBoxes/LEDMediumComboBox.png" optSmartTile="false" centeredText="false" optEditable="false" dragable="false" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]" clippingRect="[x:0 y:0 w:52 h:17]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle> 
+    
+    
+
+	<!-- Value boxes - boxes of this type can be variety of sizes, the background image is tiled to match -->
+
+    <!-- Small value box. Value box of this type should be 50px * 20px -->
+    <CtrlTextBoxStyle name="LEDSmallValueBoxStyle" imBackground="Images/EditBoxes/LEDValueBox.png" optSmartTile="true" centeredText="false" optEditable="true" optSendValueWhenFocusLost="true" dragable="false" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>  
+
+    <!-- Small value box. Value box of this type should be 50px * 20px -->
+    <CtrlTextBoxStyle name="LEDSmallValueBoxCenteredStyle" imBackground="Images/EditBoxes/LEDValueBox.png" optSmartTile="true" centeredText="true" optEditable="true" optSendValueWhenFocusLost="true" dragable="true" optSingleClickEdit="false" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>  
+    
+    <CtrlTextBoxStyle name="LEDSmallNonDragableValueBoxStyle" imBackground="Images/EditBoxes/LEDValueBox.png" optSmartTile="true" centeredText="true" optEditable="true" dragable="false" optSingleClickEdit="true" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>   
+    
+    <CtrlTextBoxStyle name="HardDragableValueBoxStyle" imBackground="Images/EditBoxes/LEDValueBox.png" optSmartTile="true" centeredText="false" optEditable="true" dragable="true" optSingleClickEdit="false" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle> 
+    
+    <CtrlTextBoxStyle name="HardDragableCenteredValueBoxStyle" imBackground="Images/EditBoxes/LEDValueBox.png" optSmartTile="true" centeredText="true" optEditable="true" dragable="true" optSingleClickEdit="false" optAlphaDisabled="true" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle> 
+
+    <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // FX STYLES
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    
+    <CtrlButtonStyle name="NextFXPresetButtonStyle" imDown="Effects/NextPresetButtonDown.png" imUp="Effects/NextPresetButtonUp.png" />
+    <CtrlButtonStyle name="PrevFXPresetButtonStyle" imDown="Effects/PrevPresetButtonDown.png" imUp="Effects/PrevPresetButtonUp.png" />
+    <CtrlButtonStyle name="LargePowerButtonStyle" imDown="Images/Buttons/LargePowerButtonDown.png" imUp="Images/Buttons/LargePowerButtonUp.png" imDisabled="Images/Buttons/LargePowerButtonDisabled.png" optMomentary="false" optDrawText="false" />
+
+    <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // INDICATOR STYLES
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    
+    <!-- Micro indicator style. Indicator of this type should be 15px * 15px -->
+    <CtrlIndicatorStyle name="StandardMicroIndicatorStyle" imOff="Images/Indicators/LEDMicroIndicatorUp.png" imOn="Images/Indicators/LEDMicroIndicatorDown.png" />
+   	<CtrlImageViewStyle name="EmptyImageStyle" optBorder="false" optBackground="false" />
+
+    <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // GENERIC BUTTONS (WE PUT THE TEXT ON THESE!)
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+
+    <!-- Menu buttons style. Button of this type should be 50px * 20px - They are used to popup a menu -->
+    <CtrlButtonStyle name="LEDMenuButtonStyle" imDown="Images/Buttons/LEDMenuButtonDown.png" imUp="Images/Buttons/LEDMenuButtonUp.png" imDisabled="Images/Buttons/LEDMenuButtonDisabled.png" optMomentary="true" optDrawText="true" textOffset="7" optTextLeftJustify="true" colTextOn="[r:222 g:229 b:237 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]" >
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="LEDLargeMenuButtonStyle" imDown="Images/Buttons/LEDLargeMenuButtonDown.png" imUp="Images/Buttons/LEDLargeMenuButtonUp.png" imDisabled="Images/Buttons/LEDLargeMenuButtonDisabled.png" optMomentary="true" optDrawText="true" textOffset="7" optTextLeftJustify="true" colTextOn="[r:222 g:229 b:237 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]" >
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="LEDUltraMenuButtonStyle" imDown="Images/Buttons/LEDUltraMenuButtonDown.png" imUp="Images/Buttons/LEDUltraMenuButtonUp.png" imDisabled="Images/Buttons/LEDUltraMenuButtonDisabled.png" optMomentary="true" optDrawText="true" textOffset="7" optTextLeftJustify="true" colTextOn="[r:222 g:229 b:237 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]" >
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+
+    <!-- Momentary buttons style. Button of this type should be 50px * 20px -->
+    <CtrlButtonStyle name="LEDMomentaryButtonStyle" imDown="Images/Buttons/LEDStandardButtonDown.png" imUp="Images/Buttons/LEDStandardButtonUp.png" imDisabled="Images/Buttons/LEDStandardButtonDisabled.png" optMomentary="true" optDrawText="true" colTextOn="[r:222 g:229 b:237 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]" >
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    
+    
+    <CtrlButtonStyle name="ModalMomentaryButtonStyle" optMomentary="true" optDrawText="true" colFillOff="[r:229 g:229 b:229 a:255]" colFillOn="[r:189 g:196 b:205 a:255]" colBorder="[r:18 g:25 b:60 a:255]" colTextOn="[r:18 g:25 b:60 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]" >
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+
+    <!-- Latching buttons style. Button of this type should be 50px * 20px -->
+    <CtrlButtonStyle name="ModalLatchingButtonStyle" optMomentary="false" optDrawText="true" colFillOff="[r:229 g:229 b:229 a:255]" colFillOn="[r:189 g:196 b:205 a:255]" colBorder="[r:18 g:25 b:60 a:255]" colTextOn="[r:18 g:25 b:60 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]" >
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    
+    <!-- Latching buttons style. Button of this type should be 50px * 20px -->
+    <CtrlButtonStyle name="LEDLatchingButtonStyle" imDown="Images/Buttons/LEDStandardButtonDown.png" imUp="Images/Buttons/LEDStandardButtonUp.png" imDisabled="Images/Buttons/LEDStandardButtonDisabled.png" optMomentary="false" optDrawText="true"  colTextOn="[r:222 g:229 b:237 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" >
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+
+    <!-- Small Momentary buttons style. Button of this type should be 20px * 20px -->
+    <CtrlButtonStyle name="LEDSmallMomentaryButtonStyle" imDown="Images/Buttons/LEDSmallButtonDown.png" imUp="Images/Buttons/LEDSmallButtonUp.png" imDisabled="Images/Buttons/LEDSmallButtonDisabled.png" optMomentary="true" optDrawText="true" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    
+    <!-- Latching buttons style. Button of this type should be 20px * 20px -->
+    <CtrlButtonStyle name="LEDSmallLatchingButtonStyle" imDown="Images/Buttons/LEDSmallButtonDown.png" imUp="Images/Buttons/LEDSmallButtonUp.png" imDisabled="Images/Buttons/LEDSmallButtonDisabled.png" optMomentary="false" optDrawText="true" colTextOn="[r:0 g:0 b:0 a:255]" colTextOff="[r:0 g:0 b:0 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    
+    <!-- MIX Style radio buttons -->
+    
+    
+    
+    <!-- Thin LED buttons, 24px * 20px -->
+    <CtrlButtonStyle name="LEDMixButton" imDown="Mixer/LEDMixButtonDown.png" imUp="Mixer/LEDMixButtonUp.png" optMomentary="false" optDrawText="false" />
+    <CtrlButtonStyle name="LEDSendButton" imDown="Mixer/LEDSendButtonDown.png" imUp="Mixer/LEDSendButtonUp.png" imDisabled="Mixer/LEDSendButtonDisabled.png" optMomentary="false" optDrawText="false" />
+    
+    <CtrlButtonStyle name="LEDMMixButton" imDown="Mixer/LEDMMixButtonDown.png" imUp="Mixer/LEDMMixButtonUp.png" optMomentary="false" optDrawText="false" />
+    <CtrlButtonStyle name="LEDMSendButton" imDown="Mixer/LEDMSendButtonDown.png" imUp="Mixer/LEDMSendButtonUp.png" imDisabled="Mixer/LEDMSendButtonDisabled.png" optMomentary="false" optDrawText="false" />
+    <CtrlButtonStyle name="LEDMSetupButton" imDown="Mixer/LEDMSetupButtonDown.png" imUp="Mixer/LEDMSetupButtonUp.png" optMomentary="false" optDrawText="false" />
+
+    <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // METERS
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+    
+    <!-- DB reduction meter. VU Meter of this type (moving needle) should be 120px * 55px -->
+	<CtrlMeterStyle name="StandardDBReduceMeterStyle" units="dB" unitMarkings="true" leftRangeText="-oo" rightRangeText="0" colUnits="[r:60 g:60 b:60 a:255]" imBackground="Images/Meters/StandardDBVU.png" pivotX="0.5" pivotY="1.10" angleStart="135" angleSize="90" radius="0.90" />
+	
+	<!-- EQ Graph - Should be 120px * 55px -->
+    <CtrlPlotStyle name="EQGraphStyle" imBackground="Images/Meters/EQGraph.png" colBorder="[r:128 g:0 b:128 a:0]" colFill="[r:0 g:0 b:0 a:255]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" lineWidth="2" colLine="[r:0 g:0 b:0 a:255]" plotRectInset="0" />
+   
+
+    <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // VU METERS
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+
+    <CtrlSliderStyle name="VU75Dark"  optHistogram="true" optScaleKnob="true" imBackingStrip="Images/VU/LEDVU75x4DarkOff.png" imAltBackingStrip="Images/VU/LEDVU75x4DarkOn.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" />
+    <CtrlSliderStyle name="VU75Light" optHistogram="true" optScaleKnob="true" imBackingStrip="Images/VU/LEDVU75x4LightOff.png" imAltBackingStrip="Images/VU/LEDVU75x4LightOn.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" />
+    <CtrlSliderStyle name="VU45Dark"  optHistogram="true" optScaleKnob="true" imBackingStrip="Images/VU/LEDVU45x4DarkOff.png" imAltBackingStrip="Images/VU/LEDVU45x4DarkOn.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" />
+    <CtrlSliderStyle name="VU45Light" optHistogram="true" optScaleKnob="true" imBackingStrip="Images/VU/LEDVU45x4LightOff.png" imAltBackingStrip="Images/VU/LEDVU45x4LightOn.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" />
+    <CtrlSliderStyle name="VU106"  optHistogram="true" optScaleKnob="true" imBackingStrip="Images/VU/LEDVU106x4Off.png" imAltBackingStrip="Images/VU/LEDVU106x4On.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" />
+    <CtrlSliderStyle name="HardVU120" optHistogram="true" optScaleKnob="true" imBackingStrip="Images/VU/HARDVU120x5Off.png" imAltBackingStrip="Images/VU/HARDVU120x5On.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" colSlider="[r:236 g:236 b:236 a:255]" />
+    <CtrlSliderStyle name="VU120Horizontal" optHistogram="true" optScaleKnob="true" imBackingStrip="Images/VU/LEDVU120x3Off.png" imAltBackingStrip="Images/VU/LEDVU120x3On.png" snapSteps="0" fineScale="0.05" incDecButtonMode="off" />
+    
+    <!-- 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // CROSS SONG-PANEL STYLES
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    -->
+
+    <!-- Alternate track highlight styles 1 -->
+    <CtrlPanelStyle name="SongTrackPanelStyle0" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:0 g:0 b:0 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0"></CtrlPanelStyle>
+    
+    <!-- Alternate track highlight styles 2 -->
+    <CtrlPanelStyle name="SongTrackPanelStyle1" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:50]" intSmartTileEdgeSize="5" intRoundedRectRadius="0"></CtrlPanelStyle>
+    
+    <!-- Selected track highlight styles -->
+    <CtrlPanelStyle name="SongTrackPanelSelectedStyle" colBorder="[r:232 g:204 b:91 a:0]" colFill="[r:232 g:204 b:91 a:80]" intSmartTileEdgeSize="5" intRoundedRectRadius="0"></CtrlPanelStyle>
+    
+    <!-- Previewing track highlight styles -->
+    <CtrlPanelStyle name="SongTrackPanelPreviewingStyle" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:200 g:0 b:0 a:100]" intSmartTileEdgeSize="5" intRoundedRectRadius="0"></CtrlPanelStyle>
+    
+    
+    
+</root>

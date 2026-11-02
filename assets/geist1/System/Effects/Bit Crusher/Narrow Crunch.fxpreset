@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.21" Level="0.79" Parameter0="0.32" Parameter1="0.72" Parameter2="1.69575e-07" Parameter3="0.64" Parameter4="0.55" Parameter5="1" EffectType="Bit Crusher">
+        <FixedString name="PresetName" string="$U$/Narrow Crunch" />
+    </Effect>
+</root>

@@ -1,0 +1,10 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlKnob name="Control1" style="LEDKnobLargeLR" rect="[x:7 y:44 w:50 h:46]" id="100014" />
+        <CtrlKnob name="Control2" style="LEDKnobLargeLR" rect="[x:71 y:44 w:50 h:46]" id="100016" />
+        <CtrlKnob name="Control3" style="LEDKnobLargeLR" rect="[x:136 y:44 w:50 h:46]" id="100018" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:94 w:50 h:15]" id="100015" text="Frequency" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:71 y:94 w:50 h:15]" id="100017" text="Depth" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:136 y:94 w:50 h:15]" id="100019" text="Spread" />
+    </CtrlPanel>
+</root>

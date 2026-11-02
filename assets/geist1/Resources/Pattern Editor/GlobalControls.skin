@@ -1,0 +1,40 @@
+<root>
+    <CtrlButtonStyle name="NudgeLeftStyle" imDown="NudgeLeftButtonDown.png" imUp="NudgeLeftButtonUp.png" imDisabled="NudgeLeftButtonDisabled.png" />
+    <CtrlButtonStyle name="NudgeRightStyle" imDown="NudgeRightButtonDown.png" imUp="NudgeRightButtonUp.png" imDisabled="NudgeRightButtonDisabled.png" />
+    <CtrlButtonStyle name="MultiTrackStyle" optMomentary="false" imDown="MultiTrackDown.png" imUp="MultiTrackUp.png" imDisabled="MultiTrackDisabled.png" />
+    <CtrlButtonStyle name="SingleTrackStyle" optMomentary="false" imDown="SingleTrackDown.png" imUp="SingleTrackUp.png" imDisabled="SingleTrackDisabled.png" />
+    <CtrlButtonStyle name="DragEditButtonStyle" optDrawText="true" optTextLeftJustify="true" imDown="DragEditButtonDown.png" imUp="DragEditButtonUp.png" imDisabled="DragEditButtonDisabled.png" colTextOn="[r:222 g:229 b:237 a:255]" colTextOff="[r:18 g:25 b:60 a:255]" colTextDisabled="[r:150 g:150 b:150 a:255]" textOffset="2" clippingRect="[x:0 y:0 w:53 h:17]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:815 h:35]" id="0">
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:19 y:0 w:50 h:10]" id="100000" text="Tools" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:91 y:0 w:52 h:10]" id="100002" text="Drag edits..." />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:158 y:0 w:50 h:10]" id="100000" text="View mode" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:261 y:0 w:105 h:10]" id="100001" text="Pattern name" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:369 y:0 w:40 h:10]" id="100007" text="Length" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:414 y:0 w:50 h:10]" id="100003" text="Steps" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:496 y:0 w:50 h:10]" id="100000" text="Play mode" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:574 y:0 w:205 h:10]" id="100000" text="Editing" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:782 y:0 w:30 h:10]" id="100000" text="Nudge" />
+        <CtrlPanel name="ToolsPanel" overloadClass="PatternToolsPanel" rect="[x:3 y:1 w:86 h:35]" id="100000" />
+        <CtrlButton name="DragEditButton" style="DragEditButtonStyle" rect="[x:91 y:11 w:65 h:17]" id="100001" text="Velocity" />
+        <CtrlButtonGroup name="ModeGroup" rect="[x:160 y:11 w:50 h:20]" id="100000">
+            <CtrlButton name="MultiButton" style="MultiTrackStyle" rect="[x:0 y:0 w:24 h:17]" id="100001" displayName="Multi track view" />
+            <CtrlButton name="SingleButton" style="SingleTrackStyle" rect="[x:23 y:0 w:24 h:17]" id="100002" displayName="Multi graph view" />
+        </CtrlButtonGroup>
+        <CtrlButton name="Follow" style="LEDLatchingButtonStyle" rect="[x:210 y:11 w:50 h:17]" id="100000" displayName="Follow playback position" text="Follow" />
+        <CtrlTextBox name="PatternNameBox" style="LEDEditBoxStyle" rect="[x:262 y:11 w:105 h:17]" id="100000" />
+        <CtrlComboBox name="StepLengthCombo" style="LEDSmallComboBoxStyle" rect="[x:369 y:11 w:40 h:17]" id="100004" />
+        <CtrlButton name="MinusButton" style="StandardSubtractButtonStyle" rect="[x:411 y:11 w:15 h:17]" id="100000" displayName="Reduce steps" text="-" />
+        <CtrlValueBox name="LengthBox" style="LEDSmallNonDragableValueBoxStyle" rect="[x:425 y:11 w:30 h:17]" id="100002" />
+        <CtrlButton name="PlusButton" style="StandardAddButtonStyle" rect="[x:454 y:11 w:15 h:17]" id="100001" displayName="Increase steps" text="+" />
+        <CtrlButton name="RestartButton" style="LEDLatchingButtonStyle" rect="[x:471 y:11 w:50 h:17]" id="100001" displayName="Restart pattern from beginning on pattern change" text="Restart" />
+        <CtrlButton name="GateButton" style="LEDLatchingButtonStyle" rect="[x:522 y:11 w:50 h:17]" id="100000" displayName="Pattern requires MIDI trigger to playback" text="Gated" />
+        <CtrlButton name="MonoButton" style="LEDLatchingButtonStyle" rect="[x:574 y:11 w:50 h:17]" id="100001" displayName="Remix mode" text="Remix!" />
+        <CtrlButton name="QuantizeButton" style="LEDMomentaryButtonStyle" rect="[x:626 y:11 w:50 h:17]" id="100000" displayName="Quantize" text="Quantize" />
+        <CtrlButton name="RepeatButton" style="LEDMomentaryButtonStyle" rect="[x:678 y:11 w:50 h:17]" id="100007" displayName="Repeat selected notes / pattern" text="Duplicate" />
+        <CtrlButton name="InsertButton" style="LEDMenuButtonStyle" rect="[x:730 y:11 w:50 h:17]" id="100008" text="Insert" />
+        <CtrlButton name="NudgeBack" style="NudgeLeftStyle" rect="[x:783 y:11 w:15 h:17]" id="100000" displayName="Nudge selected notes / pattern" />
+        <CtrlButton name="NudgeNext" style="NudgeRightStyle" rect="[x:797 y:11 w:15 h:17]" id="100001" displayName="Nudge selected notes / pattern" />
+    </CtrlPanel>
+</root>

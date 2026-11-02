@@ -1,0 +1,14 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2.1" IsActive="true" ChainMix="1">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="0.73" Level="1" Parameter0="0.25" Parameter1="0.26" Parameter2="0.63" Parameter3="0.28" Parameter4="0.597785" Parameter5="0.722" EffectType="Modulated Filter">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0" Parameter1="0.1" Parameter2="1" Parameter3="0" Parameter4="1" Parameter5="0" EffectType="Distortion">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="0.23" Level="1" Parameter0="0.43" Parameter1="1" Parameter2="0.14" Parameter3="0.21" Parameter4="0.389798" Parameter5="0.53" EffectType="Phaser">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="$U$/-UnderWahTer" />
+    </EffectChain>
+</root>

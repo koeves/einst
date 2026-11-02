@@ -1,0 +1,20 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:815 h:395]" id="0">
+        <CtrlPanel name="Channel0" overloadClass="EditorLayerMixerChannel" rect="[x:51 y:232 w:97 h:161]" id="0" />
+        <CtrlPanel name="Channel1" overloadClass="EditorLayerMixerChannel" rect="[x:146 y:232 w:97 h:161]" id="1" />
+        <CtrlPanel name="Channel2" overloadClass="EditorLayerMixerChannel" rect="[x:241 y:232 w:97 h:161]" id="2" />
+        <CtrlPanel name="Channel3" overloadClass="EditorLayerMixerChannel" rect="[x:336 y:232 w:97 h:161]" id="3" />
+        <CtrlPanel name="Channel4" overloadClass="EditorLayerMixerChannel" rect="[x:431 y:232 w:97 h:161]" id="4" />
+        <CtrlPanel name="Channel5" overloadClass="EditorLayerMixerChannel" rect="[x:526 y:232 w:97 h:161]" id="5" />
+        <CtrlPanel name="Channel6" overloadClass="EditorLayerMixerChannel" rect="[x:621 y:232 w:97 h:161]" id="6" />
+        <CtrlPanel name="Channel7" overloadClass="EditorLayerMixerChannel" rect="[x:716 y:232 w:97 h:161]" id="7" />
+        <CtrlButton name="AllLayers" style="LinkLargeButtonStyle" rect="[x:4 y:248 w:46 h:15]" id="100002" displayName="Apply changes to all layers of this pad" text="Layers" />
+        <CtrlButton name="AllPads" style="LinkLargeButtonStyle" rect="[x:4 y:264 w:46 h:15]" id="100000" displayName="Apply changes to all selected layers on all pads (Alt)" text="Pads" />
+        <CtrlButton name="AllGroups" style="LinkLargeButtonStyle" rect="[x:4 y:280 w:46 h:15]" id="100001" displayName="Apply changes to all selected layers on all pads in this group (Alt + Shift)" text="Row" />
+        <CtrlButton name="MixButton" style="LEDMixButton" rect="[x:4 y:296 w:46 h:49]" id="100001" displayName="View mixer" text="Mix" />
+        <CtrlButton name="SendButton" style="LEDSendButton" rect="[x:4 y:344 w:46 h:49]" id="100002" displayName="View aux sends" text="Send" />
+        <CtrlPanel name="FXPanel" overloadClass="EditorEffectChainPanel" rect="[x:1 y:2 w:812 h:245]" id="100009" />
+        <CtrlImageView name="LayerGlue" rect="[x:52 y:233 w:92 h:11]" id="0" image="GlueMedium.png" />
+        <CtrlImageView name="GlueMicro" rect="[x:808 y:235 w:3 h:8]" id="0" image="GlueMicro.png" />
+    </CtrlPanel>
+</root>

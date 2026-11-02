@@ -1,0 +1,14 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlKnob name="Control2" style="LEDKnobLargeLR" rect="[x:71 y:10 w:50 h:46]" id="100019" />
+        <CtrlKnob name="Control1" style="LEDKnobLargeLR" rect="[x:136 y:10 w:50 h:46]" id="100021" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:71 y:60 w:50 h:15]" id="100022" text="Size" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:136 y:60 w:50 h:15]" id="100020" text="Decay" />
+        <CtrlKnob name="Control5" style="LEDKnobLargeLR" rect="[x:7 y:79 w:50 h:46]" id="100027" />
+        <CtrlKnob name="Control3" style="LEDKnobLargeLR" rect="[x:71 y:79 w:50 h:46]" id="100023" />
+        <CtrlKnob name="Control4" style="LEDKnobLargeLR" rect="[x:136 y:79 w:50 h:46]" id="100025" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:6 y:129 w:50 h:15]" id="100028" text="Squeeze" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:71 y:129 w:50 h:15]" id="100024" text="Damp" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:136 y:129 w:50 h:15]" id="100026" text="Pinch" />
+    </CtrlPanel>
+</root>

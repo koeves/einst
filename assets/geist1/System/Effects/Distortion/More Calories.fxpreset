@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.61" Level="0.53" Parameter0="0.333333" Parameter1="0.12" Parameter2="0.75" Parameter3="0.28" Parameter4="0.93" Parameter5="0.99" EffectType="Distortion">
+        <FixedString name="PresetName" string="$U$/More Calories" />
+    </Effect>
+</root>

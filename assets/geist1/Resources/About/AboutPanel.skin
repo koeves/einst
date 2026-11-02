@@ -1,0 +1,14 @@
+<root>
+    <CtrlPanelStyle name="AboutPanelStyle" imBackground="AboutBackground.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlLabelStyle name="AboutLabelStyle" colText="[r:255 g:255 b:255 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" weight="bold" />
+    </CtrlLabelStyle>
+    <CtrlLabelStyle name="AboutRightLabel" rightAlignText="true" colText="[r:255 g:255 b:255 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" weight="bold" />
+    </CtrlLabelStyle>
+    <CtrlPanel name="CtrlPanel" style="AboutPanelStyle" rect="[x:0 y:0 w:654 h:500]" id="0">
+        <CtrlLabel name="VersionLabel" style="AboutLabelStyle" rect="[x:2 y:264 w:250 h:15]" id="100004" text="" />
+        <CtrlLabel name="DateLabel" style="AboutRightLabel" rect="[x:452 y:264 w:200 h:15]" id="100005" text="" />
+        <CtrlPanel name="AboutView" rect="[x:2 y:282 w:650 h:215]" id="100000" />
+    </CtrlPanel>
+</root>

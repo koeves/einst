@@ -1,0 +1,7 @@
+<root>
+    <CtrlPanel name="ChooserPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:291 h:31]" id="0">
+        <CtrlComboBox name="SearchType" style="LEDComboBoxStyle" rect="[x:1 y:7 w:75 h:17]" id="100004" displayName="Click here to set the type of search" />
+        <CtrlComboBox name="SubSearchType" style="LEDComboBoxStyle" rect="[x:83 y:7 w:75 h:17]" id="100004" displayName="Click here to set the sub type of search" />
+        <CtrlTextBox name="SearchTermBox" style="LEDEditBoxStyle" rect="[x:164 y:7 w:125 h:17]" id="100002" displayName="Click here to set the term to search for" />
+    </CtrlPanel>
+</root>

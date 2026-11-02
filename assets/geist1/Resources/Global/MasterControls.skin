@@ -1,0 +1,23 @@
+<root>
+    <CtrlLabelStyle name="GlobalLabelStyle" centeredText="true" colText="[r:112 g:175 b:240 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlLabelStyle>
+    <CtrlImageViewStyle name="StatusStyle" optBorder="false" optBackground="false" />
+    <CtrlButtonStyle name="MIDIIndiStyle" imDown="../Images/Global/MIDIIndiDown.png" imUp="../Images/Global/MIDIIndiUp.png" />
+    <CtrlButtonStyle name="MIDIIndiErrorStyle" imDown="../Images/Global/MIDIIndiError.png" imUp="../Images/Global/MIDIIndiError.png" />
+    <CtrlButtonStyle name="VoiceIndiStyle" imDown="../Images/Global/VoiceIndiDown.png" imUp="../Images/Global/VoiceIndiUp.png" />
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:135 h:156]" id="0">
+        <CtrlImageView name="BackStat" rect="[x:2 y:2 w:132 h:57]" id="0" image="../Images/Global/StatusStripSmall.png" />
+        <CtrlLevelStrip name="MasterVULeft" style="HardVU120" rect="[x:8 y:22 w:120 h:3]" id="100012" />
+        <CtrlLevelStrip name="MasterVURight" style="HardVU120" rect="[x:8 y:26 w:120 h:3]" id="100013" />
+        <CtrlButton name="MIDIIndi" style="MIDIIndiStyle" rect="[x:30 y:32 w:40 h:8]" id="100001" displayName="MIDI activity" />
+        <CtrlButton name="VoiceIndi" style="VoiceIndiStyle" rect="[x:72 y:32 w:40 h:8]" id="100001" displayName="Indicates a voice has been stolen" />
+        <Ctrl name="TapBox" overloadClass="TapTempoBox" rect="[x:5 y:40 w:38 h:16]" id="1" />
+        <CtrlValueBox name="BPMTextBox" overloadClass="TempoBox" rect="[x:42 y:40 w:44 h:16]" id="100003" />
+        <CtrlLabel name="MemoryUsageBox" style="GlobalLabelStyle" rect="[x:89 y:40 w:38 h:16]" id="100006" displayName="Memory usage" text="" />
+        <CtrlKnob name="MasterPitch" style="HardKnobLargeC" rect="[x:7 y:66 w:55 h:75]" id="100000" displayName="Master pitch" />
+        <CtrlKnob name="MasterSlider" style="HardKnobLargeLR" rect="[x:74 y:66 w:55 h:75]" id="100000" displayName="Master gain" />
+        <CtrlImageView name="CtrlImageView" style="StatusStyle" rect="[x:28 y:136 w:12 h:11]" id="100000" image="../Images/Global/MasterTuneIcon.png" />
+        <CtrlImageView name="CtrlImageView" style="StatusStyle" rect="[x:95 y:136 w:12 h:10]" id="100001" image="../Images/Global/MasterVolIcon.png" />
+    </CtrlPanel>
+</root>

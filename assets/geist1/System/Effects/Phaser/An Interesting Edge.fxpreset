@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.08" Level="1" Parameter0="0.883484" Parameter1="1" Parameter2="0.6" Parameter3="0.95" Parameter4="1" Parameter5="1" EffectType="Phaser">
+        <FixedString name="PresetName" string="$U$/An Interesting Edge" />
+    </Effect>
+</root>

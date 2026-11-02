@@ -1,0 +1,30 @@
+<root>
+    <CtrlTextBoxStyle name="SearchBoxStyle" optEditable="true" optNoBackground="true" optSingleClickEdit="true" optSendValueWhenFocusLost="true" optSmartTile="true">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>
+    <CtrlButtonStyle name="AdvancedFindButtonStyle" optMomentary="false" optDrawText="true" />
+    <CtrlButtonStyle name="SearchOptionsStyle" imDown="SearchOptionsDown.png" imUp="SearchOptionsUp.png" />
+    <CtrlButtonStyle name="BrowserNextFileButtonStyle" imDown="NextFileDown.png" imUp="NextFileUp.png" />
+    <CtrlButtonStyle name="BrowserPrevFileButtonStyle" imDown="PrevFileDown.png" imUp="PrevFileUp.png" />
+    <CtrlButtonStyle name="BrowserNextLocationButtonStyle" imDown="NextDown.png" imUp="NextUp.png" imDisabled="NextDisabled.png" />
+    <CtrlButtonStyle name="BrowserPrevLocationButtonStyle" imDown="PrevDown.png" imUp="PrevUp.png" imDisabled="PrevDisabled.png" />
+    <CtrlButtonStyle name="RefreshButtonStyle" imDown="RefreshButtonDown.png" imUp="RefreshButtonUp.png" />
+    <CtrlImageViewStyle name="StupidImageStyle" optBorder="false" imBackground="SearchBox.png" />
+    <CtrlButtonStyle name="EnterButtonStyle" imDown="EnterButtonDown.png" imUp="EnterButtonUp.png" />
+    <CtrlButtonStyle name="BrowserParentButtonStyle" imDown="ParentButtonDown.png" imUp="ParentButtonUp.png" />
+    <CtrlImageViewStyle name="NavButtonBackgroundStyle" optBorder="false" optBackground="false" />
+    <CtrlPanel name="ChooserPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:295 h:25]" id="0">
+   		<CtrlImageView name="NavLocationImage" style="NavButtonBackgroundStyle" rect="[x:2 y:1 w:56 h:24]" id="100000" image="NavigationBackground.png" />
+        <CtrlButton name="PrevLocnButton" style="BrowserPrevLocationButtonStyle" rect="[x:3 y:2 w:14 h:21]" id="100000" displayName="Return to the previous folder" text="&lt;" />
+        <CtrlButton name="PrevFileButton" style="BrowserPrevFileButtonStyle" rect="[x:18 y:2 w:24 h:10]" id="100000" displayName="Move to the previous file" text="^" />
+        <CtrlButton name="NextFileButton" style="BrowserNextFileButtonStyle" rect="[x:18 y:13 w:24 h:10]" id="100000" displayName="Move to the next file" text="v" />
+        <CtrlButton name="NextLocnButton" style="BrowserNextLocationButtonStyle" rect="[x:43 y:2 w:14 h:21]" id="100000" displayName="Move to the next folder" text="&gt;" />
+        <CtrlButton name="EnterButton" style="EnterButtonStyle" rect="[x:60 y:1 w:23 h:24]" id="100000" displayName="Enter the selected folder" />
+        <CtrlButton name="ParentButton" style="BrowserParentButtonStyle" rect="[x:84 y:1 w:23 h:24]" id="100000" displayName="Navigate to the parent of the current directory" />
+        <CtrlButton name="RefreshButton" style="RefreshButtonStyle" rect="[x:108 y:1 w:23 h:24]" id="100000" displayName="Refresh current file list" text="Refresh" />
+        <CtrlKnob name="Spinner" style="SpinnerStyle" rect="[x:138 y:2 w:20 h:20]" id="100001" />
+        <CtrlImageView name="CtrlImageView" style="StupidImageStyle" rect="[x:161 y:1 w:126 h:24]" id="100006" />
+        <CtrlSearchTextBox name="SearchBox" style="SearchBoxStyle" rect="[x:180 y:3 w:105 h:18]" id="0" />
+        <CtrlButton name="SearchOptionsButton" style="SearchOptionsStyle" rect="[x:165 y:7 w:14 h:11]" id="0" displayName="Alter search settings" />
+    </CtrlPanel>
+</root>

@@ -1,0 +1,64 @@
+<root>
+    <CtrlButtonStyle name="SnapshotToNextButtonStyle" imDown="ScenePageSnapshotNextButtonDown.png" imUp="ScenePageSnapshotNextButtonUp.png" />
+    <CtrlButtonStyle name="SceneClearAllButtonStyle" imDown="ScenePageClearAllButtonDown.png" imUp="ScenePageClearAllButtonUp.png" />
+    <CtrlButtonStyle name="SceneRowUpButtonStyle" imDown="SceneRowUpButtonOn.png" imUp="SceneRowUpButtonOff.png" />
+    <CtrlButtonStyle name="SceneRowDownButtonStyle" imDown="SceneRowDownButtonOn.png" imUp="SceneRowDownButtonOff.png" />
+    <CtrlButtonStyle name="ScenePageUpButtonStyle" imDown="ScenePageUpButtonOn.png" imUp="ScenePageUpButtonOff.png" />
+    <CtrlButtonStyle name="ScenePageDownButtonStyle" imDown="ScenePageDownButtonOn.png" imUp="ScenePageDownButtonOff.png" />
+    <CtrlButtonStyle name="PrevSceneButtonStyle" optSendOnMouseDown="true" imDown="PreviousSceneButtonDown.png" imUp="PreviousSceneButtonUp.png" imDisabled="PreviousSceneButtonDisabled.png" />
+    <CtrlButtonStyle name="NextSceneButtonStyle" optSendOnMouseDown="true" imDown="NextSceneButtonDown.png" imUp="NextSceneButtonUp.png" imDisabled="NextSceneButtonDisabled.png" />
+    <CtrlButtonStyle name="MiniSceneEvenButtonStyle" colBorder="[r:18 g:25 b:60 a:100]" colFillOn="[r:18 g:25 b:60 a:255]" colFillOff="[r:199 g:206 b:217 a:255]" />
+    <CtrlButtonStyle name="MiniSceneOddButtonStyle" colBorder="[r:18 g:25 b:60 a:100]" colFillOn="[r:18 g:25 b:60 a:255]" colFillOff="[r:199 g:206 b:217 a:255]" />
+    <CtrlSliderStyle name="SceneViewSliderStyle" optFlipDirection="true" optScaleKnob="true" colBorder="[r:18 g:25 b:60 a:255]" colSlider="[r:232 g:239 b:247 a:120]" colFill="[r:199 g:206 b:217 a:0]" snapSteps="15" fineScale="0.05" incDecButtonMode="off">
+        <VFont name="font" vSize="10" fontName="Arial" />
+    </CtrlSliderStyle>
+    <CtrlPanelStyle name="ScenePanelBackgroundStyle" imBackground="ScenePageBackground.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanel name="CtrlPanel" style="ScenePanelBackgroundStyle" rect="[x:30 y:22 w:820 h:395]" id="0">
+        <CtrlPanel style="EmptyPanelStyle" rect="[x:2 y:2 w:811 h:390]" id="0">
+            <CtrlButton name="SnapshotToNextButton" overloadClass="FlashingButton" style="SnapshotToNextButtonStyle" rect="[x:15 y:19 w:40 h:41]" id="100028" displayName="Snapshot to next free Scene" text="Snapshot Next" />
+            <CtrlButton name="TriggerPrevSceneButton" overloadClass="FlashingButton" style="PrevSceneButtonStyle" rect="[x:186 y:19 w:40 h:41]" id="100028" displayName="Trigger previous Scene" text="&lt;" />
+            <CtrlButton name="TriggerNextSceneButton" overloadClass="FlashingButton" style="NextSceneButtonStyle" rect="[x:229 y:19 w:40 h:41]" id="100028" displayName="Trigger next Scene" text="&gt;" />
+            <CtrlButton name="ClearAllButton" overloadClass="FlashingButton" style="SceneClearAllButtonStyle" rect="[x:402 y:19 w:40 h:41]" id="100028" displayName="Clear all Scenes" text="Clear All" />
+            <CtrlPanel name="ScenesPanel" style="EmptyPanelStyle" rect="[x:18 y:66 w:420 h:300]" id="100006">
+                <CtrlPanel name="Scene12" style="EmptyPanelStyle" rect="[x:1 y:1 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene13" style="EmptyPanelStyle" rect="[x:105 y:1 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene14" style="EmptyPanelStyle" rect="[x:209 y:1 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene15" style="EmptyPanelStyle" rect="[x:313 y:1 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene8" style="EmptyPanelStyle" rect="[x:1 y:75 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene9" style="EmptyPanelStyle" rect="[x:105 y:75 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene10" style="EmptyPanelStyle" rect="[x:209 y:75 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene11" style="EmptyPanelStyle" rect="[x:313 y:75 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene4" style="EmptyPanelStyle" rect="[x:1 y:149 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene5" style="EmptyPanelStyle" rect="[x:105 y:149 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene6" style="EmptyPanelStyle" rect="[x:209 y:149 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene7" style="EmptyPanelStyle" rect="[x:313 y:149 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene0" style="EmptyPanelStyle" rect="[x:1 y:223 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene1" style="EmptyPanelStyle" rect="[x:105 y:223 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene2" style="EmptyPanelStyle" rect="[x:209 y:223 w:105 h:75]" id="100002" />
+                <CtrlPanel name="Scene3" style="EmptyPanelStyle" rect="[x:313 y:223 w:105 h:75]" id="100002" />
+            </CtrlPanel>
+            <CtrlButton name="PageUpButton" overloadClass="FlashingButton" style="ScenePageUpButtonStyle" rect="[x:454 y:67 w:26 h:20]" id="100028" displayName="Scroll up one page" />
+            <CtrlButton name="RowUpButton" overloadClass="FlashingButton" style="SceneRowUpButtonStyle" rect="[x:454 y:88 w:26 h:20]" id="100028" displayName="Scroll up one row" />
+            <CtrlPanel name="ScrollArea" rect="[x:449 y:112 w:35 h:212]" id="100000">
+                <CtrlButton name="MiniSceneEven" style="MiniSceneEvenButtonStyle" rect="[x:3 y:3 w:8 h:8]" id="100003" />
+                <CtrlButton name="MiniSceneOdd" style="MiniSceneOddButtonStyle" rect="[x:3 y:19 w:8 h:8]" id="100003" />
+            </CtrlPanel>
+            <CtrlButton name="RowDownButton" overloadClass="FlashingButton" style="SceneRowDownButtonStyle" rect="[x:454 y:328 w:26 h:20]" id="100028" displayName="Scroll down one row" />
+            <CtrlButton name="PageDownButton" overloadClass="FlashingButton" style="ScenePageDownButtonStyle" rect="[x:454 y:349 w:26 h:20]" id="100028" displayName="Scroll down one page" />
+            <CtrlSlider name="ViewSlider" style="SceneViewSliderStyle" rect="[x:447 y:110 w:39 h:216]" id="100004" zorder="2" />
+        </CtrlPanel>
+        <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:504 y:18 w:301 h:254]" id="100009">
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:68 y:20 w:175 h:15]" id="100000" text="Start Mode" />
+            <CtrlButtonGroup name="StartModeButtonGroup" rect="[x:60 y:33 w:190 h:29]" id="100003" displayName="Select Start Mode">
+                <CtrlButton name="ImmediateButton" overloadClass="FlashingButton" style="RadioButtonLeftStyle" rect="[x:8 y:4 w:60 h:17]" id="1" displayName="Start Scene immediately" text="Immediate" />
+                <CtrlButton name="NextBeatButton" overloadClass="FlashingButton" style="RadioButtonCenterStyle" rect="[x:66 y:4 w:60 h:17]" id="1" displayName="Start Scene on next beat" text="Next Beat" />
+                <CtrlButton name="NextBarButton" overloadClass="FlashingButton" style="RadioButtonRightStyle" rect="[x:124 y:4 w:60 h:17]" id="0" displayName="Start Scene on next bar" text="Next Bar" />
+            </CtrlButtonGroup>
+            <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:68 y:64 w:175 h:15]" id="100000" text="Name" />
+            <CtrlTextBox name="NameTextBox" style="LEDEditBoxStyle" rect="[x:68 y:81 w:175 h:17]" id="100001" />
+            <CtrlTableView name="DetailsTable" style="GlobalTableStyle" rect="[x:3 y:116 w:290 h:135]" id="100000">
+                <CtrlScrollView name="ScrollView" rect="[x:0 y:15 w:290 h:120]" id="0" />
+            </CtrlTableView>
+        </CtrlPanel>
+    </CtrlPanel>
+</root>

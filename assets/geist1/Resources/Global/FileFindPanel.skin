@@ -1,0 +1,19 @@
+<root>
+    <CtrlListBoxStyle name="FindFileListBoxStyle" optNotEditable="true" optNoSelection="true" colText="[r:18 g:25 b:60 a:255]" colBorder="[r:18 g:25 b:60 a:255]" colFill="[r:255 g:255 b:255 a:0]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlListBoxStyle>
+    <CtrlPanel name="CtrlPanel" style="ModalPanelStyle" rect="[x:0 y:0 w:390 h:410]" id="0">
+        <CtrlPanel name="HoldingPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:390 h:410]" id="0">
+            <CtrlLabel name="CtrlLabel" style="ModalLabelStyle" rect="[x:20 y:2 w:350 h:20]" id="100003" text="The listed audio files could not be found whilst loading" />
+            <CtrlListBox name="FileList" style="FindFileListBoxStyle" rect="[x:3 y:24 w:382 h:350]" id="100002" />
+            <CtrlButton name="IgnoreButton" style="ModalMomentaryButtonStyle" rect="[x:115 y:383 w:50 h:17]" id="100004" text="Close" />
+            <CtrlButton name="ManualButton" style="ModalMomentaryButtonStyle" rect="[x:168 y:383 w:50 h:17]" id="100006" text="Manual" />
+            <CtrlButton name="AutoButton" style="ModalMomentaryButtonStyle" rect="[x:221 y:383 w:50 h:17]" id="100005" text="Auto" />
+        </CtrlPanel>
+        <CtrlPanel name="ScanningPanel" style="EmptyPanelStyle" rect="[x:19 y:24 w:350 h:60]" id="0">
+            <CtrlLabel name="CtrlLabel" style="ModalLabelStyle" rect="[x:3 y:2 w:85 h:20]" id="100004" text="Currently scanning" />
+            <CtrlLabel name="ScanLabel" style="ModalLabelStyle" rect="[x:98 y:2 w:250 h:20]" id="100003" text="" />
+            <CtrlButton name="AbortButton" style="ModalMomentaryButtonStyle" rect="[x:143 y:31 w:50 h:17]" id="100002" text="Abort" />
+        </CtrlPanel>
+    </CtrlPanel>
+</root>

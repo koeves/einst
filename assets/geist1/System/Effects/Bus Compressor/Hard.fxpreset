@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.390578" Parameter1="0.16" Parameter2="1" Parameter3="0.09" Parameter4="0.78" Parameter5="0" EffectType="Bus Compressor">
+        <FixedString name="PresetName" string="Hard" />
+    </Effect>
+</root>

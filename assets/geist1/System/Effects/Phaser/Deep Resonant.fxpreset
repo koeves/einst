@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.51" Level="1" Parameter0="0.363484" Parameter1="0.571429" Parameter2="0.44" Parameter3="0.24" Parameter4="0.0797981" Parameter5="0.67" EffectType="Phaser">
+        <FixedString name="PresetName" string="Deep Resonant" />
+    </Effect>
+</root>

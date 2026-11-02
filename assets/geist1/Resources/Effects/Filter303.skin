@@ -1,0 +1,12 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlComboBox name="Control2" style="LEDComboBoxStyle" rect="[x:59 y:16 w:75 h:17]" id="100002" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:59 y:37 w:75 h:15]" id="100010" text="Mode" />
+        <CtrlKnob name="Control3" style="LEDKnobLargeLR" rect="[x:71 y:68 w:50 h:46]" id="100021" displayName="Pitch" />
+        <CtrlKnob name="Control4" style="LEDKnobLargeLR" rect="[x:136 y:68 w:50 h:46]" id="100012" displayName="Resonance" />
+        <CtrlKnob name="Control1" style="LEDKnobLargeLR" rect="[x:7 y:68 w:50 h:46]" id="100020" displayName="Drive" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:71 y:118 w:50 h:15]" id="100027" text="Pitch" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:136 y:118 w:50 h:15]" id="100015" text="Resonance" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:7 y:118 w:50 h:15]" id="100026" text="Input Drive" />
+    </CtrlPanel>
+</root>

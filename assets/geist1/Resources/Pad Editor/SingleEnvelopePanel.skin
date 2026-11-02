@@ -1,0 +1,33 @@
+<root>
+    <CtrlTextBoxStyle name="EnvLearnBoxStyle" colBackground="[r:92 g:92 b:92 a:0]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlTextBoxStyle>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:131 h:185]" id="0">
+        <CtrlButton name="TrackPitchButton" style="StandardCheckButtonStyle" rect="[x:20 y:1 w:15 h:17]" id="100002" displayName="Hold time tracks wave length" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:35 y:2 w:75 h:17]" id="100003" text="Envs track length" />
+        <CtrlTextBox name="AALL" style="EnvLearnBoxStyle" rect="[x:20 y:44 w:40 h:15]" id="100005" />
+        <CtrlTextBox name="ADLL" style="EnvLearnBoxStyle" rect="[x:59 y:44 w:40 h:15]" id="100006" />
+        <CtrlComboBox name="AmpEnvDest1Combo" style="LEDComboBoxStyle" rect="[x:22 y:46 w:75 h:17]" id="100026" />
+        <CtrlKnob name="AmpEnvDepth1Knob" style="LEDKnobMicroLR" rect="[x:107 y:46 w:17 h:17]" id="100029" displayName="Amp Env Depth 1" />
+        <CtrlTextBox name="ASLL" style="EnvLearnBoxStyle" rect="[x:20 y:58 w:40 h:15]" id="100007" />
+        <CtrlTextBox name="AHLL" style="EnvLearnBoxStyle" rect="[x:59 y:58 w:40 h:15]" id="100000" />
+        <CtrlComboBox name="AmpEnvDest2Combo" style="LEDComboBoxStyle" rect="[x:22 y:67 w:75 h:17]" id="100033" />
+        <CtrlKnob name="AmpEnvDepth2Knob" style="LEDKnobMicroLR" rect="[x:107 y:67 w:17 h:17]" id="100036" displayName="Amp Env Depth 2" />
+        <CtrlTextBox name="ARLL" style="EnvLearnBoxStyle" rect="[x:20 y:72 w:40 h:15]" id="100008" />
+        <CtrlTextBox name="AACLL" style="EnvLearnBoxStyle" rect="[x:59 y:72 w:40 h:15]" id="100009" />
+        <CtrlTextBox name="ADCLL" style="EnvLearnBoxStyle" rect="[x:20 y:86 w:40 h:15]" id="100010" />
+        <CtrlTextBox name="ARCLL" style="EnvLearnBoxStyle" rect="[x:59 y:86 w:40 h:15]" id="100011" />
+        <CtrlTextBox name="FALL" style="EnvLearnBoxStyle" rect="[x:20 y:124 w:40 h:15]" id="100005" />
+        <CtrlTextBox name="FDLL" style="EnvLearnBoxStyle" rect="[x:59 y:124 w:40 h:15]" id="100006" />
+        <CtrlComboBox name="FreeEnvDest1Combo" style="LEDComboBoxStyle" rect="[x:22 y:126 w:75 h:17]" id="100064" />
+        <CtrlKnob name="FreeEnvDepth1Knob" style="LEDKnobMicroLR" rect="[x:108 y:126 w:17 h:17]" id="100066" displayName="Free Env Depth 1" />
+        <CtrlTextBox name="FSLL" style="EnvLearnBoxStyle" rect="[x:20 y:138 w:40 h:15]" id="100007" />
+        <CtrlTextBox name="FHLL" style="EnvLearnBoxStyle" rect="[x:59 y:138 w:40 h:15]" id="100001" />
+        <CtrlComboBox name="FreeEnvDest2Combo" style="LEDComboBoxStyle" rect="[x:22 y:147 w:75 h:17]" id="100068" />
+        <CtrlKnob name="FreeEnvDepth2Knob" style="LEDKnobMicroLR" rect="[x:108 y:147 w:17 h:17]" id="100069" displayName="Free Env Depth 2" />
+        <CtrlTextBox name="FRLL" style="EnvLearnBoxStyle" rect="[x:20 y:152 w:40 h:15]" id="100008" />
+        <CtrlTextBox name="FACLL" style="EnvLearnBoxStyle" rect="[x:59 y:152 w:40 h:15]" id="100009" />
+        <CtrlTextBox name="FDCLL" style="EnvLearnBoxStyle" rect="[x:20 y:166 w:40 h:15]" id="100010" />
+        <CtrlTextBox name="FRCLL" style="EnvLearnBoxStyle" rect="[x:59 y:166 w:40 h:15]" id="100011" />
+    </CtrlPanel>
+</root>

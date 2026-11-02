@@ -1,0 +1,15 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlMeter name="DasMeter" style="StandardDBReduceMeterStyle" rect="[x:43 y:2 w:107 h:50]" id="100031" />
+        <CtrlComboBox name="Control4" style="LEDSmallComboBoxStyle" rect="[x:76 y:57 w:40 h:17]" id="100029" />
+        <CtrlKnob name="Control2" style="LEDKnobSmallLR" rect="[x:17 y:78 w:24 h:26]" id="100021" />
+        <CtrlKnob name="Control3" style="LEDKnobSmallLR" rect="[x:152 y:78 w:24 h:26]" id="100011" />
+        <CtrlKnob name="Control1" style="LEDKnobSmallLR" rect="[x:62 y:107 w:24 h:26]" id="100009" />
+        <CtrlKnob name="Control5" style="LEDKnobSmallLR" rect="[x:106 y:107 w:24 h:26]" id="100020" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:76 y:78 w:40 h:15]" id="100030" text="Ratio" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:11 y:108 w:35 h:15]" id="100027" text="Attack" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:55 y:137 w:35 h:15]" id="100010" text="Input" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:101 y:137 w:35 h:15]" id="100026" text="Output" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:145 y:108 w:40 h:15]" id="100014" text="Release" />
+    </CtrlPanel>
+</root>

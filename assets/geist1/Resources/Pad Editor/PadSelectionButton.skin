@@ -1,0 +1,21 @@
+<root>
+    <CtrlButtonStyle name="FlashingButtonLayerStyle" optNoGraphics="true" />
+    <CtrlPanelStyle name="PadSelectionButtonNotSelectedStyle" imBackground="PadSelectionNotSelectedBackground.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="PadSelectionButtonPrimaryStyle" imBackground="PadSelectionPrimaryBackground.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlTextBoxStyle name="LEDEditBoxSelectionStyle" optEditable="true" optSingleClickEdit="true" optSendValueWhenFocusLost="true" optSmartTile="true" imBackground="../Images/EditBoxes/LEDEditBox.png" colBackground="[r:222 g:229 b:237 a:255]" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="9" fontName="Arial" />
+    </CtrlTextBoxStyle>
+    <CtrlPanel name="CtrlPanel" style="PadSelectionButtonNotSelectedStyle" rect="[x:0 y:0 w:144 h:70]" id="0">
+        <CtrlButton name="AllLayers" style="LinkSmallButtonStyle" rect="[x:5 y:4 w:40 h:17]" id="100000" displayName="Apply changes to all layers of this pad" text="Layers" />
+        <CtrlButton name="AllPads" style="LinkSmallButtonStyle" rect="[x:47 y:4 w:40 h:17]" id="100000" displayName="Apply changes to all selected layers on all pads (Alt)" text="Pads" />
+        <CtrlButton name="AllGroups" style="LinkSmallButtonStyle" rect="[x:89 y:4 w:40 h:17]" id="100003" displayName="Apply changes to all selected layers on all pads in this group (Alt + Shift)" text="Row" />
+        <CtrlTextBox name="PadLabel" style="LEDEditBoxSelectionStyle" rect="[x:4 y:27 w:125 h:17]" id="100009" />
+        <CtrlButton name="Mute" style="LEDMuteButtonStyle" rect="[x:4 y:45 w:19 h:17]" id="100000" displayName="Mute" text="M" />
+        <CtrlButton name="Solo" style="LEDSoloButtonStyle" rect="[x:24 y:45 w:19 h:17]" id="100001" displayName="Solo" text="S" />
+        <CtrlButton name="Clear" style="StandardClearButtonStyle" rect="[x:44 y:45 w:19 h:17]" id="100016" displayName="Clear" text="X" />
+        <CtrlButton name="Lock" style="StandardLockButtonStyle" rect="[x:64 y:45 w:19 h:17]" id="100017" displayName="Lock" text="L" />
+        <CtrlLevelStrip name="VULeft" style="VU45Dark" rect="[x:84 y:46 w:45 h:4]" id="100019" />
+        <CtrlLevelStrip name="VURight" style="VU45Dark" rect="[x:84 y:51 w:45 h:4]" id="100018" />
+        <CtrlButton name="Trigger" overloadClass="SingleFlashButton" style="FlashingButtonLayerStyle" rect="[x:84 y:56 w:45 h:6]" id="100001" />
+    </CtrlPanel>
+</root>

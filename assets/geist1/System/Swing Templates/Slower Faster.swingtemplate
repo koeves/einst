@@ -1,0 +1,12 @@
+<root>
+    <SwingTemplate name="SwingTemplate" Ver="2" NumberOfSteps="16"
+
+S0="0.0" S1="0.02" S2="0.06" S3="0.12"
+S4="0.20" S5="0.30" S6="0.42" S7="0.56"
+S8="0.56" S9="0.42" S10="0.30" S11="0.20"
+S12="0.12" S13="0.06" S14="0.02" S15="0.0"
+
+>
+        <FixedString name="SwingTemplateName" string="Slower Faster" />
+    </SwingTemplate>
+</root>

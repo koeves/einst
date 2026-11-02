@@ -1,0 +1,39 @@
+<root>
+    <CtrlPanelStyle name="PadControlsBackgroundStyle" imBackground="PadControlsBackground.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanel name="CtrlPanel" style="PadControlsBackgroundStyle" rect="[x:0 y:0 w:682 h:396]" id="0">
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:25 y:12 w:75 h:15]" id="100001" text="Pan" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:551 y:12 w:95 h:15]" id="100005" text="Layer play mode" />
+        <CtrlPanSlider name="Pan" style="FatPanStyle" rect="[x:25 y:28 w:73 h:12]" id="100000" displayName="Pan" />
+        <CtrlButton name="Auto" style="LEDMomentaryButtonStyle" rect="[x:499 y:28 w:50 h:17]" id="100014" text="Auto" />
+        <CtrlComboBox name="SelModeCombo" style="LEDLargerComboBoxStyle" rect="[x:551 y:28 w:95 h:17]" id="100009" displayName="Layer play mode" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:24 y:49 w:32 h:15]" id="100006" text="Gain" />
+        <CtrlImageView name="CtrlImageView" rect="[x:138 y:53 w:508 h:10]" id="100000" image="GraphMarkers.png" />
+        <CtrlPanel name="Split0" overloadClass="EditorSplitControl" rect="[x:138 y:62 w:508 h:40]" id="100002" displayName="Layer 1 Velocity range" />
+        <CtrlKnob name="Send1" style="LEDKnobSmallLR" rect="[x:82 y:64 w:24 h:26]" id="100016" displayName="Send 1" />
+        <CtrlSlider name="Gain" style="FatVerticalFaderStyle" rect="[x:24 y:65 w:18 h:106]" id="100000" displayName="Gain" />
+        <CtrlLevelStrip name="VULeft" style="VU106" rect="[x:47 y:65 w:4 h:106]" id="100012" />
+        <CtrlLevelStrip name="VURight" style="VU106" rect="[x:52 y:65 w:4 h:106]" id="100013" />
+        <CtrlImageView name="SendImage0" style="EmptyImageStyle" rect="[x:62 y:68 w:16 h:18]" id="0" image="SendArrow.png" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:62 y:68 w:16 h:18]" id="100004" text="S1" />
+        <CtrlKnob name="Send2" style="LEDKnobSmallLR" rect="[x:82 y:92 w:24 h:26]" id="100017" displayName="Send 2" />
+        <CtrlImageView name="SendImage1" style="EmptyImageStyle" rect="[x:62 y:96 w:16 h:18]" id="0" image="SendArrow.png" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:62 y:96 w:16 h:18]" id="100000" text="S2" />
+        <CtrlPanel name="Split1" overloadClass="EditorSplitControl" rect="[x:138 y:101 w:508 h:40]" id="100005" displayName="Layer 2 Velocity range" />
+        <CtrlKnob name="Send3" style="LEDKnobSmallLR" rect="[x:82 y:120 w:24 h:26]" id="100018" displayName="Send 3" />
+        <CtrlImageView name="SendImage2" style="EmptyImageStyle" rect="[x:62 y:124 w:16 h:18]" id="0" image="SendArrow.png" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:62 y:124 w:16 h:18]" id="100001" text="S3" />
+        <CtrlPanel name="Split2" overloadClass="EditorSplitControl" rect="[x:138 y:140 w:508 h:40]" id="100001" displayName="Layer 3 Velocity range" />
+        <CtrlKnob name="Send4" style="LEDKnobSmallLR" rect="[x:82 y:148 w:24 h:26]" id="100019" displayName="Send 4" />
+        <CtrlImageView name="SendImage3" style="EmptyImageStyle" rect="[x:62 y:152 w:16 h:18]" id="0" image="SendArrow.png" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:62 y:152 w:16 h:18]" id="100002" text="S4" />
+        <CtrlPanel name="Split3" overloadClass="EditorSplitControl" rect="[x:138 y:179 w:508 h:40]" id="100003" displayName="Layer 4 Velocity range" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:25 y:213 w:75 h:15]" id="100012" text="Output" />
+        <CtrlPanel name="Split4" overloadClass="EditorSplitControl" rect="[x:138 y:218 w:508 h:40]" id="100008" displayName="Layer 5 Velocity range" />
+        <CtrlComboBox name="Output" style="LEDComboBoxStyle" rect="[x:25 y:229 w:75 h:17]" id="100000" displayName="Output" />
+        <CtrlPanel name="Split5" overloadClass="EditorSplitControl" rect="[x:138 y:257 w:508 h:40]" id="100007" displayName="Layer 6 Velocity range" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:38 y:274 w:50 h:15]" id="100002" text="Vel-Amp" />
+        <CtrlKnob name="V2A" style="LEDKnobLargeLR" rect="[x:38 y:291 w:50 h:46]" id="100015" displayName="Velocity to Amplitude" />
+        <CtrlPanel name="Split6" overloadClass="EditorSplitControl" rect="[x:138 y:296 w:508 h:40]" id="100006" displayName="Layer 7 Velocity range" />
+        <CtrlPanel name="Split7" overloadClass="EditorSplitControl" rect="[x:138 y:335 w:508 h:40]" id="100004" displayName="Layer 8 Velocity range" />
+    </CtrlPanel>
+</root>

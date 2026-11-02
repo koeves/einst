@@ -1,0 +1,20 @@
+<root>
+    <CtrlButtonStyle name="FooterLatchingButtonStyle" optMomentary="false" optDrawText="true" />
+    <CtrlButtonStyle name="StopButtonStyle" imDown="StopButtonDown.png" imUp="StopButtonUp.png" />
+    <CtrlButtonStyle name="AutoButtonStyle" optMomentary="false" imDown="AutoButtonDown.png" imUp="AutoButtonUp.png">
+        <VFont name="font" vSize="13" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="LockPadsStyle" imDown="LockPadsDown.png" imUp="LockPadsUp.png" />
+    <CtrlButtonStyle name="LockPatternStyle" imDown="LockPatternsDown.png" imUp="LockPatternsUp.png" />
+    <CtrlImageViewStyle name="PreviewVolIconStyle" optBorder="false" optBackground="false" />
+    <CtrlPanel name="ChooserPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:295 h:25]" id="0">
+        <CtrlButton name="StopButton" style="StopButtonStyle" rect="[x:44 y:1 w:23 h:24]" id="100001" displayName="Stop Preview" />
+        <CtrlButton name="PreviewButton" style="AutoButtonStyle" rect="[x:68 y:1 w:23 h:24]" id="100000" displayName="Preview audio files when clicked in browser" text="Auto play" />
+        <CtrlButton name="LockPadsButton" style="LockPadsStyle" rect="[x:104 y:1 w:35 h:24]" id="100001" displayName="Lock / Unlock all pads" />
+        <CtrlButton name="LockPatternsButton" style="LockPatternStyle" rect="[x:140 y:1 w:35 h:24]" id="100002" displayName="Lock / Unlock all patterns" />
+        <CtrlButton name="HitLoopModeButton" style="LEDLatchingButtonStyle" rect="[x:188 y:4 w:50 h:17]" id="100007" displayName="Slice audio files when clicked in browser" text="Slice" />
+        <CtrlButton name="InteractionModeButton" style="LEDLatchingButtonStyle" rect="[x:240 y:4 w:50 h:17]" id="100004" displayName="Auto allocate files when clicked in browser" text="Auto load" />
+        <CtrlKnob name="PreviewVolumeKnob" style="LEDKnobMicroLR" rect="[x:2 y:4 w:17 h:17]" id="100005" displayName="Preview volume" />
+        <CtrlImageView name="CtrlImageView" style="PreviewVolIconStyle" rect="[x:22 y:7 w:12 h:10]" id="100000" image="PreviewVol.png" />
+    </CtrlPanel>
+</root>

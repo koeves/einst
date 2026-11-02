@@ -1,0 +1,20 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2.1" IsActive="true" ChainMix="1">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.75" Parameter1="0.16" Parameter2="0.06" Parameter3="0.34" Parameter4="0" Parameter5="0" EffectType="Vari-EQ">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.404" Parameter1="0.391304" Parameter2="0.240001" Parameter3="0.35" Parameter4="0.50996" Parameter5="1" EffectType="Hoover Filter">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="0.039731" Level="1" Parameter0="0" Parameter1="0.010303" Parameter2="0.29" Parameter3="0.279957" Parameter4="0.705454" Parameter5="0.431602" EffectType="Breverb Room">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect3" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.773409" Parameter1="0.56" Parameter2="0.695" Parameter3="0.75" Parameter4="0.666761" Parameter5="0" EffectType="Channel Compressor">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect4" EffectVersion="2" IsActive="true" Mix="0.58" Level="0.61" Parameter0="0.247024" Parameter1="0.86" Parameter2="0.69" Parameter3="1" Parameter4="0.5" Parameter5="1" EffectType="Bit Crusher">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="$U$/-Bandpass Drive" />
+    </EffectChain>
+</root>

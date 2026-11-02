@@ -1,0 +1,12 @@
+<root>
+    <CtrlButtonStyle name="TrackControlAutoStyle" optMomentary="false" imDown="AutoButtonDown.png" imUp="AutoButtonUp.png">
+        <VFont name="font" vSize="11" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:150 h:20]" id="0">
+        <CtrlButton name="AutomateButton" style="TrackControlAutoStyle" rect="[x:0 y:0 w:20 h:20]" id="100003" displayName="Show graphs" text="A" />
+        <CtrlLabel name="SelectArea" rect="[x:19 y:1 w:68 h:18]" id="100000" text="SelectArea" />
+        <CtrlKnob name="LevelSlider" style="LEDKnobMicroLR" rect="[x:88 y:1 w:17 h:17]" id="100000" displayName="Pad Gain" />
+        <CtrlButton name="MuteButton" style="LEDMuteButtonStyle" rect="[x:108 y:1 w:19 h:17]" id="100002" displayName="Mute track steps" text="M" />
+        <CtrlButton name="SoloButton" style="LEDSoloButtonStyle" rect="[x:128 y:1 w:19 h:17]" id="100004" displayName="Solo track steps" text="S" />
+    </CtrlPanel>
+</root>

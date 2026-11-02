@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.5" Parameter1="1" Parameter2="0.288363" Parameter3="0.673136" Parameter4="0.129798" Parameter5="1" EffectType="Frequency Shifter">
+        <FixedString name="PresetName" string="Default" />
+    </Effect>
+</root>

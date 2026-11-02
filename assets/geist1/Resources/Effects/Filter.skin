@@ -1,0 +1,13 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="EmptyPanelStyle" rect="[x:0 y:0 w:193 h:150]" id="0">
+        <CtrlPlot name="Plot" style="EQGraphStyle" rect="[x:43 y:2 w:107 h:50]" id="100000" />
+        <CtrlButton name="Control1" style="LEDSmallLatchingButtonStyle" rect="[x:13 y:16 w:16 h:17]" id="100004" displayName="HP Active" />
+        <CtrlButton name="Control3" style="LEDSmallLatchingButtonStyle" rect="[x:164 y:16 w:16 h:17]" id="100003" displayName="LP Active" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:0 y:37 w:40 h:15]" id="100006" text="HP On" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:152 y:37 w:40 h:15]" id="100005" text="LP On" />
+        <CtrlKnob name="Control2" style="LEDKnobLargeLR" rect="[x:36 y:68 w:50 h:46]" id="100021" displayName="HP Frequency" />
+        <CtrlKnob name="Control4" style="LEDKnobLargeLR" rect="[x:106 y:68 w:50 h:46]" id="100020" displayName="LP Frequency" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:36 y:121 w:50 h:15]" id="100027" text="HP Freq" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelCenteredStyle" rect="[x:106 y:121 w:50 h:15]" id="100026" text="LP Freq" />
+    </CtrlPanel>
+</root>

@@ -1,0 +1,29 @@
+<root>
+    <CtrlLabelStyle name="SceneNoteLabelCenteredStyle" centeredText="true" colText="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlLabelStyle>
+    <CtrlButtonStyle name="SceneTriggerButtonStyle">
+        <VFont name="font" vSize="14" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlImageViewStyle name="TriggerImageViewStyle" optBorder="false" optBackground="false" optMouseHandle="true">
+        <VFont name="font" vSize="14" fontName="Arial" />
+    </CtrlImageViewStyle>
+    <CtrlImageViewStyle name="OverlayImageViewStyle" optBorder="false" optBackground="false" optMouseHandle="true">
+        <VFont name="font" vSize="14" fontName="Arial" />
+    </CtrlImageViewStyle>
+    <CtrlButtonStyle name="SmallSceneButtonStyle" optDrawText="true" optSmartTile="false" imDown="SmallSceneSelectButtonDown.png" imUp="SmallSceneSelectButtonUp.png" colTextOn="[r:222 g:229 b:237 a:255]" colTextOff="[r:18 g:25 b:60 a:255]">
+        <VFont name="font" vSize="12" fontName="Arial" />
+    </CtrlButtonStyle>
+    <CtrlButtonStyle name="SceneSnapshotButtonStyle" optDrawText="false" imDown="SceneSnapshotButtonDown.png" imUp="SceneSnapshotButtonUp.png" imDisabled="SceneSnapshotButtonDisabled.png" />
+    <CtrlButtonStyle name="SceneClearButtonStyle" optDrawText="false" imDown="SceneClearButtonDown.png" imUp="SceneClearButtonUp.png" imDisabled="SceneClearButtonDisabled.png" />
+    <CtrlPanelStyle name="SceneNoBorderPanelStyleEven" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:200 g:200 b:200 a:255]" imBackground="SceneBackground.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanelStyle name="SceneNoBorderPanelStyleOdd" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:230 g:230 b:230 a:0]" imBackground="SceneBackground.png" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanel name="ScenePanel" style="SceneNoBorderPanelStyleOdd" rect="[x:5 y:4 w:105 h:75]" id="0">
+        <CtrlImageView name="TriggerImageView" style="TriggerImageViewStyle" rect="[x:10 y:8 w:83 h:38]" id="100008" />
+        <CtrlButton name="SelectButton" overloadClass="FlashingButton" style="SmallSceneButtonStyle" rect="[x:10 y:49 w:40 h:17]" id="100001" displayName="Select Scene" text="G#-2" />
+        <CtrlButton name="SnapshotButton" overloadClass="FlashingButton" style="SceneSnapshotButtonStyle" rect="[x:54 y:49 w:19 h:17]" id="100001" displayName="Snapshot to Scene" text="+" />
+        <CtrlButton name="ClearButton" overloadClass="FlashingButton" style="SceneClearButtonStyle" rect="[x:74 y:49 w:19 h:17]" id="100001" displayName="Clear Scene" text="x" />
+        <CtrlImageView name="OverlayImageView" style="OverlayImageViewStyle" rect="[x:10 y:8 w:83 h:38]" id="100008" displayName="Trigger Scene" zorder="2" />
+        <CtrlLabel name="NameLabel" overloadClass="AutoShorteningLabel" style="SceneNoteLabelCenteredStyle" rect="[x:10 y:10 w:83 h:15]" id="100005" zorder="3" text="" />
+    </CtrlPanel>
+</root>

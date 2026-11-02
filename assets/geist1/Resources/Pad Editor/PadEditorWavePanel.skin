@@ -1,0 +1,25 @@
+<root>
+    <CtrlTextBoxStyle name="LearnBoxStyle" centeredText="true" colBackground="[r:92 g:92 b:92 a:0]" colText="[r:236 g:189 b:47 a:255]">
+        <VFont name="font" vSize="9" fontName="Arial" />
+    </CtrlTextBoxStyle>
+    <CtrlPanelStyle name="PadEditorBackgroundStyle" imBackground="PadEditBackground.png" colBorder="[r:0 g:0 b:0 a:0]" colFill="[r:255 g:255 b:255 a:0]" intSmartTileEdgeSize="5" intRoundedRectRadius="0" />
+    <CtrlPanel name="CtrlPanel" style="PadEditorBackgroundStyle" rect="[x:0 y:0 w:682 h:396]" id="0">
+        <CtrlPanel name="SetupPanel" overloadClass="EditorPadSetupPanel" rect="[x:14 y:10 w:650 h:191]" id="100010" />
+        <CtrlPanel name="TSPanel" overloadClass="EditorPadTimestretchPanel" rect="[x:253 y:12 w:135 h:155]" id="100003" />
+        <CtrlPanel name="EnvPanel" overloadClass="EditorPadEnvelopePanel" rect="[x:531 y:13 w:131 h:185]" id="100001" />
+        <CtrlButton name="AmpButton" style="StandardCheckButtonStyle" rect="[x:551 y:36 w:14 h:15]" id="100000" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:567 y:40 w:75 h:10]" id="100003" text="Amp Env Visible" />
+        <CtrlButton name="FreeButton" style="StandardCheckButtonStyle" rect="[x:551 y:116 w:14 h:15]" id="100001" />
+        <CtrlLabel name="CtrlLabel" style="StandardLabelStyle" rect="[x:567 y:120 w:75 h:10]" id="100004" text="Free Env Visible" />
+        <CtrlPanel name="WavePanel" overloadClass="LayerWaveDisplay" rect="[x:14 y:202 w:653 h:170]" id="100011" />
+        <CtrlPanel name="WaveZoomSlider" overloadClass="WaveDisplayZoomSlider" rect="[x:14 y:373 w:575 h:12]" id="100000" />
+        <CtrlButtonGroup name="AutoZoomGroup" rect="[x:590 y:373 w:52 h:12]" id="100000">
+            <CtrlButton name="CtrlButton" style="ZoomOffButtonStyle" rect="[x:0 y:0 w:12 h:12]" id="100001" displayName="No auto zooming" />
+            <CtrlButton name="CtrlButton" style="ZoomStartEndButtonStyle" rect="[x:13 y:0 w:12 h:12]" id="100002" displayName="Auto zoom to start and end" />
+            <CtrlButton name="CtrlButton" style="ZoomStartButtonStyle" rect="[x:26 y:0 w:12 h:12]" id="100003" displayName="Auto zoom to start" />
+            <CtrlButton name="CtrlButton" style="ZoomEndButtonStyle" rect="[x:39 y:0 w:12 h:12]" id="100004" displayName="Auto zoom to end" />
+        </CtrlButtonGroup>
+        <CtrlButton name="ZoomOutButton" style="ZoomOutButtonStyle" rect="[x:642 y:373 w:12 h:12]" id="100002" />
+        <CtrlButton name="ZoomInButton" style="ZoomInButtonStyle" rect="[x:655 y:373 w:12 h:12]" id="100002" />
+    </CtrlPanel>
+</root>

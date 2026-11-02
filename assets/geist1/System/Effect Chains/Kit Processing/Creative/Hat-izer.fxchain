@@ -1,0 +1,17 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2.1" IsActive="true" ChainMix="1">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.147024" Parameter1="0.64" Parameter2="0.74" Parameter3="1" Parameter4="0" Parameter5="1" EffectType="Bit Crusher">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.29377" Parameter1="0.833333" Parameter2="0.934908" Parameter3="0.535938" Parameter4="0.53631" Parameter5="0" EffectType="Ring Mod">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.572149" Parameter1="0.333333" Parameter2="0.82" Parameter3="0.03" Parameter4="0.50996" Parameter5="1" EffectType="Little Fatty Filter">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect3" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="1" Parameter1="1" Parameter2="1" Parameter3="1" Parameter4="0.53631" Parameter5="0" EffectType="Filter">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="$U$/-Hat-izer" />
+    </EffectChain>
+</root>

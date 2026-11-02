@@ -1,0 +1,11 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2.1" IsActive="true" ChainMix="1">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.51" Parameter1="0.9" Parameter2="0.501893" Parameter3="0.168495" Parameter4="0.399129" Parameter5="0" EffectType="Tin Can Verb">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.570148" Parameter1="0.1282" Parameter2="0" Parameter3="0.56994" Parameter4="0.822106" Parameter5="0.5" EffectType="Parametric EQ">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="$U$/-Short Tin Verb" />
+    </EffectChain>
+</root>

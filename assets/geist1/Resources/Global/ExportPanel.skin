@@ -1,0 +1,39 @@
+<root>
+    <CtrlPanel name="CtrlPanel" style="ModalPanelStyle" rect="[x:7 y:7 w:435 h:264]" id="0">
+        <CtrlLabel name="CtrlLabel" style="ModalLabelStyle" rect="[x:7 y:5 w:97 h:15]" id="100003" text="Output Source" />
+        <CtrlLabel name="CtrlLabel" style="ModalLabelStyle" rect="[x:144 y:5 w:97 h:15]" id="100003" text="Output Files" />
+        <CtrlPanel name="CtrlPanel" style="ModalPanelCollectionStyle" rect="[x:6 y:22 w:130 h:75]" id="100005">
+            <CtrlButtonGroup name="SourceButtonGroup" rect="[x:107 y:2 w:23 h:78]" id="100000">
+                <CtrlButton name="CtrlButton" style="ModalCheckButtonStyle" rect="[x:5 y:5 w:14 h:15]" id="100001" />
+                <CtrlButton name="CtrlButton" style="ModalCheckButtonStyle" rect="[x:5 y:29 w:14 h:15]" id="100001" />
+                <CtrlButton name="CtrlButton" style="ModalCheckButtonStyle" rect="[x:5 y:53 w:14 h:15]" id="100001" />
+            </CtrlButtonGroup>
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:9 y:8 w:100 h:15]" id="100002" text="All Engine Patterns" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:-11 y:32 w:120 h:15]" id="100002" text="Current Engine Pattern" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:9 y:56 w:100 h:15]" id="100002" text="Song" />
+        </CtrlPanel>
+        <CtrlPanel name="CtrlPanel" style="ModalPanelCollectionStyle" rect="[x:143 y:22 w:285 h:75]" id="100006">
+            <CtrlButtonGroup name="OutputTypeButtonGroup" rect="[x:160 y:2 w:23 h:78]" id="100000">
+                <CtrlButton name="CtrlButton" style="ModalCheckButtonStyle" rect="[x:5 y:5 w:14 h:15]" id="100001" />
+                <CtrlButton name="CtrlButton" style="ModalCheckButtonStyle" rect="[x:5 y:29 w:14 h:15]" id="100001" />
+                <CtrlButton name="CtrlButton" style="ModalCheckButtonStyle" rect="[x:5 y:53 w:14 h:15]" id="100001" />
+            </CtrlButtonGroup>
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:82 y:8 w:80 h:15]" id="100002" text="Stereo Mixdown" />
+            <CtrlComboBox name="SingleOutputComboBox" style="ModalComboBoxStyle" rect="[x:181 y:31 w:100 h:17]" id="100004" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:92 y:32 w:70 h:15]" id="100002" text="Single Output" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:-1 y:56 w:163 h:15]" id="100002" text="All assigned outputs (multiple files)" />
+        </CtrlPanel>
+        <CtrlPanel name="CtrlPanel" style="ModalPanelCollectionStyle" rect="[x:78 y:112 w:275 h:60]" id="100006">
+            <CtrlLabel name="CtrlLabel" style="ModalLabelRightAlignedStyle" rect="[x:4 y:7 w:100 h:17]" id="100003" text="Normalization mode" />
+            <CtrlComboBox name="NormalizeComboBox" style="ModalComboBoxStyle" rect="[x:106 y:7 w:156 h:17]" id="100002" />
+            <CtrlLabel name="CtrlLabel" style="ModalLabelStyle" rect="[x:7 y:28 w:97 h:17]" id="100003" text="Tail Length (seconds)" />
+            <CtrlTextBox name="TailTextBox" style="ModalEditBoxStyle" rect="[x:106 y:28 w:50 h:17]" id="100004" />
+            <CtrlButton name="LoopButton" style="ModalLatchingButtonStyle" rect="[x:159 y:28 w:50 h:17]" id="100005" text="Loop" />
+            <CtrlButton name="AutoCropButton" style="ModalLatchingButtonStyle" rect="[x:212 y:28 w:50 h:17]" id="100005" text="AutoCrop" />
+        </CtrlPanel>
+        <CtrlLabel name="ProgressLabel" style="ModalLabelCenteredStyle" rect="[x:6 y:186 w:421 h:15]" id="100001" text="Progress" />
+        <VProgressBar name="ProgressBar" rect="[x:6 y:202 w:421 h:24]" id="100002" />
+        <CtrlButton name="CancelButton" style="ModalMomentaryButtonStyle" rect="[x:168 y:239 w:50 h:17]" id="100003" text="Cancel" />
+        <CtrlButton name="StartButton" style="ModalMomentaryButtonStyle" rect="[x:222 y:239 w:50 h:17]" id="100003" text="Export" />
+    </CtrlPanel>
+</root>

@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.287149" Parameter1="1" Parameter2="0.59" Parameter3="0.18" Parameter4="0.50996" Parameter5="1" EffectType="Little Fatty Filter">
+        <FixedString name="PresetName" string="$U$\Smiley Mid Cut" />
+    </Effect>
+</root>
