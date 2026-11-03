@@ -1,0 +1,620 @@
+"""v1 skin XML -> dreist-gui skins and stylesheets.
+
+Reads v1's shipped skins (assets/v1/Resources/**/*.skin, read-only) and
+writes the same layout in the syntax dreist-gui reads
+(commons/crates/dreist-gui/src: skin.rs, ctrl.rs, style.rs, render.rs):
+
+- rects `[x:0 y:0 w:10 h:10]` -> `0, 0, 10, 10`;
+- control classes the engine does not draw -> the nearest one it does
+  (CLASSES; the v1 class is kept in `legacyClass` so dreist-gui can take
+  them over as it learns them);
+- style attributes -> dreist-gui's names (STYLE_ATTRS); attributes that
+  dreist-gui reads from the control rather than the style
+  (`optIsMomentary`, ...) are copied onto every control using the style;
+- nested `<VFont vSize= fontName=>` -> a named font of the theme's type
+  scale (Liberation Sans standing in for Arial and Verdana);
+- every bitmap reference -> a vector look (looks.py);
+- identifiers carrying the legacy product name -> neutral names (RENAMES).
+
+Styles from every v1 skin (including the shared style skin) are hoisted
+into the theme's Styles.stylesheet: v1 looks styles up globally, while
+dreist-gui only registers a skin's inline styles when that skin loads.
+Control names, ids, display names and texts are kept: the editor binds
+to them.
+"""
+
+import os
+import re
+import xml.etree.ElementTree as ET
+
+import looks
+import theme
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+V1 = os.path.join(ROOT, "assets", "v1", "Resources")
+LEGACY_RS = os.path.join(ROOT, "commons", "crates", "dreist-formats", "src", "legacy.rs")
+
+# ---------------------------------------------------------------- mapping tables
+
+# v1 control class -> (dreist-gui class, what changes). Classes not listed
+# are kept as they are.
+CLASSES = {
+    "CtrlPanel": ("CtrlPanel", "as is"),
+    "CtrlButton": ("CtrlButton", "as is (image states -> fill / border / text colours)"),
+    "CtrlButtonGroup": ("CtrlButtonGroup", "as is (radio behaviour)"),
+    "CtrlLabel": ("CtrlLabel", "as is"),
+    "CtrlKnob": ("CtrlKnob", "as is; the rect shrinks to the square dial (film frames held a scale too)"),
+    "CtrlSlider": ("CtrlSlider", "as is"),
+    "CtrlTextBox": ("CtrlTextBox", "as is (drawn as a label, edited in place)"),
+    "CtrlValueBox": ("CtrlValueBox", "as is (drawn as a label)"),
+    "CtrlComboBox": ("CtrlPopupButton", "a popup button: text, arrow and divider"),
+    "CtrlSearchTextBox": ("CtrlSearchBox", "search box with magnifier"),
+    "VProgressBar": ("CtrlProgressBar", "horizontal bar"),
+    "CtrlLevelStrip": ("CtrlProgressBar", "track + horizontal bar; no LED segments, vertical strips fill sideways"),
+    "CtrlPanSlider": ("CtrlSlider", "plain horizontal fader; no centre detent"),
+    "CtrlImageView": ("CtrlPanel", "vector panel, or a CtrlLabel for text / icon images (looks.IMAGES)"),
+    "CtrlScrollView": ("CtrlPanel", "plain panel; no scrolling"),
+    "CtrlScrollViewSlider": ("CtrlScrollBar", "scroll bar (track + thumb)"),
+    "CtrlTableView": ("CtrlPanel", "framed panel; rows, header and slider are code-built"),
+    "CtrlListBox": ("CtrlPanel", "framed panel; rows are code-built"),
+    "CtrlPlot": ("CtrlPanel", "framed plot area; the curve is code-drawn"),
+    "CtrlMeter": ("CtrlPanel", "framed meter area; no needle"),
+    "Ctrl": ("CtrlPanel", "plain panel"),
+}
+
+# Plain `Ctrl`s by overload class: None drops the control.
+CTRL_OVERLOADS = {
+    "OverlayImage": None,  # the glass/shine bitmap over the window
+    "TapTempoBox": ("CtrlButton", "ReadoutButtonStyle", "TAP"),
+}
+
+# Controls v1 left unstyled (code-drawn) that need a vector style to be
+# seen: (class, overloadClass) -> style.
+UNSTYLED = {
+    ("CtrlValueBox", "TempoBox"): "ReadoutStyle",
+    ("VProgressBar", ""): "ModalProgressStyle",
+    ("CtrlScrollView", ""): "BasePanelStyle",
+    ("CtrlButtonGroup", ""): "BasePanelStyle",
+    ("CtrlPanel", "EditorPad"): "PadSlotStyle",
+}
+
+# Other unstyled controls (dreist-gui would give them its white default).
+UNSTYLED_CLASS = {"CtrlLabel": "BaseLabelStyle", "CtrlButton": "LcdButtonStyle", "CtrlImageView": "BaseImageStyle"}
+
+# Code-drawn panels the editor paints over, with the shape v1's bitmaps
+# gave them (looks.py decor entries).
+PANEL_DECOR = {
+    "EditorPad": [("inside", 2, 0, 52, 46, "PadStyle")],  # 52 px wide pad frames in a 56 px slot
+}
+
+# Labels grow to fit their font (v1 drew label text unclipped; dreist-gui
+# clips to the rect): this many pixels above the font size, and centred
+# labels this much wider on each side.
+LABEL_LEAD = 3
+LABEL_WIDEN = 8
+# Right-aligned labels (captions left of their control) reach this much
+# further left.
+LABEL_REACH = 60
+
+# v1 style attribute -> (dreist-gui attribute or None, how). `ctrl:` means
+# the value goes onto the controls using the style.
+STYLE_ATTRS = {
+    "intRoundedRectRadius": ("realCornerRounding", "same value"),
+    "colFill": ("colFill", "colour"),
+    "colBorder": ("colBorder", "colour; a visible border sets optDrawBorder"),
+    "colText": ("colText", "colour"),
+    "colTextOff": ("colText", "colour (button off)"),
+    "colTextOn": ("colAltText", "colour (button on)"),
+    "colFillOff": ("colFill", "colour (button off)"),
+    "colFillOn": ("colAltFill", "colour (button on)"),
+    "colBackground": ("colFill", "colour (text boxes)"),
+    "colSlider": ("colFillHighlight", "colour (fader / scroll thumb; also colAltFill)"),
+    "centeredText": ("enumTextHorizontalAlign", "true -> center (v1 text is left-aligned by default)"),
+    "rightAlignText": ("enumTextHorizontalAlign", "true -> right"),
+    "optTextLeftJustify": ("enumTextHorizontalAlign", "true -> left"),
+    "textOffset": ("realTextOffset", "same value"),
+    "noDefaultDrawing": ("colFill", "true -> transparent, no border"),
+    "optMomentary": ("ctrl:optIsMomentary", "v1 default true"),
+    "optSendOnMouseDown": ("ctrl:optSendOnMouseDown", "same value"),
+    "optSingleClickEdit": ("ctrl:optSingleClickEdit", "same value"),
+    "optDrawText": (None, "dropped: with the bitmaps gone the text is the label"),
+    "colTextDisabled": (None, "dropped: disabled controls fade (realDisabledAlpha)"),
+}
+
+# Attributes with no dreist-gui equivalent yet, dropped (kept here so a
+# new v1 attribute is noticed: the generator fails on unknown ones).
+DROPPED = {
+    "name", "imUp", "imDown", "imDisabled", "imBackground", "imKnobNormal", "imBackingStrip", "imAltBackingStrip",
+    "imKnobOff", "imKnobOn", "imOff", "imOn", "optSmartTile", "intSmartTileEdgeSize", "optNoGraphics", "clippingRect",
+    "optEditable", "dragable", "optSendValueWhenFocusLost", "optAlphaDisabled", "optGreyOutDisabled", "optNoBackground",
+    "fineScale", "incDecButtonMode", "snapSteps", "optScaleKnob", "optHistogram", "optFlipDirection",
+    "optNoClickOutsideKnobMove", "optNoClickOutsideKnobPage", "optIsScrollbar", "optXFineBehaviour",
+    "optShiftFineBehaviour", "optStripInverted", "macroValueScaler", "microValueScaler", "longDim", "faderHeadSize",
+    "optBorder", "optBackground", "optMouseHandle", "alwaysShowVSlider", "alwaysHideHSlider", "optVSlider",
+    "optHSlider", "optHeader", "optAltRowColours", "optColumnDividers", "optRowDividers", "colSelect", "colRow",
+    "colRowAlt", "colHeaderBackground", "colHeaderSelBackground", "colHeaderText", "colHeaderDivider",
+    "colColumnDivider", "colColumnText", "optNotEditable", "optNoSelection", "units", "unitMarkings",
+    "leftRangeText", "rightRangeText", "colUnits", "pivotX", "pivotY", "angleStart", "angleSize", "radius",
+    "lineWidth", "colLine", "plotRectInset",
+}
+
+# v1 style class -> theme base style.
+STYLE_BASES = {
+    "CtrlPanelStyle": "BasePanelStyle",
+    "CtrlButtonStyle": "LcdButtonStyle",
+    "CtrlLabelStyle": "BaseLabelStyle",
+    "CtrlTextBoxStyle": "BaseTextBoxStyle",
+    "CtrlKnobStyle": "LcdKnobStyle",
+    "CtrlSliderStyle": "BaseSliderStyle",
+    "CtrlPanSliderStyle": "LcdFaderStyle",
+    "CtrlImageViewStyle": "BaseImageStyle",
+    "CtrlScrollViewStyle": "BasePanelStyle",
+    "CtrlTreeViewStyle": "BasePanelStyle",
+    "CtrlTableViewStyle": "BaseTableStyle",
+    "CtrlListBoxStyle": "BaseTableStyle",
+    "CtrlPlotStyle": "LcdPlotStyle",
+    "CtrlMeterStyle": "LcdPlotStyle",
+    "CtrlIndicatorStyle": "IndicatorStyle",
+}
+
+# Control attributes copied as they are.
+CTRL_KEEP = ["name", "id", "displayName", "text", "zorder", "overloadClass", "style"]
+CTRL_DROPPED = {"image"}
+
+# v1 folders renamed in the output (v1's `MIxer` only resolved on
+# case-insensitive file systems).
+FOLDERS = {"MIxer": "Mixer"}
+
+
+def legacy_names():
+    """The legacy product and vendor names, read from dreist-formats'
+    legacy table (the one place they are spelled), to rename and to check
+    the output against."""
+    text = open(LEGACY_RS, encoding="utf-8").read()
+    product = re.search(r'ROOT_ELEMENT: &str = "([^"]+)"', text).group(1)
+    vendor = re.search(r'REVERB_TYPE: &str = "([^" ]+)', text).group(1)
+    return product, vendor
+
+
+PRODUCT, VENDOR = legacy_names()
+
+# Identifiers of the form <product><suffix> -> neutral names.
+RENAMES = {"TabbedPanel": "TabbedPanel", "ButtonStyle": "OptionsButtonStyle", " options": "Options"}
+
+
+def neutral(v):
+    out = re.sub(re.escape(PRODUCT) + "(" + "|".join(re.escape(k) for k in RENAMES) + ")", lambda m: RENAMES[m.group(1)], v)
+    if PRODUCT.lower() in out.lower():
+        raise SystemExit(f"uigen: no neutral name for {v!r}")
+    return out
+
+
+# ---------------------------------------------------------------- values
+
+
+def parse_rect(s):
+    m = re.fullmatch(r"\s*\[x:(-?\d+) y:(-?\d+) w:(-?\d+) h:(-?\d+)\]\s*", s)
+    if not m:
+        raise SystemExit(f"uigen: bad rect {s!r}")
+    return [int(v) for v in m.groups()]
+
+
+def parse_colour(s):
+    m = re.fullmatch(r"\s*\[r:(\d+) g:(\d+) b:(\d+) a:(\d+)\]\s*", s)
+    if not m:
+        raise SystemExit(f"uigen: bad colour {s!r}")
+    return tuple(int(v) for v in m.groups())
+
+
+# Palette entries by value: v1 literals that are palette colours are
+# written by name.
+PALETTE = {}
+for _n, _c in theme.COLOURS.items():
+    PALETTE.setdefault(tuple(_c) + ((255,) if len(_c) == 3 else ()), _n)
+
+
+def colour(s):
+    c = parse_colour(s)
+    if c[3] == 0:
+        return "Transparent"
+    return PALETTE.get(c) or theme.colour_value(c)
+
+
+def truthy(v):
+    return v.strip().lower() in ("true", "1")
+
+
+class Fonts:
+    """The text fonts the converted styles name (on top of the theme's)."""
+
+    def __init__(self):
+        self.used = set(theme.TEXT_SIZES)
+
+    def name(self, vfont):
+        size = int(round(float(vfont.get("vSize", "12"))))
+        bold = (vfont.get("weight") or "").lower() == "bold"
+        self.used.add((size, bold))
+        return theme.text_font(size, bold)
+
+
+# ---------------------------------------------------------------- elements
+
+
+class E:
+    def __init__(self, cls, attrs=None, kids=None, comment=None):
+        self.cls, self.attrs, self.kids, self.comment = cls, dict(attrs or {}), list(kids or []), comment
+
+
+def esc(v):
+    return (v.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+            .replace("\n", "&#10;").replace("\t", "&#9;"))
+
+
+FIRST = ["name", "rect"]
+
+
+def write(e, depth=1):
+    pad = "    " * depth
+    out = []
+    if e.comment:
+        out.append(f"{pad}<!-- {e.comment} -->")
+    keys = [k for k in FIRST if k in e.attrs] + sorted(k for k in e.attrs if k not in FIRST)
+    a = "".join(f' {k}="{esc(str(e.attrs[k]))}"' for k in keys)
+    if e.kids:
+        out.append(f"{pad}<{e.cls}{a}>")
+        for k in e.kids:
+            out.extend(write(k, depth + 1))
+        out.append(f"{pad}</{e.cls}>")
+    else:
+        out.append(f"{pad}<{e.cls}{a} />")
+    return out
+
+
+def document(elements, header):
+    lines = [f"<!-- {header} -->", "<root>"]
+    for e in elements:
+        lines.extend(write(e))
+    lines.append("</root>")
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
+
+# ---------------------------------------------------------------- conversion
+
+
+class Converter:
+    def __init__(self):
+        self.fonts = Fonts()
+        self.styles = {}  # name -> (source, E)
+        self.order = []  # (source, name)
+        self.info = {}  # style name -> look applied to controls
+        self.extra = {}  # synthesized look styles (image views), name -> E
+        self.class_use = {}  # (v1 class, new class) -> count
+        self.dropped_ctrls = []
+        self.unmatched = []  # bitmap references no look rule matched
+        self.decor = 0
+        self.skins = {}  # output rel path -> bytes
+        self.theme_names = {n for n, _ in theme.base_styles()}
+        self.local = {}  # (skin, v1 style name) -> that skin's renamed copy
+
+    # -- styles
+
+    def style(self, el, source):
+        name = neutral(el.get("name"))
+        a = dict(el.attrib)
+        images = {k: v for k, v in a.items() if k.startswith("im")}
+        out = {}
+        ctrl = {}
+        for k, v in a.items():
+            if k == "name" or k in DROPPED:
+                continue
+            if k not in STYLE_ATTRS:
+                raise SystemExit(f"uigen: {source}: {name}: unknown style attribute {k}")
+            dest, _ = STYLE_ATTRS[k]
+            if dest is None:
+                continue
+            if dest.startswith("ctrl:"):
+                ctrl[dest[5:]] = "true" if truthy(v) else "false"
+            elif k == "noDefaultDrawing":
+                if truthy(v):
+                    out["colFill"] = "Transparent"
+                    out["optDrawBorder"] = "false"
+            elif k in ("centeredText", "rightAlignText", "optTextLeftJustify"):
+                if truthy(v):
+                    out[dest] = {"centeredText": "center", "rightAlignText": "right", "optTextLeftJustify": "left"}[k]
+            elif dest.startswith("col"):
+                if images and el.tag != "CtrlTextBoxStyle":
+                    continue  # the look replaces the bitmap's colours
+                out[dest] = colour(v)
+                if k == "colSlider":
+                    out["colAltFill"] = colour(v)
+                if k == "colBorder" and out[dest] != "Transparent" and "noDefaultDrawing" not in out:
+                    out["optDrawBorder"] = "true"
+            else:
+                out[dest] = v
+        if out.get("colFill") == "Transparent" and a.get("noDefaultDrawing", "").strip() == "true":
+            out["optDrawBorder"] = "false"
+        for f in el.findall("VFont"):
+            out["font"] = self.fonts.name(f)
+        if el.tag == "CtrlButtonStyle" and "optIsMomentary" not in ctrl:
+            ctrl["optIsMomentary"] = "true"
+        look, fit = self.look_for_style(el.tag, name, images, a)
+        parent = STYLE_BASES.get(el.tag, "BaseStyle")
+        cls = "CtrlStyle"
+        if look:
+            parent = look["parent"]
+            if look["text"] and any("\ue000" <= ch <= "\uf8ff" for ch in look["text"]) and "font" not in look["attrs"]:
+                out.pop("font", None)  # the glyph needs the parent's icon font
+            out.update(look["attrs"])
+            ctrl.update(look["ctrl"])
+            if parent == "CheckBoxStyle":
+                cls, parent = "CheckBoxButtonRendererStyle", "CheckBoxStyle"
+        attrs = {"name": name, "parentStyle0": parent}
+        attrs.update(out)
+        info = {"ctrl": ctrl, "look": look, "fit": fit, "class": el.tag}
+        if name in self.theme_names:
+            self.info[name] = info
+            return  # the theme's own style of that name wins (e.g. LogoStyle)
+        e = E(cls, attrs)
+        if name in self.styles:
+            if write(self.styles[name][1]) == write(e):
+                return
+            # A skin redefining a shared name: its own copy, renamed for
+            # that skin's controls.
+            local = name + re.sub(r"[^A-Za-z0-9]", "", os.path.splitext(os.path.basename(source))[0])
+            self.local[(source, name)] = local
+            name = e.attrs["name"] = local
+        self.info[name] = info
+        self.styles[name] = (source, e)
+        self.order.append((source, name))
+
+    def look_for_style(self, cls, name, images, a):
+        """(look, knob fit) for a v1 style, from its bitmaps."""
+        if name in looks.BY_NAME:
+            return looks.BY_NAME[name], None
+        if cls == "CtrlButtonStyle":
+            if "imUp" in images:
+                r = looks.match(looks.BUTTONS, looks.stem(images["imUp"]))
+                if r:
+                    return r[1], None
+                self.unmatched.append((name, images["imUp"]))
+                return None, None
+            if truthy(a.get("optNoGraphics", "false")):
+                return looks.L("LcdFlatButtonStyle", text=""), None
+            if name.startswith("Modal"):
+                return looks.L("ModalButtonStyle"), None
+            return None, None
+        if cls == "CtrlPanelStyle" and "imBackground" in images:
+            r = looks.match(looks.PANELS, looks.stem(images["imBackground"]))
+            if r:
+                return r[1], None
+            self.unmatched.append((name, images["imBackground"]))
+        if cls == "CtrlTextBoxStyle":
+            if name.startswith("Modal"):
+                return looks.L("ModalFieldStyle"), None
+            if "imBackground" in images:
+                return looks.match(looks.TEXT_BOXES, looks.stem(images["imBackground"]))[1], None
+            if a.get("colBackground", "").endswith("a:0]"):
+                return looks.L("BaseLabelStyle"), None
+        if cls == "CtrlKnobStyle":
+            r = looks.match(looks.KNOBS, looks.stem(images.get("imKnobNormal", "")))
+            if r:
+                return r[1], r[2]
+        if cls in ("CtrlSliderStyle", "CtrlPanSliderStyle") and "imBackingStrip" in images:
+            return looks.match(looks.SLIDERS, looks.stem(images["imBackingStrip"]))[1], None
+        if cls == "CtrlImageViewStyle" and "imBackground" in images:
+            r = looks.match(looks.IMAGES, looks.stem(images["imBackground"]))
+            if r:
+                return r[1], None
+        if cls == "CtrlMeterStyle" or cls == "CtrlPlotStyle":
+            return looks.L("LcdPlotStyle"), None
+        return None, None
+
+    # -- controls
+
+    def image_style(self, look, key):
+        """The style an image view's look draws with."""
+        if not look["attrs"]:
+            return look["parent"]
+        name = re.sub(r"[^A-Za-z0-9]", "", key) + "ImageStyle"
+        if name not in self.extra:
+            self.extra[name] = E("CtrlStyle", dict(name=name, parentStyle0=look["parent"], **look["attrs"]))
+        return name
+
+    def ctrl(self, el, source):
+        """The converted control: a list (decor siblings first)."""
+        v1cls = el.tag
+        ov = neutral(el.get("overloadClass", ""))
+        if v1cls not in CLASSES:
+            raise SystemExit(f"uigen: {source}: unknown control class {v1cls}")
+        cls = CLASSES[v1cls][0]
+        attrs = {}
+        for k, v in el.attrib.items():
+            if k in CTRL_KEEP:
+                attrs[k] = neutral(v)
+            elif k == "rect":
+                attrs[k] = parse_rect(v)
+            elif k not in CTRL_DROPPED:
+                raise SystemExit(f"uigen: {source}: unknown control attribute {k}")
+        if v1cls == "Ctrl" and ov in CTRL_OVERLOADS:
+            spec = CTRL_OVERLOADS[ov]
+            if spec is None:
+                self.dropped_ctrls.append((source, attrs.get("name"), ov))
+                return []
+            cls, attrs["style"], attrs["text"] = spec
+        if (source, attrs.get("style")) in self.local:
+            attrs["style"] = self.local[(source, attrs["style"])]
+        if "style" not in attrs:
+            st = UNSTYLED.get((v1cls, ov)) or (UNSTYLED_CLASS.get(v1cls) if not ov else None)
+            if st:
+                attrs["style"] = st
+        rect = attrs.get("rect", [0, 0, 0, 0])
+        out_before = []
+        kids = []
+        info = self.info.get(attrs.get("style", ""))
+        look = info["look"] if info else None
+        if v1cls == "CtrlImageView":
+            img = el.get("image")
+            r = looks.match(looks.IMAGES, looks.stem(img)) if img else None
+            if r:
+                look = r[1]
+                attrs["style"] = self.image_style(look, looks.stem(img))
+            elif attrs.get("style") in looks.IMAGE_STYLE_LOOKS:
+                look = looks.IMAGE_STYLE_LOOKS[attrs["style"]]
+                attrs["style"] = self.image_style(look, attrs["style"])
+            elif img:
+                self.unmatched.append((attrs.get("name"), img))
+            if look and look["cls"]:
+                cls = look["cls"]
+            if look:
+                attrs.update(look["ctrl"])
+        if look:
+            if look["text"] is not None:
+                attrs["text"] = look["text"]
+            elif look["upper"] and attrs.get("text"):
+                attrs["text"] = attrs["text"].upper()
+        if info:
+            for k, v in info["ctrl"].items():
+                if cls == "CtrlButton" or not k.startswith("optIs"):
+                    attrs[k] = v
+            if info["fit"]:
+                rect = self.fit_knob(rect, info, out_before)
+                attrs["rect"] = rect
+        if v1cls in ("CtrlKnob",) and info and info["look"] and info["look"]["parent"] in ("HardKnobStyle", "LcdKnobStyle"):
+            if attrs.get("style", "").endswith("C"):
+                attrs["optCentered"] = "true"
+        decor = (look["decor"] if look else []) + PANEL_DECOR.get(ov, [])
+        if decor:
+            for where, x, y, w, h, st in decor:
+                w = w if w >= 1 else rect[2] + w
+                h = h if h >= 1 else rect[3] + h
+                d = E("CtrlPanel", {"rect": [x, y, w, h], "style": st})
+                if where == "inside":
+                    kids.append(d)
+                else:
+                    d.attrs["rect"] = [rect[0] + x, rect[1] + y, w, h]
+                    out_before.append(d)
+                self.decor += 1
+        if cls == "CtrlLabel" and v1cls == "CtrlLabel":
+            rect = self.fit_label(rect, attrs.get("style", ""))
+        if cls != v1cls:
+            attrs["legacyClass"] = v1cls
+        self.class_use[(v1cls, cls)] = self.class_use.get((v1cls, cls), 0) + 1
+        attrs["rect"] = ", ".join(str(v) for v in rect)
+        for d in out_before:
+            d.attrs["rect"] = ", ".join(str(v) for v in d.attrs["rect"])
+        for d in kids:
+            d.attrs["rect"] = ", ".join(str(v) for v in d.attrs["rect"])
+        for ch in el:
+            if ch.tag.endswith("Style") or ch.tag in ("VColour", "VFont"):
+                continue
+            kids.extend(self.ctrl(ch, source))
+        kids = CHASSIS.get((source, attrs.get("name")), []) + kids
+        return out_before + [E(cls, attrs, kids)]
+
+    def font_size(self, style):
+        """The text size a converted style draws with."""
+        for _ in range(16):
+            e = self.styles.get(style, (None, None))[1]
+            if e is None:
+                attrs = dict(theme.base_styles()).get(style)
+                if attrs is None:
+                    return 12
+            else:
+                attrs = e.attrs
+            f = attrs.get("font")
+            if f:
+                return int(re.search(r"\d+", f).group(0))
+            style = attrs.get("parentStyle0", "")
+        return 12
+
+    def style_attr(self, style, key):
+        for _ in range(16):
+            e = self.styles.get(style, (None, None))[1]
+            attrs = e.attrs if e is not None else dict(theme.base_styles()).get(style)
+            if attrs is None:
+                return None
+            if key in attrs:
+                return attrs[key]
+            style = attrs.get("parentStyle0", "")
+        return None
+
+    def fit_label(self, rect, style):
+        x, y, w, h = rect
+        need = self.font_size(style) + LABEL_LEAD
+        if h < need:
+            y -= (need - h) // 2
+            h = need
+        align = self.style_attr(style, "enumTextHorizontalAlign")
+        if align == "center":
+            x -= LABEL_WIDEN
+            w += 2 * LABEL_WIDEN
+        elif align == "right":
+            x -= LABEL_REACH
+            w += LABEL_REACH
+        return [x, y, w, h]
+
+    def fit_knob(self, rect, info, decor):
+        x, y, w, h = rect
+        s = min(w, h)
+        nx = x + (w - s) // 2
+        ny = y if info["fit"] == "top" else y + (h - s) // 2
+        body = looks.KNOB_BODY.get(info["look"]["parent"])
+        if body and s > 32:
+            i = int(round(s * body[1]))
+            decor.append(E("CtrlPanel", {"rect": [nx + i, ny + i, s - 2 * i, s - 2 * i], "style": body[0]}))
+            self.decor += 1
+        return [nx, ny, s, s]
+
+    # -- files
+
+    def run(self):
+        files = []
+        for dp, dns, fns in os.walk(V1):
+            dns.sort()
+            for f in sorted(fns):
+                if f.endswith(".skin"):
+                    files.append(os.path.relpath(os.path.join(dp, f), V1))
+        # Shared styles first, then each skin's own.
+        files.sort(key=lambda r: (r != "GlobalStyles.skin", r))
+        trees = {r: ET.parse(os.path.join(V1, r)).getroot() for r in files}
+        self.colours = []
+        for rel in files:
+            for el in trees[rel]:
+                if el.tag == "VColour":
+                    self.colours.append((el.get("name"), tuple(int(el.get(k)) for k in ("red", "green", "blue", "alpha"))))
+                elif el.tag.endswith("Style"):
+                    self.style(el, rel)
+        for rel in files:
+            if rel == "GlobalStyles.skin":
+                continue
+            ctrls = []
+            for el in trees[rel]:
+                if el.tag.endswith("Style") or el.tag in ("VColour", "VFont"):
+                    continue
+                ctrls.extend(self.ctrl(el, rel))
+            out = rel.replace("\\", "/")
+            for a, b in FOLDERS.items():
+                out = re.sub(rf"^{a}/", f"{b}/", out)
+            header = f"Generated by scripts/uigen from the v1 layout ({rel}). Edit the generator, not this file."
+            self.skins[out] = document(ctrls, header)
+
+
+# ---------------------------------------------------------------- chassis art
+
+# The section bars, frames and the transport backing that v1's window
+# background bitmap carried, as panels at the start of the moving part
+# of the window (MovePanel coordinates).
+CHASSIS = {
+    ("RootSkin.skin", "MovePanel"): [
+        E("CtrlPanel", {"rect": r, "style": s}) for r, s in [
+            ("2, 428, 283, 11", "ChassisBarStyle"),
+            ("290, 428, 392, 11", "ChassisBarStyle"),
+            ("688, 428, 138, 11", "ChassisBarStyle"),
+            ("290, 500, 392, 11", "ChassisBarStyle"),
+            ("2, 443, 58, 58", "ChassisFrameStyle"),
+            ("2, 504, 58, 56", "ChassisWellStyle"),
+            ("688, 437, 138, 160", "ChassisFrameStyle"),
+            ("421, 602, 405, 34", "ChassisBackingStyle"),
+        ]
+    ],
+}
