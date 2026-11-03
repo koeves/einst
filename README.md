@@ -48,3 +48,12 @@ metronomes) and `assets/v1/System` (v1's factory effect presets, effect chains a
 
 Status: [`docs/PROGRESS.md`](docs/PROGRESS.md). Reverse-engineering notes are in the private
 `dreist-re` repository (`einst/`).
+
+## Related projects
+
+- [dreist-commons](https://github.com/koeves/dreist-commons): the shared library (formats, DSP,
+  engine, GUI, editor) that both apps are built on.
+- [Dreist](https://github.com/koeves/dreist): the Geist2 rebuild, an app on dreist-commons.
+- [Einst](https://github.com/koeves/einst): the Geist v1 rebuild, an app on dreist-commons.
+
+The reverse-engineering notes behind all three are kept in a private repository.
