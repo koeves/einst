@@ -21,6 +21,7 @@
 
 pub mod auto_filter;
 pub mod bus_comp;
+pub mod comb;
 pub mod envelope_shaper;
 pub mod freq_shifter;
 pub mod gain;
@@ -43,6 +44,7 @@ pub const NOISE_GATE: usize = 11;
 pub const ENVELOPE_SHAPER: usize = 12;
 pub const PHASER: usize = 18;
 pub const MODULATED_FILTER: usize = 29;
+pub const COMB_FILTER: usize = 30;
 pub const FREQUENCY_SHIFTER: usize = 25;
 
 /// v1's node for an effect type (v2 numbering), or `None` where v1 and
@@ -57,6 +59,7 @@ pub fn create(kind: usize) -> Option<Box<dyn Node>> {
         NOISE_GATE => Box::new(noise_gate::NoiseGate::new()),
         PHASER => Box::new(phaser::Phaser::new()),
         MODULATED_FILTER => Box::new(auto_filter::AutoFilter::new()),
+        COMB_FILTER => Box::new(comb::Comb::new()),
         FREQUENCY_SHIFTER => Box::new(freq_shifter::FreqShifter::new()),
         ENVELOPE_SHAPER => Box::new(envelope_shaper::EnvelopeShaper::new()),
         _ => return None,

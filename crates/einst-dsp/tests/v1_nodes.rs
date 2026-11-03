@@ -353,3 +353,39 @@ fn modulated_filter_fm_is_taken_from_the_left_input() {
     assert_eq!(right(0.0, 1), right(0.0, 2));
     assert_ne!(right(0.8, 1), right(0.8, 2));
 }
+
+/// Comb Filter ports: 0 Drive, 1 Mode, 2 Pitch, 3 Feedback, 4 PM, 5 FM.
+/// With PM on (the modulated path) v1's comb is Dreist's at the pitch whose
+/// exact 2^(−pitch) is v1's fast one, up to float rounding (v1 sums the tap
+/// and the modulated delay in another order).
+#[test]
+fn comb_differs_only_by_fast_exp2_and_rounding() {
+    use dreist_dsp::fx::nodes::comb::Comb;
+    let ctx = Ctx::new(48_000.0);
+    // Where v1's fast 2^x is furthest off (0.38 %).
+    let pitch = 1.51;
+    let set = |n: &mut dyn Node, p: f32| {
+        for (i, v) in [0.6, 1.0, p, 0.8, 0.3, 0.2].into_iter().enumerate() {
+            n.ports()[i].value = v;
+        }
+    };
+    let mut v1 = einst_dsp::comb::Comb::new();
+    let (mut g2, mut g2_exact) = (Comb::new(), Comb::new());
+    set(&mut v1, pitch);
+    set(&mut g2, -einst_dsp::fast_exp2(-pitch).log2());
+    set(&mut g2_exact, pitch);
+    let (mut worst, mut worst_exact, mut peak) = (0.0f32, 0.0f32, 0.0f32);
+    for b in 0..30 {
+        let (l, r) = (noise(512, 20 + b), noise(512, 200 + b));
+        let a = run(&mut v1, &ctx, &l, &r);
+        let g = run(&mut g2, &ctx, &l, &r);
+        let e = run(&mut g2_exact, &ctx, &l, &r);
+        for k in 0..512 {
+            worst = worst.max((a.0[k] - g.0[k]).abs()).max((a.1[k] - g.1[k]).abs());
+            worst_exact = worst_exact.max((a.0[k] - e.0[k]).abs());
+            peak = peak.max(a.0[k].abs());
+        }
+    }
+    assert!(worst < peak * 1e-3, "worst {worst}, peak {peak}");
+    assert!(worst_exact > worst * 10.0, "exact {worst_exact} vs {worst}");
+}

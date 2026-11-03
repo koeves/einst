@@ -13,3 +13,8 @@ pub(crate) fn sat(x: f32) -> f32 {
     let c = ((x + 2.0).abs() - (x - 2.0).abs()) * 0.5;
     ((c.abs() * 0.0625 - 0.25) * c * c + 1.0) * c
 }
+
+/// Ring sizes: the smallest power of two ≥ `n` (1 below 2).
+pub(crate) fn pow2_at_least(n: i64) -> usize {
+    if n > 1 { (n as usize).next_power_of_two() } else { 1 }
+}
