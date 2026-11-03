@@ -147,3 +147,81 @@ fn envelope_shaper_never_links_channels() {
     assert_eq!(a, b);
     assert_ne!(a, c, "Geist2's linked detector differs");
 }
+
+fn noise(n: usize, seed: u32) -> Vec<f32> {
+    let mut s = seed;
+    (0..n)
+        .map(|_| {
+            s = s.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+            (s >> 8) as f32 / (1u32 << 24) as f32 - 0.5
+        })
+        .collect()
+}
+
+/// The copied nodes differ from Dreist's only in the one 2^x: Dreist's
+/// node fed log2(fast2^v) at that port gives v1's output.
+fn matches_dreist_with_fast_exp2(mut v1: Box<dyn Node>, mut g2: Box<dyn Node>, exp_port: usize, set: &[(usize, f32)]) {
+    let ctx = Ctx::new(48_000.0);
+    for &(i, v) in set {
+        v1.ports()[i].value = v;
+        g2.ports()[i].value = if i == exp_port { einst_dsp::fast_exp2(v).log2() } else { v };
+    }
+    let (l, r) = (noise(2048, 1), noise(2048, 2));
+    let a = run(v1.as_mut(), &ctx, &l, &r);
+    let b = run(g2.as_mut(), &ctx, &l, &r);
+    let worst = a.0.iter().chain(&a.1).zip(b.0.iter().chain(&b.1)).map(|(x, y)| (x - y).abs()).fold(0.0f32, f32::max);
+    assert!(worst < 1e-4, "worst difference {worst}");
+    // And it is not Dreist's exact exp2.
+    let mut g2_exact = g2;
+    for &(i, v) in set {
+        g2_exact.ports()[i].value = v;
+    }
+    let c = run(g2_exact.as_mut(), &ctx, &l, &r);
+    assert_ne!(a, c);
+}
+
+#[test]
+fn phaser_differs_only_by_fast_exp2() {
+    use geist_dsp::fx::nodes::phaser::Phaser;
+    // Ports: 0 Drive, 1 Mode, 2 Pitch (the 2^x), 3 Resonance, 4 Rate, 5 Depth, 6 Mix.
+    let set = [(0, 1.0), (1, 2.0), (2, 1.37), (3, 0.6), (4, 1.0), (5, 0.7), (6, 1.0), (7, 0.0), (8, 0.0)];
+    matches_dreist_with_fast_exp2(Box::new(einst_dsp::phaser::Phaser::new()), Box::new(Phaser::new()), 2, &set);
+}
+
+#[test]
+fn freq_shifter_differs_only_by_fast_exp2() {
+    use geist_dsp::fx::nodes::freq_shifter::FreqShifter;
+    let set = [(0, 0.63), (1, 1.0), (2, 1.0)];
+    matches_dreist_with_fast_exp2(Box::new(einst_dsp::freq_shifter::FreqShifter::new()), Box::new(FreqShifter::new()), 0, &set);
+}
+
+#[test]
+fn stereo_width_gain_uses_fast_exp2() {
+    let ctx = Ctx::new(44_100.0);
+    let mut s = einst_dsp::stereo::StereoMixer::new();
+    s.ports()[0].value = 1.3;
+    let ones = vec![1.0f32; 64];
+    let (l, _) = run(&mut s, &ctx, &ones, &ones);
+    // Mono input, full width: the level settles at v1's Gain target.
+    assert!((l[63] - Gain::target(1.3)).abs() < 1e-3, "{} vs {}", l[63], Gain::target(1.3));
+}
+
+/// v1's Noise Gate ports in v1 order reach Dreist's gate at Geist2's indices.
+#[test]
+fn noise_gate_takes_v1_port_order() {
+    use einst_dsp::noise_gate::{NoiseGate, V1_TO_GEIST2};
+    use geist_dsp::fx::nodes::noise_gate::NoiseGate as Geist2;
+    let ctx = Ctx::new(44_100.0);
+    let mut v1 = NoiseGate::new();
+    let mut g2 = Geist2::new();
+    // v1 values: Attack, Hold, Release, Threshold, Hysteresis, LPFreq, HPFreq, Preview, Sidechain, WetMix.
+    let vals = [0.002f32, 0.05, 0.2, 0.1, 0.5, 8000.0, 30.0, 0.0, 0.0, 1.0];
+    for (i, v) in vals.iter().enumerate() {
+        v1.ports()[i].value = *v;
+        g2.ports()[V1_TO_GEIST2[i]].value = *v;
+    }
+    let (l, r) = (noise(4096, 3), noise(4096, 4));
+    assert_eq!(run(&mut v1, &ctx, &l, &r), run(&mut g2, &ctx, &l, &r));
+    // The v1 names sit where v1 puts them.
+    assert_eq!(einst_dsp::internal_ports(einst_dsp::NOISE_GATE), &[(6, 0.0), (7, 0.0), (8, 0.0), (9, 1.0)]);
+}

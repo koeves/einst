@@ -7,6 +7,10 @@
 //! | Vari-EQ | `VFilterEQ2` | `VFilterEQ2S` |
 //! | Envelope Shaper | `VDSPTransientDesigner` | `VDSPTransientDesignerS` |
 //!
+//! and the shared classes whose v1 build differs (`docs/re/effects-v1.md`):
+//! Stereo Width, Phaser and Frequency Shifter (v1's fast 2^x), Noise Gate
+//! (v1's port order).
+//!
 //! v1's `VDSPNodeAdaptor::Process22` (0x4f3840, ev_964c5456) runs a mono
 //! node as two instances, one per channel, so each node here keeps one
 //! state per channel. They implement `geist_dsp::fx::Node`; the engine
@@ -14,33 +18,53 @@
 //! Dreist's Geist2 nodes.
 
 pub mod envelope_shaper;
+pub mod freq_shifter;
 pub mod gain;
+mod math;
+pub mod noise_gate;
+pub mod phaser;
+pub mod stereo;
 pub mod vari_eq;
 
 use geist_dsp::fx::Node;
 
 /// Effect type indices as Geist2 / Dreist number them (`EFFECT_TYPES`).
 pub const GAIN: usize = 1;
+pub const STEREO_WIDTH: usize = 2;
 pub const VARI_EQ: usize = 5;
+pub const NOISE_GATE: usize = 11;
 pub const ENVELOPE_SHAPER: usize = 12;
+pub const PHASER: usize = 18;
+pub const FREQUENCY_SHIFTER: usize = 25;
 
 /// v1's node for an effect type (Geist2 numbering), or `None` where v1 and
 /// Geist2 share the DSP and Dreist's node stands.
 pub fn create(kind: usize) -> Option<Box<dyn Node>> {
     Some(match kind {
         GAIN => Box::new(gain::Gain::new()),
+        STEREO_WIDTH => Box::new(stereo::StereoMixer::new()),
         VARI_EQ => Box::new(vari_eq::VariEq::new()),
+        NOISE_GATE => Box::new(noise_gate::NoiseGate::new()),
+        PHASER => Box::new(phaser::Phaser::new()),
+        FREQUENCY_SHIFTER => Box::new(freq_shifter::FreqShifter::new()),
         ENVELOPE_SHAPER => Box::new(envelope_shaper::EnvelopeShaper::new()),
         _ => return None,
     })
 }
 
 /// The hidden ports v1's `Effect::SetupInternalParameters` (0x2f0250,
-/// ev_5107cdbc) sets for these types, as `(port, value 0..1)`: the
-/// Envelope Shaper's WetMix at 1 (v1 type 9). Gain and Vari-EQ have none.
+/// ev_5107cdbc) sets for these types, as `(port, value 0..1)` in the
+/// node's own (v1) port order.
 pub fn internal_ports(kind: usize) -> &'static [(usize, f32)] {
     match kind {
+        // v1 type 9: WetMix.
         ENVELOPE_SHAPER => &[(0, 1.0)],
+        // v1 type 8: HPFreq, Preview, Sidechain off, WetMix 1.
+        NOISE_GATE => &[(6, 0.0), (7, 0.0), (8, 0.0), (9, 1.0)],
+        // v1 type 13.
+        PHASER => &[(6, 1.0), (7, 0.0), (8, 0.0)],
+        // v1 type 17.
+        FREQUENCY_SHIFTER => &[(2, 1.0)],
         _ => &[],
     }
 }
