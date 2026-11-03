@@ -15,6 +15,6 @@
         <CtrlButton name="UndoHistory" rect="44, 7, 16, 27" displayName="Show undo history" id="100000" optIsMomentary="true" style="UndoRedoDropButtonStyle" text="" />
         <CtrlButton name="RedoButton" rect="62, 7, 43, 27" displayName="Redo previous action" id="100001" optIsMomentary="true" style="RedoButtonStyle" text="" />
         <CtrlButton name="RedoHistory" rect="105, 7, 16, 27" displayName="Show redo history" id="100001" optIsMomentary="true" style="UndoRedoDropButtonStyle" text="" />
-        <CtrlKnob name="MetroVol" rect="231, 9, 24, 24" displayName="Metronome volume" id="100015" realDialThickness="0.2" style="HardKnobSmallLR" />
+        <CtrlKnob name="MetroVol" rect="231, 9, 24, 26" displayName="Metronome volume" id="100015" realDialThickness="0.2" style="HardKnobSmallLR" />
     </CtrlPanel>
 </root>

@@ -8,8 +8,8 @@
             <CtrlButton name="SendNotesButton" rect="190, 2, 50, 17" id="100000" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Send Note" />
             <CtrlButton name="SendCCButton" rect="242, 2, 50, 17" id="100001" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Send CC" />
         </CtrlPanel>
-        <CtrlPanel name="TableView" rect="0, 21, 295, 577" id="100001" legacyClass="CtrlTableView" style="GlobalTableStyleAlwaysVisibleHSlider">
+        <CtrlTableView name="TableView" rect="0, 21, 295, 577" id="100001" style="GlobalTableStyleAlwaysVisibleHSlider">
             <CtrlPanel name="ScrollView" rect="0, 15, 295, 562" id="0" legacyClass="CtrlScrollView" style="BasePanelStyle" />
-        </CtrlPanel>
+        </CtrlTableView>
     </CtrlPanel>
 </root>

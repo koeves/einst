@@ -43,9 +43,9 @@
             </CtrlButtonGroup>
             <CtrlLabel name="CtrlLabel" rect="60, 64, 191, 15" id="100000" style="StandardLabelCenteredStyle" text="Name" />
             <CtrlTextBox name="NameTextBox" rect="68, 81, 175, 17" id="100001" optSingleClickEdit="true" style="LEDEditBoxStyle" />
-            <CtrlPanel name="DetailsTable" rect="3, 116, 290, 135" id="100000" legacyClass="CtrlTableView" style="GlobalTableStyle">
+            <CtrlTableView name="DetailsTable" rect="3, 116, 290, 135" id="100000" style="GlobalTableStyle">
                 <CtrlPanel name="ScrollView" rect="0, 15, 290, 120" id="0" legacyClass="CtrlScrollView" style="BasePanelStyle" />
-            </CtrlPanel>
+            </CtrlTableView>
         </CtrlPanel>
     </CtrlPanel>
 </root>

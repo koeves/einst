@@ -2,12 +2,12 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 48, 161" id="0" style="PadChannelBackgroundOdd">
         <CtrlLabel name="NameLabel" rect="-8, 16, 62, 15" displayName="Sample name" id="100011" overloadClass="AutoShorteningLabel" style="StandardLabelCenteredStyle" text="Pad X" />
-        <CtrlSlider name="PanKnob" rect="4, 49, 41, 12" displayName="Pan" id="100000" legacyClass="CtrlPanSlider" realTrackInset="0.36" style="SmallPanStyle" />
+        <CtrlPanSlider name="PanKnob" rect="4, 49, 41, 12" displayName="Pan" id="100000" realTrackInset="0.33" style="SmallPanStyle" />
         <CtrlButton name="MuteButton" rect="5, 30, 19, 17" displayName="Mute" id="100019" optIsMomentary="false" style="LEDMuteButtonStyle" text="M" />
         <CtrlButton name="SoloButton" rect="25, 30, 19, 17" displayName="Solo" id="100018" optIsMomentary="false" style="LEDSoloButtonStyle" text="S" />
         <CtrlSlider name="GainSlider" rect="17, 63, 15, 75" displayName="Gain" id="100003" realTrackInset="0.36" style="SmallVerticalFaderStyle" />
-        <CtrlProgressBar name="VUMeterLeft" rect="34, 63, 4, 75" id="100016" legacyClass="CtrlLevelStrip" style="VU75Dark" />
-        <CtrlProgressBar name="VUMeterRight" rect="39, 63, 4, 75" id="100017" legacyClass="CtrlLevelStrip" style="VU75Dark" />
+        <CtrlLevelStrip name="VUMeterLeft" rect="34, 63, 4, 75" id="100016" style="VU75Dark" />
+        <CtrlLevelStrip name="VUMeterRight" rect="39, 63, 4, 75" id="100017" style="VU75Dark" />
         <CtrlLabel name="SendLabel0" rect="33, 49, 35, 17" id="100013" style="StandardLabelStyle" text="S1" />
         <CtrlLabel name="SendLabel1" rect="33, 72, 35, 17" id="100013" style="StandardLabelStyle" text="S2" />
         <CtrlLabel name="SendLabel2" rect="33, 95, 35, 17" id="100013" style="StandardLabelStyle" text="S3" />

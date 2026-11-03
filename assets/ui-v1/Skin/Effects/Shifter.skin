@@ -2,9 +2,9 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 193, 150" id="0" style="EmptyPanelStyle">
         <CtrlPanel rect="47, 48, 28, 28" style="LcdKnobBodyStyle" />
-        <CtrlKnob name="Control1" rect="38, 39, 46, 46" id="100020" realDialThickness="0.14" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control1" rect="36, 39, 50, 46" id="100020" realDialThickness="0.14" style="LEDKnobLargeLR" />
         <CtrlPanel rect="117, 48, 28, 28" style="LcdKnobBodyStyle" />
-        <CtrlKnob name="Control2" rect="108, 39, 46, 46" id="100021" realDialThickness="0.14" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control2" rect="106, 39, 50, 46" id="100021" realDialThickness="0.14" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="28, 90, 66, 15" id="100026" style="StandardLabelCenteredStyle" text="Pitch" />
         <CtrlLabel name="CtrlLabel" rect="98, 90, 66, 15" id="100027" style="StandardLabelCenteredStyle" text="Amp" />
     </CtrlPanel>
