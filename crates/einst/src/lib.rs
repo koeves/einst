@@ -39,8 +39,9 @@ pub fn effect_menu(category: usize) -> Vec<usize> {
     einst_formats::v1::effect_menu(category).filter_map(dreist_formats::params::effect_type_index).collect()
 }
 
-/// Install Einst's profile and effect nodes.
+/// Install Einst's profile, effect nodes and v1's fast 2^x.
 pub fn install() {
     dreist_formats::profile::install(&PROFILE);
     dreist_dsp::fx::install_factory(dreist_dsp::fx::NodeFactory { create: einst_dsp::create, internal_ports: einst_dsp::internal_ports });
+    dreist_dsp::fx::install_exp2(einst_dsp::fast_exp2);
 }
