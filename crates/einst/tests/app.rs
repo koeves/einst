@@ -85,3 +85,20 @@ fn screens_match_einsts_goldens() {
     setup();
     dreist_editor::screens::check_screens("screens");
 }
+
+/// Dreist's nodes take v1's fast 2^x once Einst is installed: Stereo
+/// Width settles at v1's Gain target.
+#[test]
+fn shared_nodes_use_v1s_fast_exp2() {
+    setup();
+    assert_eq!(dreist_dsp::fx::exp2(1.51), einst_dsp::fast_exp2(1.51));
+    let mut s = Effect::new(einst_dsp::STEREO_WIDTH, 44_100.0);
+    s.active = true;
+    s.mix = 1.0;
+    let node = s.node.as_mut().unwrap();
+    node.ports()[0].value = 1.3;
+    let ones = vec![1.0f32; 64];
+    let (mut l, mut r) = (vec![0.0; 64], vec![0.0; 64]);
+    node.process(&Ctx::new(44_100.0), [&ones, &ones], [&mut l, &mut r]);
+    assert!((l[63] - einst_dsp::gain::Gain::target(1.3)).abs() < 1e-3, "{} vs {}", l[63], einst_dsp::gain::Gain::target(1.3));
+}
