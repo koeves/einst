@@ -15,9 +15,11 @@
 # notarised and stapled.
 #
 # Dreist must be checked out next to this repository (../geist): its crates
-# build the engine and editor, and its assets/geist2 (Geist2's factory
-# resources the editor reads), assets/dreist (UI graphics, app icon) and
-# licence files go into the bundles as they do for Dreist.
+# build the engine, and its assets/dreist (UI graphics: skin, fonts, cursors,
+# metronomes, read by geist-gui / geist-engine) and licence files go into
+# the bundles. Einst's own resources (Geist v1's factory effect presets,
+# effect chains, pattern and swing templates; the app icon) come from this
+# repository.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -38,7 +40,7 @@ version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
 dreist=../geist
 out=target/bundled
 mkdir -p "$out"
-[ -d "$dreist/assets/geist2" ] || { echo "Dreist not found at $dreist" >&2; exit 1; }
+[ -d "$dreist/assets/dreist" ] || { echo "Dreist not found at $dreist" >&2; exit 1; }
 
 echo "==> VST3 / CLAP ($profile)"
 cargo run --package xtask --release -- bundle einst-plugin $flag
@@ -68,19 +70,25 @@ cat > "$app/Contents/Info.plist" <<PLIST
 </dict>
 </plist>
 PLIST
-# App icon: Dreist's for now (Einst has no icon of its own yet).
-cp "$dreist/assets/dreist/AppIcon.icns" "$app/Contents/Resources/AppIcon.icns"
+# App icon: Einst's placeholder (assets/einst, drawn by scripts/icon.py).
+cp assets/einst/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
 
-# Resources where geist_formats::paths looks: Geist2's factory presets,
-# effect chains and templates in Contents/Resources/Geist2, Dreist's UI
-# graphics (icon font, cursors) in Contents/Resources/Dreist.
+# Resources: Einst's factory data in Contents/Resources/Einst (where
+# einst_editor::paths looks: Geist v1's effect presets, effect chains,
+# pattern and swing templates, which einst-formats reads 1:1), Dreist's UI
+# graphics in Contents/Resources/Dreist (geist_formats::paths::ui_dir), plus
+# the Einst theme folder the editor selects by default (empty: the base skin).
 echo "==> Resources"
 for b in "$app" "$out/Einst.vst3" "$out/Einst.clap"; do
-    mkdir -p "$b/Contents/Resources"
-    rm -rf "$b/Contents/Resources/Geist2" "$b/Contents/Resources/Dreist"
-    cp -R "$dreist/assets/geist2" "$b/Contents/Resources/Geist2"
+    mkdir -p "$b/Contents/Resources/Einst"
+    rm -rf "$b/Contents/Resources/Geist2" "$b/Contents/Resources/Dreist" "$b/Contents/Resources/Einst"/*
+    for d in "Effects" "Effect Chains" "Pattern Templates" "Swing Templates"; do
+        cp -R "assets/geist1/System/$d" "$b/Contents/Resources/Einst/$d"
+    done
     cp -R "$dreist/assets/dreist" "$b/Contents/Resources/Dreist"
     rm -f "$b/Contents/Resources/Dreist/preview.png" "$b/Contents/Resources/Dreist/AppIcon.png" "$b/Contents/Resources/Dreist/AppIcon.icns"
+    mkdir -p "$b/Contents/Resources/Dreist/Skin/Styles/Einst.style"
+    echo "Einst's theme: the base skin (no overrides)." > "$b/Contents/Resources/Dreist/Skin/Styles/Einst.style/README.txt"
 done
 # Licence and notices travel with every bundle (Dreist's: the plugin
 # links nih-plug's GPLv3 VST3 bindings and Dreist's crates).

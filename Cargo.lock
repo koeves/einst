@@ -1013,6 +1013,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
+name = "einst-editor"
+version = "0.1.0"
+dependencies = [
+ "einst-formats",
+ "geist-dsp",
+ "geist-engine",
+ "geist-formats",
+ "geist-gui",
+ "geist-testkit",
+ "rfd",
+]
+
+[[package]]
 name = "einst-formats"
 version = "0.1.0"
 dependencies = [
@@ -1026,9 +1039,9 @@ name = "einst-plugin"
 version = "0.1.0"
 dependencies = [
  "cpal",
+ "einst-editor",
  "einst-formats",
  "geist-dsp",
- "geist-editor",
  "geist-engine",
  "geist-formats",
  "geist-gui",
@@ -1274,17 +1287,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "geist-editor"
-version = "0.1.0"
-dependencies = [
- "geist-dsp",
- "geist-engine",
- "geist-formats",
- "geist-gui",
- "rfd",
-]
-
-[[package]]
 name = "geist-engine"
 version = "0.1.0"
 dependencies = [
@@ -1315,6 +1317,10 @@ dependencies = [
  "softbuffer",
  "tiny-skia",
 ]
+
+[[package]]
+name = "geist-testkit"
+version = "0.1.0"
 
 [[package]]
 name = "gethostname"

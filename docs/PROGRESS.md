@@ -32,36 +32,60 @@
   shell and build with Einst's names and IDs, on Dreist's crates, vendored patches and exact
   dependency versions (Cargo.lock seeded from Dreist's). Geist v1 files open through
   `load_project` (saved project path or `EINST_PROJECT`).
+- `einst-editor` (below): Einst's names, settings folder, theme, factory resources
+  (`Contents/Resources/Einst`: v1's effect presets, chains, pattern and swing templates), icon
+  placeholder (`assets/einst`, `scripts/icon.py`), and v1 files through its Open dialog, browser
+  and drag and drop.
 
 - Hold of v1 layers recomputed like v1 (owner's decision, 2026-11-03): a v1 Hold of −1 stays −1,
   so Dreist's load-time `reset_hold_time` (the same formula as v1's `Layer::ResetHoldTime`,
   ev_97d7ba71) derives it from the sample; `tests/v1_documents.rs` checks the two agree.
 
-## Known gaps (plugin shell)
+## `einst-editor`: Einst's copy of Dreist's editor
 
-- Dreist's editor is used unpatched, so some UI text still says "Dreist": `geist_editor::PRODUCT`
-  (window title, transmodulation menu labels), the Open/Save dialog filter "Dreist project", the
-  UI theme name and font. Only the macOS menu bar uses Einst's own `PRODUCT`.
-- The editor's Open dialog, browser and drag and drop load files through Dreist's Geist2 readers;
-  a v1 file opened there is read as if it were Geist2. Fix needs a document-import hook in
-  `geist-editor` (an upstream change: ask the user before touching Dreist).
-- Einst shares Dreist's settings folder (`Geist-rs`, or `GEIST_SETTINGS_DIR`) and resource
-  lookups (`Contents/Resources/{Geist2,Dreist}`, `GEIST2_RESOURCES`, `DREIST_UI`).
-- The bundles carry Dreist's app icon, resources and licence files. v1's own factory resources
-  (`assets/geist1`) are not bundled yet.
+Copied from Dreist `crates/geist-editor` at commit `bc729de21717d9788e959a71f91b99e1276004db`
+(2026-11-02, "Dreist beta 1" tree). To re-sync: copy that crate again from the newer Dreist commit
+and re-apply Einst's changes, which are all marked `Einst` or listed here:
+
+- `Cargo.toml`: crate `einst-editor`, depends on `einst-formats`; `geist_editor::` → `einst_editor::`
+  in `examples/`.
+- `lib.rs`: `PRODUCT = "Einst"`, `DEFAULT_THEME = "Einst"`, `OPEN_EXTENSIONS`, modules `paths`
+  and `v1io` (both Einst's own files).
+- `window.rs`: Open/Save filter "Einst project" (Open takes the v1 extensions).
+- `options.rs`: settings folder `~/Library/Application Support/Einst` (`EINST_SETTINGS_DIR`).
+- `modal.rs`: About text, "start Einst", the theme menu (Einst first as "Default", Dreist's base
+  theme not offered twice). `editor/tools_menu.rs`: "Reset Einst", default preset via `v1io`.
+- `editor/requests.rs` (Open Project, Recent, browser and dropped projects), `project.rs`
+  (`load_part`: engines, pads, patterns, banks), `browser.rs` (kits): read through
+  `v1io::read_project` / `read_document`, so Geist v1 files are converted. A converted v1 project
+  has no project path (Save asks for a new name, as for Guru presets).
+- Every `geist_formats::paths::skin_dir()` → `crate::paths::skin_dir()` (Einst's factory data).
+- `tests.rs` / `screens_test.rs`: `crate::DEFAULT_THEME`, "Remove all modulation from Einst";
+  `tests/golden/screens.txt`: `modal-about` re-recorded (the About text), all other screens as
+  Dreist's.
+
+## Known gaps (plugin shell / editor)
+
+- Dreist's UI graphics (skin, fonts, cursors, metronome sounds) still come from
+  `Contents/Resources/Dreist` (`geist_formats::paths::ui_dir`, read inside `geist-gui` and
+  `geist-engine`); the UI font is still "Dreist Sans". Changing those needs Dreist's crates.
+- The editor still offers Geist2's 47 effect types; the 15 that v1 lacks have no factory presets
+  in Einst's resources (v1 has 32).
+- The browser lists `.geist` and `.geistkit` as Dreist's does; v1 `.geistpad/.geistengine/
+  .geistpattern/.geistbank` open through the Open dialog (into engine 0) and drag and drop.
 - No CLAP/VST3 validator is installed (clap-validator, pluginval); downloading one needs the user's
-  OK. Checked instead (2026-11-03): `tools/plugincheck.py` loads Einst.clap (descriptor
-  `rs.einst.einst`, create/init/activate at 48 kHz) and Einst.vst3 (class `EinstRsDrumSmplr`),
-  and Dreist's own validation harnesses (`geist-dsp` fx_harness / fx_realtime, `geist-engine`
-  harness / realtime) pass when run against its sources with `--target-dir target/dreist`.
+  OK. Checked instead: `tools/plugincheck.py` (CLAP descriptor, create/init/activate; VST3
+  factory), and Dreist's validation harnesses (`geist-dsp` fx_harness / fx_realtime,
+  `geist-engine` harness / realtime) pass when run against its sources with
+  `--target-dir target/dreist`.
 
 ## Next
 
 1. Confirm the remaining conversion guesses in `docs/re/loading-v1.md` ("Guesses and
    deliberate choices"). Convert v1 MIDI/host bindings once `Binding`'s message objects are
    traced.
-2. Close the plugin-shell gaps above: needs small upstream hooks in Dreist (product name,
-   document import, settings folder). Ask the user before touching Dreist.
+2. Remaining UI gaps above need Dreist's `geist-gui` / `geist-engine` (owner, 2026-11-03: keep
+   Dreist untouched).
 3. v1-only DSP: `VAmpM` (Gain), `VFilterEQ2` (Vari-EQ), `VDSPTransientDesigner` (Envelope
    Shaper) are mono versions of Geist2's `VAmpS`/`VFilterEQ2S`/`VDSPTransientDesignerS`; diff
    them against Dreist's ports.
