@@ -523,8 +523,59 @@ v1-only DSP, per class [decomp, sym]:
 
 Geist2 has the stereo counterparts `VAmpS`, `VFilterEQ2S` and `VDSPTransientDesignerS` (plus the
 shared `VFilterEQCommon` and `VDSPTransientDesignerConvertParam`) [sym, Dreist `re/out/symbols.txt`].
-So the v1-only classes are mono versions of DSP Dreist already ports; what differs is to be
-checked in the DSP diff (PROGRESS "Next" 3–4).
+So the v1-only classes are mono versions of DSP Dreist already ports. What differs, recovered
+2026-11-03 and implemented in `crates/einst-dsp` [decomp, file]:
+
+- **Stereo handling.** `VDSPNodeAdaptor::ProcessStereo` 0x4f4060 (ev_69fac40b) →
+  `Process22` 0x4f3840 (ev_964c5456): a node with one audio input and output runs as two
+  instances, left through the first and right through the second. Each v1 effect therefore keeps
+  separate state per channel.
+- **Parameters.** `Effect::PushParameterValue` 0x2efc60 (ev_a735042f): Gain and Vari-EQ map
+  `ParameterN` to port N; Envelope Shaper (v1 type 9) to port N + 1. `SetupInternalParameters`
+  0x2f0250 (ev_5107cdbc) sets the Envelope Shaper's port 0 (WetMix) to 1. Port tables:
+  `VAmpM::InitializePorts` 0x536b50 (ev_cfa257f1; "Amp" amp-log, 0 dB, −oo..36 dB),
+  `VFilterEQ2::InitializePorts` 0x520370 (ev_6e577663; Mode 0..8, Freq −4..4.5
+  frequency-pitch, Q 0.25 default 0.5..4 double-log, Gain ±15 dB),
+  `VDSPTransientDesigner::InitializePorts` 0x31ddc0 (WetMix, Attack, Sustain, Gain 0..1,
+  Sensitivity %, Linked switch; `In1`/`Out1`). These are the same tables as Geist2's stereo
+  classes.
+- **Fast 2^x** (inlined in both voices): `i = floor(x − 0.5)`, `f = x − i`,
+  `p = ((f·0.079440236 + 0.22449434)·f + 0.69606566)·f + 1`, result = `p` with `i` added to
+  its exponent bits (`shll $0x17; addl` at 0x536a58). Within 0.4 % of 2^x.
+- **Gain (`VAmpM`)**, `Voice::ProcessBuffer` 0x5369d0 (ev_9b98b0fe): x = Amp port clamped to
+  ±10; a = fast2^x − 0.016367754, floored at 0; the gain ramps linearly from its last value to a
+  over the block (`SongInfo + 0x2c` = 1/block size). `Voice::Reset` 0x536b10 sets the gain to 0.
+  Dreist's `VAmpS` port uses an exact `exp2` here.
+- **Vari-EQ (`VFilterEQ2`)**, `Voice::ProcessBuffer` 0x51fab0 (ev_b33db815):
+  mode = trunc(clamp(m, 0, 8) + 0.5); f/fs = fast2^(Freq + 1)·`SongInfo + 0x24` (1/fs)·400;
+  then v1's `VFilterEQCommon::SetCoeffs` 0x521520 (ev_a7794e4b; the cases are behind a jump
+  table at 0x521664: mode 0 → 0x521b99 … mode 8 → 0x5216b0, read from the disassembly):
+  - w = 2π·clamp(f/fs, **0.001**, 0.45) (Geist2's: 1e−5..0.45);
+  - Q clamped to 0.5..1000;
+  - A = `powf(10, g·0.025)`, except Bell, which uses double `pow`;
+  - RBJ-cookbook coefficients for Bell, Low Shelf, High Shelf, LPF, BPF, BPF 0 dB, HPF, Notch and
+    Allpass, normalised by a0;
+  - a mode change clears the coefficients and history.
+
+  Per sample: y = ((x2·b2 + x1·b1) − y1·a1) − y2·a2 + x·b0, with history x2 ← x1, y2 ← y1,
+  x1 ← (x − d) in float, y1 ← y, where d is an anti-denormal term that starts at 1e−8
+  (`CreateVoice` 0x51fe80, ev_d61d4f58) and flips sign every sample. `Voice::Reset` 0x51f920
+  (ev_9a6184d3) clears the key and history but not d.
+- **Envelope Shaper (`VDSPTransientDesigner`)**: the voice (`Voice::Voice` 0x31e4a0,
+  ev_c1277f4f; `ProcessBuffer` 0x31e370, ev_ed247fe9) pushes changed ports into the node's
+  `TransientDesigner` (`TDImpl`) and processes one channel. v1's `TDImpl` has the same time
+  constants (`TDChannel::BuildCoeffs` 0x31f560, ev_d7897614: e.g.
+  exp(−1/(2π·sr·39000·100e−9)) = exp(−40.809/sr)), the same parameter scaling
+  (`ConvertParameter01ToParameterValue` 0x31f1d0, ev_8c86f1ce: Attack ±15, Sustain ±24,
+  Gain ±12 dB) and the same constants in `TDChannel::Process` 0x31fb40 (compared as a set, not
+  line by line) as Geist2's, which Dreist ports. `TDImpl::Process` 0x320830 (ev_8c1c8c76)
+  links channels only within one instance. So in v1, with one instance per channel, **Linked
+  never links left and right**. The base voice `Reset` is empty, so a panic keeps the
+  parameters.
+
+The effect menu (`EditorEffectPanel::DoShowEffectTypeMenu`, ev_ad49b2ff) lists "No Effect",
+then the six categories of `Effect::EffectCategoryToString` 0xf4e00 (ev_b6c62234: Distortion,
+Dynamics, EQ, Filters, FX, Reverbs) as submenus, each with its types in type order.
 
 ## Conversion to Geist2 (`einst_formats::geist2`)
 

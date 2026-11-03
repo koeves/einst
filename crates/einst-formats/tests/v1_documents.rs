@@ -333,3 +333,15 @@ fn single_object_files() {
     assert_eq!(p.engines[0].patterns.len(), 2);
     assert_eq!(p.engines[0].patterns[1].tracks[0].steps.len(), 4);
 }
+
+/// Every v1 effect type keeps its name and exists in Geist2's table.
+#[test]
+fn v1_effect_types_map_onto_geist2() {
+    for (i, name) in einst_formats::v1::EFFECT_TYPES.iter().enumerate() {
+        assert!(geist_formats::params::effect_type_index(name).is_some(), "{name}");
+        let text = format!(r#"<root><EffectChain name="EffectChain"><Effect name="Effect0" EffectType="{name}" Parameter0="0.3" /></EffectChain></root>"#);
+        let doc = convert(FileKind::Pad, &text.replace("<root>", "<root><Pad name=\"Pad\">").replace("</root>", "</Pad></root>"));
+        let e = first(first(first(&doc, "Pad"), "EffectChain"), "Effect");
+        assert_eq!((e.attr("EffectType"), e.attr("Parameter0")), (Some(*name), Some("0.3")), "type {i}");
+    }
+}

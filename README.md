@@ -10,6 +10,8 @@ Outputs: `Einst.vst3`, `Einst.clap`, `Einst.app` (Apple Silicon).
 | Crate | Role |
 |---|---|
 | `einst-formats` | Geist v1 file reader and converter onto Dreist's Geist2 document tree |
+| `einst-dsp` | Geist v1's own effect DSP (Gain, Vari-EQ, Envelope Shaper) as `geist_dsp` nodes |
+| `einst-engine` | Dreist's `geist-engine` copied, building those nodes (used under the name `geist-engine`) |
 | `einst-editor` | the editor: a copy of Dreist's `geist-editor` with Einst's names, settings folder, resources (v1 factory presets and templates) and v1 file opening (source commit in `docs/PROGRESS.md`) |
 | `einst-plugin` | nih-plug VST3 / CLAP plugin and standalone app: a copy of Dreist's `geist-plugin` shell with Einst's names and IDs (CLAP `rs.einst.einst`, VST3 class `EinstRsDrumSmplr`), opening Geist v1 files |
 | `xtask` | nih-plug bundler (`cargo xtask bundle einst-plugin`) |

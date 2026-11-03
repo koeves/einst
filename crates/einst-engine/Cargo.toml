@@ -1,0 +1,24 @@
+[package]
+name = "einst-engine"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+description = "Einst's engine: a copy of Dreist's geist-engine (see docs/PROGRESS.md for the source commit) building Geist v1's own effect nodes (einst-dsp)"
+
+# The library keeps Dreist's crate name so the copied editor, plugin and tests
+# read `geist_engine::` unchanged; dependents name this package with
+# `geist-engine = { package = "einst-engine", ... }`.
+[lib]
+name = "geist_engine"
+
+[dependencies]
+einst-dsp = { path = "../einst-dsp" }
+geist-formats.workspace = true
+geist-dsp.workspace = true
+symphonia = { version = "0.5.5", default-features = false, features = ["wav", "aiff", "pcm"] }
+
+[dev-dependencies]
+geist-testkit = { path = "../../../geist/crates/geist-testkit" }
+
+[lints]
+workspace = true

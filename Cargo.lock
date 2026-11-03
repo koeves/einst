@@ -1013,12 +1013,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
+name = "einst-dsp"
+version = "0.1.0"
+dependencies = [
+ "geist-dsp",
+]
+
+[[package]]
 name = "einst-editor"
 version = "0.1.0"
 dependencies = [
+ "einst-engine",
  "einst-formats",
  "geist-dsp",
- "geist-engine",
  "geist-formats",
  "geist-gui",
  "geist-testkit",
@@ -1026,10 +1033,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "einst-engine"
+version = "0.1.0"
+dependencies = [
+ "einst-dsp",
+ "geist-dsp",
+ "geist-formats",
+ "geist-testkit",
+ "symphonia",
+]
+
+[[package]]
 name = "einst-formats"
 version = "0.1.0"
 dependencies = [
- "geist-engine",
+ "einst-engine",
  "geist-formats",
  "thiserror 2.0.21",
 ]
@@ -1040,9 +1058,9 @@ version = "0.1.0"
 dependencies = [
  "cpal",
  "einst-editor",
+ "einst-engine",
  "einst-formats",
  "geist-dsp",
- "geist-engine",
  "geist-formats",
  "geist-gui",
  "midir",
@@ -1284,15 +1302,6 @@ version = "0.1.0"
 dependencies = [
  "rustfft",
  "signalsmith-stretch",
-]
-
-[[package]]
-name = "geist-engine"
-version = "0.1.0"
-dependencies = [
- "geist-dsp",
- "geist-formats",
- "symphonia",
 ]
 
 [[package]]
