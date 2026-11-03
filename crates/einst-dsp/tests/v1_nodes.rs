@@ -470,3 +470,85 @@ fn audio_freezer_freezes_with_v1_loops() {
     assert!(a[40_000..].iter().any(|v| v.abs() > 1e-3), "frozen output");
     assert_ne!(a, b);
 }
+
+/// v1's step-table builder: the windowed sinc sums to 1, its running sum
+/// (the step) rises from ~0 to 1, and the ramp integrates the step.
+#[test]
+fn ring_mod_step_tables() {
+    use einst_dsp::ring_mod::{BL_LEN, bl_tables};
+    let t = bl_tables();
+    let s: f32 = t.sinc.iter().sum();
+    assert!((s - 1.0).abs() < 1e-5, "sinc sum {s}");
+    assert!(t.step[0].abs() < 1e-3 && (t.step[BL_LEN - 1] - 1.0).abs() < 1e-6);
+    assert!((t.step[64] - 0.5).abs() < 0.05, "midpoint {}", t.step[64]);
+    // Monotonic but for the window's small side-lobe ripple.
+    assert!(t.step.windows(2).all(|w| w[1] >= w[0] - 0.02));
+    // The ramp dips by the step's ripple, then climbs one per 16 entries.
+    assert!(t.ramp.windows(2).all(|w| w[1] >= w[0] - 1e-3));
+    assert!(((t.ramp[BL_LEN - 1] - t.ramp[BL_LEN - 17]) - 1.0).abs() < 1e-3);
+    assert!((t.ramp[120] - 3.5625).abs() < 1e-3, "ramp[120] {}", t.ramp[120]);
+}
+
+fn ring_mod_ports(n: &mut dyn Node, mode: f32, pitch: f32, wet: f32) {
+    for (i, v) in [(0, 1.0), (1, mode), (2, pitch), (3, wet)] {
+        n.ports()[i].value = v;
+    }
+}
+
+/// Every mode renders finite output, across the pitch range and mode switches.
+#[test]
+fn ring_mod_every_mode_is_finite() {
+    let mut n = einst_dsp::ring_mod::RingMod::new();
+    for mode in 0..7 {
+        for pitch in [-6.0, 0.0, 2.5, 6.0] {
+            let ports = [(0, 1.3), (1, mode as f32), (2, pitch), (3, 0.8)];
+            let (l, r) = render_blocks(&mut n, &ports, 8);
+            assert!(l.iter().chain(&r).all(|v| v.is_finite()), "mode {mode} pitch {pitch}");
+            assert!(l.iter().any(|v| v.abs() > 1e-3), "mode {mode} pitch {pitch} silent");
+        }
+    }
+}
+
+/// Largest sample-to-sample jump of the carrier (DC input, fully wet).
+fn ring_mod_max_jump(n: &mut dyn Node, mode: f32) -> f32 {
+    let ctx = Ctx::new(48_000.0);
+    ring_mod_ports(n, mode, 0.0, 1.0);
+    let x = vec![0.5; 8192];
+    let (l, _) = run(n, &ctx, &x, &x);
+    l[1024..].windows(2).map(|w| (w[1] - w[0]).abs()).fold(0.0, f32::max)
+}
+
+/// Saw and pulse: v1's live step tables spread each edge over several
+/// samples, where Dreist's (zero tables) jumps in one.
+#[test]
+fn ring_mod_saw_and_pulse_are_band_limited() {
+    use dreist_dsp::fx::nodes::ring_mod::RingMod;
+    for mode in [2.0, 3.0] {
+        let a = ring_mod_max_jump(&mut einst_dsp::ring_mod::RingMod::new(), mode);
+        let b = ring_mod_max_jump(&mut RingMod::new(), mode);
+        assert!(b > 0.4 && a < b * 0.6, "mode {mode}: v1 {a}, naive {b}");
+    }
+}
+
+/// Sine: the same table oscillator as Dreist's (same level and frequency),
+/// but v1's init starts it at a random phase.
+#[test]
+fn ring_mod_sine_matches_dreist_but_for_start_phase() {
+    use dreist_dsp::fx::nodes::ring_mod::RingMod;
+    let ctx = Ctx::new(48_000.0);
+    let x = vec![0.5; 9600];
+    let render = |n: &mut dyn Node| {
+        ring_mod_ports(n, 0.0, 0.0, 1.0);
+        run(n, &ctx, &x, &x).0
+    };
+    let a = render(&mut einst_dsp::ring_mod::RingMod::new());
+    let b = render(&mut RingMod::new());
+    let rms = |v: &[f32]| (v.iter().map(|x| x * x).sum::<f32>() / v.len() as f32).sqrt();
+    let peak = |v: &[f32]| v.iter().fold(0.0f32, |m, x| m.max(x.abs()));
+    let crossings = |v: &[f32]| v.windows(2).filter(|w| w[0] < 0.0 && w[1] >= 0.0).count() as i32;
+    let (a, b) = (&a[480..], &b[480..]);
+    assert!((rms(a) / rms(b) - 1.0).abs() < 2e-3, "{} vs {}", rms(a), rms(b));
+    assert!((peak(a) - peak(b)).abs() < 1e-3);
+    assert!((crossings(a) - crossings(b)).abs() <= 1);
+    assert_ne!(a, b);
+}
