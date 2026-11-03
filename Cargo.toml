@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/einst-formats", "crates/einst-dsp", "crates/einst-engine", "crates/einst-editor", "crates/einst-plugin", "xtask"]
+members = ["crates/einst-formats", "crates/einst-dsp", "crates/einst", "crates/einst-plugin", "xtask"]
 
 [workspace.package]
 edition = "2024"
@@ -22,12 +22,13 @@ type_complexity = "allow"
 manual_range_contains = "allow"
 
 [workspace.dependencies]
-# Dreist (Geist2 port) lives next to this repo: ~/Documents/projects/geist.
-geist-formats = { path = "../geist/crates/geist-formats" }
-# Einst's copy of Dreist's engine, under Dreist's crate name (see crates/einst-engine).
-geist-engine = { path = "crates/einst-engine", package = "einst-engine" }
-geist-dsp = { path = "../geist/crates/geist-dsp" }
-geist-gui = { path = "../geist/crates/geist-gui" }
+# The shared crates (dreist-commons).
+dreist-formats = { path = "../dreist-commons/crates/dreist-formats" }
+dreist-dsp = { path = "../dreist-commons/crates/dreist-dsp" }
+dreist-engine = { path = "../dreist-commons/crates/dreist-engine" }
+dreist-gui = { path = "../dreist-commons/crates/dreist-gui" }
+dreist-editor = { path = "../dreist-commons/crates/dreist-editor" }
+dreist-testkit = { path = "../dreist-commons/crates/dreist-testkit" }
 roxmltree = "0.20"
 thiserror = "2"
 
@@ -37,11 +38,10 @@ strip = false
 [profile.test]
 opt-level = 2
 
-# Dreist's vendored patches, used by path (see ../geist/Cargo.toml): baseview
-# with a re-entrancy guard for modal dialogs, signalsmith-stretch with a fixed
-# phase-randomisation seed.
+# dreist-commons' vendored patches: baseview with a re-entrancy guard for
+# modal dialogs, signalsmith-stretch with a fixed phase-randomisation seed.
 [patch."https://github.com/RustAudio/baseview.git"]
-baseview = { path = "../geist/vendor/baseview" }
+baseview = { path = "../dreist-commons/vendor/baseview" }
 
 [patch.crates-io]
-signalsmith-stretch = { path = "../geist/vendor/signalsmith-stretch" }
+signalsmith-stretch = { path = "../dreist-commons/vendor/signalsmith-stretch" }

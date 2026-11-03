@@ -1,0 +1,29 @@
+Einst
+Copyright (c) 2026 Daniel Köves
+
+Source code
+  Every crate in this repository except einst-plugin, and the scripts, are
+  licensed under either of
+    - Apache License, Version 2.0 (LICENSE-APACHE), or
+    - MIT license (LICENSE-MIT)
+  at your option.
+
+  crates/einst-plugin is licensed under the GNU General Public License,
+  version 3 or later (LICENSE-GPL-3.0): it exports a VST3 plugin through
+  nih-plug's VST3 bindings, which are GPLv3.
+
+Binaries
+  Einst.app, Einst.vst3 and Einst.clap are built from einst-plugin and are
+  therefore distributed under the GNU General Public License, version 3 or
+  later (LICENSE-GPL-3.0).
+
+Artwork
+  assets/ui (skin, stylesheets, icon font, cursors, metronome clicks) is a
+  copy of Dreist's UI graphics with Einst's names, under the same
+  MIT OR Apache-2.0 terms; assets/ui/Fonts/Liberation Sans*.ttf are under
+  the SIL Open Font License 1.1 (assets/ui/Fonts/OFL-LiberationSans.txt).
+
+Factory data
+  assets/v1 holds the original instrument's resources for development and
+  reverse engineering. It is not covered by the licences above; this
+  repository is private.

@@ -1,4 +1,4 @@
-//! Einst: Dreist's port of `VDSP::VFilterAutoS` (`geist_dsp::fx::nodes::auto_filter`,
+//! Einst: Dreist's port of `VDSP::VFilterAutoS` (`dreist_dsp::fx::nodes::auto_filter`,
 //! copied from Dreist at bc729de) with v1's differences (`docs/re/effects-v1.md`):
 //!
 //! - v1's `Voice::ProcessBuffer` 0x553a10 (ev_9fed2d28) takes the attack
@@ -29,8 +29,8 @@
 //! Modes: Low, Band, High, Peak, Notch.
 
 use crate::fast_exp2;
-use geist_dsp::analog::{analog, lerp, lut_pos, sin_tab};
-use geist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
+use dreist_dsp::analog::{analog, lerp, lut_pos, sin_tab};
+use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
 /// The node's saturator: `((|c|·0.0016875 − 0.0225)·c² + 1)·c`, c clamped to ±6.6667.
 #[inline]
@@ -88,7 +88,7 @@ impl AutoFilter {
             // Voice::Reset leaves the pitch state at 1.0.
             pitch: 1.0,
             wet: 1.0,
-            alt: geist_dsp::fx::nodes::ssl_filter::DENORMAL,
+            alt: dreist_dsp::fx::nodes::ssl_filter::DENORMAL,
             meter: 0.0,
         }
     }

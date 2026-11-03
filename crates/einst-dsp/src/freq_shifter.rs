@@ -1,4 +1,4 @@
-//! Einst: Dreist's port of `VDSP::VFreqShifterS` (`geist_dsp::fx::nodes::freq_shifter`,
+//! Einst: Dreist's port of `VDSP::VFreqShifterS` (`dreist_dsp::fx::nodes::freq_shifter`,
 //! copied from Dreist at bc729de2) with v1's one difference: the 2^x in
 //! `Voice::ProcessBuffer` is v1's [`fast_exp2`](crate::fast_exp2) (one
 //! inlined instance in v1, the rest of the function's constants and callees
@@ -11,8 +11,8 @@
 //! `fs/2 + (2^pitch − 1)·tune` and decimated back (`VDownsampler2Flt`).
 
 use crate::math::clip01;
-use geist_dsp::analog::sin_tab;
-use geist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
+use dreist_dsp::analog::sin_tab;
+use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
 /// Allpass coefficients; branch 1 uses the even entries, branch 2 the odd.
 const C: [f32; 7] = [0.0457281, 0.168088, 0.332501, 0.504486, 0.663202, 0.803781, 0.933856];

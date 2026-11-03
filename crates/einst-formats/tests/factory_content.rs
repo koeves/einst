@@ -1,11 +1,11 @@
-//! Reads every XML file of the Geist v1 factory install (`assets/geist1`).
+//! Reads every XML file of the Geist v1 factory install (`assets/v1`).
 
 use std::path::{Path, PathBuf};
 
 use einst_formats::{FileKind, v1::Document};
 
 fn assets() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/geist1")
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/v1")
 }
 
 fn files(dir: &Path, out: &mut Vec<PathBuf>) {
@@ -23,7 +23,7 @@ fn every_factory_file_loads() {
     for p in &all {
         let Some(kind) = FileKind::from_path(p) else { continue };
         let doc = Document::load(p).unwrap_or_else(|e| panic!("{}: {e}", p.display()));
-        doc.to_geist2().unwrap_or_else(|e| panic!("{}: {e}", p.display()));
+        doc.to_v2().unwrap_or_else(|e| panic!("{}: {e}", p.display()));
         *counts.entry(format!("{kind:?}")).or_insert(0) += 1;
     }
     let n = |k: &str| counts.get(k).copied().unwrap_or(0);

@@ -1,7 +1,7 @@
 # Geist v1's effects compared with Geist2's (Dreist's ports)
 
 v1 engine `original/Geist-engine-x86_64` (GCC build) against Geist2 2.1.2.13 (clang), whose
-effect DSP Dreist ports in `geist_dsp::fx::nodes`. The class behind each v1 effect type is in
+effect DSP Dreist ports in `dreist_dsp::fx::nodes`. The class behind each v1 effect type is in
 `loading-v1.md` ("Effect types and the v1-only DSP"); the three v1-only classes (Gain, Vari-EQ,
 Envelope Shaper) are described there.
 
@@ -10,7 +10,7 @@ Envelope Shaper) are described there.
 Per effect, four comparisons:
 
 1. **Port tables:** v1's `InitializePorts` (port names, defaults and ranges, in creation order)
-   against Dreist's `geist_dsp::fx::ports` (generated from Geist2's) [disasm, decomp].
+   against Dreist's `dreist_dsp::fx::ports` (generated from Geist2's) [disasm, decomp].
 2. **Front-panel → port mapping:** v1's `Effect::PushParameterValue` 0x2efc60 (ev_a735042f)
    against Dreist's `nodes::node_port` [decomp].
 3. **Hidden ports:** v1's `Effect::SetupInternalParameters` 0x2f0250 (ev_5107cdbc) against

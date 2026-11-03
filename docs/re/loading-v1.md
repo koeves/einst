@@ -266,7 +266,7 @@ Load-time upgrades (only when loading):
    clamped to 0..`Envelope::kMaxHoldInSeconds` (60).
 4. Hold = (x/60)^0.25, clamped to 0..1, written to **both** envelopes' Hold.
 
-Geist2's `Layer::ResetHoldTime` (as ported in Dreist's `geist_engine::hold`) is the same
+Geist2's `Layer::ResetHoldTime` (as ported in Dreist's `dreist_engine::hold`) is the same
 computation, except that it uses CoarseTune unrounded. The two agree for coarse values on v1's
 semitone grid (the only values v1's UI writes).
 
@@ -580,7 +580,7 @@ Dynamics, EQ, Filters, FX, Reverbs) as submenus, each with its types in type ord
 ## Conversion to Geist2 (`einst_formats::geist2`)
 
 `Document::to_geist2` turns a v1 project, kit, pad, engine, pattern or bank into the tree Dreist's
-`geist_formats` and `geist_engine` read. Dreist has no v1 legacy branch of its own, so the
+`dreist_formats` and `dreist_engine` read. Dreist has no v1 legacy branch of its own, so the
 converter emits what Geist2's own loader ends up with when it reads a v1 file. Geist2 2.1.2.13
 (sha256 `395d2ccf…e46d`) branches checked with REA [decomp]:
 

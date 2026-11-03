@@ -1,9 +1,9 @@
 //! v1's nodes against the decompiled formulas (`docs/re/loading-v1.md`).
 
+use dreist_dsp::fx::{Ctx, Node};
 use einst_dsp::envelope_shaper::EnvelopeShaper;
 use einst_dsp::gain::Gain;
 use einst_dsp::vari_eq::{Filter, VariEq};
-use geist_dsp::fx::{Ctx, Node};
 
 fn run(node: &mut dyn Node, ctx: &Ctx, l: &[f32], r: &[f32]) -> (Vec<f32>, Vec<f32>) {
     let (mut ol, mut or) = (vec![0.0; l.len()], vec![0.0; r.len()]);
@@ -127,7 +127,7 @@ fn vari_eq_node_maps_ports_like_v1() {
 /// left and right. With Linked on, v1's node equals Dreist's with it off.
 #[test]
 fn envelope_shaper_never_links_channels() {
-    use geist_dsp::fx::nodes::envelope_shaper::EnvelopeShaper as Geist2;
+    use dreist_dsp::fx::nodes::envelope_shaper::EnvelopeShaper as Geist2;
     let ctx = Ctx::new(44_100.0);
     let set = |n: &mut dyn Node, linked: f32| {
         for (i, v) in [1.0, 0.9, 0.2, 0.6, 0.5, linked].iter().enumerate() {
@@ -182,7 +182,7 @@ fn matches_dreist_with_fast_exp2(mut v1: Box<dyn Node>, mut g2: Box<dyn Node>, e
 
 #[test]
 fn phaser_differs_only_by_fast_exp2() {
-    use geist_dsp::fx::nodes::phaser::Phaser;
+    use dreist_dsp::fx::nodes::phaser::Phaser;
     // Ports: 0 Drive, 1 Mode, 2 Pitch (the 2^x), 3 Resonance, 4 Rate, 5 Depth, 6 Mix.
     let set = [(0, 1.0), (1, 2.0), (2, 1.37), (3, 0.6), (4, 1.0), (5, 0.7), (6, 1.0), (7, 0.0), (8, 0.0)];
     matches_dreist_with_fast_exp2(Box::new(einst_dsp::phaser::Phaser::new()), Box::new(Phaser::new()), 2, &set);
@@ -190,7 +190,7 @@ fn phaser_differs_only_by_fast_exp2() {
 
 #[test]
 fn freq_shifter_differs_only_by_fast_exp2() {
-    use geist_dsp::fx::nodes::freq_shifter::FreqShifter;
+    use dreist_dsp::fx::nodes::freq_shifter::FreqShifter;
     let set = [(0, 0.63), (1, 1.0), (2, 1.0)];
     matches_dreist_with_fast_exp2(Box::new(einst_dsp::freq_shifter::FreqShifter::new()), Box::new(FreqShifter::new()), 0, &set);
 }
@@ -209,8 +209,8 @@ fn stereo_width_gain_uses_fast_exp2() {
 /// v1's Noise Gate ports in v1 order reach Dreist's gate at Geist2's indices.
 #[test]
 fn noise_gate_takes_v1_port_order() {
-    use einst_dsp::noise_gate::{NoiseGate, V1_TO_GEIST2};
-    use geist_dsp::fx::nodes::noise_gate::NoiseGate as Geist2;
+    use dreist_dsp::fx::nodes::noise_gate::NoiseGate as Geist2;
+    use einst_dsp::noise_gate::{NoiseGate, V1_TO_V2};
     let ctx = Ctx::new(44_100.0);
     let mut v1 = NoiseGate::new();
     let mut g2 = Geist2::new();
@@ -218,7 +218,7 @@ fn noise_gate_takes_v1_port_order() {
     let vals = [0.002f32, 0.05, 0.2, 0.1, 0.5, 8000.0, 30.0, 0.0, 0.0, 1.0];
     for (i, v) in vals.iter().enumerate() {
         v1.ports()[i].value = *v;
-        g2.ports()[V1_TO_GEIST2[i]].value = *v;
+        g2.ports()[V1_TO_V2[i]].value = *v;
     }
     let (l, r) = (noise(4096, 3), noise(4096, 4));
     assert_eq!(run(&mut v1, &ctx, &l, &r), run(&mut g2, &ctx, &l, &r));
@@ -231,7 +231,7 @@ fn noise_gate_takes_v1_port_order() {
 /// v1's fast 2^x for attack and release.
 #[test]
 fn channel_compressor_matches_dreist_but_for_gain_ramp_and_fast_exp2() {
-    use geist_dsp::fx::nodes::urei1176::Urei1176 as Geist2;
+    use dreist_dsp::fx::nodes::urei1176::Urei1176 as Geist2;
     let ctx = Ctx::new(48_000.0);
     let mut v1 = einst_dsp::urei1176::Urei1176::new();
     let mut g2 = Geist2::new();
@@ -281,7 +281,7 @@ fn channel_compressor_solver_constants() {
 /// v1's Bus Compressor is Dreist's fed log2(fast2^(HPFreq + 1)) − 1.
 #[test]
 fn bus_compressor_differs_only_by_fast_exp2_side_chain_hp() {
-    use geist_dsp::fx::nodes::bus_comp::BusComp;
+    use dreist_dsp::fx::nodes::bus_comp::BusComp;
     let ctx = Ctx::new(48_000.0);
     // Threshold, Attack, Ratio, Release, Makeup, Mix, Active, (ext SC), HPFreq, Clip.
     let set = [(0, 0.1), (1, 1.0), (2, 2.0), (3, 1.0), (4, 0.4), (5, 1.0), (6, 1.0), (7, 0.0), (8, 7.3), (9, 1.0)];
@@ -313,7 +313,7 @@ fn auto_filter_ports(n: &mut dyn Node, pitch: f32, depth: f32, fm: f32) {
 /// 2^x is v1's fast one (once the first block's pitch ramp has passed).
 #[test]
 fn modulated_filter_cutoff_uses_fast_exp2() {
-    use geist_dsp::fx::nodes::auto_filter::AutoFilter;
+    use dreist_dsp::fx::nodes::auto_filter::AutoFilter;
     let ctx = Ctx::new(48_000.0);
     let pitch = 1.37;
     let mut v1 = einst_dsp::auto_filter::AutoFilter::new();

@@ -4,13 +4,13 @@
 
 use std::path::{Path, PathBuf};
 
+use dreist_engine::{Dreist, RenderOptions};
+use dreist_formats::Node;
 use einst_formats::{FileKind, v1::Document};
-use geist_engine::{Geist, RenderOptions};
-use geist_formats::Node;
 
 /// A factory metronome click from the v1 install, used as every layer's sample.
 fn samples() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/geist1/System/Metronomes/Default")
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/v1/System/Metronomes/Default")
 }
 
 /// A v1 layer with every attribute `Layer::SerializeAsXML` writes (`Ver` 3.2).
@@ -101,13 +101,13 @@ fn project(engine0: &str) -> String {
 }
 
 fn convert(kind: FileKind, text: &str) -> Node {
-    Document::from_str(kind, text).unwrap().to_geist2().unwrap()
+    Document::from_str(kind, text).unwrap().to_v2().unwrap()
 }
 
 /// Render `secs` seconds; return the peak.
 fn render(doc: &Node, secs: f32) -> f32 {
     let sr = 44_100.0;
-    let mut g = Geist::from_document(doc, &samples(), sr, RenderOptions::default(), &mut Default::default()).expect("Dreist loads the converted project");
+    let mut g = Dreist::from_document(doc, &samples(), sr, RenderOptions::default(), &mut Default::default()).expect("Dreist loads the converted project");
     g.start();
     let (mut l, mut r) = (vec![0.0; 512], vec![0.0; 512]);
     let mut peak = 0.0f32;
@@ -132,7 +132,7 @@ fn project_converts_loads_and_plays() {
     assert!(doc.attr("StateVersion").is_none());
     assert!(doc.children_of("BindingMap").next().is_none());
     assert_eq!(first(&doc, "GlobalAux").attr("OutputLocation"), Some("Aux 1"));
-    let p = geist_formats::Project::from_node(doc.clone()).unwrap();
+    let p = dreist_formats::Project::from_node(doc.clone()).unwrap();
     assert_eq!(p.audio_files, ["Beat.wav"]);
     let layer = &p.engines[0].pads[0].layers[0];
     assert_eq!(layer.raw.version, Some(3300));
@@ -145,7 +145,7 @@ fn project_converts_loads_and_plays() {
     }
     assert_eq!(layer.raw.f32("AmpEnvDecay"), Some(0.02));
     assert_eq!(layer.raw.f32("FreeEnvHold"), Some(-1.0));
-    assert!(geist_engine::hold::needs_reset_on_load(&layer.raw));
+    assert!(dreist_engine::hold::needs_reset_on_load(&layer.raw));
     assert_eq!(layer.raw.f32("TimestretchActive"), Some(0.0));
     assert_eq!(layer.raw.f32("Cutoff_Velocity"), Some(0.0));
     assert!(layer.raw.children_of("LayerModulationRouting").next().is_none());
@@ -197,11 +197,11 @@ fn hold_is_recomputed_like_v1() {
     let doc = convert(FileKind::Pad, &format!("<root>{}</root>", pad("Pad", &text)));
     let l = first(first(&doc, "Pad"), "Layer");
     assert_eq!(l.f32("AmpEnvHold"), Some(-1.0));
-    assert!(geist_engine::hold::needs_reset_on_load(l));
-    let lp = |k: geist_formats::LayerParam| l.f32(k.name()).unwrap_or(k.default_value()).clamp(0.0, 1.0);
+    assert!(dreist_engine::hold::needs_reset_on_load(l));
+    let lp = |k: dreist_formats::LayerParam| l.f32(k.name()).unwrap_or(k.default_value()).clamp(0.0, 1.0);
     // A region shorter than the envelope gives 0; longer ones a hold in between.
     for (region, total, sr, inside) in [(4000.0, 4000.0, 44_100.0, false), (0.0, 88_200.0, 44_100.0, true), (120_000.0, 200_000.0, 48_000.0, true)] {
-        let dreist = geist_engine::hold::reset_hold_time(&lp, false, region, total, sr, true);
+        let dreist = dreist_engine::hold::reset_hold_time(&lp, false, region, total, sr, true);
         let v1 = v1_reset_hold_time(l, region, total, sr);
         assert!((dreist - v1).abs() < 1e-5, "region {region}: Dreist {dreist} vs v1 {v1}");
         assert_eq!(v1 > 0.0 && v1 < 1.0, inside, "region {region}: {v1}");
@@ -210,7 +210,7 @@ fn hold_is_recomputed_like_v1() {
     let kept = convert(FileKind::Pad, &format!("<root>{}</root>", pad("Pad", &text.replace(r#"Envelope0Param3="-1""#, r#"Envelope0Param3="0.4""#))));
     let k = first(first(&kept, "Pad"), "Layer");
     assert_eq!((k.f32("AmpEnvHold"), k.f32("FreeEnvHold")), (Some(0.4), Some(-1.0)));
-    assert!(geist_engine::hold::needs_reset_on_load(k), "either hold negative → reset, as in v1");
+    assert!(dreist_engine::hold::needs_reset_on_load(k), "either hold negative → reset, as in v1");
 }
 
 #[test]
@@ -263,7 +263,7 @@ fn layer_version_branches() {
     let l = first(first(&doc, "Pad"), "Layer");
     assert_eq!((l.f32("AmpEnvHold"), l.f32("FreeEnvHold")), (Some(-1.0), Some(-1.0)));
     assert_eq!((l.f32("AmpEnvDecay"), l.f32("FreeEnvDecay")), (Some(0.02), Some(0.3)));
-    assert!(geist_engine::hold::needs_reset_on_load(l));
+    assert!(dreist_engine::hold::needs_reset_on_load(l));
 }
 
 #[test]
@@ -306,7 +306,7 @@ fn single_object_files() {
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("k.geistkit");
     std::fs::write(&path, kit.to_xml()).unwrap();
-    let k = geist_formats::Kit::load(&path).unwrap();
+    let k = dreist_formats::Kit::load(&path).unwrap();
     assert_eq!(k.pads.len(), 2);
     assert_eq!(k.pads[1].layers[0].audio_file.as_deref(), Some("Beat.wav"));
     let _ = std::fs::remove_dir_all(&dir);
@@ -329,16 +329,16 @@ fn single_object_files() {
 
     let bank = convert(FileKind::PatternBank, &format!("<root>{}{}</root>", pattern("StepPattern0"), pattern("StepPattern1")));
     let doc = wrap(&xml(&bank));
-    let p = geist_formats::Project::from_node(doc).unwrap();
+    let p = dreist_formats::Project::from_node(doc).unwrap();
     assert_eq!(p.engines[0].patterns.len(), 2);
     assert_eq!(p.engines[0].patterns[1].tracks[0].steps.len(), 4);
 }
 
 /// Every v1 effect type keeps its name and exists in Geist2's table.
 #[test]
-fn v1_effect_types_map_onto_geist2() {
+fn v1_effect_types_map_onto_v2() {
     for (i, name) in einst_formats::v1::EFFECT_TYPES.iter().enumerate() {
-        assert!(geist_formats::params::effect_type_index(name).is_some(), "{name}");
+        assert!(dreist_formats::params::effect_type_index(name).is_some(), "{name}");
         let text = format!(r#"<root><EffectChain name="EffectChain"><Effect name="Effect0" EffectType="{name}" Parameter0="0.3" /></EffectChain></root>"#);
         let doc = convert(FileKind::Pad, &text.replace("<root>", "<root><Pad name=\"Pad\">").replace("</root>", "</Pad></root>"));
         let e = first(first(first(&doc, "Pad"), "EffectChain"), "Effect");

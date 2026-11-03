@@ -1,4 +1,4 @@
-//! Plugin editor: `einst-editor` (Einst's copy of Dreist's editor) in the host's
+//! Plugin editor: `dreist-editor` (under Einst's profile) in the host's
 //! parent view. The GUI talks to the audio thread through [`Bridge`]:
 //! commands one way, a state snapshot the other, both behind locks the
 //! audio thread only ever `try_lock`s.
@@ -8,9 +8,9 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex, OnceLock, PoisonError, Weak};
 
-use einst_editor::{Command, Editor as GeistGui, Model};
-use geist_engine::Geist;
-use geist_formats::Node;
+use dreist_editor::{Command, Editor as DreistGui, Model};
+use dreist_engine::Dreist;
+use dreist_formats::Node;
 use nih_plug::prelude::*;
 
 /// Engine state the GUI displays, refreshed by the audio thread.
@@ -28,33 +28,33 @@ pub struct UiState {
     /// The host reports a loop this block.
     pub host_loop: bool,
     /// Messages from editor-only bindings.
-    pub editor_messages: Vec<geist_engine::binding::Message>,
+    pub editor_messages: Vec<dreist_engine::binding::Message>,
     /// Bound parameters moved by MIDI CCs / host automation (latest per
     /// target), for the editor's document.
-    pub automation: Vec<geist_engine::binding::Message>,
-    pub sampler: einst_editor::model::SamplerView,
+    pub automation: Vec<dreist_engine::binding::Message>,
+    pub sampler: dreist_editor::model::SamplerView,
     /// Last MIDI CC (count, channel, controller) for MIDI learn.
     pub last_cc: (u32, u8, u8),
     /// Peak levels since the editor's last meter tick.
-    pub meters: geist_engine::Meters,
+    pub meters: dreist_engine::Meters,
     /// Finished sampler takes and their sample rate, for the editor to save.
-    pub takes: Vec<(geist_engine::sampler::Take, f32)>,
+    pub takes: Vec<(dreist_engine::sampler::Take, f32)>,
     /// Incoming MIDI for the MIDI console.
     pub midi_log: Vec<[u8; 3]>,
     /// Live take display: a new take started, and new min/max pairs.
     pub live_reset: bool,
     pub live: Vec<(f32, f32)>,
     /// Song recorder messages.
-    pub song_events: Vec<geist_engine::songrec::SongEvent>,
+    pub song_events: Vec<dreist_engine::songrec::SongEvent>,
     /// Pattern retro recording input.
-    pub retro_events: Vec<geist_engine::songrec::RetroEvent>,
+    pub retro_events: Vec<dreist_engine::songrec::RetroEvent>,
     /// Steps the engine wrote (recording).
-    pub step_writes: Vec<geist_engine::StepWrite>,
+    pub step_writes: Vec<dreist_engine::StepWrite>,
     /// Scene notifications.
-    pub scene_events: Vec<geist_engine::scene::SceneEvent>,
+    pub scene_events: Vec<dreist_engine::scene::SceneEvent>,
     /// A reserved buffer for the sampler's next take (see
     /// `Sampler::give_spare`), kept ready by the rebuild worker.
-    pub spare_take: Option<geist_engine::sampler::Take>,
+    pub spare_take: Option<dreist_engine::sampler::Take>,
 }
 
 /// The GUI's copy of what the audio thread left in [`UiState`], taken under
@@ -68,19 +68,19 @@ struct Inbox {
     mods_triggered: u32,
     song_pos: Option<f64>,
     host_loop: bool,
-    editor_messages: Vec<geist_engine::binding::Message>,
-    automation: Vec<geist_engine::binding::Message>,
-    sampler: Option<einst_editor::model::SamplerView>,
+    editor_messages: Vec<dreist_engine::binding::Message>,
+    automation: Vec<dreist_engine::binding::Message>,
+    sampler: Option<dreist_editor::model::SamplerView>,
     last_cc: (u32, u8, u8),
-    meters: geist_engine::Meters,
-    takes: Vec<(geist_engine::sampler::Take, f32)>,
+    meters: dreist_engine::Meters,
+    takes: Vec<(dreist_engine::sampler::Take, f32)>,
     midi_log: Vec<[u8; 3]>,
     live_reset: bool,
     live: Vec<(f32, f32)>,
-    song_events: Vec<geist_engine::songrec::SongEvent>,
-    retro_events: Vec<geist_engine::songrec::RetroEvent>,
-    step_writes: Vec<geist_engine::StepWrite>,
-    scene_events: Vec<geist_engine::scene::SceneEvent>,
+    song_events: Vec<dreist_engine::songrec::SongEvent>,
+    retro_events: Vec<dreist_engine::songrec::RetroEvent>,
+    step_writes: Vec<dreist_engine::StepWrite>,
+    scene_events: Vec<dreist_engine::scene::SceneEvent>,
 }
 
 impl Inbox {
@@ -144,14 +144,14 @@ pub struct Bridge {
     pub samples: Mutex<Option<PathBuf>>,
     /// A rebuilt engine and its request number, waiting to be swapped in
     /// by the audio thread.
-    pub replace: Mutex<Option<(u64, Box<Geist>)>>,
+    pub replace: Mutex<Option<(u64, Box<Dreist>)>>,
     /// Engines swapped out, dropped by the rebuild worker.
-    pub retired: Mutex<Vec<Box<Geist>>>,
+    pub retired: Mutex<Vec<Box<Dreist>>>,
     /// An editor window is open (it applies the engine's output to the
     /// document; otherwise `Bridge::headless_sync` does).
     pub editor_open: std::sync::atomic::AtomicBool,
     /// The plugin's parameters (their persisted session), for the worker.
-    params: OnceLock<Weak<crate::GeistParams>>,
+    params: OnceLock<Weak<crate::DreistParams>>,
     /// Rebuild requests issued (the newest wins).
     pub requested: AtomicU64,
     /// The request the running engine was built for (published by the
@@ -161,7 +161,7 @@ pub struct Bridge {
     wake: Condvar,
     worker: OnceLock<()>,
     /// Decoded samples shared between rebuilds.
-    pub cache: Arc<Mutex<geist_engine::audio::SampleCache>>,
+    pub cache: Arc<Mutex<dreist_engine::audio::SampleCache>>,
     /// Sample rate (f32 bits) for rebuilds.
     pub sample_rate: AtomicU32,
     /// Project path chosen in the editor (persisted by the plugin).
@@ -205,7 +205,7 @@ impl Bridge {
 
     /// Start the worker (rebuilds, freeing retired engines, spare takes,
     /// the headless document sync) for the plugin with `params`.
-    pub fn start(self: &Arc<Self>, params: &Arc<crate::GeistParams>) {
+    pub fn start(self: &Arc<Self>, params: &Arc<crate::DreistParams>) {
         let _ = self.params.set(Arc::downgrade(params));
         self.ensure_worker();
     }
@@ -232,17 +232,17 @@ impl Bridge {
         let Ok(mut s) = self.state.try_lock() else { return };
         // Drained, not taken: the audio thread keeps the reserved room.
         #[allow(clippy::drain_collect)]
-        let writes: Vec<geist_engine::StepWrite> = s.step_writes.drain(..).collect();
+        let writes: Vec<dreist_engine::StepWrite> = s.step_writes.drain(..).collect();
         #[allow(clippy::drain_collect)]
-        let automation: Vec<geist_engine::binding::Message> = s.automation.drain(..).collect();
+        let automation: Vec<dreist_engine::binding::Message> = s.automation.drain(..).collect();
         let tempo = s.tempo;
         drop(s);
         let mut changed = !writes.is_empty() || !automation.is_empty();
         for w in &writes {
-            geist_engine::engine::doc::write_step(d, w.engine, w.pattern, w.track, w.step, &w.data);
+            dreist_engine::engine::doc::write_step(d, w.engine, w.pattern, w.track, w.step, &w.data);
         }
         for m in &automation {
-            geist_engine::engine::doc::mirror_message(d, m);
+            dreist_engine::engine::doc::mirror_message(d, m);
         }
         let doc_tempo = d.child("TimeInfo", "TimeInfo").and_then(|t| t.attr("Tempo")).and_then(|v| v.trim().parse::<f64>().ok());
         if tempo > 0.0 && doc_tempo != Some(tempo.clamp(20.0, 999.0)) {
@@ -271,7 +271,7 @@ impl Bridge {
     }
 
     /// Build one request; `None` when it failed or a newer one arrived.
-    fn build(&self, doc: &Node, samples: Option<PathBuf>) -> Option<Geist> {
+    fn build(&self, doc: &Node, samples: Option<PathBuf>) -> Option<Dreist> {
         let sr = self.sample_rate();
         let samples = samples.unwrap_or_else(|| PathBuf::from("."));
         // Loader progress (`SetupJobCallbacks` $_6 / $_4): lookups over
@@ -292,8 +292,8 @@ impl Bridge {
                 *lock(&counter) = Some((n / total).min(1.0));
             }));
             let built = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                let mut g = Geist::from_document(doc, &samples, sr, einst_editor::options::render_options(), &mut cache)?;
-                g.set_metronome_sound(&einst_editor::options::metronome_sound());
+                let mut g = Dreist::from_document(doc, &samples, sr, dreist_editor::options::render_options(), &mut cache)?;
+                g.set_metronome_sound(&dreist_editor::options::metronome_sound());
                 g.set_document_mirroring(false);
                 Some(g)
             }));
@@ -315,10 +315,10 @@ impl Bridge {
 fn worker(bridge: Weak<Bridge>) {
     loop {
         let Some(me) = bridge.upgrade() else { return };
-        let retired: Vec<Box<Geist>> = lock(&me.retired).drain(..).collect();
+        let retired: Vec<Box<Dreist>> = lock(&me.retired).drain(..).collect();
         drop(retired);
         if lock(&me.state).spare_take.is_none() {
-            let t = geist_engine::sampler::Take::with_capacity((me.sample_rate() * geist_engine::sampler::TAKE_RESERVE_SECONDS) as usize);
+            let t = dreist_engine::sampler::Take::with_capacity((me.sample_rate() * dreist_engine::sampler::TAKE_RESERVE_SECONDS) as usize);
             lock(&me.state).spare_take.get_or_insert(t);
         }
         me.headless_sync();
@@ -342,10 +342,10 @@ fn worker(bridge: Weak<Bridge>) {
     }
 }
 
-pub struct GeistEditor {
+pub struct DreistEditor {
     pub bridge: Arc<Bridge>,
     pub theme: String,
-    pub params: Arc<crate::GeistParams>,
+    pub params: Arc<crate::DreistParams>,
     /// The window size the editor last asked for (pixels; 0 = from the
     /// options), what `size()` reports to the host.
     pub size: Arc<std::sync::atomic::AtomicU64>,
@@ -354,7 +354,7 @@ pub struct GeistEditor {
 /// `Editor::ComputeStartupSize`: `LastEditorSize` (window pixels) or the
 /// default size × the UI scale.
 fn startup_size() -> (u32, u32) {
-    let o = einst_editor::options::Options::load();
+    let o = dreist_editor::options::Options::load();
     let ui = o.int("LastEditorScaleFactor", 100).clamp(50, 300) as f64 / 100.0;
     let saved = o.string("LastEditorSize", "0,0");
     let parsed = saved.split_once(',').and_then(|(w, h)| Some((w.trim().parse::<u32>().ok()?, h.trim().parse::<u32>().ok()?))).filter(|(w, h)| *w > 0 && *h > 0);
@@ -363,7 +363,7 @@ fn startup_size() -> (u32, u32) {
 
 /// Store the editor's document in the bridge and the persisted session
 /// when it changed (`wait`: even if the worker holds the document).
-fn sync_session(bridge: &Bridge, params: &crate::GeistParams, ed: &GeistGui, wait: bool) {
+fn sync_session(bridge: &Bridge, params: &crate::DreistParams, ed: &DreistGui, wait: bool) {
     let mut d = if wait {
         lock(&bridge.doc)
     } else {
@@ -385,7 +385,7 @@ fn sync_session(bridge: &Bridge, params: &crate::GeistParams, ed: &GeistGui, wai
     }
 }
 
-struct Handle(geist_gui::window::WindowHandle);
+struct Handle(dreist_gui::window::WindowHandle);
 // SAFETY: the handle is only used to close the window from the host's GUI
 // thread, as nih-plug's own baseview editors do.
 unsafe impl Send for Handle {}
@@ -398,7 +398,7 @@ impl Drop for Handle {
 
 pub const SIZE: (u32, u32) = (1400, 850);
 
-impl Editor for GeistEditor {
+impl Editor for DreistEditor {
     fn spawn(&self, parent: ParentWindowHandle, context: Arc<dyn GuiContext>) -> Box<dyn Any + Send> {
         // Before reading the document (see `Bridge::headless_sync`).
         self.bridge.editor_open.store(true, std::sync::atomic::Ordering::Release);
@@ -413,7 +413,7 @@ impl Editor for GeistEditor {
             model.name = p.file_stem().map(|s| s.to_string_lossy().into_owned());
         }
         let project_path = self.bridge.project_path.lock().ok().and_then(|p| p.clone());
-        let gui = match GeistGui::new(&self.theme, model) {
+        let gui = match DreistGui::new(&self.theme, model) {
             Ok(mut g) => {
                 g.project_path = project_path;
                 g.menu_bar = cfg!(feature = "standalone");
@@ -421,7 +421,7 @@ impl Editor for GeistEditor {
                 {
                     g.devices.host = Some(Box::new(crate::standalone::Host));
                     let (app_items, menus) = g.menu_bar_items();
-                    geist_gui::menubar::install(einst_editor::PRODUCT, &app_items, &menus);
+                    dreist_gui::menubar::install(dreist_editor::product(), &app_items, &menus);
                 }
                 g
             }
@@ -438,8 +438,8 @@ impl Editor for GeistEditor {
         let mut inbox = Inbox::default();
         // The last previews' samples: the audio thread may still be playing
         // one, and must not be the one to free it.
-        let mut previews: std::collections::VecDeque<Arc<geist_dsp::voice::SampleData>> = Default::default();
-        let link = Box::new(move |ed: &mut GeistGui, cmds: Vec<Command>| {
+        let mut previews: std::collections::VecDeque<Arc<dreist_dsp::voice::SampleData>> = Default::default();
+        let link = Box::new(move |ed: &mut DreistGui, cmds: Vec<Command>| {
             // A new UI scale: ask the host for the new size (`size()` reads it).
             if ed.app.resize_request {
                 let (w, h) = ed.app.size();
@@ -475,7 +475,7 @@ impl Editor for GeistEditor {
                         let sr = if sr > 0.0 { sr as u32 } else { 44100 };
                         std::thread::spawn(move || {
                             let samples = samples.unwrap_or_else(|| std::path::PathBuf::from("."));
-                            match einst_editor::command::run_export(&doc, &samples, &path, sr, &options, status.as_ref()) {
+                            match dreist_editor::command::run_export(&doc, &samples, &path, sr, &options, status.as_ref()) {
                                 Ok(r) => {
                                     if r.clipped > 0 {
                                         nih_log!("export: {} clipped samples", r.clipped);
@@ -507,7 +507,7 @@ impl Editor for GeistEditor {
                 }
             }
             // The standalone's menu bar.
-            for tag in geist_gui::menubar::take() {
+            for tag in dreist_gui::menubar::take() {
                 ed.menu_command(tag);
             }
             // A document from the plugin side (session restore, reload).
@@ -562,7 +562,7 @@ impl Editor for GeistEditor {
             ed.set_playback(inbox.playing, inbox.steps, inbox.song_pos);
             // The preview volume is editor-side.
             if let Some(view) = inbox.sampler.take() {
-                let sampler = einst_editor::model::SamplerView { preview_volume: ed.model.sampler.preview_volume, ..view };
+                let sampler = dreist_editor::model::SamplerView { preview_volume: ed.model.sampler.preview_volume, ..view };
                 if ed.model.sampler != sampler {
                     ed.model.sampler = sampler;
                     ed.app.dirty = true;
@@ -596,7 +596,7 @@ impl Editor for GeistEditor {
             }
             inbox.clear();
         });
-        Box::new(Handle(einst_editor::window::open_parented(&parent, gui, link)))
+        Box::new(Handle(dreist_editor::window::open_parented(&parent, gui, link)))
     }
 
     fn size(&self) -> (u32, u32) {
@@ -659,7 +659,7 @@ mod tests {
     fn state_commands_during_a_rebuild_ask_for_another() {
         let b = Bridge::default();
         let song = Command::SongTracks(Box::default());
-        let msg = Command::Message(geist_engine::binding::Message::new(geist_engine::binding::id::SET_TEMPO, &[], &[100.0]));
+        let msg = Command::Message(dreist_engine::binding::Message::new(dreist_engine::binding::id::SET_TEMPO, &[], &[100.0]));
         assert!(!b.needs_newer_rebuild(std::slice::from_ref(&song), &[]), "no rebuild in flight");
         b.requested.store(3, Ordering::Release);
         b.built.store(2, Ordering::Release);
@@ -676,17 +676,17 @@ mod tests {
     /// open, they are left for it.
     #[test]
     fn headless_sync_keeps_the_session_current() {
-        use geist_engine::binding::{Message, id};
+        use dreist_engine::binding::{Message, id};
         let b = Bridge::default();
-        let params = Arc::new(crate::GeistParams::default());
+        let params = Arc::new(crate::DreistParams::default());
         let _ = b.params.set(Arc::downgrade(&params));
         *lock(&b.doc) = Some(doc(120));
         lock(&b.state).step_writes.reserve(16);
         lock(&b.state).automation.reserve(16);
-        let data = geist_engine::pattern::StepData { on: true, ..geist_engine::pattern::StepData::off() };
+        let data = dreist_engine::pattern::StepData { on: true, ..dreist_engine::pattern::StepData::off() };
         let push = |b: &Bridge| {
             let mut s = lock(&b.state);
-            s.step_writes.push(geist_engine::StepWrite { engine: 0, pattern: 1, track: 2, step: 3, data: data.clone() });
+            s.step_writes.push(dreist_engine::StepWrite { engine: 0, pattern: 1, track: 2, step: 3, data: data.clone() });
             s.automation.push(Message::new(id::SET_MASTER_CHANNEL_GAIN, &[], &[0.25]));
             s.tempo = 133.0;
         };
@@ -722,7 +722,7 @@ mod tests {
         let b = Arc::new(Bridge::default());
         b.sample_rate.store(44100f32.to_bits(), Ordering::Relaxed);
         b.rebuild(doc(100), None);
-        lock(&b.retired).push(Box::new(Geist::empty(44100.0, Default::default())));
+        lock(&b.retired).push(Box::new(Dreist::empty(44100.0, Default::default())));
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
         while !lock(&b.retired).is_empty() {
             assert!(std::time::Instant::now() < deadline, "retired engine not freed");

@@ -1,4 +1,4 @@
-//! Helpers the copied Dreist nodes use (Dreist's `geist_dsp::fx::nodes::math`
+//! Helpers the copied Dreist nodes use (Dreist's `dreist_dsp::fx::nodes::math`
 //! is private to its crate; these are copied unchanged).
 
 /// Clamp to 0..1 the way the binaries do: `((|x| + 1) − |x − 1|)/2`.

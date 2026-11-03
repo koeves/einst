@@ -1,4 +1,4 @@
-//! Einst: Dreist's port of `VDSP::VFilterPhaser8` (`geist_dsp::fx::nodes::phaser`,
+//! Einst: Dreist's port of `VDSP::VFilterPhaser8` (`dreist_dsp::fx::nodes::phaser`,
 //! copied from Dreist at bc729de2) with v1's one difference: the 2^x in
 //! `Voice::ProcessBuffer` is v1's [`fast_exp2`](crate::fast_exp2) (one
 //! inlined instance in v1, the rest of the function's constants and callees
@@ -11,10 +11,10 @@
 //! input and DC-blocked feedback, ramped dry/wet gains.
 
 use crate::math::{clip01, sat};
-use geist_dsp::analog::sin_tab;
-use geist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
+use dreist_dsp::analog::sin_tab;
+use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
-use geist_dsp::fx::nodes::blocks::ALT;
+use dreist_dsp::fx::nodes::blocks::ALT;
 
 /// Per-mode coefficient polynomials `(((a·v + b)·v + c)·v + d)·v − 1`.
 const POLY: [[f32; 4]; 8] = [
@@ -172,7 +172,7 @@ impl Node for Phaser {
     }
 
     fn process(&mut self, ctx: &Ctx, inp: [&[f32]; 2], out: [&mut [f32]; 2]) {
-        let p = geist_dsp::fx::port_values(&self.ports);
+        let p = dreist_dsp::fx::port_values(&self.ports);
         for (k, o) in out.into_iter().enumerate() {
             self.voices[k].process(ctx, &p, inp[k], o);
         }

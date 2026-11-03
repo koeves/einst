@@ -9,7 +9,7 @@
 
 use std::path::Path;
 
-use geist_formats::Node;
+use dreist_formats::Node;
 
 use crate::{Error, FileKind};
 
@@ -74,10 +74,10 @@ impl Document {
     }
 
     /// The document in Geist2's vocabulary, ready for Dreist's engine.
-    pub fn to_geist2(&self) -> Result<Node, Error> {
+    pub fn to_v2(&self) -> Result<Node, Error> {
         match self.kind {
             FileKind::EffectPreset | FileKind::EffectChain | FileKind::PatternTemplate | FileKind::SwingTemplate => Ok(self.root.clone()),
-            FileKind::Project | FileKind::Kit | FileKind::Pad | FileKind::Engine | FileKind::Pattern | FileKind::PatternBank => Ok(crate::geist2::convert_root(&self.root)),
+            FileKind::Project | FileKind::Kit | FileKind::Pad | FileKind::Engine | FileKind::Pattern | FileKind::PatternBank => Ok(crate::v2::convert_root(&self.root)),
         }
     }
 }
@@ -90,7 +90,7 @@ impl Document {
 /// (`<file>.samples`, as both versions do).
 pub fn open_as_project(path: &Path) -> Result<Option<(Node, std::path::PathBuf)>, Error> {
     let Some(kind) = FileKind::from_path(path) else { return Ok(None) };
-    Ok(convert_file(path)?.map(|doc| (as_project(kind, doc), geist_formats::model::samples_dir(path))))
+    Ok(convert_file(path)?.map(|doc| (as_project(kind, doc), dreist_formats::model::samples_dir(path))))
 }
 
 /// A Geist v1 project, kit, pad, engine, pattern or bank file converted to
@@ -105,7 +105,7 @@ pub fn convert_file(path: &Path) -> Result<Option<Node>, Error> {
     if crate::parse(&text)?.version.is_some() {
         return Ok(None);
     }
-    Ok(Some(Document::from_str(kind, &text)?.to_geist2()?))
+    Ok(Some(Document::from_str(kind, &text)?.to_v2()?))
 }
 
 /// A converted single-object document placed in engine 0 of a project.
@@ -135,7 +135,7 @@ pub fn as_project(kind: FileKind, converted: Node) -> Node {
 
 /// v1's effect types in v1's order (`Effect::EffectTypeToString` 0xf47f0,
 /// ev_16b78c41): index = v1 `EEffectType`. Effect files store the name,
-/// which Geist2 and Dreist number differently (`geist_formats::EFFECT_TYPES`).
+/// which Geist2 and Dreist number differently (`dreist_formats::EFFECT_TYPES`).
 pub const EFFECT_TYPES: [&str; 33] = [
     "No Effect", "Gain", "Stereo Width", "Parametric EQ", "DJ EQ", "Vari-EQ", "Channel Compressor", "Bus Compressor", "Noise Gate", "Envelope Shaper", "Delay", "Flanger", "Chorus", "Phaser",
     "Distortion", "Bit Crusher", "Ring Mod", "Frequency Shifter", "Filter", "Modulated Filter", "Comb Filter", "Three Oh! Three Filter", "Hoover Filter", "Grandad Filter", "Little Fatty Filter",

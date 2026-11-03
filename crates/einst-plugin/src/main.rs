@@ -2,7 +2,7 @@
 //! through cpal, or JACK).
 //!
 //! The devices come from the audio / MIDI settings panels
-//! (`einst_editor::devices`, options `Standalone*`); nih-plug's command
+//! (`dreist_editor::devices`, options `Standalone*`); nih-plug's command
 //! line flags (`--output-device`, `--midi-input`, ...) override them.
 
 use einst_plugin::EinstPlugin;
@@ -11,9 +11,9 @@ use nih_plug::prelude::*;
 /// Command line plus the stored device choices for flags not given.
 fn args() -> Vec<String> {
     let mut args: Vec<String> = std::env::args().collect();
-    let o = einst_editor::options::Options::load();
+    let o = dreist_editor::options::Options::load();
     let given = |args: &[String], flag: &str| args.iter().any(|a| a == flag || a.starts_with(&format!("{flag}=")));
-    let s = einst_editor::devices::Settings::load(&o);
+    let s = dreist_editor::devices::Settings::load(&o);
     // The system backend even when JACK is installed (nih-plug's "auto"
     // prefers JACK).
     let backend = if cfg!(windows) {
@@ -57,5 +57,6 @@ fn device_sample_rate(name: &str) -> Option<u32> {
 }
 
 fn main() {
+    einst::install();
     nih_export_standalone_with_args::<EinstPlugin, _>(args());
 }

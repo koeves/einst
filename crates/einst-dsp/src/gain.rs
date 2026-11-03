@@ -8,7 +8,7 @@
 //! its last value to `a` over the block (`SongInfo + 0x2c` = 1/block size).
 //! Dreist's `VAmpS` port uses an exact `exp2`.
 
-use geist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
+use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
 pub struct Gain {
     ports: Vec<Port>,

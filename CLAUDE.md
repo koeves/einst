@@ -5,7 +5,7 @@ of **Dreist**, the Geist2 2.1.2.13 port at `../geist` (private repo `koeves/drei
 needs on top: the v1 file reader, the v1-only DSP, and v1's behaviour and layout where they differ.
 Decision (user, 2026-11-02): separate Einst app with Dreist's crates as dependencies; no fork.
 
-- `assets/geist1` holds FXpansion's original v1 resources (effects, chains, templates, skins,
+- `assets/v1` holds FXpansion's original v1 resources (effects, chains, templates, skins,
   manuals). Keep this repo private. Original binaries for RE are in `original/` (gitignored).
 - RE notes: `docs/re/` (`v1-vs-geist2.md`, `formats-v1.md`). Tag claims [file]/[sym]/[decomp]/[runtime]
   and cite REA Evidence IDs, as in Dreist's `docs/re/README.md`.

@@ -5,7 +5,7 @@
 //! 0x321010).
 //!
 //! v1's `TDImpl` is the transient designer Geist2's `VDSPTransientDesignerS`
-//! wraps, which Dreist ports as `geist_dsp::fx::nodes::envelope_shaper`:
+//! wraps, which Dreist ports as `dreist_dsp::fx::nodes::envelope_shaper`:
 //! `TDChannel::BuildCoeffs` 0x31f560 (ev_d7897614) gives the same time
 //! constants (e.g. exp(−1/(2π·sr·39000·100e−9)) = exp(−40.809/sr)),
 //! `ConvertParameter01ToParameterValue` 0x31f1d0 (ev_8c86f1ce) the same
@@ -20,19 +20,19 @@
 //! its own (the base `VDSPVoice::Reset` is empty), so a panic keeps the
 //! parameters where Dreist's Geist2 voice resets them.
 
-use geist_dsp::fx::nodes::envelope_shaper::EnvelopeShaper as Geist2Shaper;
-use geist_dsp::fx::{Ctx, Node, Port};
+use dreist_dsp::fx::nodes::envelope_shaper::EnvelopeShaper as V2Shaper;
+use dreist_dsp::fx::{Ctx, Node, Port};
 
 /// The Linked port.
 pub const LINKED: usize = 5;
 
 pub struct EnvelopeShaper {
-    inner: Geist2Shaper,
+    inner: V2Shaper,
 }
 
 impl EnvelopeShaper {
     pub fn new() -> EnvelopeShaper {
-        EnvelopeShaper { inner: Geist2Shaper::new() }
+        EnvelopeShaper { inner: V2Shaper::new() }
     }
 }
 

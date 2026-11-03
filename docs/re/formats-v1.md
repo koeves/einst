@@ -2,7 +2,7 @@
 
 XML written by `VFoundation::VXMLFile` through TinyXML (`VXMLFileIOTinyXml`) [sym]. Same element
 shape as Geist2's `SerializationNode`: tag = class, `name` = instance key, parameters as attributes,
-strings as `FixedString`/`VString` children. `geist_formats::Node` parses them unchanged [file].
+strings as `FixedString`/`VString` children. `dreist_formats::Node` parses them unchanged [file].
 
 | Ext | Writer [sym] | Contents | Status |
 |---|---|---|---|

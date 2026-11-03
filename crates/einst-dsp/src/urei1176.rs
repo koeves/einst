@@ -1,5 +1,5 @@
 //! Einst: `VDSP::VCompressorUrei1176S` (Channel Compressor) as v1 builds it.
-//! A copy of Dreist's port (`geist_dsp::fx::nodes::urei1176`, Dreist bc729de2)
+//! A copy of Dreist's port (`dreist_dsp::fx::nodes::urei1176`, Dreist bc729de2)
 //! with v1's code where it differs (`docs/re/effects-v1.md`):
 //!
 //! - `Urei1176Comp::Solve1176A` 0x53ed… (ev_9b3b4723) and `SolveDRCR2`
@@ -14,7 +14,7 @@
 //!   fast 2^x (`setAttackTime` = x·23636362 = x·5.2/2.2e−7, ev_f7e912e2;
 //!   `setReleaseTime` = x·4545454.5 = x/2.2e−7, ev_8307faad).
 
-use geist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
+use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
 /// v1's `Solve1176A(v1, v2, x, vctl)` (ev_9b3b4723).
 pub fn solve_1176a(p1: &mut f32, p2: &mut f32, x: f32, vctl: f32) {
