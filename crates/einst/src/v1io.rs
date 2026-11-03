@@ -1,5 +1,5 @@
-//! Document files as Einst reads them (the profile's `read_document` /
-//! `read_project`): a v1 file (project, kit, pad, engine, pattern or bank;
+//! Document files as Einst reads them (`einst_editor::app`'s
+//! `read_document` / `read_project`): a v1 file (project, kit, pad, engine, pattern or bank;
 //! see `einst_formats::v1`) converted to the v2 tree, anything else parsed
 //! as is.
 
@@ -11,7 +11,7 @@ use dreist_formats::Node;
 pub fn read_document(path: &Path) -> Option<Node> {
     match einst_formats::v1::convert_file(path) {
         Ok(Some(doc)) => Some(doc),
-        Ok(None) => dreist_formats::profile::plain_document(path),
+        Ok(None) => Node::parse(&std::fs::read_to_string(path).ok()?).ok(),
         Err(_) => None,
     }
 }
@@ -21,7 +21,7 @@ pub fn read_document(path: &Path) -> Option<Node> {
 pub fn read_project(path: &Path) -> Option<(Node, bool)> {
     match einst_formats::v1::open_as_project(path) {
         Ok(Some((doc, _))) => Some((doc, true)),
-        Ok(None) => dreist_formats::profile::plain_project(path),
+        Ok(None) => dreist_formats::Project::load(path).ok().map(|p| (p.raw, false)),
         Err(_) => None,
     }
 }

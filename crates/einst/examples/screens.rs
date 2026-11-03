@@ -2,11 +2,11 @@
 //! `docs/screens`). Uses the Geist2 demo project when installed, else a new
 //! project; one image per editor tab, the transmod page and the About box.
 
-use dreist_editor::{Editor, Model};
+use einst_editor::{Editor, Model};
 
 fn editor() -> Editor {
-    let mut ed = dreist_editor::screens::editor().unwrap_or_else(|| {
-        let model = Model::new(dreist_editor::project::new_document());
+    let mut ed = einst_editor::screens::editor().unwrap_or_else(|| {
+        let model = Model::new(einst_editor::project::new_document());
         Editor::new(dreist_gui::skin::default_theme(), model).expect("editor")
     });
     ed.sync();

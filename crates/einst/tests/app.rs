@@ -15,7 +15,7 @@ fn profile_is_einsts() {
     let p = profile::get();
     assert_eq!((p.product, p.save.project, p.theme), ("Einst", "einst", "Einst"));
     assert_eq!(profile::extensions_of(DocKind::Kit), ["einstkit", "geistkit", "dreistkit", "gkit"]);
-    assert!(profile::open_extensions().contains(&"geistpad"));
+    assert!(einst_editor::app::open_extensions().contains(&"geistpad"));
     assert!(dreist_formats::paths::ui_dir().join("Skin/Styles/Einst.style").is_dir());
     assert!(dreist_formats::paths::ui_dir().join("Fonts/Einst-Icons.ttf").is_file());
     assert!(dreist_formats::paths::resources_dir().join("Effects/Gain").is_dir());
@@ -62,16 +62,16 @@ fn editor_part_loads_take_v1_files() {
     const LAYER: &str = r#"<Layer name="Layer0" Ver="3.2" AudioFileName="Beat.wav" Envelope0Param3="-1" />"#;
     let dir = std::env::temp_dir().join(format!("einst-parts-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
-    let mut model = dreist_editor::Model::new(dreist_editor::project::new_document());
+    let mut model = einst_editor::Model::new(einst_editor::project::new_document());
     let pad = dir.join("Q.geistpad");
     std::fs::write(&pad, format!(r#"<root><Pad name="Pad" Ver="2" PadMode="Random">{LAYER}</Pad></root>"#)).unwrap();
-    assert!(dreist_editor::project::load_part(&mut model.doc, None, dreist_editor::project::Part::Pad(1, 3), &pad));
+    assert!(einst_editor::project::load_part(&mut model.doc, None, einst_editor::project::Part::Pad(1, 3), &pad));
     let p = model.doc.child("Engine", "Engine1").and_then(|e| e.child("Pad", "Pad3")).unwrap();
     assert_eq!(p.attr("PadMode"), Some("Random"));
     assert_eq!(p.children_of("Layer").next().and_then(|l| l.version), Some(3300));
     let kit = dir.join("K.geistkit");
     std::fs::write(&kit, format!(r#"<root><Pad name="Pad5" Ver="2">{LAYER}</Pad></root>"#)).unwrap();
-    assert!(dreist_editor::browser::load_kit_into_doc(&mut model, &kit));
+    assert!(einst_editor::browser::load_kit_into_doc(&mut model, &kit));
     let e = model.doc.child("Engine", &format!("Engine{}", model.engine)).unwrap();
     assert!(e.child("Pad", "Pad5").and_then(|p| p.children_of("Layer").next()).is_some_and(|l| l.version == Some(3300)));
     let _ = std::fs::remove_dir_all(&dir);
@@ -86,7 +86,7 @@ fn engine_renders_match_einsts_goldens() {
 #[test]
 fn screens_match_einsts_goldens() {
     setup();
-    dreist_editor::screens::check_screens("screens");
+    einst_editor::screens::check_screens("screens");
 }
 
 /// Dreist's nodes take v1's fast 2^x once Einst is installed: Stereo

@@ -88,13 +88,13 @@ pub struct EinstPlugin {
     recent_writes: RecentWrites,
     /// Commands being applied (with their queue tags) / applied and
     /// waiting to go back to the GUI.
-    cmds: Vec<(u64, dreist_editor::Command)>,
-    applied: Vec<dreist_editor::Command>,
+    cmds: Vec<(u64, einst_editor::Command)>,
+    applied: Vec<einst_editor::Command>,
     last_auto: Vec<f32>,
     sub_scratch: Vec<[Vec<f32>; 2]>,
     input_scratch: [Vec<f32>; 2],
     bridge: Arc<editor::Bridge>,
-    live_take: dreist_editor::model::LiveTake,
+    live_take: einst_editor::model::LiveTake,
     /// Editor window size shared with the open editor (see `DreistEditor`).
     editor_size: Arc<std::sync::atomic::AtomicU64>,
 }
@@ -266,14 +266,14 @@ impl Plugin for EinstPlugin {
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
         // Option `StyleSheet` (Preferences › UI style; `EINST_THEME` overrides).
-        let theme = std::env::var("EINST_THEME").unwrap_or_else(|_| dreist_editor::options::Options::load().string("StyleSheet", dreist_gui::skin::default_theme()));
+        let theme = std::env::var("EINST_THEME").unwrap_or_else(|_| einst_editor::options::Options::load().string("StyleSheet", dreist_gui::skin::default_theme()));
         Some(Box::new(editor::DreistEditor { bridge: self.bridge.clone(), theme, params: self.params.clone(), size: self.editor_size.clone() }))
     }
 
     fn initialize(&mut self, _layout: &AudioIOLayout, buffer_config: &BufferConfig, _context: &mut impl InitContext<Self>) -> bool {
         let sr = buffer_config.sample_rate;
         self.bridge.sample_rate.store(sr.to_bits(), std::sync::atomic::Ordering::Relaxed);
-        let options = dreist_editor::options::render_options();
+        let options = einst_editor::options::render_options();
         if let Ok(mut bp) = self.bridge.project_path.lock() {
             *bp = self.project_path();
         }
@@ -306,7 +306,7 @@ impl Plugin for EinstPlugin {
             }),
             // [re:5cbd54] (from the constructor):
             // Tools › Save as default preset, when one was saved.
-            (None, None) => dreist_editor::options::settings_dir()
+            (None, None) => einst_editor::options::settings_dir()
                 .map(|d| d.join("DefaultPreset.geist"))
                 .filter(|p| p.is_file())
                 .and_then(|p| Dreist::load_cached(&p, sr, options, &mut cache).ok())
@@ -314,7 +314,7 @@ impl Plugin for EinstPlugin {
         };
         drop(cache);
         let mut engine = engine;
-        engine.set_metronome_sound(&dreist_editor::options::metronome_sound());
+        engine.set_metronome_sound(&einst_editor::options::metronome_sound());
         let spare = engine.sampler.new_spare();
         engine.sampler.give_spare(spare);
         self.bridge.set_document(engine.document().clone(), samples);
@@ -388,7 +388,7 @@ impl Plugin for EinstPlugin {
         }
         for (tag, mut c) in self.cmds.drain(..) {
             c.apply(engine);
-            if let dreist_editor::Command::Message(m) = &c {
+            if let einst_editor::Command::Message(m) = &c {
                 self.replay.record(tag, self.built, m);
             }
             if self.applied.len() < self.applied.capacity() {
@@ -422,7 +422,7 @@ impl Plugin for EinstPlugin {
             s.seq_steps = Some(engine.seq_steps());
             s.mods_triggered |= std::mem::take(&mut engine.mods_triggered);
             let held = s.sampler.meters;
-            s.sampler = dreist_editor::model::SamplerView::of(&engine.sampler);
+            s.sampler = einst_editor::model::SamplerView::of(&engine.sampler);
             s.sampler.meters = (held.0.max(engine.sampler.meters.0), held.1.max(engine.sampler.meters.1));
             engine.sampler.meters = (0.0, 0.0);
             s.last_cc = engine.last_cc;

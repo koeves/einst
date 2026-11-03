@@ -1021,18 +1021,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dreist-editor"
-version = "0.1.0"
-dependencies = [
- "dreist-dsp",
- "dreist-engine",
- "dreist-formats",
- "dreist-gui",
- "dreist-testkit",
- "rfd",
-]
-
-[[package]]
 name = "dreist-engine"
 version = "0.1.0"
 dependencies = [
@@ -1074,12 +1062,12 @@ name = "einst"
 version = "0.1.0"
 dependencies = [
  "dreist-dsp",
- "dreist-editor",
  "dreist-engine",
  "dreist-formats",
  "dreist-gui",
  "dreist-testkit",
  "einst-dsp",
+ "einst-editor",
  "einst-formats",
 ]
 
@@ -1088,6 +1076,19 @@ name = "einst-dsp"
 version = "0.1.0"
 dependencies = [
  "dreist-dsp",
+]
+
+[[package]]
+name = "einst-editor"
+version = "0.1.0"
+dependencies = [
+ "dreist-dsp",
+ "dreist-engine",
+ "dreist-formats",
+ "dreist-gui",
+ "dreist-testkit",
+ "einst",
+ "rfd",
 ]
 
 [[package]]
@@ -1105,11 +1106,11 @@ version = "0.1.0"
 dependencies = [
  "cpal",
  "dreist-dsp",
- "dreist-editor",
  "dreist-engine",
  "dreist-formats",
  "dreist-gui",
  "einst",
+ "einst-editor",
  "einst-formats",
  "midir",
  "nih_plug",

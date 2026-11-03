@@ -24,7 +24,7 @@ einst-formats = { path = "../einst-formats" }
 dreist-dsp.workspace = true
 dreist-engine.workspace = true
 dreist-gui = { workspace = true, features = ["window"] }
-dreist-editor = { workspace = true, features = ["window"] }
+einst-editor = { workspace = true, features = ["window"] }
 einst = { path = "../einst" }
 dreist-formats.workspace = true
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git" }
