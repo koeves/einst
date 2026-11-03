@@ -41,8 +41,10 @@ pub fn effect_menu(category: usize) -> Vec<usize> {
 
 /// v1's behaviour where it differs from the reference: the sampler stops a
 /// threshold-started recording after 1 s of silence (v1's
-/// `Sampler::ProcessSamples`, `silence > sr` [disasm]).
-pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules { sampler_auto_stop_seconds: 1.0 };
+/// `Sampler::ProcessSamples`, `silence > sr` [disasm]); the envelope's end
+/// rules (ev_dc13a646) and the forward loop without crossfade, wrapping at
+/// the loop end minus 3 frames (ev_29992d9a).
+pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules { sampler_auto_stop_seconds: 1.0, envelope_v1_ends: true, loop_v1: true };
 
 /// Install Einst's profile, effect nodes, v1's fast 2^x and v1's rules.
 pub fn install() {
