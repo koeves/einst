@@ -247,7 +247,10 @@ fn envelopes(n: &Node, ver: u32, out: &mut Node) {
 /// `ModRouting0..3`: routings 0 and 1 are the amp envelope's, 2 and 3 the
 /// free envelope's. A depth d ≠ 0.5 to a destination becomes that source's
 /// depth 2d − 1 on Cutoff, Resonance, FilterDrive or CoarseTune (Pitch).
+/// Two routings of one envelope to one destination average their depths,
+/// as v1's voice does (`UpdatePitchModulation` ev_c7cae932).
 fn routings(n: &Node, out: &mut Node) {
+    let mut acc: Vec<(String, f32, u32)> = Vec::new();
     for i in 0..4u32 {
         let name = format!("ModRouting{i}");
         let Some(r) = n.child("LayerModulationRouting", &name) else { continue };
@@ -265,8 +268,18 @@ fn routings(n: &Node, out: &mut Node) {
         };
         let src = if i < 2 { TransmodSource::AmpEnvelope } else { TransmodSource::FreeEnvelope };
         if let Some(k) = src.attr(param.name()) {
-            out.set(&k, format_g16((depth + depth - 1.0).min(1.0).max(-1.0) as f64));
+            match acc.iter_mut().find(|(key, ..)| *key == k) {
+                Some(e) => {
+                    e.1 += depth;
+                    e.2 += 1;
+                }
+                None => acc.push((k, depth, 1)),
+            }
         }
+    }
+    for (k, sum, count) in acc {
+        let d = sum / count as f32;
+        out.set(&k, format_g16((d + d - 1.0).min(1.0).max(-1.0) as f64));
     }
 }
 
@@ -285,5 +298,24 @@ mod tests {
     fn outputs() {
         assert_eq!(output_name("Buss 2"), "Aux 2");
         assert_eq!(output_name("Sub output 3"), "Sub output 3");
+    }
+
+    /// Two routings of one envelope to one destination average (v1).
+    #[test]
+    fn duplicate_routings_average() {
+        let n = Node::parse(
+            r#"<Layer name="Layer0" Ver="3.2">
+                <LayerModulationRouting name="ModRouting0" Ver="1" ModulationDepth="0.9" ModulationDestination="Cutoff" />
+                <LayerModulationRouting name="ModRouting1" Ver="1" ModulationDepth="0.7" ModulationDestination="Cutoff" />
+                <LayerModulationRouting name="ModRouting2" Ver="1" ModulationDepth="0.25" ModulationDestination="Pitch" />
+            </Layer>"#,
+        )
+        .unwrap();
+        let mut out = Node::new("Layer", None);
+        routings(&n, &mut out);
+        let k = TransmodSource::AmpEnvelope.attr(LayerParam::FilterCutoff.name()).unwrap();
+        assert!((out.f32(&k).unwrap() - 0.6).abs() < 1e-6);
+        let k = TransmodSource::FreeEnvelope.attr(LayerParam::CoarseTune.name()).unwrap();
+        assert!((out.f32(&k).unwrap() + 0.5).abs() < 1e-6);
     }
 }

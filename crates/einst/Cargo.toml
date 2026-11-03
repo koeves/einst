@@ -14,5 +14,8 @@ dreist-gui.workspace = true
 einst-formats = { path = "../einst-formats" }
 einst-dsp = { path = "../einst-dsp" }
 
+[dev-dependencies]
+dreist-testkit.workspace = true
+
 [lints]
 workspace = true
