@@ -9,12 +9,21 @@ pub mod v1io;
 
 use dreist_formats::profile::{EINST, Profile, Resources};
 
+/// Einst's logo mark, an "E" like its app icon: a stem and three bars.
+pub const LOGO_MARK: &[&[(f32, f32)]] = &[
+    &[(9.0, 9.0), (16.0, 9.0), (16.0, 41.0), (9.0, 41.0)],
+    &[(16.0, 9.0), (41.0, 9.0), (41.0, 16.0), (16.0, 16.0)],
+    &[(16.0, 21.5), (36.0, 21.5), (36.0, 28.5), (16.0, 28.5)],
+    &[(16.0, 34.0), (41.0, 34.0), (41.0, 41.0), (16.0, 41.0)],
+];
+
 pub static PROFILE: Profile = Profile {
     product: "Einst",
     about: "Einst: drum sampler, sequencer and performance instrument, a rebuild of the original v1 instrument on Dreist. Native for macOS, written in Rust.",
     theme: "Einst",
     ui_family: "Einst Sans",
     icon_family: "Einst-Icons",
+    logo_mark: LOGO_MARK,
     settings_dir: "Einst",
     legacy_settings_dirs: &[],
     settings_env: "EINST_SETTINGS_DIR",

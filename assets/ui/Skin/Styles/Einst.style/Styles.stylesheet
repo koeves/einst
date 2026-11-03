@@ -13,7 +13,7 @@
     <CtrlOptionMenuStyle name="MenuStyle" parentStyle0="CornerRounding5Style" optDrawShadow="true" colFill="ToolTipPanelColour" colBorder="ToolTipBorderColour" colAltFill="EditorAltBrightest" colDivider="PanelMedium" colSubMenuArrow="ToolTipTextColour" colText="ToolTipTextColour" font="Standard" />
 
     <!-- Logo -->
-    <CtrlStyle name="LogoStyle" parentStyle0="ApplicationStyle" optDrawBorder="false" enumDisabledDrawMode="NormalDrawing" colFill="EditorAltBrightestAlpha05" colAltFill="PanelBrightestAlpha05" />
+    <CtrlStyle name="LogoStyle" parentStyle0="ApplicationStyle" optDrawBorder="false" enumDisabledDrawMode="NormalDrawing" colFill="LogoMark" colAltFill="PanelBrightestAlpha05" />
 
     <!-- Panels -->
     <CtrlStyle name="BackPanelStyle" parentStyle0="ShadowStyle" optDrawBorder="true" colFill="PanelDarkest" colBorder="PanelDarkest" />
