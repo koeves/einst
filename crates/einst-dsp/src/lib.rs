@@ -9,8 +9,8 @@
 //!
 //! and the shared effects whose v1 build differs in more than its 2^x
 //! (dreist-re `einst/docs/re/effects-v1.md`): Channel Compressor, Noise
-//! Gate, Parametric / DJ EQ, Filter, Delay, Comb Filter, Tin Can Verb and the
-//! ladder filters. Effects that differ only by v1's fast 2^x use Dreist's
+//! Gate, Parametric / DJ EQ, Filter, Delay, Comb Filter, Tin Can Verb, Ring
+//! Mod and the ladder filters. Effects that differ only by v1's fast 2^x use Dreist's
 //! nodes with [`fast_exp2`] installed as `dreist_dsp::fx::exp2`
 //! (`einst::install`).
 //!
@@ -28,6 +28,7 @@ pub mod gain;
 pub mod ladder;
 mod math;
 pub mod noise_gate;
+pub mod ring_mod;
 pub mod ssl_eq;
 pub mod ssl_filter;
 pub mod tin_can;
@@ -50,6 +51,7 @@ pub const DELAY: usize = 15;
 pub const PHASER: usize = 18;
 pub const DISTORTION: usize = 19;
 pub const BIT_CRUSHER: usize = 23;
+pub const RING_MOD: usize = 24;
 pub const FILTER: usize = 28;
 pub const MODULATED_FILTER: usize = 29;
 pub const COMB_FILTER: usize = 30;
@@ -74,6 +76,7 @@ pub fn create(kind: usize) -> Option<Box<dyn Node>> {
         COMB_FILTER => Box::new(comb::Comb::new()),
         DELAY => Box::new(delay::Delay::new()),
         AUDIO_FREEZER => Box::new(audio_freeze::AudioFreeze::new()),
+        RING_MOD => Box::new(ring_mod::RingMod::new()),
         TIN_CAN_VERB => Box::new(tin_can::TinCan::new()),
         PARAMETRIC_EQ | DJ_EQ => Box::new(ssl_eq::SslEq::new()),
         FILTER => Box::new(ssl_filter::SslFilter::new()),
