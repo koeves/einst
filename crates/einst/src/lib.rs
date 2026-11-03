@@ -19,7 +19,7 @@ pub const LOGO_MARK: &[&[(f32, f32)]] = &[
 
 pub static PROFILE: Profile = Profile {
     product: "Einst",
-    about: "Einst: drum sampler, sequencer and performance instrument, a rebuild of the original v1 instrument on Dreist. Native for macOS, written in Rust.",
+    about: "Einst: drum sampler, sequencer and performance instrument,\na rebuild of the original v1 instrument.\nNative for macOS, written in Rust.",
     theme: "Einst",
     ui_family: "Einst Sans",
     icon_family: "Einst-Icons",
