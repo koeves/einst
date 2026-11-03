@@ -216,7 +216,8 @@ impl Slide {
 
 pub(crate) fn overlay(skin: &mut Skin, root: &mut Ctrl, rel: &str, name: &str) -> Result<Option<Vec<usize>>, EditorError> {
     let (w, h) = (root.rect.w, root.rect.h);
-    let Some(rel) = skin.find(rel).or_else(|| Some(rel.to_string())) else { return Ok(None) };
+    // A dialog the UI set does not have stays closed.
+    let Some(rel) = skin.find(rel) else { return Ok(None) };
     let Some(mut panel) = skin.load_skin(&rel).map_err(err)?.children.into_iter().next() else { return Ok(None) };
     let (pw, ph) = (panel.rect.w.min(w), panel.rect.h.min(h));
     panel.set_rect(Rect::new((w - pw) / 2, (h - ph) / 2, pw, ph));
@@ -254,6 +255,21 @@ impl Modals {
             c.find_mut("ProgressBar")
         }) {
             c.visible = false;
+        }
+        // v1's experimental Windows text renderer and controller support
+        // are not ported.
+        if let Some(c) = prefs.as_ref().and_then(|p| {
+            let mut c = &mut *root;
+            for &i in p {
+                c = c.children.get_mut(i)?;
+            }
+            Some(c)
+        }) {
+            for n in ["DirectWritePanel", "LaunchpadPanel"] {
+                if let Some(k) = c.find_mut(n) {
+                    k.visible = false;
+                }
+            }
         }
         let options = Options::load();
         crate::pattern::set_shading_mode(&options.string("PatternEditorShadingMode", SHADING[0]));
@@ -311,8 +327,24 @@ impl Modals {
         self.docs_alerted = false;
         if k == Kind::About {
             if let Some(o) = self.about.clone().and_then(|p| app.ctrl_mut(&p)) {
+                // v1's panel leaves the text to code: a label in `AboutView`.
+                if o.find("AboutLabel").is_none() {
+                    if let Some(v) = o.find_mut("AboutView") {
+                        let r = Rect::new(8, 8, v.rect.w - 16, v.rect.h - 16);
+                        v.children.push(Ctrl {
+                            class: "CtrlMultiLineLabel".into(),
+                            name: "AboutLabel".into(),
+                            style: "AboutLabelStyle".into(),
+                            rect: r,
+                            zorder: 1,
+                            visible: true,
+                            enabled: true,
+                            ..Ctrl::default()
+                        });
+                    }
+                }
                 o.walk_mut(&mut |c: &mut Ctrl| match c.name.as_str() {
-                    "Version" => c.text = format!("Version {}", env!("CARGO_PKG_VERSION")),
+                    "Version" | "VersionLabel" => c.text = format!("Version {}", env!("CARGO_PKG_VERSION")),
                     "DateLabel" => c.text = String::new(),
                     "AboutLabel" => c.text = about().into(),
                     _ => {}
@@ -373,7 +405,9 @@ impl Modals {
                 "ShadingMode" => c.text = s.string("PatternEditorShadingMode", SHADING[0]),
                 "RemMod" => c.text = camel(&s.string("RemoveModBehavour", REMOVE_BEHAVIOUR[0])),
                 "UIScaling" => c.text = format!("{} %", s.int("LastEditorScaleFactor", 100)),
-                "UIStyle" => c.text = style_label(&s.string("StyleSheet", styles.iter().find(|n| n.as_str() == dreist_gui::skin::default_theme()).map(String::as_str).unwrap_or(""))).to_string(),
+                "UIStyle" | "ThemeCombo" => {
+                    c.text = style_label(&s.string("StyleSheet", styles.iter().find(|n| n.as_str() == dreist_gui::skin::default_theme()).map(String::as_str).unwrap_or(""))).to_string()
+                }
                 "UndoStages" => {
                     let v = s.int("MaxUndoSteps", UNDO_DEFAULT).clamp(1, 250);
                     c.set_attr("realMin", "1".into());
@@ -467,7 +501,7 @@ impl Modals {
             "ShadingMode" => SHADING.iter().map(|s| s.to_string()).collect(),
             "RemMod" => REMOVE_BEHAVIOUR.iter().map(|s| camel(s)).collect(),
             "UIScaling" => SCALINGS.iter().map(|f| format!("{} %", (f * 100.0).floor() as i32)).collect(),
-            "UIStyle" => self.styles().iter().map(|n| style_label(n).to_string()).collect(),
+            "UIStyle" | "ThemeCombo" => self.styles().iter().map(|n| style_label(n).to_string()).collect(),
             _ => return None,
         })
     }
@@ -686,7 +720,7 @@ impl Modals {
                     }
                     // [re:0d12fb] [re:dfe5ca]: written at once
                     // and applied ([re:cac947], repaint).
-                    "UIStyle" => {
+                    "UIStyle" | "ThemeCombo" => {
                         let name = if v == DEFAULT_STYLE_LABEL { dreist_gui::skin::default_theme().to_string() } else { v.to_string() };
                         for o in [&mut self.options, &mut self.staged] {
                             o.set("StyleSheet", &name);

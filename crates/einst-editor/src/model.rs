@@ -5,6 +5,8 @@ use dreist_formats::Node;
 
 pub const ENGINES: usize = 8;
 pub const PADS: usize = 64;
+/// Pads per engine on the v1 layout.
+pub const V1_PADS: usize = 16;
 pub const LAYERS: usize = 8;
 
 #[derive(Clone, Debug, Default)]
@@ -21,8 +23,6 @@ pub struct Model {
     pub engine: usize,
     /// Selected pad per engine.
     pub pad: [usize; ENGINES],
-    /// Visible pad bank: 0..3 = A..D (16 pads), 4 = all 64.
-    pub bank: usize,
     pub playing: bool,
     /// Current (limited) step per engine, from the audio thread.
     pub steps: [Option<u32>; ENGINES],
@@ -272,7 +272,6 @@ impl Model {
             doc,
             engine,
             pad: [0; ENGINES],
-            bank: 0,
             playing: false,
             steps: [None; ENGINES],
             seq_steps: [-1; 16],
@@ -428,9 +427,10 @@ impl Model {
         self.pad_node(e, p).and_then(|n| n.f32("Gain")).unwrap_or(0.5)
     }
 
-    /// Pads shown by the matrix: (first, count).
+    /// Pads shown by the front panel and the pattern editor: (first,
+    /// count). v1 engines have 16 pads (the document's first 16).
     pub fn visible_pads(&self) -> (usize, usize) {
-        if self.bank < 4 { (self.bank * 16, 16) } else { (0, 64) }
+        (0, V1_PADS)
     }
 }
 

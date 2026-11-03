@@ -19,7 +19,8 @@ fn profile_is_einsts() {
     assert!(dreist_formats::paths::ui_dir().join("Skin/Styles/Einst.style").is_dir());
     assert!(dreist_formats::paths::ui_dir().join("Fonts/Einst-Icons.ttf").is_file());
     assert!(dreist_formats::paths::resources_dir().join("Effects/Gain").is_dir());
-    assert_eq!(dreist_gui::skin::Skin::themes(), ["Einst", "Ember"]);
+    // The v1-layout set has one theme.
+    assert_eq!(dreist_gui::skin::Skin::themes(), ["Einst"]);
     // The header logo is Einst's "E", not the reference profile's mark.
     assert_eq!(p.logo_mark, einst::LOGO_MARK);
     assert_ne!(p.logo_mark, dreist_formats::profile::DREIST_LOGO_MARK);

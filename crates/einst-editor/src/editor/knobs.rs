@@ -70,10 +70,10 @@ impl Editor {
                 }
                 // The graph controls' menu is on Variance and Rand only;
                 // swing and v2a have their own menus (pattern.rs, velsplit.rs).
-                if matches!(name.as_str(), "ScaleKnob" | "CompKnob" | "SwingKnob" | "v2a") {
+                if matches!(name.as_str(), "ScaleKnob" | "CompKnob" | "EngineSwingDepthKnob" | "v2a") {
                     return false;
                 }
-                let header_gain = name == "GlobalGain";
+                let header_gain = name == header::MASTER_GAIN;
                 if !header_gain && self.knob_reset_value(path, name).is_none() {
                     return false;
                 }
@@ -112,7 +112,7 @@ impl Editor {
                 let id = self.app.ctrl(&path).map(|c| c.id).unwrap_or(0);
                 match acts.get(*index).copied().unwrap_or(KnobAction::None) {
                     KnobAction::Reset => {
-                        let v = if name == "GlobalGain" { Some(dreist_formats::params::UNITY_GAIN) } else { self.knob_reset_value(&path, &name) };
+                        let v = if name == header::MASTER_GAIN { Some(dreist_formats::params::UNITY_GAIN) } else { self.knob_reset_value(&path, &name) };
                         if let Some(v) = v {
                             self.knob_set(&path, &name, id, v);
                         }
@@ -190,7 +190,7 @@ impl Editor {
     pub(crate) fn start_knob_edit(&mut self, path: &[usize], name: &str, id: i32) {
         use dreist_formats::params::Curve;
         let Some(c) = self.app.ctrl(path).cloned() else { return };
-        let curve = self.inspector.edit_curve(path, name).or_else(|| self.mixers.iter().find_map(|m| m.edit_curve(&self.app, path))).unwrap_or(if name == "GlobalGain" {
+        let curve = self.inspector.edit_curve(path, name).or_else(|| self.mixers.iter().find_map(|m| m.edit_curve(&self.app, path))).unwrap_or(if name == header::MASTER_GAIN {
             Curve::Decibels
         } else {
             Curve::Linear(0.0, 100.0)
@@ -216,7 +216,7 @@ impl Editor {
     pub(crate) fn double_click_reset(&mut self, ev: &UiEvent) -> bool {
         let UiEvent::DoubleClicked { path, name } = ev else { return false };
         let Some(c) = self.app.ctrl(path) else { return false };
-        if !matches!(c.class.as_str(), "CtrlKnob" | "CtrlTransmodKnob" | "CtrlSlider" | "CtrlTransmodSlider") || name == "GlobalGain" {
+        if !matches!(c.class.as_str(), "CtrlKnob" | "CtrlTransmodKnob" | "CtrlSlider" | "CtrlTransmodSlider") || name == header::MASTER_GAIN {
             return false;
         }
         let id = c.id;

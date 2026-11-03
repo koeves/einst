@@ -296,6 +296,25 @@ impl SearchPane {
         let h = s.rect.h;
         s.rect.h = PANE_HEIGHT;
         skin.mount(s, "SearchPane.skin")?;
+        // v1's pane leaves the three option rows to code: one
+        // `SearchOptionItem.skin` row each in its `OptionsPlaceHolder`.
+        if s.find("Option1").is_none() {
+            if let Some(ph) = s.find_mut("OptionsPlaceHolder") {
+                let rh = ph.rect.h / 3;
+                for i in 1..=3 {
+                    ph.children.push(dreist_gui::Ctrl {
+                        class: "CtrlPanel".into(),
+                        name: format!("Option{i}"),
+                        style: "InvisibleStyle".into(),
+                        rect: dreist_gui::Rect::new(0, (i - 1) * rh, ph.rect.w, rh),
+                        visible: true,
+                        enabled: true,
+                        zorder: 1,
+                        ..dreist_gui::Ctrl::default()
+                    });
+                }
+            }
+        }
         for i in 1..=3 {
             if let Some(o) = s.find_mut(&format!("Option{i}")) {
                 skin.mount(o, "SearchOptionItem.skin")?;

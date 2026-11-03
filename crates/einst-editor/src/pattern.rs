@@ -31,13 +31,44 @@ use dreist_gui::paint::{Painter, RectF};
 use dreist_gui::render::Renderer;
 use dreist_gui::{Colour, Ctrl, Rect, Skin};
 
+use crate::EditorError;
 use crate::command::{Command, msg};
 use crate::model::Model;
-use crate::{EditorError, err};
 
-const BACK_STYLE: &str = "PatternBackPanelStyle";
-const TRACK_STYLE: &str = "TrackStyle";
-const TIMELINE_STYLE: &str = "PatternTimelineStyle";
+/// The theme's content styles for the code-drawn grid, graphs and ruler
+/// (the v1 set's `Grid*`, `StepOnStyle` and `Timeline*` styles).
+const TIMELINE_STYLE: &str = "TimelineStyle";
+const TIMELINE_LABEL_STYLE: &str = "TimelineLabelStyle";
+
+/// A grid colour by its role (`colFill` beat groups, `colAltFill` shaded
+/// groups, `colSelectedTrack`, `colPosition`, `colGridBar`, `colGridBeat`,
+/// `colStep`, `colOverlay` past a track's length, `colMarker` /
+/// `colMarkerDrag` the length markers and selection, `colText`).
+fn grid_colour(s: &dreist_gui::style::StyleSheet, role: &str) -> Colour {
+    let (style, attr, default) = match role {
+        "colFill" => ("GridBackStyle", "colFill", Colour::rgba(222, 229, 237, 255)),
+        "colAltFill" => ("GridShadeStyle", "colFill", Colour::rgba(199, 206, 217, 255)),
+        "colSelectedTrack" => ("GridRowSelectedStyle", "colFill", Colour::rgba(232, 204, 91, 80)),
+        "colPosition" => ("GridPositionStyle", "colFill", Colour::rgba(236, 189, 47, 120)),
+        "colGridBar" => ("GridBarLineStyle", "colFill", Colour::rgba(76, 83, 111, 255)),
+        "colGridBeat" => ("GridLineStyle", "colFill", Colour::rgba(169, 176, 191, 255)),
+        "colStep" => ("StepOnStyle", "colFill", Colour::rgba(18, 25, 60, 255)),
+        "colOverlay" => ("GridShadeStyle", "colFill", Colour::rgba(169, 176, 191, 140)),
+        "colMarker" => ("GridBarLineStyle", "colFill", Colour::rgba(40, 40, 40, 255)),
+        "colMarkerDrag" => ("GridPositionStyle", "colFill", Colour::rgba(236, 189, 47, 255)),
+        _ => (TIMELINE_LABEL_STYLE, "colText", Colour::rgba(18, 25, 60, 255)),
+    };
+    if s.raw(style, attr).is_some() { s.colour(style, attr, default) } else { default }
+}
+
+/// The front panel's swing depth knob (`EngineControls.skin`).
+pub(crate) const SWING_KNOB: &str = "EngineSwingDepthKnob";
+
+/// The pad mode column's graph recording knob ("Focus Graph").
+const INSTO_GRAPH: &str = "InstoSlider";
+
+/// A track row's pad gain knob (`TrackControls.skin`).
+const TRACK_LEVEL: &str = "LevelSlider";
 
 /// Items above the templates in the swing menu.
 const SWING_HEAD: usize = 4;
@@ -68,9 +99,8 @@ pub struct PatternPanel {
     /// The current pattern as the draw functions read it, built once per
     /// frame ([`PatternPanel::begin_frame`]): (engine, pattern, data).
     frame_pattern: std::cell::RefCell<Option<(usize, usize, std::rc::Rc<PatternData>)>>,
-    /// The controls `sync` sets, and the toolbar's (under `ToolBar`).
+    /// The controls `sync` sets.
     named: dreist_gui::app::PathCache,
-    toolbar: dreist_gui::app::PathCache,
     /// The graph lane view ([re:e9d6e3]) and its last edited step.
     graph: Option<Vec<usize>>,
     graph_last: Option<usize>,
@@ -326,9 +356,25 @@ pub(crate) fn sync_selectors(app: &mut App, model: &Model, path: &[usize]) {
     fn walk(c: &mut Ctrl, cur: usize, used: &[bool], locked: &[bool]) {
         for k in &mut c.children {
             if let Some(n) = k.name.strip_prefix("Key").and_then(|n| n.parse::<usize>().ok()) {
+                let u = used.get(n).copied().unwrap_or(false);
                 k.on = n == cur;
-                k.set_attr("patternUsed", used.get(n).copied().unwrap_or(false).to_string());
+                k.set_attr("patternUsed", u.to_string());
                 k.set_attr("patternLocked", locked.get(n).copied().unwrap_or(false).to_string());
+                // v1's key art: selected (the current pattern), allocated
+                // (not empty) or not; the key's LED lights when allocated.
+                k.style = if n == cur {
+                    "SelectorStyleSelected"
+                } else if u {
+                    "SelectorStyleAllocated"
+                } else {
+                    "SelectorStyleNotAllocated"
+                }
+                .into();
+                for led in &mut k.children {
+                    led.visible = u;
+                    led.passive = true;
+                }
+                continue;
             }
             walk(k, cur, used, locked);
         }
@@ -336,24 +382,10 @@ pub(crate) fn sync_selectors(app: &mut App, model: &Model, path: &[usize]) {
     walk(s, cur, &used, &locked);
 }
 
-/// [re:3e59b6] over the stock button: a disc
-/// (x 4, w − 8 wide, centred) in LightGrey (empty), DarkGrey (used) or
-/// White (current), and U+E915 in colText when the pattern is locked.
+/// [re:3e59b6] over the stock button (v1's key styles show the state):
+/// U+E915 in colText when the pattern is locked.
 pub(crate) fn draw_selector(r: &Renderer, p: &mut Painter, c: &Ctrl) {
     let (w, h) = (c.rect.w as f32, c.rect.h as f32);
-    let col = if c.on {
-        Colour::WHITE
-    } else if c.attr("patternUsed") == Some("true") {
-        dreist_gui::colour::standard("DarkGrey")
-    } else {
-        dreist_gui::colour::standard("LightGrey")
-    };
-    let wi = c.rect.w;
-    let hi = c.rect.h;
-    let x = (wi / 2 + 4 - wi / 2) as f32;
-    let y = (hi / 2 + 4 - wi / 2) as f32;
-    let d = (wi - 8) as f32;
-    p.fill_ellipse(RectF::new(x, y, d, d), col);
     if c.attr("patternLocked") == Some("true") {
         let st = r.style(c);
         let font = dreist_gui::style::FontSpec { family: dreist_gui::text::icon_family().into(), size: r.styles.font(st).size, bold: false };
@@ -514,20 +546,64 @@ impl GridLayout {
     }
 }
 
-fn mount(skin: &mut Skin, root: &mut Ctrl, host_name: &str, overload: &str, skin_name: &str) -> Result<(), EditorError> {
-    let found = {
-        fn find<'a>(c: &'a mut Ctrl, name: &str, overload: &str) -> Option<&'a mut Ctrl> {
-            if c.name == name && (overload.is_empty() || c.overload == overload) && c.children.is_empty() {
-                return Some(c);
-            }
-            c.children.iter_mut().find_map(|ch| find(ch, name, overload))
-        }
-        find(root, host_name, overload)
-    };
-    if let Some(h) = found {
-        skin.mount(h, skin_name).map_err(err)?;
+/// A plain code-built control.
+fn part(class: &str, name: &str, r: Rect, style: &str) -> Ctrl {
+    Ctrl { class: class.into(), name: name.into(), style: style.into(), rect: r, visible: true, enabled: true, zorder: 1, ..Ctrl::default() }
+}
+
+/// The step editor under the v1 toolbar, `w` × `h` (v1 draws it in code):
+/// the ruler over the grid, the track controls column (150 wide, the
+/// `TrackControls.skin` rows) beside it, the vertical scroll bar and zoom
+/// at the right, a splitter giving the single-graph view
+/// (`AutomationControls.skin` + the graph) 75 px in SingleGraph mode, and
+/// the horizontal scroll bar and zoom along the bottom.
+fn editor_area(w: i32, h: i32) -> Ctrl {
+    const COLS: i32 = 152;
+    const RULER: i32 = 15;
+    const BAR: i32 = 12;
+    let grid_w = w - COLS - BAR - 2;
+    let split_h = h - BAR;
+    let mut ed = part("CtrlPanel", "PatternEditor", Rect::new(0, 0, w, h), "InvisibleStyle");
+    let mut sp = part("CtrlSplitterPanel", "Splitter", Rect::new(0, 0, w, split_h), "InvisibleStyle");
+    for (k, v) in [("SplitterPanelStyle", "InvisibleStyle"), ("intMaxSize1", "75"), ("intMinSize1", "75"), ("intSplitterDim", "1")] {
+        sp.set_attr(k, v.into());
     }
-    Ok(())
+    sp.set_attr("intSplitPosition", (split_h - 1).to_string());
+    let mut upper = part("CtrlPanel", "", Rect::new(0, 0, w, split_h), "InvisibleStyle");
+    upper.display_name = "SplitterPanel0".into();
+    let step_h = split_h - RULER;
+    let mut steps = part("CtrlPanel", "StepPanel", Rect::new(0, RULER, w, step_h), "InvisibleStyle");
+    steps.zorder = 3;
+    steps.children.push(part("CtrlScrollView", "ControlsScrollView", Rect::new(2, 0, COLS - 2, step_h), "InvisibleStyle"));
+    steps.children.push(part("CtrlScrollView", "PatternScrollView", Rect::new(COLS, 0, grid_w, step_h), "GridBackStyle"));
+    steps.children.push(part("CtrlScrollBar", "VScrollBar", Rect::new(w - BAR - 1, 0, BAR, step_h - 2 * BAR), "VerticalScrollbarStyle"));
+    for (i, (n, t)) in [("ZoomOutV", "-"), ("ZoomInV", "+")].into_iter().enumerate() {
+        let mut b = part("CtrlButton", n, Rect::new(w - BAR - 1, step_h - 2 * BAR + i as i32 * BAR, BAR, BAR), if i == 0 { "ZoomOutButtonStyle" } else { "ZoomInButtonStyle" });
+        b.text = t.into();
+        b.set_attr("optIsMomentary", "true".into());
+        steps.children.push(b);
+    }
+    upper.children.push(steps);
+    let mut tl = part("CtrlScrollView", "TimelineView", Rect::new(COLS, 0, grid_w, RULER), TIMELINE_STYLE);
+    tl.zorder = 10;
+    upper.children.push(tl);
+    sp.children.push(upper);
+    let mut lower = part("CtrlPanel", "SingleViewPanel", Rect::new(0, split_h, w, 75), "InvisibleStyle");
+    lower.display_name = "SplitterPanel1".into();
+    lower.children.push(part("CtrlPanel", "SingleAutoControl", Rect::new(2, 0, COLS - 2, 75), "InvisibleStyle"));
+    lower.children.push(part("CtrlScrollView", "SingleScrollView", Rect::new(COLS, 0, grid_w, 75), "GridBackStyle"));
+    sp.children.push(lower);
+    ed.children.push(sp);
+    let mut hbar = part("CtrlPanel", "HBarPanel", Rect::new(COLS, split_h, grid_w, BAR), "InvisibleStyle");
+    hbar.children.push(part("CtrlScrollBar", "HScrollBar", Rect::new(0, 0, grid_w - 2 * BAR - 1, BAR), "VerticalScrollbarStyle"));
+    for (i, (n, t)) in [("ZoomOutH", "-"), ("ZoomInH", "+")].into_iter().enumerate() {
+        let mut b = part("CtrlButton", n, Rect::new(grid_w - 2 * BAR + i as i32 * BAR, 0, BAR, BAR), if i == 0 { "ZoomOutButtonStyle" } else { "ZoomInButtonStyle" });
+        b.text = t.into();
+        b.set_attr("optIsMomentary", "true".into());
+        hbar.children.push(b);
+    }
+    ed.children.push(hbar);
+    ed
 }
 
 fn new_custom(name: &str, overload: &str, w: i32, h: i32) -> Ctrl {
@@ -552,15 +628,17 @@ impl PatternPanel {
             for &i in page {
                 host = &mut host.children[i];
             }
-            skin.mount(host, "PatternPanel.skin").map_err(err)?;
-            mount(skin, host, "ToolBar", "PatternEditorToolBar", "Toolbar.skin")?;
-            mount(skin, host, "Selectors", "PatternSelectors", "PatternSelectors.skin")?;
-            mount(skin, host, "PatternEditor", "PatternEditor", "PatternEditor.skin")?;
-            // The View toggle sits under the Options button; Options › Single
-            // Track View drives it.
-            if let Some(v) = host.find_mut("ViewPanel") {
-                v.visible = false;
-            }
+            // The toolbar (`GlobalControls.skin`, with its tools panel) over
+            // the step editor.
+            let (w, h) = (host.rect.w, host.rect.h);
+            let mut tb = crate::front::load(skin, "Pattern Editor/GlobalControls.skin")?;
+            tb.name = "ToolBar".into();
+            crate::front::mount_all(skin, &mut tb)?;
+            let tb_h = tb.rect.h;
+            host.children.push(tb);
+            let mut area = editor_area(w, h - tb_h - 2);
+            area.rect.y = tb_h + 2;
+            host.children.push(area);
             // The single-graph view (`SingleViewPanel`, intMaxSize1 75 px)
             // under the step panel: graph controls + the lane graph.
             if let Some(sp) = host.find_mut("Splitter") {
@@ -572,9 +650,9 @@ impl PatternPanel {
             if let Some(ac) = host.find_mut("SingleAutoControl") {
                 ac.overload.clear();
                 if ac.children.is_empty() {
-                    skin.mount(ac, "AutomationControls.skin").map_err(err)?;
+                    crate::front::mount_into(skin, ac, "Pattern Editor/AutomationControls.skin")?;
                 }
-                for n in ["AddButton", "RemoveButton", "Learn"] {
+                for n in ["LearnButton", "ModeGroup"] {
                     if let Some(b) = ac.find_mut(n) {
                         b.visible = false;
                     }
@@ -604,16 +682,16 @@ impl PatternPanel {
                 tv.children.push(new_custom("PatternTimeline", "PatternTimeline", w, h));
             }
         }
-        let auto_rel = skin.find("AutomationControls.skin").unwrap_or_else(|| "Patterns/AutomationControls.skin".into());
-        let auto_template = skin.load_skin(&auto_rel).ok().and_then(|r| r.children.into_iter().next()).map(|mut t| {
-            // Lane MIDI learn is not ported.
-            if let Some(b) = t.find_mut("Learn") {
-                b.visible = false;
+        let auto_template = crate::front::load(skin, "Pattern Editor/AutomationControls.skin").ok().map(|mut t| {
+            // Lane MIDI learn and the edit / live switch are not ported.
+            for n in ["LearnButton", "ModeGroup"] {
+                if let Some(b) = t.find_mut(n) {
+                    b.visible = false;
+                }
             }
             t
         });
-        let rel = skin.find("TrackControls.skin").unwrap_or_else(|| "Patterns/TrackControls.skin".into());
-        let mut row_template = skin.load_skin(&rel).ok().and_then(|r| r.children.into_iter().next());
+        let mut row_template = crate::front::load(skin, "Pattern Editor/TrackControls.skin").ok();
         // The track name area takes clicks (select / right-click menu).
         if let Some(sa) = row_template.as_mut().and_then(|r| r.children.iter_mut().find(|c| c.name == "SelectArea")) {
             sa.overload = "TrackSelectArea".into();
@@ -623,7 +701,7 @@ impl PatternPanel {
             grid: root.path_of("PatternGrid"),
             rows: root.path_of("ControlsScrollView"),
             row_template,
-            selectors: root.path_of("Selectors"),
+            selectors: root.path_of("PatternSelectors"),
             brush: None,
             marker_drag: None,
             brush_value: 1.0,
@@ -632,7 +710,6 @@ impl PatternPanel {
             grid_w: std::cell::Cell::new(626),
             frame_pattern: Default::default(),
             named: Default::default(),
-            toolbar: Default::default(),
             graph: root.path_of("PatternGraph"),
             graph_last: None,
             graph_drag_state: GraphDrag::default(),
@@ -727,7 +804,7 @@ impl PatternPanel {
         }
         match name {
             "ScaleKnob" | "CompKnob" | "RandKnob" | "VarianceKnob" => Some(0.5),
-            "SwingKnob" => Some(0.0),
+            SWING_KNOB => Some(0.0),
             _ => None,
         }
     }
@@ -860,7 +937,6 @@ impl PatternPanel {
     }
 
     pub fn sync(&mut self, app: &mut App, model: &Model) {
-        layout_toolbar(app, &self.named, &self.toolbar);
         let e = model.engine;
         let cur = model.current_pattern(e);
         let pat = model.pattern(e, cur);
@@ -879,12 +955,16 @@ impl PatternPanel {
         let name = model.pattern_name(e, cur);
         set(app, "PatternNameBox", &|c| c.text = name.clone());
         let sync = pat.sync;
-        set(app, "Gated", &|c| c.on = sync.gated());
-        set(app, "Restart", &|c| c.on = sync.restarts());
+        set(app, "GateButton", &|c| c.on = sync.gated());
+        if let Some(c) = self.named.path_in(app, &self.page, "RestartButton").and_then(|p| app.ctrl_mut(&p)) {
+            c.on = sync.restarts();
+        }
         let mono = pat.mono;
-        set(app, "Remix", &|c| c.on = mono);
+        set(app, "MonoButton", &|c| c.on = mono);
         let drag = lane_label(model.pattern_view[e].drag_lane);
-        set(app, "DragEdit", &|c| c.text = drag.clone());
+        set(app, "DragEditButton", &|c| c.text = drag.clone());
+        let follow = model.follow_playback;
+        set(app, "Follow", &|c| c.on = follow);
         // Engine controls: tempo modifier and swing depth.
         let en = model.engine_node(e);
         let num = en.and_then(|n| n.u32("TempoNumerator")).unwrap_or(1).clamp(1, 16);
@@ -900,7 +980,7 @@ impl PatternPanel {
                 c.value = den as f32;
             });
         }
-        set(app, "SwingKnob", &|c| c.value = depth);
+        set(app, SWING_KNOB, &|c| c.value = depth);
         // Pattern selector keys.
         if let Some(sp) = &self.selectors {
             sync_selectors(app, model, sp);
@@ -928,7 +1008,8 @@ impl PatternPanel {
         let names: Vec<String> = (0..lay.tracks).map(|r| model.pad_name(e, lay.first_track + r).unwrap_or_else(|| format!("Pad {}", lay.first_track + r + 1))).collect();
         let gains: Vec<f32> = (0..lay.tracks).map(|r| model.pad_gain(e, lay.first_track + r)).collect();
         let multi = self.multi;
-        set(app, "View", &|c| c.on = !multi);
+        set(app, "MultiButton", &|c| c.on = multi);
+        set(app, "SingleButton", &|c| c.on = !multi);
         self.apply_view(app);
         let sig = format!("{:?}{:?}{}", lay.track_y, lay.graphs, lay.row_h);
         let open: Vec<bool> = (0..lay.tracks).map(|r| self.auto_open.contains(&(e, lay.first_track + r))).collect();
@@ -978,13 +1059,13 @@ impl PatternPanel {
             }
             let td = pat.tracks.get(track);
             row.set_attr("track", track.to_string());
-            row.style = if track == selected { "TrackSelectedStyle" } else { "TrackNotSelectedStyle" }.into();
+            row.style = if track == selected { "GridRowSelectedStyle" } else { "InvisibleStyle" }.into();
             for c in row.children.iter_mut() {
                 match c.name.as_str() {
                     "SelectArea" => c.text = names[r].clone(),
                     "MuteButton" => c.on = td.is_some_and(|t| t.mute),
                     "SoloButton" => c.on = td.is_some_and(|t| t.solo),
-                    "PadLevel" => c.value = gains[r],
+                    TRACK_LEVEL => c.value = gains[r],
                     _ => {}
                 }
             }
@@ -1026,7 +1107,7 @@ impl PatternPanel {
             // [re:ca3223] [re:c0f351]: a track
             // row's level knob posts `e_setPadParameter` 0x4e [engine,
             // track] [value, Gain, 0] (the drag keeps an undo point).
-            UiEvent::ValueChanged { path, name, value, .. } if name == "PadLevel" && self.rows.as_ref().is_some_and(|r| path.starts_with(r)) => {
+            UiEvent::ValueChanged { path, name, value, .. } if name == TRACK_LEVEL && self.rows.as_ref().is_some_and(|r| path.starts_with(r)) => {
                 let track = (1..path.len()).rev().find_map(|n| app.ctrl(&path[..n]).and_then(|c| c.attr("track")).and_then(|t| t.parse::<i32>().ok()));
                 match track {
                     Some(t) => {
@@ -1079,7 +1160,7 @@ impl PatternPanel {
                 true
             }
             UiEvent::Clicked { path, name, .. }
-                if name == "OptionsButton" && (app.root.path_of("SingleAutoControl").is_some_and(|p| path.starts_with(&p)) || self.auto_slot_of(app, path).is_some()) =>
+                if (name == "OptionsButton" || name == "InsertButton") && (app.root.path_of("SingleAutoControl").is_some_and(|p| path.starts_with(&p)) || self.auto_slot_of(app, path).is_some()) =>
             {
                 self.graph_menu = Some(false);
                 self.graph_target = None;
@@ -1099,15 +1180,15 @@ impl PatternPanel {
                 true
             }
             // `e_setEngineSwingTemplateDepth` 0x95.
-            // Graph Rec (`InstoGraph`, toolbar lambda [re:a6cf3a] →
+            // Graph Rec (`InstoSlider` "Focus Graph" on the pad mode column; toolbar lambda [re:a6cf3a] →
             // `e_setInstoGraphValue` 0xd8; the pattern message handler: with the
             // gate on and record armed the value goes into the selected
             // pad's graph lane at the current step and is queued for the
             // next step). Port: a step graph message at the engine's current
             // step plus 0xd8 (with the lane) for the engine's queue.
-            UiEvent::ValueChanged { name, value, .. } if name == "InstoGraph" => {
+            UiEvent::ValueChanged { name, value, .. } if name == INSTO_GRAPH => {
                 let e = model.engine;
-                let armed = app.root.path_of("RecButton").and_then(|p| app.ctrl(&p)).is_some_and(|c| c.on);
+                let armed = crate::front::path_in(&app.root, "Transport", "RecButton").and_then(|p| app.ctrl(&p)).is_some_and(|c| c.on);
                 if let (true, true, Some(step)) = (model.playing, armed, model.steps[e]) {
                     let (track, lane, cur) = (model.pad[e], model.pattern_view[e].lane, model.current_pattern(e) as i32);
                     out.push(msg(id::SET_STEP_GRAPH_STATE, &[e as i32, track as i32, -1, cur, track as i32, step as i32], &[lane as f32, value.clamp(0.0, 1.0), 0.0]));
@@ -1115,7 +1196,7 @@ impl PatternPanel {
                 }
                 true
             }
-            UiEvent::ValueChanged { name, value, .. } if name == "SwingKnob" => {
+            UiEvent::ValueChanged { name, value, .. } if name == SWING_KNOB => {
                 out.push(msg(id::SET_ENGINE_SWING_TEMPLATE_DEPTH, &[e as i32], &[value.clamp(0.0, 1.0)]));
                 true
             }
@@ -1123,7 +1204,7 @@ impl PatternPanel {
             // [re:05f028]): Extract timing from current pattern, Import MIDI
             // template, Import Guru shuffle, divider, the templates
             // (swing template paths, current checked).
-            UiEvent::RightClicked { path, name } if name == "SwingKnob" => {
+            UiEvent::RightClicked { path, name } if name == SWING_KNOB => {
                 self.swing_knob_menu = true;
                 self.handle(app, model, &UiEvent::Clicked { path: path.clone(), name: "SwingDrop".into(), id: 0, on: false }, out)
             }
@@ -1160,7 +1241,7 @@ impl PatternPanel {
                         1 => out.push(msg(id::SET_ENGINE_SWING_TEMPLATE_DEPTH, &[e as i32], &[0.0])),
                         2 => {
                             // [re:c8b896]: a text box over the knob.
-                            let Some(knob) = app.root.path_of("SwingKnob").and_then(|p| app.ctrl(&p).cloned().map(|c| (p, c))) else { return false };
+                            let Some(knob) = app.root.path_of(SWING_KNOB).and_then(|p| app.ctrl(&p).cloned().map(|c| (p, c))) else { return false };
                             let (kp, kc) = knob;
                             let rect = dreist_gui::Rect::new(kc.rect.x - 10, kc.rect.y + kc.rect.h / 2 - 9, kc.rect.w + 20, 18);
                             app.open_edit_box(&kp[..kp.len() - 1], SWING_EDIT, rect, format!("{:.0}%", kc.value * 100.0));
@@ -1470,14 +1551,14 @@ impl PatternPanel {
                     }
                 }
             }
+            // The front panel's pattern keys (`PatternSelectors`).
+            UiEvent::Clicked { path, name, .. } if self.selectors.as_ref().is_some_and(|s| path.starts_with(s)) => {
+                let Some(n) = name.strip_prefix("Key").and_then(|n| n.parse::<i32>().ok()) else { return false };
+                out.push(msg(id::SELECT_PATTERN, &[e as i32, -1, -1, n], &[0.0]));
+                set_current_pattern(model, e, n as usize);
+                true
+            }
             UiEvent::Clicked { path, name, on, .. } if path.starts_with(&self.page) => {
-                if let Some(n) = name.strip_prefix("Key").and_then(|n| n.parse::<i32>().ok()) {
-                    if self.selectors.as_ref().is_some_and(|s| path.starts_with(s)) {
-                        out.push(msg(id::SELECT_PATTERN, &[e as i32, -1, -1, n], &[0.0]));
-                        set_current_pattern(model, e, n as usize);
-                        return true;
-                    }
-                }
                 let pat = model.pattern(e, cur as usize);
                 let track = model.pad[e] as i32;
                 match name.as_str() {
@@ -1488,10 +1569,21 @@ impl PatternPanel {
                         app.open_menu(path, items, Some(model.pattern_view[e].lane.min(CORE_LANES)));
                         false
                     }
-                    // Toolbar View ("Show a Single Global Graph", lambda
-                    // [re:ec3067]): writes `PatternEditorViewMode`.
-                    "View" if path.len() > 1 => {
-                        self.set_view(!on, model);
+                    // Toolbar view mode: multi track / multi graph ("Show a
+                    // Single Global Graph", lambda [re:ec3067]): writes
+                    // `PatternEditorViewMode`.
+                    "MultiButton" | "SingleButton" if path.len() > 1 && app.ctrl(&path[..path.len() - 1]).is_some_and(|g| g.name == "ModeGroup") => {
+                        self.set_view(name == "MultiButton", model);
+                        true
+                    }
+                    // Follow playback position (`PatternEditorFollow`).
+                    "Follow" => {
+                        let mut o = crate::options::Options::load();
+                        o.set("PatternEditorFollow", *on);
+                        if !cfg!(test) {
+                            o.save();
+                        }
+                        model.follow_playback = *on;
                         true
                     }
                     "ZoomInH" | "ZoomOutH" => {
@@ -1509,8 +1601,8 @@ impl PatternPanel {
                         out.push(msg(k, &[e as i32, -1, -1, cur, track], &[0.0]));
                         true
                     }
-                    "NudgePatternBackButton" | "NudgePatternForwardButton" => {
-                        let k = if name == "NudgePatternForwardButton" { id::NUDGE_PATTERN_FORWARD } else { id::NUDGE_PATTERN_BACKWARDS };
+                    "NudgePatternBackButton" | "NudgePatternForwardButton" | "NudgeBack" | "NudgeNext" => {
+                        let k = if name == "NudgePatternForwardButton" || name == "NudgeNext" { id::NUDGE_PATTERN_FORWARD } else { id::NUDGE_PATTERN_BACKWARDS };
                         out.push(msg(k, &[e as i32, -1, -1, cur], &[0.0]));
                         true
                     }
@@ -1524,12 +1616,12 @@ impl PatternPanel {
                         out.push(msg(id::SET_PATTERN_STEP_COUNT, &[e as i32, -1, -1, cur], &[n as f32]));
                         true
                     }
-                    "Gated" => self.toolbar_action(app, model, path, ToolbarAction::Gated, out),
-                    "Restart" => self.toolbar_action(app, model, path, ToolbarAction::Restart, out),
+                    "GateButton" => self.toolbar_action(app, model, path, ToolbarAction::Gated, out),
+                    "RestartButton" => self.toolbar_action(app, model, path, ToolbarAction::Restart, out),
                     "QuantizeButton" => self.toolbar_action(app, model, path, ToolbarAction::Quantize, out),
                     "RepeatButton" => self.toolbar_action(app, model, path, ToolbarAction::Duplicate, out),
-                    "Remix" => self.toolbar_action(app, model, path, ToolbarAction::Remix, out),
-                    "DragEdit" => self.toolbar_action(app, model, path, ToolbarAction::DragEdits, out),
+                    "MonoButton" => self.toolbar_action(app, model, path, ToolbarAction::Remix, out),
+                    "DragEditButton" => self.toolbar_action(app, model, path, ToolbarAction::DragEdits, out),
                     "CopyToNext" => {
                         if copy_to_next(model, e).is_some() {
                             self.selection.clear();
@@ -1824,7 +1916,7 @@ impl PatternPanel {
                 let checked = lanes.iter().position(|&l| l == model.pattern_view[e].drag_lane);
                 let labels = lanes.iter().map(|&l| lane_label(l)).collect();
                 self.toolbar_menu = Some(lanes.into_iter().map(ToolbarAction::DragLane).collect());
-                let anchor = app.root.path_of("DragEdit").unwrap_or_else(|| anchor.to_vec());
+                let anchor = app.root.path_of("DragEditButton").unwrap_or_else(|| anchor.to_vec());
                 app.open_menu(&anchor, labels, checked);
                 false
             }
@@ -1979,9 +2071,8 @@ impl PatternPanel {
         let pat = self.drawn_pattern(model);
         let lay = if self.multi { GridLayout::compute_multi(model, &pat, c.rect.w, c.rect.h, &|t| self.lanes(e, t)) } else { GridLayout::compute(model, &pat, c.rect.w, c.rect.h) };
         let (w, h) = ((lay.step_range().end as f32 - lay.first_step as f32) * lay.step_w, c.rect.h as f32);
-        let pink = Colour::rgba(255, 200, 200, 255);
-        let fill = s.colour(BACK_STYLE, "colFill", pink);
-        let alt = s.colour(BACK_STYLE, "colAltFill", pink);
+        let fill = grid_colour(s, "colFill");
+        let alt = grid_colour(s, "colAltFill");
         // Background stripes by the shading mode ([re:ac984a]).
         for st in lay.step_range() {
             let col = if shaded(pat.resolution, st) { alt } else { fill };
@@ -1991,11 +2082,11 @@ impl PatternPanel {
         let sel = model.pad[e];
         if sel >= lay.first_track && sel < lay.first_track + lay.tracks {
             let y = lay.row_y(sel - lay.first_track);
-            p.fill_rect(RectF::new(0.0, y, w, lay.row_h), s.colour(BACK_STYLE, "colSelectedTrack", pink));
+            p.fill_rect(RectF::new(0.0, y, w, lay.row_h), grid_colour(s, "colSelectedTrack"));
         }
         // Playback position (per-track step when tracks wrap).
         if let Some(pos) = model.steps[e] {
-            let col = s.colour(BACK_STYLE, "colPosition", pink);
+            let col = grid_colour(s, "colPosition");
             for row in 0..lay.tracks {
                 let tl = pat.tracks.get(lay.first_track + row).map(|t| t.length.max(1)).unwrap_or(pat.steps) as usize;
                 let st = pos as usize % tl.max(1);
@@ -2005,8 +2096,8 @@ impl PatternPanel {
             }
         }
         // Steps.
-        let step_col = s.colour(TRACK_STYLE, "colStep", Colour::BLACK);
-        let overlay = s.colour(TRACK_STYLE, "colOverlay", pink);
+        let step_col = grid_colour(s, "colStep");
+        let overlay = grid_colour(s, "colOverlay");
         for row in 0..lay.tracks {
             let Some(t) = pat.tracks.get(lay.first_track + row) else { continue };
             for (st, step) in t.steps.iter().enumerate().take(lay.steps) {
@@ -2044,11 +2135,11 @@ impl PatternPanel {
             let mx = drag.map(|(_, x, _)| x.min(c.rect.w as f32 - MARKER_W)).unwrap_or_else(|| Self::marker_x(&lay, len, c.rect.w as f32));
             let mh = lay.row_h.min(MARKER_H);
             let (cy, half) = (lay.row_y(row) + mh * 0.5, mh.min(12.0) * 0.4);
-            let col = s.colour("PatternTrackMarkerStyle", if drag.is_some() { "colAltFill" } else { "colFill" }, Colour::rgba(40, 40, 40, 255));
+            let col = grid_colour(s, if drag.is_some() { "colMarkerDrag" } else { "colMarker" });
             p.fill_polygon(&[(mx + 1.0, cy), (mx + MARKER_W * 0.7, cy - half), (mx + MARKER_W * 0.7, cy + half)], col);
         }
         // Selected steps and the rubber band.
-        let sel = s.colour("PatternTrackMarkerStyle", "colAltFill", Colour::rgba(0, 200, 255, 255));
+        let sel = grid_colour(s, "colMarkerDrag");
         for &(t, st) in &self.selection {
             if t >= lay.first_track && t < lay.first_track + lay.tracks && lay.step_range().contains(&st) {
                 let a = lay.step_rect(t - lay.first_track, st).inset(1.0);
@@ -2064,8 +2155,8 @@ impl PatternPanel {
             p.stroke_rect(RectF::new(x0, r0, x1 - x0, r1 - r0), sel, 1.0);
         }
         // Grid lines.
-        let bar = s.colour(BACK_STYLE, "colGridBar", pink);
-        let beat = s.colour(BACK_STYLE, "colGridBeat", pink);
+        let bar = grid_colour(s, "colGridBar");
+        let beat = grid_colour(s, "colGridBeat");
         for row in 0..lay.tracks {
             for y in [lay.row_y(row), lay.row_y(row) + lay.row_h] {
                 let y = y.round() - 0.5;
@@ -2083,10 +2174,9 @@ impl PatternPanel {
         }
         // Pattern power off.
         if !model.pattern_power(e) {
-            let col = s.colour(BACK_STYLE, "colPowerOverlay", Colour::BLACK);
-            p.fill_rect(RectF::new(0.0, 0.0, c.rect.w as f32, h), col.with_alpha(0.3));
-            let font = s.font(BACK_STYLE);
-            let text = s.colour(BACK_STYLE, "colText", Colour::BLACK);
+            p.fill_rect(RectF::new(0.0, 0.0, c.rect.w as f32, h), Colour::BLACK.with_alpha(0.3));
+            let font = s.font(TIMELINE_LABEL_STYLE);
+            let text = grid_colour(s, "colText");
             p.text(RectF::new(0.0, 0.0, c.rect.w as f32, h), "Pattern power off", text, &font, dreist_gui::style::HAlign::Center, dreist_gui::style::VAlign::Center);
         }
     }
@@ -2105,20 +2195,19 @@ impl PatternPanel {
     fn draw_lane(&self, r: &Renderer, p: &mut Painter, pat: &PatternData, lay: &GridLayout, track: usize, lane: usize, y0: f32, w: f32, h: f32) {
         use dreist_engine::pattern::lane_style;
         let s = r.styles;
-        let pink = Colour::rgba(255, 200, 200, 255);
-        let fill = s.colour(BACK_STYLE, "colFill", pink);
-        let alt = s.colour(BACK_STYLE, "colAltFill", pink);
+        let fill = grid_colour(s, "colFill");
+        let alt = grid_colour(s, "colAltFill");
         p.fill_rect(RectF::new(0.0, y0, w, h), fill);
         for st in lay.step_range() {
             let col = if shaded(pat.resolution, st) { alt } else { fill };
             p.fill_rect(RectF::new(lay.step_x(st), y0, lay.step_w.ceil(), h), col);
         }
         let style = lane_style(lane);
-        let divider = s.colour(BACK_STYLE, "colGridBar", pink);
+        let divider = grid_colour(s, "colGridBar");
         if style == 1 || style == 4 {
             p.line(0.0, y0 + (h / 2.0).floor() + 0.5, w, y0 + (h / 2.0).floor() + 0.5, divider, 1.0);
         }
-        let step_col = s.colour(TRACK_STYLE, "colStep", Colour::BLACK);
+        let step_col = grid_colour(s, "colStep");
         let Some(t) = pat.tracks.get(track) else { return };
         for st in lay.step_range() {
             let Some(step) = t.steps.get(st) else { continue };
@@ -2180,7 +2269,7 @@ impl PatternPanel {
         }
         for st in lay.first_step..=lay.step_range().end {
             let x = lay.step_x(st).round() + 0.5;
-            let beat = s.colour(BACK_STYLE, if st % 4 == 0 { "colGridBar" } else { "colGridBeat" }, pink);
+            let beat = grid_colour(s, if st % 4 == 0 { "colGridBar" } else { "colGridBeat" });
             p.line(x, y0, x, y0 + h, beat, 1.0);
         }
     }
@@ -2191,9 +2280,9 @@ impl PatternPanel {
         let lay = GridLayout::compute(model, &pat, self.grid_width(c), 100);
         let steps = lay.steps;
         let step_w = lay.step_w;
-        let line = s.colour(TIMELINE_STYLE, "colBorder", Colour::rgba(128, 0, 128, 255));
-        let text = s.colour(TIMELINE_STYLE, "colText", Colour::rgba(255, 255, 0, 255));
-        let font = s.font(TIMELINE_STYLE);
+        let line = if s.raw("TimelineTickStyle", "colFill").is_some() { s.colour("TimelineTickStyle", "colFill", Colour::BLACK) } else { grid_colour(s, "colGridBar") };
+        let text = grid_colour(s, "colText");
+        let font = s.font(TIMELINE_LABEL_STYLE);
         let every = if step_w <= 7.0 { 16 } else { 4 };
         let h = c.rect.h as f32;
         for st in lay.step_range() {
@@ -2336,71 +2425,6 @@ impl StepCtx<'_> {
             }
         }
         v
-    }
-}
-
-/// [re:45e9a3] resize listener (skin lambda
-/// [re:0570da]): PatternNameBox is 100 px wide under a 1101 px toolbar, else
-/// 150; against the swing panel (SwingKnob's parent) PatternNameBox and
-/// the Quantize panel show only when left of it without overlap, DragEdit
-/// only when its x ≤ the panel's and without overlap; OptionsButton shows
-/// exactly when DragEdit does not, and the View button's panel the other
-/// way round (all via the user enable state).
-fn layout_toolbar(app: &mut App, named: &dreist_gui::app::PathCache, toolbar: &dreist_gui::app::PathCache) {
-    let Some(tb) = named.path_in(app, &[], "ToolBar") else { return };
-    let tw = app.ctrl(&tb).map(|c| c.rect.w).unwrap_or(0);
-    let find = |app: &App, n: &'static str| toolbar.path_in(app, &tb, n);
-    if let Some(nb) = find(app, "PatternNameBox") {
-        let w = if tw < 0x44d { 100 } else { 150 };
-        if let Some(c) = app.ctrl_mut(&nb) {
-            if c.rect.w != w {
-                let r = c.rect;
-                c.set_rect(dreist_gui::Rect::new(r.x, r.y, w, r.h));
-            }
-        }
-    }
-    let rect = |app: &App, p: &[usize]| -> Option<(i32, i32, i32, i32)> {
-        let (x, y) = app.origin(p);
-        let c = app.ctrl(p)?;
-        Some((x, y, c.rect.w, c.rect.h))
-    };
-    let parent = |p: Vec<usize>| p[..p.len().saturating_sub(1)].to_vec();
-    let Some(swing) = find(app, "SwingKnob").map(parent) else { return };
-    let Some(a) = rect(app, &swing) else { return };
-    let overlaps = |b: (i32, i32, i32, i32)| {
-        let (x0, x1) = (a.0.max(b.0), (a.0 + a.2).min(b.0 + b.2));
-        let (y0, y1) = (a.1.max(b.1), (a.1 + a.3).min(b.1 + b.3));
-        x1 > x0 && y1 > y0
-    };
-    let set_vis = |app: &mut App, p: &[usize], on: bool| {
-        if let Some(c) = app.ctrl_mut(p) {
-            if c.visible != on || c.enabled != on {
-                c.visible = on;
-                c.enabled = on;
-                app.dirty = true;
-            }
-        }
-    };
-    if let Some(nb) = find(app, "PatternNameBox") {
-        if let Some(b) = rect(app, &nb) {
-            set_vis(app, &nb, b.0 <= a.0 && !overlaps(b));
-        }
-    }
-    let drag_fits = find(app, "DragEdit").and_then(|p| rect(app, &p).map(|c| (p, a.0 >= c.0 && !overlaps(c))));
-    if let Some((p, fits)) = &drag_fits {
-        set_vis(app, p, *fits);
-    }
-    if let Some(q) = find(app, "QuantizeButton").map(parent) {
-        if let Some(d) = rect(app, &q) {
-            set_vis(app, &q, d.0 <= a.0 && !overlaps(d));
-        }
-    }
-    let opts = drag_fits.as_ref().map(|(_, f)| !f).unwrap_or(false);
-    if let Some(o) = find(app, "OptionsButton") {
-        set_vis(app, &o, opts);
-    }
-    if let Some(v) = find(app, "View").map(parent) {
-        set_vis(app, &v, !opts);
     }
 }
 

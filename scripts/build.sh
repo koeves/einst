@@ -66,10 +66,10 @@ cat > "$app/Contents/Info.plist" <<PLIST
 </dict>
 </plist>
 PLIST
-# App icon (assets/ui/AppIcon.icns, drawn by scripts/icon.py).
-cp assets/ui/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
+# App icon (assets/ui-v1/AppIcon.icns, drawn by scripts/icon.py).
+cp assets/ui-v1/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
 
-# Resources: Einst's UI graphics (assets/ui: skin, fonts, cursors,
+# Resources: Einst's UI graphics (assets/ui-v1, the v1-layout set: skin, fonts, cursors,
 # metronomes) in Contents/Resources/Einst and v1's factory data (effect
 # presets, effect chains, pattern and swing templates, which einst-formats
 # reads 1:1) in Contents/Resources/Factory, where Einst's profile looks.
@@ -80,7 +80,7 @@ for b in "$app" "$out/Einst.vst3" "$out/Einst.clap"; do
     for d in "Effects" "Effect Chains" "Pattern Templates" "Swing Templates"; do
         cp -R "assets/v1/System/$d" "$b/Contents/Resources/Factory/$d"
     done
-    cp -R assets/ui "$b/Contents/Resources/Einst"
+    cp -R assets/ui-v1 "$b/Contents/Resources/Einst"
     rm -f "$b/Contents/Resources/Einst/AppIcon.png" "$b/Contents/Resources/Einst/AppIcon.icns"
 done
 # Licence and notices travel with every bundle (the plugin links nih-plug's

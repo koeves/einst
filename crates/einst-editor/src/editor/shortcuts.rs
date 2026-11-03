@@ -27,7 +27,7 @@ impl Editor {
         match action {
             accel::Action::Nothing => {}
             accel::Action::Toggle(button) | accel::Action::Press(button) => {
-                let Some(p) = self.app.root.path_of("Header").and_then(|h| Some([h.clone(), (self.app.ctrl(&h)?).path_of(button)?].concat())) else { return };
+                let Some(p) = self.app.root.path_of("Transport").and_then(|h| Some([h.clone(), (self.app.ctrl(&h)?).path_of(button)?].concat())) else { return };
                 let Some(c) = self.app.ctrl_mut(&p) else { return };
                 if matches!(action, accel::Action::Toggle(_)) {
                     c.on = !c.on;
@@ -79,7 +79,9 @@ impl Editor {
     /// A menu bar item was chosen.
     pub fn menu_command(&mut self, tag: isize) {
         match tag {
-            MENU_ABOUT => self.handle(&UiEvent::MenuSelected { anchor: Vec::new(), name: "HelpButton".into(), index: 0 }),
+            MENU_ABOUT => {
+                self.main_action(&[], crate::editor::tools_menu::MainAction::About);
+            }
             MENU_AUDIO => self.devices.show(devices::Panel::Audio),
             MENU_MIDI => self.devices.show(devices::Panel::Midi),
             t => {
@@ -102,7 +104,9 @@ impl Editor {
             menu(ed, "LoadButton", 0);
         };
         match id {
-            0x16a => menu(self, "ToolButton", 0),
+            0x16a => {
+                self.main_action(&[], crate::editor::tools_menu::MainAction::Preferences);
+            }
             0x16c => file(self, FileAction::OpenPreset),
             0x16d => file(self, FileAction::Open(Part::Engine(e))),
             0x16e => file(self, FileAction::Open(Part::Kit(e))),
@@ -118,18 +122,23 @@ impl Editor {
             0x17c => file(self, FileAction::Save { part: Part::Pattern(e, self.model.current_pattern(e)), as_new: true }),
             0x17d => file(self, FileAction::SaveMidi),
             0x17e => file(self, FileAction::Save { part: Part::Mappings, as_new: true }),
-            0x17f => menu(self, "ToolButton", 8),
+            0x17f => {
+                self.main_action(&[], crate::editor::tools_menu::MainAction::Export);
+            }
             0x174 => file(self, FileAction::SavePreset { as_new: false }),
             0x176 => file(self, FileAction::SavePreset { as_new: true }),
             0x178 => file(self, FileAction::Save { part: Part::Kit(e), as_new: false }),
             0x179 => file(self, FileAction::Save { part: Part::Kit(e), as_new: true }),
             // e_updateDelete: the pattern / song editors delete their selection.
             0x18f => self.handle(&UiEvent::Shortcut { key: "delete".into(), cmd: false, shift: false, alt: false, ctrl: false }),
-            0x152 => menu(self, "HelpButton", 2),
-            0x153 => menu(self, "HelpButton", 3),
+            // Reset UI size: the window has one size.
+            0x152 => {}
+            0x153 => {
+                self.main_action(&[], crate::editor::tools_menu::MainAction::ResetScale);
+            }
             // Header Retro (`e_grabRetroRecording`).
             0x23 => {
-                if let Some(p) = self.app.root.path_of("Header").and_then(|h| Some([h.clone(), (self.app.ctrl(&h)?).path_of("RetroButton")?].concat())) {
+                if let Some(p) = self.app.root.path_of("Transport").and_then(|h| Some([h.clone(), (self.app.ctrl(&h)?).path_of("RetroButton")?].concat())) {
                     let ev = UiEvent::Clicked { path: p, name: "RetroButton".into(), id: 0, on: false };
                     self.handle(&ev);
                 }

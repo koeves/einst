@@ -34,7 +34,10 @@ use crate::{EditorError, err};
 const TIMELINE_H: f32 = 20.0;
 /// Editor tab page id of the song panel.
 const SONG_TAB: usize = 2;
-const PART_STYLE: &str = "SongPartStyle";
+/// The theme's content styles for the code-drawn lanes and parts (the
+/// v1 set's `SongLane*`, `SongPart*`, `Grid*` and `Timeline*` styles).
+const PART_STYLE: &str = "SongPartBodyStyle";
+const PART_SELECTED_STYLE: &str = "SongPartSelectedBodyStyle";
 
 /// [re:207106] (left-button operation per tool [re:588ddb]).
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -501,9 +504,19 @@ impl SongPanel {
             if n.is_empty() { format!("Pattern {}", ip + 1) } else { n }
         };
         let Some(page) = app.ctrl_mut(&self.page) else { return };
+        // The blackout covers the lanes until song mode is on; its Activate
+        // button turns it on.
         if let Some(b) = page.find_mut("BlackoutPanel") {
             b.visible = !song.active;
-            b.passive = true;
+        }
+        for n in ["PatternRenameTextBox", "ShuffleButton"] {
+            if let Some(b) = page.find_mut(n) {
+                b.visible = false;
+            }
+        }
+        let follow = model.follow_playback;
+        if let Some(b) = page.find_mut("FollowButton") {
+            b.on = follow;
         }
         let _ = name;
         // Pattern buttons [re:ea233f]: enabled with a selection.
@@ -527,7 +540,7 @@ impl SongPanel {
         if let Some(hp) = page.find_mut("TrackHeaderPanel") {
             for h in &mut hp.children {
                 let sel = h.attr("songTrack").and_then(|v| v.parse::<usize>().ok()) == Some(model.engine);
-                h.style = if sel { "SongTrackPanelSelectedStyle" } else { "SongTrackPanelStyle0" }.into();
+                h.style = if sel { "SongTrackPanelSelectedStyle".to_string() } else { format!("SongTrackPanelStyle{}", h.attr("songTrack").and_then(|v| v.parse::<usize>().ok()).unwrap_or(0) % 2) };
             }
         }
     }
@@ -790,6 +803,19 @@ impl SongPanel {
                     // Control event [re:e3a0fd] → pattern IDs by delta.
                     "NextPatternButton" => self.change_patterns(model, Some(1), None, out),
                     "PrevPatternButton" => self.change_patterns(model, Some(-1), None, out),
+                    // The blackout's Activate: song mode on (`e_songSetActive`).
+                    "PowerButton" => out.push(msg(id::SONG_SET_ACTIVE, &[], &[1.0, 0.0])),
+                    // Scroll to follow (`PatternEditorFollow`, shared with the
+                    // pattern page).
+                    "FollowButton" => {
+                        let on = !model.follow_playback;
+                        let mut o = crate::options::Options::load();
+                        o.set("PatternEditorFollow", on);
+                        if !cfg!(test) {
+                            o.save();
+                        }
+                        model.follow_playback = on;
+                    }
                     "SelectPatternButton" => self.open_pattern_menu(app, model, path),
                     // Part buttons: select the anchor part, then as above.
                     "PartNextPatternButton" | "PartPrevPatternButton" | "PartSelectPatternButton" => {
@@ -1078,21 +1104,28 @@ impl SongPanel {
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
         self.body_w.set(w);
         let rh = row_h(c);
-        let pink = Colour::rgba(255, 200, 200, 255);
         let off = self.scroll * self.zoom;
+        let colour = |st: &str, attr: &str, default: Colour| crate::front::colour_or(s, st, attr, default);
+        let position = colour("GridPositionStyle", "colFill", Colour::rgba(236, 189, 47, 255));
         // Track rows.
+        let line = colour("GridLineStyle", "colFill", Colour::rgba(169, 176, 191, 255));
         for e in 0..ENGINES {
-            let st = if e == model.engine { "SongTrackPanelSelectedStyle" } else { "SongBodyPanelStyle" };
+            let st = if e == model.engine {
+                "SongLaneSelectedStyle"
+            } else if e % 2 == 1 {
+                "SongLaneAltStyle"
+            } else {
+                "SongLaneStyle"
+            };
             let y = TIMELINE_H + e as f32 * rh;
-            p.fill_rect(RectF::new(0.0, y, w, rh), s.colour(st, "colFill", Colour::WHITE));
-            let b = s.colour(st, "colBorder", Colour::BLACK);
-            p.line(0.0, y + rh - 0.5, w, y + rh - 0.5, b, 1.0);
+            p.fill_rect(RectF::new(0.0, y, w, rh), colour(st, "colFill", Colour::WHITE));
+            p.line(0.0, y + rh - 0.5, w, y + rh - 0.5, line, 1.0);
         }
         // Timeline + grid.
-        p.fill_rect(RectF::new(0.0, 0.0, w, TIMELINE_H), s.colour("SongTimelineStyle", "colFill", Colour::TRANSPARENT));
-        let bar = s.colour("PatternBackPanelStyle", "colGridBar", pink);
-        let font = s.font("SongTimelineStyle");
-        let text = s.colour("SongTimelineStyle", "colText", Colour::BLACK);
+        p.fill_rect(RectF::new(0.0, 0.0, w, TIMELINE_H), colour("TimelineStyle", "colFill", Colour::TRANSPARENT));
+        let bar = line;
+        let font = s.font("TimelineLabelStyle");
+        let text = colour("TimelineLabelStyle", "colText", Colour::BLACK);
         let bar_qn = 4.0f32;
         let first_bar = (self.scroll / bar_qn).floor() as usize;
         let bars = (w / (bar_qn * self.zoom)).ceil() as usize + 2;
@@ -1112,16 +1145,16 @@ impl SongPanel {
         }
         // Loop range.
         if song.loop_enabled {
-            let col = s.colour("SongPanelStyle", "colLoopInternal", pink);
+            let col = position.with_alpha(0.5);
             p.fill_rect(RectF::new(song.loop_start as f32 * self.zoom - off, 0.0, ((song.loop_end - song.loop_start) as f32 * self.zoom).max(0.0), TIMELINE_H), col);
         }
         // Parts.
-        let fill = s.colour(PART_STYLE, "colPart", pink);
-        let border = s.colour(PART_STYLE, "colBorder", Colour::BLACK);
-        let ptext = s.colour(PART_STYLE, "colText", Colour::BLACK);
+        let fill = colour(PART_STYLE, "colFill", Colour::rgba(222, 229, 237, 255));
+        let border = colour(PART_STYLE, "colBorder", Colour::BLACK);
+        let ptext = colour(PART_STYLE, "colText", Colour::BLACK);
         let pfont = s.font(PART_STYLE);
         let radius = s.float(PART_STYLE, "realCornerRounding", 7.0).floor().min(rh / 2.0);
-        let sel_col = s.colour(PART_STYLE, "colSelected", pink);
+        let sel_col = colour(PART_SELECTED_STYLE, "colFill", Colour::rgba(236, 189, 47, 255));
         for (e, parts) in song.tracks.iter().enumerate() {
             let y = TIMELINE_H + e as f32 * rh;
             for part in parts {
@@ -1163,8 +1196,8 @@ impl SongPanel {
             }
         }
         // Parts being recorded (colRecording) and retro parts (colRetro).
-        let rec_col = s.colour(PART_STYLE, "colRecording", pink);
-        let retro_col = s.colour(PART_STYLE, "colRetro", pink);
+        let rec_col = Colour::rgba(244, 116, 116, 255);
+        let retro_col = Colour::rgba(244, 116, 116, 160);
         let grow = |p: &SongPart| model.song_pos.filter(|pos| *pos > p.start).map(|pos| pos - p.start).unwrap_or(p.length);
         let extra = self
             .recording
@@ -1185,17 +1218,17 @@ impl SongPanel {
         }
         // Insert marker.
         let mx = ((self.marker as f32 - self.scroll) * self.zoom).round() + 0.5;
-        p.line(mx, 0.0, mx, TIMELINE_H, s.colour("SongPanelStyle", "colInsertMarker", s.colour("SongPanelStyle", "colPosition", Colour::BLACK)), 1.0);
+        p.line(mx, 0.0, mx, TIMELINE_H, position, 1.0);
         // Rubber band.
         if let Some(b) = self.band {
-            let col = s.colour(PART_STYLE, "colSelected", pink);
+            let col = sel_col;
             p.fill_rect(b, col.with_alpha(0.25));
             p.stroke_rect(b.inset(0.5), col, 1.0);
         }
         // Playback position.
         if let Some(pos) = model.song_pos.filter(|_| song.active) {
             let x = (pos as f32 * self.zoom - off).round() + 0.5;
-            p.line(x, 0.0, x, h, s.colour("SongPanelStyle", "colPosition", Colour::BLACK), 1.0);
+            p.line(x, 0.0, x, h, position, 1.0);
         }
         true
     }
