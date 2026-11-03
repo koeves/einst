@@ -144,23 +144,6 @@ impl Editor {
 
     pub(crate) fn pad_menu(&mut self, ev: &UiEvent) -> bool {
         match ev {
-            UiEvent::RightClicked { path, .. } if self.ancestors(path).last().is_some_and(|n| n == "PadBank") => {
-                let b = *path.last().unwrap();
-                if b > 3 {
-                    return false;
-                }
-                let mut items: Vec<String> = padmenu::BANK_ITEMS.iter().map(|s| s.to_string()).collect();
-                if self.clipboard.bank.is_none() {
-                    items[2] = dreist_gui::menu::item("Paste", false);
-                }
-                self.bank_menu = Some((path.clone(), b));
-                self.app.open_menu(path, items, None);
-                true
-            }
-            UiEvent::MenuSelected { anchor, index, .. } if self.bank_menu.as_ref().is_some_and(|(p, _)| p == anchor) => {
-                let Some((_, b)) = self.bank_menu.take() else { return false };
-                padmenu::bank_action(&mut self.model, &mut self.clipboard, b, *index, &mut self.outbox)
-            }
             UiEvent::RightClicked { path, .. } if self.mixers.iter().any(|m| m.pad_strip_at(&self.app, path).is_some()) => {
                 let Some(k) = self.mixers.iter().find_map(|m| m.pad_strip_at(&self.app, path)) else { return false };
                 let path = path.clone();

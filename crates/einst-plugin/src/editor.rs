@@ -351,14 +351,12 @@ pub struct DreistEditor {
     pub size: Arc<std::sync::atomic::AtomicU64>,
 }
 
-/// [re:46068f]: `LastEditorSize` (window pixels) or the
-/// default size × the UI scale.
+/// The window's size: v1's fixed size × the UI scale
+/// (`LastEditorScaleFactor`).
 fn startup_size() -> (u32, u32) {
     let o = einst_editor::options::Options::load();
     let ui = o.int("LastEditorScaleFactor", 100).clamp(50, 300) as f64 / 100.0;
-    let saved = o.string("LastEditorSize", "0,0");
-    let parsed = saved.split_once(',').and_then(|(w, h)| Some((w.trim().parse::<u32>().ok()?, h.trim().parse::<u32>().ok()?))).filter(|(w, h)| *w > 0 && *h > 0);
-    parsed.unwrap_or(((SIZE.0 as f64 * ui).round() as u32, (SIZE.1 as f64 * ui).round() as u32))
+    ((SIZE.0 as f64 * ui).round() as u32, (SIZE.1 as f64 * ui).round() as u32)
 }
 
 /// Store the editor's document in the bridge and the persisted session
@@ -396,7 +394,8 @@ impl Drop for Handle {
     }
 }
 
-pub const SIZE: (u32, u32) = (1400, 850);
+/// v1's window (fixed; `einst_editor` lays it out at this size).
+pub const SIZE: (u32, u32) = (1135, 640);
 
 impl Editor for DreistEditor {
     fn spawn(&self, parent: ParentWindowHandle, context: Arc<dyn GuiContext>) -> Box<dyn Any + Send> {
@@ -600,8 +599,8 @@ impl Editor for DreistEditor {
     }
 
     fn size(&self) -> (u32, u32) {
-        // A live resize (window sizer, UI scale) reports the requested
-        // size; otherwise the startup size from the options.
+        // A UI scale change reports the requested size; otherwise the
+        // startup size from the options.
         let px = self.size.load(std::sync::atomic::Ordering::Relaxed);
         if px != 0 {
             return ((px >> 32) as u32, px as u32);

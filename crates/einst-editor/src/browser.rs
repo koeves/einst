@@ -18,7 +18,7 @@ use dreist_gui::app::{App, MouseKind, UiEvent};
 use dreist_gui::paint::{Painter, RectF};
 use dreist_gui::render::Renderer;
 use dreist_gui::style::{HAlign, VAlign};
-use dreist_gui::{Colour, Ctrl, Skin};
+use dreist_gui::{Colour, Ctrl, Rect, Skin};
 
 use crate::command::Command;
 use crate::model::Model;
@@ -27,8 +27,14 @@ use crate::{EditorError, err};
 pub const CATEGORIES: [&str; 6] = ["Content", "Places", "Drives", "Favourites", "Searches", "Shortlists"];
 const SOURCE_ROW: f32 = 25.0;
 const FILE_ROW: f32 = 18.0;
-const ITEM_STYLE: &str = "BrowserListItemStyle";
-const SOURCE_STYLE: &str = "BrowserSourceListItemStyle";
+/// The theme's content styles for the code-drawn lists: the file list
+/// (`BrowserListStyle`), the source tree (`BrowserTree*`) and the path
+/// navigator (`BrowserCrumbStyle`).
+const ITEM_STYLE: &str = "BrowserListStyle";
+const SOURCE_STYLE: &str = "BrowserTreeItemStyle";
+const SOURCE_HEAD_STYLE: &str = "BrowserTreeHeadStyle";
+const SOURCE_SELECTED_STYLE: &str = "BrowserTreeSelectedStyle";
+const NAV_STYLE: &str = "BrowserCrumbStyle";
 
 /// Listed files besides projects and kits of every family.
 const EXTENSIONS: [&str; 13] = ["wav", "aif", "aiff", "patterntemplate", "rx2", "rex", "rcy", "rex2", "rcso", "gru", "kit", "g01", "g24"];
@@ -645,30 +651,74 @@ fn load_kit_inner(model: &mut Model, kit: &Path) -> bool {
     true
 }
 
+/// The browser column (v1 draws its lists in code): `Header.skin` at the
+/// top, the advanced search pane under it (closed), the path navigator,
+/// the source tree beside the file list, and `Footer.skin` at the bottom.
+fn build_column(skin: &mut Skin, host: &mut Ctrl) -> Result<(), EditorError> {
+    let (w, h) = (host.rect.w, host.rect.h);
+    let panel = |name: &str, overload: &str, r: Rect, style: &str| Ctrl {
+        class: "CtrlPanel".into(),
+        name: name.into(),
+        overload: overload.into(),
+        style: style.into(),
+        rect: r,
+        visible: true,
+        enabled: true,
+        zorder: 1,
+        ..Ctrl::default()
+    };
+    let mut header = crate::front::load(skin, "Browser/Header.skin")?;
+    header.name = "BrowserHeader".into();
+    let mut footer = crate::front::load(skin, "Browser/Footer.skin")?;
+    footer.name = "Footer".into();
+    let (hh, fh) = (header.rect.h, footer.rect.h);
+    footer.rect.y = h - fh;
+    host.children.push(header);
+    host.children.push(panel("Search", "BrowserSearchPane", Rect::new(0, hh, w, 0), "InvisibleStyle"));
+    const NAV: i32 = 20;
+    host.children.push(panel("Navigator", "BrowserPathNavigator", Rect::new(1, hh + 2, w - 2, NAV), "InvisibleStyle"));
+    let top = hh + NAV + 4;
+    let body = h - top - fh - 2;
+    let mut split = panel("SplitView", "", Rect::new(0, top, w, body), "InvisibleStyle");
+    split.class = "CtrlSplitterPanel".into();
+    for (k, v) in [
+        ("SplitterPanelStyle", "InvisibleStyle"),
+        ("intMinSize1", "100"),
+        ("intSplitPosition", "110"),
+        ("intSplitterDim", "3"),
+        ("optIsVertical", "false"),
+        ("optDbClkCollapse1", "false"),
+        ("optSnapCollapse1", "false"),
+    ] {
+        split.set_attr(k, v.into());
+    }
+    let mut sources = panel("SourceList", "BrowserSourceList", Rect::new(0, 0, 110, body), "InvisibleStyle");
+    sources.display_name = "SplitterPanel0".into();
+    let mut pane = panel("Browser", "", Rect::new(113, 0, w - 113, body), "InvisibleStyle");
+    pane.display_name = "SplitterPanel1".into();
+    pane.children.push(panel("FileList", "BrowserFileList", Rect::new(0, 0, w - 113, body), "InvisibleStyle"));
+    split.children.push(sources);
+    split.children.push(pane);
+    host.children.push(split);
+    host.children.push(footer);
+    Ok(())
+}
+
 impl Browser {
     pub fn build(skin: &mut Skin, root: &mut Ctrl, page: &[usize]) -> Result<Browser, EditorError> {
         let mut host = &mut *root;
         for &i in page {
             host = &mut host.children[i];
         }
-        skin.mount(host, "Browser.skin").map_err(err)?;
+        build_column(skin, host)?;
         crate::search::SearchPane::mount(skin, host).map_err(err)?;
-        if let Some(h) = host.find_mut("Header") {
-            skin.mount(h, "Header.skin").map_err(err)?;
-            // [re:9c477d]..[re:af9e3a]:
-            // disabled: the Spinner (shown only while an
-            // asynchronous search runs; the port's search is synchronous) and
-            // LockPadsButton / LockPatternsButton (never shown again; the
-            // Options menu has the (Un)Lock all items).
-            for n in ["Spinner", "LockPadsButton", "LockPatternsButton"] {
-                if let Some(c) = h.find_mut(n) {
-                    c.visible = false;
-                    c.enabled = false;
-                }
+        // [re:9c477d]..[re:af9e3a]: the Spinner shows only while an
+        // asynchronous search runs (the port's search is synchronous).
+        for panel in ["BrowserHeader", "Search"] {
+            if let Some(c) = host.find_mut(panel).and_then(|p| p.find_mut("Spinner")) {
+                c.visible = false;
+                c.enabled = false;
             }
-        }
-        if let Some(b) = host.find_mut("Browser") {
-            skin.mount(b, "FileList.skin").map_err(err)?;
         }
         let start = subdirs(&content_dir()).into_iter().next();
         let mut b = Browser {
@@ -1424,16 +1474,16 @@ impl Browser {
         }
         let auto = self.auto_load;
         let Some(page) = app.ctrl_mut(&self.page) else { return };
-        if let Some(b) = page.find_mut("AutoAllocateButton") {
+        if let Some(b) = page.find_mut("InteractionModeButton") {
             b.on = auto;
         }
-        if let Some(b) = page.find_mut("SliceModeButton") {
+        if let Some(b) = page.find_mut("HitLoopModeButton") {
             b.on = self.slice_mode;
         }
         if let Some(b) = page.find_mut("PreviewButton") {
             b.on = self.preview_mode;
         }
-        if let Some(b) = page.find_mut("PreviewVolume") {
+        if let Some(b) = page.find_mut("PreviewVolumeKnob") {
             b.value = self.preview_volume;
         }
     }
@@ -1508,7 +1558,7 @@ impl Browser {
                 }
                 true
             }
-            UiEvent::ValueChanged { path, name, value, .. } if name == "PreviewVolume" && path.starts_with(&self.page) => {
+            UiEvent::ValueChanged { path, name, value, .. } if name == "PreviewVolumeKnob" && path.starts_with(&self.page) => {
                 self.preview_volume = *value;
                 out.push(crate::command::msg(dreist_engine::binding::id::SET_PREVIEW_VOLUME, &[], &[*value]));
                 true
@@ -1765,11 +1815,11 @@ impl Browser {
                     out.push(Command::Preview(None));
                     true
                 }
-                "AutoAllocateButton" => {
+                "InteractionModeButton" => {
                     self.auto_load = !self.auto_load;
                     true
                 }
-                "SliceModeButton" => {
+                "HitLoopModeButton" => {
                     self.slice_mode = !self.slice_mode;
                     true
                 }
@@ -1784,11 +1834,11 @@ impl Browser {
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
         match c.overload.as_str() {
             "BrowserSourceList" => {
-                p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour("BrowserSourceListStyle", "colFill", Colour::WHITE));
+                p.fill_rect(RectF::new(0.0, 0.0, w, h), crate::front::colour_or(s, "BrowserTreeStyle", "colFill", Colour::TRANSPARENT));
                 let font = s.font(SOURCE_STYLE);
                 let text = s.colour(SOURCE_STYLE, "colText", Colour::BLACK);
-                let sel = s.colour(SOURCE_STYLE, "colAltFill", Colour::BLACK);
-                let mut bold = font.clone();
+                let sel = crate::front::colour_or(s, SOURCE_SELECTED_STYLE, "colFill", Colour::rgba(232, 204, 91, 255));
+                let mut bold = s.font(SOURCE_HEAD_STYLE);
                 bold.bold = true;
                 for (i, src) in self.sources.iter().enumerate() {
                     let y = i as f32 * SOURCE_ROW;
@@ -1804,7 +1854,7 @@ impl Browser {
                     if current {
                         p.fill_rect(RectF::new(0.0, y, w, SOURCE_ROW), sel);
                     }
-                    let col = if current { Colour::WHITE } else { text };
+                    let col = text;
                     let (x, f) = if src.header { (4.0, &bold) } else { (16.0, &font) };
                     p.text(RectF::new(x, y, w - x - 4.0, SOURCE_ROW), &src.label, col, f, HAlign::Left, VAlign::Center);
                 }
@@ -1813,11 +1863,14 @@ impl Browser {
             "BrowserFileList" => {
                 let font = s.font(ITEM_STYLE);
                 let text = s.colour(ITEM_STYLE, "colText", Colour::BLACK);
-                let sel = s.colour(ITEM_STYLE, "colAltFill", Colour::BLACK);
+                let sel = crate::front::colour_or(s, ITEM_STYLE, "colSelection", Colour::rgba(232, 204, 91, 255));
+                let (row, alt) = (crate::front::colour_or(s, ITEM_STYLE, "colRow", Colour::TRANSPARENT), crate::front::colour_or(s, ITEM_STYLE, "colRowAlt", Colour::TRANSPARENT));
+                p.fill_rect(RectF::new(0.0, 0.0, w, h), crate::front::colour_or(s, ITEM_STYLE, "colFill", Colour::TRANSPARENT));
                 let rows = (h / FILE_ROW) as usize + 1;
                 for (k, en) in self.entries.iter().enumerate().skip(self.scroll).take(rows) {
                     let y = (k - self.scroll) as f32 * FILE_ROW;
                     let selected = if self.multi.is_empty() { self.selected == Some(k) } else { self.multi.contains(&k) };
+                    p.fill_rect(RectF::new(0.0, y, w, FILE_ROW), if k % 2 == 0 { row } else { alt });
                     if selected {
                         p.fill_rect(RectF::new(0.0, y, w, FILE_ROW), sel);
                     }
@@ -1826,7 +1879,7 @@ impl Browser {
                     if let Some((_, pr)) = self.loading.as_ref().filter(|(lp, pr)| *lp == en.path && *pr > 0.0 && *pr <= 1.0) {
                         p.fill_rect(RectF::new(2.0, y + 2.0, (w - 4.0) * pr, FILE_ROW - 2.0), sel.with_alpha(0.6));
                     }
-                    let col = if selected { Colour::WHITE } else { text };
+                    let col = text;
                     if en.dir {
                         // Folder glyph.
                         p.fill_rounded(RectF::new(4.0, y + 5.0, 12.0, 9.0), 1.5, [true; 4], col.with_alpha(0.6));
@@ -1842,7 +1895,7 @@ impl Browser {
                 // after every button but the last, which gets a right edge
                 // line and, for "(No slice)", a 10 point star at
                 // (w − 10, h/2) (radii 0.4h / 0.15h) in the text colour.
-                let st = "BrowserPathNavStyle";
+                let st = NAV_STYLE;
                 let font = s.font(st);
                 let text = s.colour(st, "colText", Colour::BLACK);
                 let border = s.colour(st, "colBorder", Colour::BLACK);

@@ -123,8 +123,12 @@ impl Slicer {
             enabled: true,
             ..Ctrl::default()
         };
-        let rel = skin.find("SlicePanel.skin").unwrap_or_else(|| "Slicer/SlicePanel.skin".into());
-        let panel = skin.load_skin(&rel).map_err(err)?.children.into_iter().next();
+        // The v1 layout has no slicer panel yet (v1's is a page on the
+        // LCD): without one the slicer stays closed.
+        let panel = match skin.find("SlicePanel.skin") {
+            Some(rel) => skin.load_skin(&rel).map_err(err)?.children.into_iter().next(),
+            None => None,
+        };
         let mut out = Slicer {
             overlay: None,
             main: root.path_of("MainPanel"),

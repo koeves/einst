@@ -15,6 +15,9 @@ mod dragdrop;
 mod editbind;
 mod editor;
 pub mod filefind;
+mod front;
+// Kept for the v1 mixer and scene pages, which do not use it yet.
+#[allow(dead_code)]
 mod fxchain;
 mod fxtext;
 mod guru;
@@ -25,6 +28,8 @@ mod metadata;
 mod meters;
 mod midiconsole;
 mod midimap;
+// Kept for the v1 mixer and scene pages, which do not use it yet.
+#[allow(dead_code)]
 mod mixer;
 mod modal;
 pub mod model;
@@ -38,6 +43,8 @@ mod popups;
 pub mod project;
 mod retro;
 mod sampler;
+// Kept for the v1 mixer and scene pages, which do not use it yet.
+#[allow(dead_code)]
 mod scenes;
 mod search;
 mod slicer;
@@ -144,41 +151,6 @@ pub fn add_recent_preset(path: &std::path::Path) {
     o.save();
 }
 
-/// [re:7f1242]: "w,h", both > 0.
-fn parse_size(s: &str) -> Option<(i32, i32)> {
-    let (w, h) = s.split_once(',')?;
-    let (w, h) = (w.trim().parse::<i32>().ok()?, h.trim().parse::<i32>().ok()?);
-    (w > 0 && h > 0).then_some((w, h))
-}
-
-/// [re:48ffa9] (the
-/// port's options file; tests leave it alone).
-fn save_split(key: &str, pos: i32) {
-    if cfg!(test) {
-        return;
-    }
-    let mut o = options::Options::load();
-    o.set(key, pos);
-    o.save();
-}
-
-/// Opening the editor → [re:4ca6d7] for every
-/// splitter: a saved position ≥ 0 is clamped and applied.
-fn restore_splits(c: &mut Ctrl, o: &options::Options) {
-    if c.class == "CtrlSplitterPanel" {
-        if let Some(key) = c.attr("strAutoSaveName").filter(|k| !k.is_empty()).map(str::to_string) {
-            let v = o.int(&key, -1);
-            if v >= 0 {
-                let p = dreist_gui::splitter::clamp(c, v as i32);
-                dreist_gui::splitter::set_position(c, p);
-            }
-        }
-    }
-    for ch in &mut c.children {
-        restore_splits(ch, o);
-    }
-}
-
 pub type DialogFn = Box<dyn FnMut(Dialog) -> Option<std::path::PathBuf> + Send>;
 
 pub struct Editor {
@@ -192,9 +164,6 @@ pub struct Editor {
     pub(crate) external_drag: Option<Vec<std::path::PathBuf>>,
     /// Pattern key / engine selector drop highlights.
     pub(crate) drop_hl: dragdrop::DropHighlights,
-    /// Root size from the skin ([re:93103c]) and the
-    /// size last written to `LastEditorSize`.
-    window_size: ((i32, i32), (i32, i32)),
     pub app: App,
     /// Native file dialogs (set by the window host; `None` in tests).
     pub dialogs: Option<DialogFn>,
@@ -210,12 +179,12 @@ pub struct Editor {
     /// "Reset all engines" confirmation; the engine being renamed.
     engine_menu: Option<(Vec<usize>, usize, Vec<EngineAction>)>,
     engine_rename: Option<usize>,
-    /// An open pad bank menu: the button and its bank.
-    bank_menu: Option<(Vec<usize>, usize)>,
     /// A typed knob edit in progress: the knob, its id and the conversion.
     knob_edit: Option<(Vec<usize>, String, i32, dreist_formats::params::Curve)>,
     /// The open File menu level (main menu or a submenu) and its actions.
     file_menu: Option<Vec<FileAction>>,
+    /// The main menu (`GridButton`) is open.
+    main_menu: bool,
     /// Last file per part type and engine ([re:4196af] dialog paths): what
     /// "Save Engine" / "Save Kit" / … write to without asking.
     part_paths: std::collections::HashMap<(&'static str, usize), std::path::PathBuf>,
@@ -225,6 +194,7 @@ pub struct Editor {
     /// Commands produced since the last `take_commands`.
     pub outbox: Vec<Command>,
     pads: pads::Pads,
+    front: front::Front,
     sampler: sampler::Sampler,
     header: header::Header,
     editor_tabs: Option<tabs::Tabs>,
@@ -273,60 +243,42 @@ fn err(e: impl std::fmt::Display) -> EditorError {
 }
 
 impl Editor {
-    /// Build the editor from the installed resources (`theme`, e.g. "Dreist").
+    /// Build the editor from the installed resources (`theme`, e.g.
+    /// "Einst"): the v1 layout (`front`) with its pages.
     pub fn new(theme: &str, model: Model) -> Result<Editor, EditorError> {
         let mut skin = Skin::load(&Skin::resources_dir(), theme).map_err(err)?;
-        let mut root = skin.load_skin("RootSkin.skin").map_err(err)?;
-        let header = header::Header::build(&mut skin, &mut root)?;
-        let pads = pads::Pads::build(&mut skin, &mut root, &model)?;
+        let mut root = front::root(&mut skin)?;
+        let header = header::Header::build(&root);
+        let pads = pads::Pads::build(&mut root, &model)?;
         let sampler = sampler::Sampler::build(&mut skin, &mut root)?;
-        let editor_tabs = tabs::Tabs::new(&root, "EditorTabPanel", "EditorTabButtons");
-        let utility_tabs = tabs::Tabs::new(&root, "UtilityTabPanel", "UtilityTabButtonGroup");
-        let pattern = match &editor_tabs {
-            Some(t) => {
-                let page = t.add_page(&mut root, 0);
-                Some(pattern::PatternPanel::build(&mut skin, &mut root, &page)?)
-            }
-            None => None,
-        };
-        let inspector = inspector::Inspector::build(&mut skin, &mut root)?;
-        let mut mixers = Vec::new();
+        let editor_tabs = tabs::Tabs::new(&root, "MainTabs", "MainTabButtons");
+        let utility_tabs = tabs::Tabs::new(&root, "BrowserTabs", "BrowserTabButtons");
+        let mut pattern = None;
+        let mut song = None;
         if let Some(t) = &editor_tabs {
-            for (page_id, kind) in [(3, mixer::Kind::Layer), (4, mixer::Kind::Pad), (5, mixer::Kind::Global)] {
-                let page = t.add_page(&mut root, page_id);
-                mixers.push(mixer::Mixer::build(&mut skin, &mut root, &page, kind)?);
+            for id in 0..front::PAGES.len() {
+                let page = t.add_page(&mut root, id);
+                match id {
+                    front::PATTERN_PAGE => pattern = Some(pattern::PatternPanel::build(&mut skin, &mut root, &page)?),
+                    front::SONG_PAGE => song = Some(song::SongPanel::build(&mut skin, &mut root, &page)?),
+                    _ => front::static_page(&mut skin, &mut root, &page, id)?,
+                }
             }
         }
-        let scenes = match &editor_tabs {
-            Some(t) => {
-                let page = t.add_page(&mut root, 1);
-                Some(scenes::Scenes::build(&mut skin, &mut root, &page)?)
-            }
-            None => None,
-        };
-        let song = match &editor_tabs {
-            Some(t) => {
-                let page = t.add_page(&mut root, 2);
-                Some(song::SongPanel::build(&mut skin, &mut root, &page)?)
-            }
-            None => None,
-        };
-        let midimap = match &editor_tabs {
-            Some(t) => {
-                let page = t.add_page(&mut root, 6);
-                Some(midimap::MidiMap::build(&mut skin, &mut root, &page)?)
-            }
-            None => None,
-        };
-        let browser = match &utility_tabs {
-            Some(t) => {
-                let page = t.add_page(&mut root, 0);
-                Some(browser::Browser::build(&mut skin, &mut root, &page)?)
-            }
-            None => None,
-        };
-        let tm_page = utility_tabs.as_ref().map(|t| t.add_page(&mut root, 1));
-        let transmod = transmod::Transmod::build(&mut skin, &mut root, tm_page.as_deref())?;
+        // Not on the v1 layout yet: the pad / layer editor, the mixers and
+        // the scene page (their pages show their layout only).
+        let inspector = inspector::Inspector::build(&mut skin, &mut root)?;
+        let mixers = Vec::new();
+        let scenes = None;
+        let mut browser = None;
+        let mut midimap = None;
+        if let Some(t) = &utility_tabs {
+            let page = t.add_page(&mut root, front::BROWSER_PAGE);
+            browser = Some(browser::Browser::build(&mut skin, &mut root, &page)?);
+            let page = t.add_page(&mut root, front::MAPPING_PAGE);
+            midimap = Some(midimap::MidiMap::build(&mut skin, &mut root, &page)?);
+        }
+        let transmod = transmod::Transmod::build(&mut skin, &mut root, None)?;
         // MIDI learn overlay (drawn over everything, never hit).
         root.children.push(Ctrl {
             class: "CtrlPanel".into(),
@@ -359,17 +311,17 @@ impl Editor {
             knob_menu: None,
             engine_menu: None,
             engine_rename: None,
-            bank_menu: None,
             knob_edit: None,
             file_menu: None,
+            main_menu: false,
             part_paths: Default::default(),
             drop_label: String::new(),
             external_drag: None,
             drop_hl: Default::default(),
-            window_size: ((0, 0), (0, 0)),
             model,
             outbox: Vec::new(),
             pads,
+            front: front::Front::default(),
             sampler,
             header,
             editor_tabs,
@@ -399,24 +351,8 @@ impl Editor {
             clipboard: padmenu::Clipboard::default(),
         };
         // `LastEditorScaleFactor` (Preferences › UI scaling), applied when
-        // the window opens.
+        // the window opens. The window keeps v1's fixed size.
         ed.app.ui_scale = (ed.modals.options.int("LastEditorScaleFactor", 100).clamp(50, 300) as f32) / 100.0;
-        // Opening the editor: the window sizer; startup size [re:4aa577]:
-        // `LastEditorSize` (window pixels, "0,0" = the default size).
-        ed.app.set_has_window_sizer();
-        let default = ed.app.size();
-        let mut size = default;
-        if !cfg!(test) {
-            let o = ed.modals.options.clone();
-            if let Some((w, h)) = parse_size(&o.string("LastEditorSize", "0,0")) {
-                let ui = ed.app.ui_scale.max(0.25);
-                size = ((w as f32 / ui).round() as i32, (h as f32 / ui).round() as i32);
-                ed.app.resize(size.0, size.1);
-            }
-            restore_splits(&mut ed.app.root, &o);
-        }
-        let ui = ed.app.ui_scale;
-        ed.window_size = (default, ((size.0 as f32 * ui).floor() as i32, (size.1 as f32 * ui).floor() as i32));
         // [re:f98edd] (messaging initialized).
         let startup = sampler::Sampler::startup_messages(&mut ed.model);
         // The document follows, as the engine's does (`mirror_message`).
@@ -489,25 +425,6 @@ impl Editor {
         self.sync();
     }
 
-    /// Root rect changed: `LastEditorSize` = the size
-    /// × scale, floored ("%d,%d"); written once a live resize ends.
-    fn save_window_size(&mut self) {
-        let (w, h) = self.app.size();
-        let ui = self.app.ui_scale;
-        let px = ((w as f32 * ui).floor() as i32, (h as f32 * ui).floor() as i32);
-        if px == self.window_size.1 || self.app.live_resizing() {
-            return;
-        }
-        self.window_size.1 = px;
-        let v = format!("{},{}", px.0, px.1);
-        self.modals.options.set("LastEditorSize", &v);
-        if !cfg!(test) {
-            let mut o = options::Options::load();
-            o.set("LastEditorSize", v);
-            o.save();
-        }
-    }
-
     #[cfg(test)]
     fn pads_matrix(&self) -> Option<Vec<usize>> {
         Some(self.pads.matrix().to_vec())
@@ -525,7 +442,6 @@ impl Editor {
             self.app.dirty = true;
         }
         self.animate_drop_highlights();
-        self.save_window_size();
         if self.filefind.scanning() && self.filefind.tick(&mut self.app, &mut self.model) {
             self.outbox.push(self.model.rebuild_command());
             self.sync();
@@ -551,9 +467,9 @@ impl Editor {
     /// Replace the document (project loaded or reset).
     pub fn set_document(&mut self, doc: dreist_formats::Node) {
         self.retro.clear();
-        let keep = (self.model.bank, self.model.pad, self.model.name.take(), self.model.samples.take(), self.model.editor_tab, self.model.utility_tab);
+        let keep = (self.model.pad, self.model.name.take(), self.model.samples.take(), self.model.editor_tab, self.model.utility_tab);
         self.model = Model::new(doc);
-        (self.model.bank, self.model.pad, self.model.name, self.model.samples, self.model.editor_tab, self.model.utility_tab) = keep;
+        (self.model.pad, self.model.name, self.model.samples, self.model.editor_tab, self.model.utility_tab) = keep;
         self.sync();
     }
 }

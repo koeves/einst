@@ -212,7 +212,7 @@ impl PatMenu {
         match ev {
             UiEvent::RightClicked { path, name } => {
                 let Some(n) = name.strip_prefix("Key").and_then(|n| n.parse::<usize>().ok()).filter(|n| *n < PATTERNS) else { return false };
-                if !app.root.path_of("Selectors").is_some_and(|s| path.starts_with(&s)) {
+                if !app.root.path_of("PatternSelectors").is_some_and(|s| path.starts_with(&s)) {
                     return false;
                 }
                 let path = path.clone();

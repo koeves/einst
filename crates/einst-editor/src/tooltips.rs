@@ -15,8 +15,8 @@ use crate::conv::{Conv, bool_text, db15, db15_text, depth_text, long_percent_tex
 /// controls connected to a provider).
 const BOOL_BUTTONS: [&str; 33] = [
     "Mute", "Solo", "MuteButton", "SoloButton", "QuantizeButton", "PlayButton", "RecButton", "RecordButton", "LearnButton", "MetroButton", "SongButton", "LoopButton", "PrePostButton", "PrePost",
-    "Gated", "Restart", "Remix", "EraseButton", "FullLevelButton", "MultiLayersButton", "LoopPreview", "ArmButton", "ThruButton", "AllLayers", "AllPads", "ShowSplits", "AutoAllocateButton",
-    "SliceModeButton", "ActiveButton", "PatternPower", "PowerButton", "RepeatButton", "View",
+    "GateButton", "RestartButton", "MonoButton", "EraseButton", "FullLevelButton", "MultiLayersButton", "LoopPreview", "ArmButton", "ThruButton", "AllLayers", "AllPads", "ShowSplits",
+    "InteractionModeButton", "HitLoopModeButton", "ActiveButton", "PatternPower", "PowerButton", "RepeatButton", "Follow",
 ];
 
 /// Fixed help texts of the pattern tool bar and
@@ -25,7 +25,7 @@ const HELP: [(&str, &str); 7] = [
     ("StepLengthCombo", "Length of time each step lasts"),
     ("LengthBox", "Number of steps in the pattern"),
     ("PatternNameBox", "Name of the pattern"),
-    ("DragEdit", "When the mouse is dragged up and down over a step, which graph is changed"),
+    ("DragEditButton", "When the mouse is dragged up and down over a step, which graph is changed"),
     ("Follow", "Set the follow action to occur once a sample has been captured"),
     ("TriggerMode", "Set the mode that is used to determine sampling start and stop conditions"),
     ("SourceList", "Set where the sampler takes its input from"),
@@ -135,12 +135,12 @@ impl Editor {
         }
         match name {
             // [re:4139f8] [re:f8b6cc].
-            "GlobalGain" => return below(Conv::Decibels.named("Master Level", v)),
+            "MasterSlider" => return below(Conv::Decibels.named("Master Level", v)),
             // [re:45e9a3], [re:bc7b1d].
-            "SwingKnob" => return below(Conv::Percent.named("Swing Depth", v)),
+            "EngineSwingDepthKnob" => return below(Conv::Percent.named("Swing Depth", v)),
             "VarianceKnob" => return below(Conv::Depth.named("Variance", v)),
             "ScaleKnob" | "CompKnob" | "RandKnob" => return below(depth_text(&c.display_name, v)),
-            "InstoGraph" | "Sensitivity" => return below(long_percent_text(&c.display_name, v)),
+            "InstoSlider" | "Sensitivity" => return below(long_percent_text(&c.display_name, v)),
             "FullLevelKnob" => return below(midi_text(&c.display_name, v)),
             // [re:b3e82a].
             "MixKnob" => return below(Conv::Percent.named("Mix", v)),
@@ -149,7 +149,7 @@ impl Editor {
             // [re:9fbf48] (with the start one above).
             "StartThresholdSlider" => return Some((format!("Start threshold: {}", db15(v)), Pos::Above)),
             "StopThresholdSlider" => return below(format!("Stop threshold: {}", db15(v))),
-            "PreviewVolume" if !c.display_name.is_empty() => return below(db15_text(&c.display_name, v)),
+            "PreviewVolume" | "PreviewVolumeKnob" if !c.display_name.is_empty() => return below(db15_text(&c.display_name, v)),
             // [re:948d61].
             "SliceMode" => return below("If enabled, transients are detected and used to slice the file. If disabled the audio file is divided in to equal sections".into()),
             // [re:6278e9].

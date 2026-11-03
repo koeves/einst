@@ -15,9 +15,10 @@ impl Editor {
         let e = self.model.engine;
         let found = editbind::TABLE.iter().find(|b| b.control == ctrl.name && anc.iter().any(|a| a == b.scope)).map(|b| (b.group.to_string(), b.name.to_string(), b.kind, b.id));
         let found = found.or_else(|| match parent.as_str() {
-            "EditorTabButtons" => editbind::EDITOR_TABS.iter().find(|t| t.0 as i32 == ctrl.id).map(|t| ("Panels".to_string(), t.1.to_string(), "Trigger", t.2)),
-            "UtilityTabButtonGroup" => editbind::UTILITY_TABS.iter().find(|t| t.0 as i32 == ctrl.id).map(|t| ("Panels".to_string(), t.1.to_string(), "Trigger", t.2)),
-            "ModeGroup" => {
+            // The tab buttons' index in their group is the page.
+            "MainTabButtons" => editbind::EDITOR_TABS.iter().find(|t| Some(&t.0) == path.last()).map(|t| ("Panels".to_string(), t.1.to_string(), "Trigger", t.2)),
+            "BrowserTabButtons" => editbind::UTILITY_TABS.iter().find(|t| Some(&t.0) == path.last()).map(|t| ("Panels".to_string(), t.1.to_string(), "Trigger", t.2)),
+            "ModeGroup" if !anc.iter().any(|a| a == "ToolBar") => {
                 let i = *path.last()?;
                 editbind::MIXER_MODES.get(i).map(|m| ("Mixer".to_string(), m.0.to_string(), "Trigger", m.1))
             }
@@ -85,13 +86,13 @@ impl Editor {
         }
         let tab = |ed: &mut Editor, group: &str, id: usize| {
             let Some(g) = ed.app.root.path_of(group) else { return };
-            let Some(i) = ed.app.ctrl(&g).and_then(|c| c.children.iter().position(|k| k.id == id as i32)) else { return };
+            let Some(i) = ed.app.ctrl(&g).and_then(|c| (id < c.children.len()).then_some(id)) else { return };
             click(ed, [g, vec![i]].concat(), true);
         };
         if let Some(t) = editbind::EDITOR_TABS.iter().find(|t| t.2 == m.kind) {
-            tab(self, "EditorTabButtons", t.0);
+            tab(self, "MainTabButtons", t.0);
         } else if let Some(t) = editbind::UTILITY_TABS.iter().find(|t| t.2 == m.kind) {
-            tab(self, "UtilityTabButtonGroup", t.0);
+            tab(self, "BrowserTabButtons", t.0);
         } else if let Some(i) = editbind::MIXER_MODES.iter().position(|x| x.1 == m.kind) {
             // The shown mixer's mode group.
             fn visible(c: &Ctrl, path: &mut Vec<usize>, out: &mut Option<Vec<usize>>) {
@@ -141,7 +142,8 @@ impl Editor {
         if let Some(t) = self.editor_binding_target(&path, &ctrl) {
             return Some(t);
         }
-        if let Some((group, name, kind, msg_id)) = self.app.root.path_of("Header").filter(|h| path.starts_with(h)).and_then(|_| header::binding_for(&ctrl.name)) {
+        let front = ["Transport", "MasterControls", "EditorEngineSelectors"].iter().filter_map(|n| self.app.root.path_of(n)).any(|h| path.starts_with(&h));
+        if let Some((group, name, kind, msg_id)) = front.then(|| header::binding_for(&ctrl.name)).flatten() {
             let proto = dreist_engine::binding::Message::new(msg_id, &[], &[0.0, 0.0, 0.0]);
             return Some(learn::Target { path, proto, stuffer: 0, name: name.into(), group: group.into(), kind });
         }
@@ -180,8 +182,8 @@ impl Editor {
 
     /// Learn-mode events; true when consumed.
     pub(crate) fn learn_event(&mut self, ev: &UiEvent) -> bool {
-        if let UiEvent::Clicked { name, .. } = ev {
-            if name == "LearnButton" {
+        if let UiEvent::Clicked { path, name, .. } = ev {
+            if name == "LearnButton" && front::path_in(&self.app.root, "Transport", "LearnButton").as_ref() == Some(path) {
                 self.learn.active = !self.learn.active;
                 self.learn.target = None;
                 self.inspector.learn_buttons(&mut self.app, self.learn.active);

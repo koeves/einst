@@ -97,8 +97,6 @@ pub struct Clipboard {
     pub pad: Option<Node>,
     /// An engine ([re:fa3f32]).
     pub engine: Option<Node>,
-    /// A pad bank's 16 pads ([re:453892]).
-    pub bank: Option<Vec<Node>>,
     pub track: Option<Node>,
     pub pattern: Option<Node>,
     /// A layer ([re:ed58fc]).
@@ -590,71 +588,6 @@ mod tests {
         let tune = dreist_dsp::convert::semitones(m.layer_param(0, 0, 0, LayerParam::CoarseTune), false);
         assert!((tune + 4.0).abs() < 1e-4);
         assert!(m.pad_node(0, 5).is_none());
-    }
-}
-
-/// [re:084d85] [re:89a9b0]: the pad bank buttons' right-click
-/// menu items (16 pads of bank `b`).
-pub const BANK_ITEMS: [&str; 10] = ["Cut", "Copy", "Paste", "", "Mute all", "Solo all", "", "Unmute all", "Unsolo all", "Clear all mute and solo"];
-
-/// A bank menu pick: Cut ([re:835158]: copy, then clear the non-empty pads),
-/// Copy ([re:7b5ea8]), Paste ([re:4a3521]: all 16 pads, 0x56), mute / solo all
-/// and their clears (0x4c / 0x4d per pad). True when the document changed.
-pub fn bank_action(model: &mut Model, clip: &mut Clipboard, b: usize, index: usize, out: &mut Vec<Command>) -> bool {
-    use dreist_engine::binding::id;
-    let e = model.engine;
-    let pads: Vec<usize> = (b * 16..b * 16 + 16).collect();
-    let rebuild = |model: &Model, out: &mut Vec<Command>| out.push(model.rebuild_command());
-    let set = |model: &mut Model, out: &mut Vec<Command>, kind: u32, on: bool| {
-        for &p in &pads {
-            let c = crate::command::msg(kind, &[e as i32, p as i32], &[on as i32 as f32]);
-            model.apply(&c);
-            out.push(c);
-        }
-    };
-    match index {
-        0 | 1 => {
-            clip.bank = Some(pads.iter().map(|&p| pad_or_empty(model, e, p)).collect());
-            if index == 0 {
-                for &p in &pads {
-                    if model.pad_node(e, p).is_some() {
-                        clear_samples(model.pad_mut(e, p));
-                    }
-                }
-                rebuild(model, out);
-            }
-            index == 0
-        }
-        2 => {
-            let Some(bank) = clip.bank.clone().filter(|v| v.len() == 16) else { return false };
-            for (&p, n) in pads.iter().zip(bank) {
-                put_pad(model, e, p, n);
-            }
-            rebuild(model, out);
-            true
-        }
-        4 => {
-            set(model, out, id::MUTE_PAD, true);
-            true
-        }
-        5 => {
-            set(model, out, id::SOLO_PAD, true);
-            true
-        }
-        7 => {
-            set(model, out, id::MUTE_PAD, false);
-            true
-        }
-        8 => {
-            set(model, out, id::SOLO_PAD, false);
-            true
-        }
-        9 => {
-            set(model, out, id::MUTE_PAD, false);
-            set(model, out, id::SOLO_PAD, false);
-            true
-        }
-        _ => false,
     }
 }
 

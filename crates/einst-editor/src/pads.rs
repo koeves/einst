@@ -1,38 +1,38 @@
-//! Pads panel: [re:1ab7d3] (`PadsPanel.skin`) with one [re:2d30eb]
-//! (`Pad.skin`) per visible pad in the `PadsMatrix`.
+//! The front panel's pads: `EditorPads` (`Pads.skin`, 16 pads `Pad0..15`
+//! of the selected engine in a 4 × 4 grid, bottom row first) and the pad
+//! mode column (`PadModeControlsPanel.skin`: erase, repeat and its timing,
+//! full level).
 //!
-//! - [re:518b99]: banks A–D show 16 pads in 4×4,
-//!   "All" shows 64 in 8×8; the matrix lays out from the bottom
-//!   (`optLayoutFromTop="false"`).
-//! - [re:ff2d9a] / pad update [re:bc1ce0] /
-//!   layer indicators [re:535995]: styles `PadStyle` /
-//!   `PadSelectedStyle`, `PadNameLabel[Selected]Style`, layer indicators
-//!   `PadLayer{,Selected,Muted,Soloed,MutedSoloed}IndicatorStyle`, name text
-//!   per pad mode.
+//! - Pad states ([re:ff2d9a] / pad update [re:bc1ce0] / layer indicators
+//!   [re:535995]): the face in `PadStyle` / `PadSelectedStyle`, the name
+//!   (per pad mode) in `PadNameStyle`, one status LED per layer:
+//!   `PadLedStyle` when empty, `PadLed2Style` muted, `PadLed3Style` soloed,
+//!   else the pad's colour (`PadLed1Style`, or `PadLed1..4Style` for pad
+//!   colours 1..4).
 //! - [re:b99f7e]: velocity from the click's
 //!   x position (peak at the centre), or with option `PadVelocityBehaviour`
 //!   1 − y/height; triggering [re:069c0a] posts `e_playSound` (0x3b).
 
 use dreist_engine::live::PadMode;
 use dreist_gui::app::{App, MouseKind, UiEvent};
-use dreist_gui::{Ctrl, Rect, Skin};
+use dreist_gui::{Ctrl, Rect};
 
 use crate::command::Command;
 use crate::model::{LAYERS, Model};
 use crate::{EditorError, err};
 
 pub struct Pads {
-    /// Path of the `PadsMatrix` control.
+    /// Path of the `EditorPads` panel.
     matrix: Vec<usize>,
-    /// Path of the `PadBank` button group.
-    bank: Option<Vec<usize>>,
-    /// Template pad control (`Pad.skin`).
+    /// Template pad control (the skin's `Pad0`, its children named).
     template: Ctrl,
+    /// The pad cells, by pad index (the skin's `Pad<n>` rects).
+    cells: Vec<Rect>,
     /// Which pads are currently instantiated (first, count).
     shown: (usize, usize),
     /// Pad held down by the mouse.
     held: Option<usize>,
-    /// Path of the `PadControl` strip (mode, bank, erase, repeat, full level).
+    /// Path of the pad mode column (erase, repeat, full level).
     control: Option<Vec<usize>>,
     /// Note repeat base per engine ([re:6e9d2e], not
     /// saved, default 8 = 1/16) for the RepeatCount label and menu.
@@ -188,34 +188,40 @@ fn velocity_from_click(x: f32, w: f32) -> f32 {
 }
 
 impl Pads {
-    pub fn build(skin: &mut Skin, root: &mut Ctrl, model: &Model) -> Result<Pads, EditorError> {
-        let host = root.find_mut("PadsPanel").ok_or_else(|| EditorError("RootSkin has no PadsPanel".into()))?;
-        skin.mount(host, "PadsPanel.skin").map_err(err)?;
-        let rel = skin.find("Pad.skin").unwrap_or_else(|| "Pad Editor/Pad.skin".into());
-        let pad_skin = skin.load_skin(&rel).map_err(err)?;
-        let mut template = pad_skin.children.into_iter().next().ok_or_else(|| EditorError("empty Pad.skin".into()))?;
+    pub fn build(root: &mut Ctrl, model: &Model) -> Result<Pads, EditorError> {
+        let matrix = root.path_of("EditorPads").ok_or_else(|| EditorError("RootSkin has no EditorPads".into()))?;
+        let host = root.find_mut("EditorPads").ok_or_else(|| err("no EditorPads"))?;
+        let mut cells = Vec::new();
+        for i in 0..16 {
+            let r = host.children.iter().find(|c| c.name == format!("Pad{i}")).map(|c| c.rect).ok_or_else(|| EditorError(format!("Pads.skin has no Pad{i}")))?;
+            cells.push(r);
+        }
+        let mut template = host.children.iter().find(|c| c.name == "Pad0").cloned().ok_or_else(|| err("no Pad0"))?;
         template.overload = "EditorPad".into();
+        // The face, then one status LED per layer.
+        for (i, c) in template.children.iter_mut().enumerate() {
+            c.name = if i == 0 { "Face".into() } else { format!("LI{}", i - 1) };
+        }
+        let face = template.children.first().map(|c| c.rect).unwrap_or(Rect::new(0, 0, template.rect.w, template.rect.h));
+        template.children.push(Ctrl {
+            class: "CtrlLabel".into(),
+            name: "NameLabel".into(),
+            style: "PadNameStyle".into(),
+            rect: Rect::new(face.x, face.y + 10, face.w, 18),
+            zorder: 1,
+            visible: true,
+            enabled: true,
+            ..Ctrl::default()
+        });
         // The indicators are display-only; clicks go to the pad.
-        fn passive(c: &mut Ctrl) {
-            for ch in &mut c.children {
-                ch.passive = true;
-                passive(ch);
-            }
+        for ch in &mut template.children {
+            ch.passive = true;
         }
-        passive(&mut template);
-        // [re:114692] user-disables
-        // the overlay (hidden and disabled); only x0x shading shows it.
-        if let Some(o) = template.find_mut("Overlay") {
-            o.enabled = false;
-            o.visible = false;
-        }
-        let matrix = root.path_of("PadsMatrix").ok_or_else(|| EditorError("no PadsMatrix".into()))?;
-        let bank = root.path_of("PadBank");
-        let control = root.path_of("PadControl");
+        let control = root.path_of("PadModePanel");
         let mut pads = Pads {
             matrix,
-            bank,
             template,
+            cells,
             shown: (0, 0),
             held: None,
             control,
@@ -243,20 +249,20 @@ impl Pads {
         Some(c)
     }
 
-    /// [re:ca55ac].
+    /// [re:ca55ac]: one pad per cell.
     fn layout(&mut self, root: &mut Ctrl, model: &Model) {
         let vis = model.visible_pads();
         if vis == self.shown {
             return;
         }
         self.shown = vis;
-        let dim = if vis.1 == 64 { 8 } else { 4 };
         let template = self.template.clone();
+        let cells = self.cells.clone();
         let Some(m) = self.matrix_mut(root) else { return };
-        let cells = matrix_cells(m, dim, dim);
         m.children.clear();
-        for (i, cell) in cells.into_iter().enumerate() {
+        for (i, cell) in cells.into_iter().enumerate().take(vis.1) {
             let mut p = template.clone();
+            p.name = format!("Pad{i}");
             p.set_attr("padIndex", (vis.0 + i).to_string());
             p.set_rect(cell);
             m.children.push(p);
@@ -285,15 +291,6 @@ impl Pads {
         let selected = model.pad[e];
         let sel_mask = crate::multipad::selection(model, e).1;
         let (_, count) = model.visible_pads();
-        if let Some(bp) = &self.bank {
-            if let Some(g) = app.ctrl_mut(bp) {
-                for (i, b) in g.children.iter_mut().enumerate() {
-                    b.on = i == model.bank;
-                }
-            }
-        }
-        // x0x: the current pad's track in the current pattern.
-        let x0x_pat = (mode == PadMode::X0x).then(|| model.pattern(e, model.current_pattern(e)));
         for (idx, path) in self.pad_paths(app) {
             let name = model.pad_name(e, idx);
             let label = match mode {
@@ -307,94 +304,31 @@ impl Pads {
                 _ => name.unwrap_or_else(|| format!("{}", idx + 1)),
             };
             let sel = idx == selected || sel_mask & (1u64 << idx.min(63)) != 0;
-            let x0x = mode == PadMode::X0x;
-            let (mute, solo) = (model.pad_mute(e, idx), model.pad_solo(e, idx));
             let layers: Vec<_> = (0..LAYERS).map(|l| model.layer(e, idx, l)).collect();
-            let locked = crate::padmenu::pad_locked(model, e, idx);
-            let colour = model.pad_node(e, idx).and_then(|n| n.attr("PadColour")).map(str::to_string);
-            // [re:39f304] / [re:6a00c8]
-            //  [re:274980]: pads past the step count are
-            // disabled; an on step (enabled pad) with velocity ≈ 0 shows as
-            // off, ≥ 1 as accent, else on; on / accent use the selected
-            // label styles.
-            let step_state = x0x_pat.as_ref().map(|p| {
-                let enabled = idx < p.steps as usize;
-                let st = p.tracks.get(selected).map(|t| t.step(idx as u32));
-                match st {
-                    Some(s) if enabled && s.on && s.lanes[0].abs() > 1e-6 => (enabled, if s.lanes[0] >= 1.0 { 2 } else { 1 }),
-                    _ => (enabled, 0),
-                }
-            });
+            // The pad's colour LED (pad colours 1..4, else the first).
+            let colour = model.pad_node(e, idx).and_then(|n| n.attr("PadColour")).and_then(|v| v.trim().parse::<usize>().ok()).filter(|c| (1..=4).contains(c)).unwrap_or(1);
             let Some(pad) = app.ctrl_mut(&path) else { continue };
-            pad.style = if sel { "PadSelectedStyle" } else { "PadStyle" }.into();
-            pad.enabled = step_state.is_none_or(|s| s.0);
-            if let Some((_, state)) = step_state {
-                pad.style = match (state, sel) {
-                    (2, true) => "PadAccentSelectedStyle",
-                    (2, false) => "PadAccentStyle",
-                    (1, true) => "PadOnSelectedStyle",
-                    (1, false) => "PadOnStyle",
-                    (_, true) => "PadOffSelectedStyle",
-                    _ => "PadOffStyle",
-                }
-                .into();
-            }
-            let lit = step_state.is_some_and(|s| s.1 > 0);
-            // x0x: the overlay marks the steps of odd shading groups
-            // (step-state style → `Overlay` shown).
-            let shade = x0x_pat.as_ref().map(|p| crate::pattern::shaded(p.resolution, idx));
+            pad.enabled = true;
             for c in pad.children.iter_mut() {
                 match c.name.as_str() {
-                    "Overlay" => {
-                        if let Some(v) = shade {
-                            c.visible = v;
-                        }
-                    }
-                    "NameLabel" => {
-                        c.text = label.clone();
-                        c.style = if (sel && !x0x) || lit { "PadNameLabelSelectedStyle" } else { "PadNameLabelStyle" }.into();
-                    }
-                    "StepLabel" => {
-                        c.visible = x0x;
-                        c.text = format!("S {}", idx + 1);
-                        c.style = if (sel && !x0x) || lit { "PadStepNameLabelSelectedStyle" } else { "PadStepNameLabelStyle" }.into();
-                    }
-                    "MuteIndi" => {
-                        c.visible = !x0x;
-                        c.on = mute;
-                    }
-                    "SoloIndi" => {
-                        c.visible = !x0x;
-                        c.on = solo;
-                    }
-                    "ColourIndi" => {
-                        c.visible = !x0x;
-                        match &colour {
-                            Some(v) => c.set_attr("fillColour", v.clone()),
-                            None => c.remove_attr("fillColour"),
+                    "Face" => c.style = if sel { "PadSelectedStyle" } else { "PadStyle" }.into(),
+                    "NameLabel" => c.text = label.clone(),
+                    n => {
+                        let Some(l) = n.strip_prefix("LI").and_then(|n| n.parse::<usize>().ok()) else { continue };
+                        let f = &layers[l.min(LAYERS - 1)];
+                        c.style = if !f.present {
+                            "PadLedStyle".to_string()
+                        } else if f.mute {
+                            "PadLed2Style".into()
+                        } else if f.solo {
+                            "PadLed3Style".into()
+                        } else if f.valid {
+                            format!("PadLed{colour}Style")
+                        } else {
+                            "PadLedStyle".into()
                         };
+                        c.on = f.present && (f.valid || f.mute || f.solo);
                     }
-                    "LockIndi" => c.on = locked,
-                    _ => {}
-                }
-                for li in c.children.iter_mut() {
-                    let Some(l) = li.name.strip_prefix("LI").and_then(|n| n.parse::<usize>().ok()) else { continue };
-                    let f = &layers[l.min(LAYERS - 1)];
-                    li.style = if !f.present {
-                        "PadLayerIndicatorStyle"
-                    } else if f.mute && f.solo {
-                        "PadLayerMutedSoloedIndicatorStyle"
-                    } else if f.mute {
-                        "PadLayerMutedIndicatorStyle"
-                    } else if f.solo {
-                        "PadLayerSoloedIndicatorStyle"
-                    } else if sel && f.valid {
-                        "PadLayerIndicatorSelectedStyle"
-                    } else {
-                        "PadLayerIndicatorStyle"
-                    }
-                    .into();
-                    li.on = f.present && (f.valid || f.mute || f.solo);
                 }
             }
         }
@@ -567,14 +501,6 @@ impl Pads {
                     _ => false,
                 }
             }
-            UiEvent::Clicked { path, .. } => {
-                let Some(bp) = &self.bank else { return false };
-                if path.len() == bp.len() + 1 && path.starts_with(bp) {
-                    model.bank = *path.last().unwrap();
-                    return true;
-                }
-                false
-            }
             _ => false,
         }
     }
@@ -593,13 +519,8 @@ impl Pads {
         Some([base, vec![i]].concat())
     }
 
-    /// [re:032c62] + the visibility rules:
-    /// [re:0c84c6] sets them per pad
-    /// mode, then notifies [re:91eddf], whose listener
-    /// ([re:d830f2]) sets each of FullLevelKnob + FullLevelButton,
-    /// RepeatButton + RepeatCount and EraseButton visible exactly when its
-    /// right edge is left of the panel width − 25, and Options when any is
-    /// not — so the fit decides.
+    /// [re:032c62]: the erase, repeat and full level states and the repeat
+    /// timing.
     fn sync_controls(&mut self, app: &mut App, model: &Model) {
         let e = model.engine;
         let erase = state_flag(model, e, "NoteEraseEnabled", false);
@@ -609,39 +530,15 @@ impl Pads {
             model.engine_node(e).and_then(|n| n.children.iter().find(|c| c.class == "EngineState")).and_then(|s| s.attr("FullLevels")).and_then(|v| v.trim().parse::<f32>().ok()).unwrap_or(127.0);
         let base = self.repeat_base[e.min(crate::model::ENGINES - 1)];
         let Some(cp) = self.control.clone() else { return };
-        let panel_w = app.ctrl(&cp[..cp.len() - 1]).map(|c| c.rect.w).unwrap_or(0);
         let Some(c) = app.ctrl_mut(&cp) else { return };
-        let limit = panel_w - 0x19;
-        let right = |c: &Ctrl, n: &str| c.children.iter().find(|k| k.name == n).map(|k| k.rect.x + k.rect.w).unwrap_or(0);
-        let (full_fits, rep_fits, erase_fits) = (right(c, "FullLevelKnob") < limit, right(c, "RepeatCount") < limit, right(c, "EraseButton") < limit);
         for k in &mut c.children {
-            let vis = match k.name.as_str() {
-                "EraseButton" => {
-                    k.on = erase;
-                    Some(erase_fits)
-                }
-                "RepeatButton" => {
-                    k.on = repeat;
-                    Some(rep_fits)
-                }
-                "RepeatCount" => {
-                    k.text = dreist_engine::pattern::RESOLUTION_NAMES.get(base).copied().unwrap_or("1/16").to_string();
-                    Some(rep_fits)
-                }
-                "FullLevelButton" => {
-                    k.on = full;
-                    Some(full_fits)
-                }
-                "FullLevelKnob" => {
-                    k.value = levels * 0.007874016;
-                    Some(full_fits)
-                }
-                "Options" => Some(!(full_fits && rep_fits && erase_fits)),
-                _ => None,
-            };
-            if let Some(v) = vis {
-                k.visible = v;
-                k.enabled = v;
+            match k.name.as_str() {
+                "EraseButton" => k.on = erase,
+                "RepeatButton" => k.on = repeat,
+                "RepeatCount" => k.text = dreist_engine::pattern::RESOLUTION_NAMES.get(base).copied().unwrap_or("1/16").to_string(),
+                "FullLevelButton" => k.on = full,
+                "FullLevelKnob" => k.value = levels * 0.007874016,
+                _ => {}
             }
         }
     }

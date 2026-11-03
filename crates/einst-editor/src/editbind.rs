@@ -38,44 +38,43 @@ const fn b(scope: &'static str, control: &'static str, group: &'static str, name
 }
 
 pub const TABLE: &[EditorBinding] = &[
-    b("Header", "UndoButton", "Global", "Undo", "Trigger", 0x18d),
-    b("Header", "RedoButton", "Global", "Redo", "Trigger", 0x18e),
+    b("Transport", "UndoButton", "Global", "Undo", "Trigger", 0x18d),
+    b("Transport", "RedoButton", "Global", "Redo", "Trigger", 0x18e),
     b("PadInspector", "AllPads", "Global", "All Pads", "Continuous", 0x1c6),
     b("PadInspector", "AllLayers", "Global", "All Layers", "Continuous", 0x1c7),
     b("PadInspector", "ShowSplits", "Global", "Show Splits", "Continuous", 0x1c5),
     b("PadInspector", "ShowAmpEnvButton", "Global", "Show Amp Envelope", "Continuous", 0x1cd),
     b("PadInspector", "ShowFreeEnvButton", "Global", "Show Free Envelope", "Continuous", 0x1ce),
-    b("UtilityTabPanel", "AutoAllocateButton", "Browser", "Auto Mode", "Trigger", 0x15c),
-    b("UtilityTabPanel", "SliceModeButton", "Browser", "Slice Mode", "Trigger", 0x15d),
-    b("UtilityTabPanel", "PreviewButton", "Browser", "Preview", "Trigger", 0x15e),
-    b("UtilityTabPanel", "NextFileButton", "Browser", "Next file", "Trigger", 0x155),
-    b("UtilityTabPanel", "PrevFileButton", "Browser", "Previous file", "Trigger", 0x156),
-    b("UtilityTabPanel", "NextLocnButton", "Browser", "Next location", "Trigger", 0x157),
-    b("UtilityTabPanel", "PrevLocnButton", "Browser", "Previous location", "Trigger", 0x158),
-    b("UtilityTabPanel", "RefreshButton", "Browser", "Refresh", "Trigger", 0x159),
-    b("UtilityTabPanel", "EnterButton", "Browser", "Enter location", "Trigger", 0x15a),
-    b("UtilityTabPanel", "ParentButton", "Browser", "Parent location", "Trigger", 0x15b),
+    b("BrowserTabs", "InteractionModeButton", "Browser", "Auto Mode", "Trigger", 0x15c),
+    b("BrowserTabs", "HitLoopModeButton", "Browser", "Slice Mode", "Trigger", 0x15d),
+    b("BrowserTabs", "PreviewButton", "Browser", "Preview", "Trigger", 0x15e),
+    b("BrowserTabs", "NextFileButton", "Browser", "Next file", "Trigger", 0x155),
+    b("BrowserTabs", "PrevFileButton", "Browser", "Previous file", "Trigger", 0x156),
+    b("BrowserTabs", "NextLocnButton", "Browser", "Next location", "Trigger", 0x157),
+    b("BrowserTabs", "PrevLocnButton", "Browser", "Previous location", "Trigger", 0x158),
+    b("BrowserTabs", "RefreshButton", "Browser", "Refresh", "Trigger", 0x159),
+    b("BrowserTabs", "EnterButton", "Browser", "Enter location", "Trigger", 0x15a),
+    b("BrowserTabs", "ParentButton", "Browser", "Parent location", "Trigger", 0x15b),
     b("ToolBar", "LengthBox", "Engine", "Pattern Length", "Continuous", 0x1b2),
     b("ToolBar", "StepLengthCombo", "Engine", "Step Length", "Continuous", 0x1b3),
     b("ToolBar", "MinusButton", "Engine", "Decrease number of steps", "Gated", 0x1b4),
     b("ToolBar", "PlusButton", "Engine", "Increase number of steps", "Gated", 0x1b5),
     b("ToolBar", "RepeatButton", "Engine", "Duplicate", "Gated", 0x1b6),
     b("ToolBar", "QuantizeButton", "Engine", "Pattern quantize", "Gated", 0x1bb),
-    b("ToolBar", "Gated", "Engine", "Pattern gated", "Gated", 0x1bc),
-    b("ToolBar", "Restart", "Engine", "Pattern restart", "Gated", 0x1bd),
-    b("ToolBar", "Remix", "Engine", "Remix", "Gated", 0x1be),
+    b("ToolBar", "GateButton", "Engine", "Pattern gated", "Gated", 0x1bc),
+    b("ToolBar", "RestartButton", "Engine", "Pattern restart", "Gated", 0x1bd),
+    b("ToolBar", "MonoButton", "Engine", "Remix", "Gated", 0x1be),
     b("ToolBar", "CopyToNext", "Engine", "Copy to next", "Trigger", 0x1bf),
-    b("PatternEditor", "NudgePatternBackButton", "Engine", "Nudge pattern back", "Gated", 0x1b7),
-    b("PatternEditor", "NudgePatternForwardButton", "Engine", "Nudge pattern forward", "Gated", 0x1b8),
-    b("PatternEditor", "NudgeTrackBackButton", "Engine", "Nudge track back", "Gated", 0x1b9),
-    b("PatternEditor", "NudgeTrackForwardButton", "Engine", "Nudge track forward", "Gated", 0x1ba),
-    b("EditorTabPanel", "SnapshotToNextButton", "Scenes", "Snapshot To Next Scene", "Trigger", 0x10e),
+    b("ToolBar", "NudgeBack", "Engine", "Nudge pattern back", "Gated", 0x1b7),
+    b("ToolBar", "NudgeNext", "Engine", "Nudge pattern forward", "Gated", 0x1b8),
+    b("MainTabs", "SnapshotToNextButton", "Scenes", "Snapshot To Next Scene", "Trigger", 0x10e),
 ];
 
-/// Editor tab buttons ([re:23be19]: button id → panel).
-pub const EDITOR_TABS: [(usize, &str, u32); 7] =
-    [(0, "Pattern", 0x146), (1, "Scenes", 0x147), (2, "Song", 0x148), (3, "Layer Mixer", 0x14b), (4, "Pad Mixer", 0x14a), (5, "Global Mixer", 0x149), (6, "Mapping", 0x14c)];
-pub const UTILITY_TABS: [(usize, &str, u32); 2] = [(0, "Browser", 0x14e), (1, "Transmod", 0x14d)];
+/// LCD page buttons ([re:23be19]: button id → panel; the pages the
+/// original's panel messages name).
+pub const EDITOR_TABS: [(usize, &str, u32); 6] = [(0, "Pattern", 0x146), (1, "Scenes", 0x147), (2, "Song", 0x148), (4, "Layer Mixer", 0x14b), (5, "Pad Mixer", 0x14a), (7, "Global Mixer", 0x149)];
+/// Browser column buttons.
+pub const UTILITY_TABS: [(usize, &str, u32); 2] = [(0, "Browser", 0x14e), (1, "Mapping", 0x14c)];
 /// Mixer ModeGroup children ([re:69fc1c]).
 pub const MIXER_MODES: [(&str, u32); 3] = [("Mix", 0x14f), ("Sends", 0x150), ("Effects", 0x151)];
 

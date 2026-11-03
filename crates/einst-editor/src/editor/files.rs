@@ -4,11 +4,12 @@
 use crate::*;
 
 impl Editor {
-    /// Header "File" menu ([re:4139f8] [re:3ce6a1]): Open
-    /// Preset, Open Recent ▸ (when there are recent presets), Open Engine,
-    /// Open Kit, Open others... ▸ (Pad, Pattern Bank, Pattern, Mappings);
-    /// Save Preset / As..., Save Engine / As..., Save Kit / As..., Save
-    /// others... ▸ (Pad, Pattern Bank, Pattern, Mappings).
+    /// The master section's LOAD and SAVE menus (the original's File menu,
+    /// [re:4139f8] [re:3ce6a1]): LOAD has Open Preset, Open Recent ▸ (when
+    /// there are recent presets), Open Engine, Open Kit, Open others... ▸
+    /// (Pad, Pattern Bank, Pattern, Mappings); SAVE has Save Preset /
+    /// As..., Save Engine / As..., Save Kit / As..., Save others... ▸ (Pad,
+    /// Pattern Bank, Pattern, Mappings).
     pub(crate) fn file_menu(&mut self, ev: &UiEvent) -> bool {
         use project::Part;
         let e = self.model.engine;
@@ -22,19 +23,24 @@ impl Editor {
                     ("Open Engine".to_string(), FileAction::Open(Part::Engine(e))),
                     ("Open Kit".into(), FileAction::Open(Part::Kit(e))),
                     ("Open others... ▸".into(), FileAction::OthersMenu),
-                    (String::new(), FileAction::None),
-                    ("Save Preset".into(), FileAction::SavePreset { as_new: false }),
+                ]);
+                self.show_file_menu(path, items);
+                false
+            }
+            UiEvent::Clicked { path, name, .. } if name == "SaveButton" => {
+                let items = vec![
+                    ("Save Preset".to_string(), FileAction::SavePreset { as_new: false }),
                     ("Save Preset As...".into(), FileAction::SavePreset { as_new: true }),
                     ("Save Engine".into(), FileAction::Save { part: Part::Engine(e), as_new: false }),
                     ("Save Engine As...".into(), FileAction::Save { part: Part::Engine(e), as_new: true }),
                     ("Save Kit".into(), FileAction::Save { part: Part::Kit(e), as_new: false }),
                     ("Save Kit As...".into(), FileAction::Save { part: Part::Kit(e), as_new: true }),
                     ("Save others... ▸".into(), FileAction::SaveOthersMenu),
-                ]);
+                ];
                 self.show_file_menu(path, items);
                 false
             }
-            UiEvent::MenuSelected { anchor, name, index } if name == "LoadButton" => {
+            UiEvent::MenuSelected { anchor, name, index } if name == "LoadButton" || name == "SaveButton" => {
                 let Some(actions) = self.file_menu.take() else { return false };
                 let action = actions.get(*index).cloned().unwrap_or(FileAction::None);
                 self.file_action(anchor, action)

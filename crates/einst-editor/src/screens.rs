@@ -1,6 +1,6 @@
 //! Pixel regression: fingerprints of the editor rendered in fixed states
-//! (every editor and utility tab, a transmod source, the sampler pad mode,
-//! the dialogs, a menu) so refactors are checked pixel for pixel
+//! (every LCD page, the mapping column, a pad mode, the dialogs, the main
+//! menu) so refactors are checked pixel for pixel
 //! (`tests/golden/screens.txt`; `UPDATE_GOLDEN=1` rewrites it). Skipped
 //! without the factory content. Apps run [`check_screens`] with their own
 //! profile installed.
@@ -54,25 +54,25 @@ pub fn check_screens(name: &str) {
     let a = shot(&mut ed);
     assert_eq!(a, shot(&mut ed), "rendering is not deterministic");
     golden.check("main", a, &[]);
-    for tab in 0..7 {
+    // Every LCD page (the page tabs, in order).
+    for (tab, (page, _)) in crate::front::PAGES.iter().enumerate() {
         let mut ed = editor().unwrap();
         ed.model.editor_tab = tab;
         ed.sync();
-        golden.check(&format!("editor-tab-{tab}"), shot(&mut ed), &[]);
+        golden.check(&format!("page-{}", page.to_ascii_lowercase().replace([' ', '/'], "")), shot(&mut ed), &[]);
     }
+    // The browser column's mapping page.
     let mut ed = editor().unwrap();
-    ed.model.utility_tab = 1;
+    ed.model.utility_tab = crate::front::MAPPING_PAGE;
     ed.sync();
-    golden.check("transmod", shot(&mut ed), &[]);
-    ed.model.source = 3;
-    ed.sync();
-    golden.check("transmod-source", shot(&mut ed), &[]);
+    golden.check("mapping", shot(&mut ed), &[]);
+    // A pad mode: the pads show semitones.
     let mut ed = editor().unwrap();
     let e = ed.model.engine;
-    ed.model.engine_mut(e).set("EnginePadMode", "Sampler");
+    ed.model.engine_mut(e).set("EnginePadMode", "Chromatic");
     ed.sync();
-    golden.check("sampler-pads", shot(&mut ed), &[]);
-    for modal in ["about", "preferences", "export", "filefind", "metadata"] {
+    golden.check("chromatic-pads", shot(&mut ed), &[]);
+    for modal in ["about", "preferences", "export", "filefind"] {
         let mut ed = editor().unwrap();
         ed.show_modal(modal);
         // Let the dialog slide in.
@@ -81,7 +81,7 @@ pub fn check_screens(name: &str) {
         golden.check(&format!("modal-{modal}"), shot(&mut ed), &[]);
     }
     let mut ed = editor().unwrap();
-    click(&mut ed, "Header/OptionsButton", dreist_gui::app::MouseButton::Left);
-    golden.check("options-menu", shot(&mut ed), &[]);
+    click(&mut ed, "UtilityControls/GridButton", dreist_gui::app::MouseButton::Left);
+    golden.check("main-menu", shot(&mut ed), &[]);
     golden.finish();
 }

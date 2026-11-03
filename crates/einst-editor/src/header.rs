@@ -1,15 +1,16 @@
-//! Header bar ([re:6e0e89], [re:4139f8]): engine selectors,
-//! transport buttons, preset/kit labels and tempo.
+//! The front panel's engine selectors, transport and master section
+//! ([re:6e0e89], [re:4139f8] in the original's header bar; Einst's v1
+//! layout has them under the LCD: `EditorEngineSelectors`, `Transport`,
+//! `MasterControls`).
 //!
-//! [re:7ed671] lays out 8
-//! [re:4fd51c]s (`EngineSelector.skin`) with 1 px spacing.
-//! [re:873bf1] labels each with its number; selecting one
-//! [re:a570ec] turns on `StateIndicator` and `EngineSelectionButton` of the
-//! chosen one and posts `e_selectEngine` (0x41). Mute/Solo/PatternPower post
-//! 0x8c/0x8d/0xa8 for that engine ([re:c7d50e]).
+//! Each `EngineSelector<n>` ([re:4fd51c]) shows its number on
+//! `EngineSelectionButton`; selecting one ([re:a570ec]) posts
+//! `e_selectEngine` (0x41). Mute/Solo/PatternPower post 0x8c/0x8d/0xa8 for
+//! that engine ([re:c7d50e]); with pattern power off the button shows its
+//! power-off art.
 //!
 //! Transport and master controls ([re:46c9b4] callbacks):
-//! - GlobalGain ([re:3f9657]) posts `e_setMasterChannelGain` 0xa5; a
+//! - MasterSlider ([re:3f9657]) posts `e_setMasterChannelGain` 0xa5; a
 //!   double click ([re:dd3107]) resets it to 0 dB (0.7937) when the
 //!   option `DoubleClickResets` (default on) is set, else opens a text edit
 //!   in dB ("Master Level", decibel text). It follows
@@ -24,18 +25,18 @@
 //!   with the song active, Loop in learn mode or with the song active and
 //!   no host loop (the song sequencer's state queries, [re:3a88f8]: active,
 //!   internal loop enabled, host loop enabled).
-//! - OptionsButton ([re:d718a1]) opens the transport options: check
-//!   items for the options `PatternEditorFollow` (default off; editor
-//!   message 0x18c), `PadSelectionFollowsMIDI` (on) and
-//!   `EngineSelectionFollowsMIDI` (off) (both posted as
-//!   `e_registryFollowOptionsChanged` 0x2 [pad, engine]); the pre-roll
-//!   length `PrerollTime` ("PrerollOff", "Preroll1Bar", "Preroll2Bars",
-//!   "Preroll4Bars"; 0x27 [0..3]); "Only pre-roll when recording"
-//!   (`PrerollOnlyOnRecord`, on; 0x28), "Metronome only when recording"
-//!   (stored under the same key, read with default off; 0x2a) and "Wait
-//!   for MIDI input when recording" (`WaitForMIDI`, off; 0x29); the
-//!   metronome volume slider (0x24) and the "Metronome output..." sub menu
-//!   (Master and Sub output 1–31, output locations 1..=32; 0x25).
+//! - The transport options ([re:d718a1]; the main menu's "Transport
+//!   options" submenu here): check items for the options
+//!   `PatternEditorFollow` (default off; editor message 0x18c),
+//!   `PadSelectionFollowsMIDI` (on) and `EngineSelectionFollowsMIDI` (off)
+//!   (both posted as `e_registryFollowOptionsChanged` 0x2 [pad, engine]);
+//!   the pre-roll length `PrerollTime` ("PrerollOff", "Preroll1Bar",
+//!   "Preroll2Bars", "Preroll4Bars"; 0x27 [0..3]); "Only pre-roll when
+//!   recording" (`PrerollOnlyOnRecord`, on; 0x28), "Metronome only when
+//!   recording" (stored under the same key, read with default off; 0x2a)
+//!   and "Wait for MIDI input when recording" (`WaitForMIDI`, off; 0x29);
+//!   the metronome volume slider (0x24) and the "Metronome output..." sub
+//!   menu (Master and Sub output 1–31, output locations 1..=32; 0x25).
 //! - MetroButton follows the document's `Metronome Mute`.
 //! - Indicators (timer tick [re:8ae44a]): MIDIIndi lights for 10 ticks when a
 //!   block carried MIDI, VoiceIndi for 10 ticks
@@ -43,20 +44,19 @@
 
 use dreist_engine::binding::id;
 use dreist_gui::app::{App, UiEvent};
-use dreist_gui::{Ctrl, Rect, Skin};
+use dreist_gui::{Ctrl, Rect};
 
 use crate::command::{Command, msg};
 use crate::model::{ENGINES, Model};
-use crate::{EditorError, err};
 
 pub struct Header {
-    /// The header bar: its button clicks come from under it (the sampler,
-    /// export panel and pattern toolbar reuse RecButton / PlayButton /
-    /// QuantizeButton).
-    page: Option<Vec<usize>>,
+    /// The front-panel sections this panel owns: their button clicks come
+    /// from under them (the pattern toolbar and the sampler reuse
+    /// RestartButton / QuantizeButton / RecButton).
+    scopes: Vec<Vec<usize>>,
     pub(crate) selectors: Option<Vec<usize>>,
-    /// The header's OptionsButton and its open menu (1 options, 2 the
-    /// metronome output sub menu).
+    /// The anchor of the open transport options menu and its level (1
+    /// options, 2 the metronome output sub menu).
     options: Option<Vec<usize>>,
     menu: u8,
     /// Indicator countdowns in timer ticks ([re:f5d1f8] MIDI,
@@ -69,13 +69,16 @@ pub struct Header {
 
 /// Indicator hold (10 ticks of the 1/30 s timer).
 const INDICATOR_TICKS: u32 = 10;
-const GAIN_EDIT: &str = "GlobalGainEdit";
+const GAIN_EDIT: &str = "MasterGainEdit";
+
+/// The master gain knob.
+pub(crate) const MASTER_GAIN: &str = "MasterSlider";
 
 /// [re:b4c931]: the learn binding of a
 /// header control: (path, name, type, message, value slot or none).
 pub(crate) fn binding_for(name: &str) -> Option<(&'static str, &'static str, &'static str, u32)> {
     Some(match name {
-        "GlobalGain" => ("Global", "Gain", "Continuous", id::SET_MASTER_CHANNEL_GAIN),
+        MASTER_GAIN => ("Global", "Gain", "Continuous", id::SET_MASTER_CHANNEL_GAIN),
         "PlayButton" => ("Transport", "Play", "Gated", id::TOGGLE_PLAYBACK),
         "RecButton" => ("Transport", "Record", "Gated", id::TOGGLE_RECORD),
         "MetroButton" => ("Transport", "Metronome", "Gated", id::TOGGLE_METRONOME),
@@ -85,7 +88,7 @@ pub(crate) fn binding_for(name: &str) -> Option<(&'static str, &'static str, &'s
         "SongButton" => ("Transport", "Song", "Continuous", id::SONG_SET_ACTIVE),
         "LoopButton" => ("Transport", "Loop", "Gated", id::SONG_SET_INTERNAL_LOOP_ACTIVE),
         "RestartButton" => ("Transport", "Restart", "Continuous", id::RETURN_TO_ZERO),
-        "MetroVolLearnButton" => ("Transport", "Metronome Volume", "Continuous", id::SET_METRONOME_LEVEL),
+        "MetroVol" => ("Transport", "Metronome Volume", "Continuous", id::SET_METRONOME_LEVEL),
         "BPMTextBox" => ("Transport", "Tap tempo", "Gated", id::TAP_TEMPO),
         _ => return None,
     })
@@ -177,61 +180,33 @@ pub(crate) fn selector_hit(app: &App, base: &[usize], path: &[usize]) -> Option<
 }
 
 impl Header {
-    pub fn build(skin: &mut Skin, root: &mut Ctrl) -> Result<Header, EditorError> {
-        if let Some(h) = root.find_mut("Header") {
-            skin.mount(h, "HeaderBar.skin").map_err(err)?;
-        }
-        let rel = skin.find("EngineSelector.skin").unwrap_or_else(|| "Engines/EngineSelector.skin".into());
-        let sel = skin.load_skin(&rel).map_err(err)?;
-        let template = sel.children.into_iter().next();
-        let selectors = root.path_of("EngineSelectors");
-        if let (Some(t), Some(p)) = (template, &selectors) {
-            let mut c = &mut *root;
-            for &i in p {
-                c = &mut c.children[i];
-            }
-            // [re:c9a6aa], horizontal, intra spacing 1 (set in LoadSkin).
-            let mut x = c.attr_i32("intLeftSpacing", 0);
-            for e in 0..ENGINES {
-                let mut s = t.clone();
-                let w = s.rect.w;
-                s.set_rect(Rect::new(x, c.attr_i32("intTopSpacing", 0), w, c.rect.h));
-                x += w + 1;
-                if let Some(l) = s.find_mut("NameLabel") {
-                    l.text = format!("{}", e + 1);
-                    l.passive = true;
-                }
-                for n in ["EngineMutedIcon", "EngineSoloedIcon", "EngineVolIndic", "StateIndicator"] {
-                    if let Some(k) = s.find_mut(n) {
-                        k.passive = true;
-                    }
-                }
-                if let Some(k) = s.find_mut("EngineVolIndic") {
-                    k.set_attr("volEngine", e.to_string());
-                }
-                c.children.push(s);
-            }
-        }
-        let options = root.path_of("Header").and_then(|h| {
-            let mut c = &*root;
-            for &i in &h {
-                c = &c.children[i];
-            }
-            Some([h.clone(), c.path_of("OptionsButton")?].concat())
-        });
-        Ok(Header { page: root.path_of("Header"), selectors, options, menu: 0, midi_ticks: 0, voice_ticks: 0, named: Default::default() })
+    pub fn build(root: &Ctrl) -> Header {
+        let scopes = ["EditorEngineSelectors", "Transport", "MasterControls", "UtilityControls"].iter().filter_map(|n| root.path_of(n)).collect();
+        Header { scopes, selectors: root.path_of("EditorEngineSelectors"), options: None, menu: 0, midi_ticks: 0, voice_ticks: 0, named: Default::default() }
+    }
+
+    /// Open the transport options menu at `anchor` (the main menu's
+    /// "Transport options" item).
+    pub fn open_options(&mut self, app: &mut App, model: &Model, anchor: &[usize]) {
+        self.options = Some(anchor.to_vec());
+        self.menu = 1;
+        app.open_menu(anchor, options_items(model), None);
     }
 
     pub fn sync(&self, app: &mut App, model: &Model, learn: bool) {
         if let Some(base) = &self.selectors {
             if let Some(c) = app.ctrl_mut(base) {
-                for (e, s) in c.children.iter_mut().enumerate() {
+                for s in c.children.iter_mut() {
+                    let Some(e) = s.attr("engine").and_then(|v| v.parse::<usize>().ok()) else { continue };
                     let sel = e == model.engine;
                     let (m, so) = (model.engine_mute(e), model.engine_solo(e));
                     let power = model.pattern_power(e);
                     for k in s.children.iter_mut() {
                         match k.name.as_str() {
-                            "StateIndicator" | "EngineSelectionButton" => k.on = sel,
+                            "EngineSelectionButton" => {
+                                k.on = sel;
+                                k.style = if power { format!("EngineButtonStyle{}", e + 1) } else { format!("EngineButtonPowerOffStyle{}", e + 1) };
+                            }
                             "EngineMutedIcon" => k.on = m,
                             "EngineSoloedIcon" => k.on = so,
                             "MuteButton" => k.on = m,
@@ -243,31 +218,30 @@ impl Header {
                 }
             }
         }
-        let preset = model.doc.attr("PresetName").map(str::to_string);
         let tempo = model.tempo();
         let named = &self.named;
+        let scopes = &self.scopes;
+        // The first control called `name` in this panel's sections.
+        let find = |app: &App, name: &'static str| scopes.iter().find_map(|s| named.path_in(app, s, name));
         let set_text = |app: &mut App, name: &'static str, text: String| {
-            if let Some(c) = named.ctrl_mut(app, name) {
+            if let Some(c) = find(app, name).and_then(|p| app.ctrl_mut(&p)) {
                 c.text = text;
             }
         };
-        set_text(app, "PresetLabel", preset.or_else(|| model.name.clone()).unwrap_or_default());
-        set_text(app, "KitLabel", model.engine_node(model.engine).and_then(|n| n.attr("KitName")).unwrap_or("").to_string());
         set_text(app, "BPMTextBox", format!("{tempo:.2}"));
         set_text(app, "MemoryUsageBox", String::new());
         let song = song_of(model);
         let gain = master_gain(model);
         let host_loop = model.host_loop;
         let mut set = |name: &'static str, f: &dyn Fn(&mut Ctrl)| {
-            if let Some(c) = named.ctrl_mut(app, name) {
+            if let Some(c) = find(app, name).and_then(|p| app.ctrl_mut(&p)) {
                 f(c);
             }
         };
         set("PlayButton", &|c| c.on = model.playing);
-        set("MetroVolLearnButton", &|c| c.visible = false);
         let metro_on = !metronome(model).and_then(|n| n.bool("Mute")).unwrap_or(true);
         set("MetroButton", &|c| c.on = metro_on);
-        set("GlobalGain", &|c| c.value = gain);
+        set(MASTER_GAIN, &|c| c.value = gain);
         set("SongButton", &|c| c.on = song.active);
         set("LoopButton", &|c| {
             c.on = song.loop_enabled;
@@ -354,11 +328,11 @@ impl Header {
 
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
         match ev {
-            UiEvent::ValueChanged { name, value, .. } if name == "GlobalGain" => {
+            UiEvent::ValueChanged { name, value, .. } if name == MASTER_GAIN => {
                 out.push(msg(id::SET_MASTER_CHANNEL_GAIN, &[], &[*value]));
                 return true;
             }
-            UiEvent::DoubleClicked { path, name } if name == "GlobalGain" => {
+            UiEvent::DoubleClicked { path, name } if name == MASTER_GAIN => {
                 if crate::options::Options::load().bool("DoubleClickResets", true) {
                     if let Some(c) = app.ctrl_mut(path) {
                         c.value = dreist_formats::params::UNITY_GAIN;
@@ -398,12 +372,12 @@ impl Header {
             _ => {}
         }
         let UiEvent::Clicked { path, name, on, .. } = ev else { return false };
-        if !self.page.as_ref().is_some_and(|h| path.starts_with(h)) {
+        if !self.scopes.iter().any(|h| path.starts_with(h)) {
             return false;
         }
         if let Some(base) = &self.selectors {
-            if let Some((e, child)) = selector_hit(app, base, path) {
-                let e = e.min(ENGINES - 1);
+            if let Some((i, child)) = selector_hit(app, base, path) {
+                let e = app.ctrl(&[base.as_slice(), &[i]].concat()).and_then(|s| s.attr("engine")).and_then(|v| v.parse::<usize>().ok()).unwrap_or(i).min(ENGINES - 1);
                 match child.as_str() {
                     "MuteButton" => out.push(msg(id::MUTE_ENGINE, &[e as i32], &[*on as i32 as f32])),
                     "SoloButton" => out.push(msg(id::SOLO_ENGINE, &[e as i32], &[*on as i32 as f32])),
@@ -433,11 +407,6 @@ impl Header {
                 out.push(msg(id::TOGGLE_METRONOME, &[], &[*on as i32 as f32]));
                 false
             }
-            "OptionsButton" if self.options.as_deref() == Some(path.as_slice()) => {
-                self.menu = 1;
-                app.open_menu(path, options_items(model), None);
-                false
-            }
             "QuantizeButton" => {
                 out.push(msg(id::TOGGLE_QUANTIZE, &[], &[*on as i32 as f32]));
                 false
@@ -447,7 +416,7 @@ impl Header {
                 // The engine's 0x1d4 / 0x1d5 answers: play and record off.
                 model.playing = false;
                 for n in ["PlayButton", "RecButton"] {
-                    if let Some(c) = app.root.path_of(n).and_then(|p| app.ctrl_mut(&p)) {
+                    if let Some(c) = crate::front::path_in(&app.root, "Transport", n).and_then(|p| app.ctrl_mut(&p)) {
                         c.on = false;
                     }
                 }

@@ -5,7 +5,8 @@
 //! The meter's source comes from its ancestors: mixer strips (`channel`
 //! attr: the mixer channel's output levels), inspector layer rows
 //! (`layer` attr), the pad header (`PadSelButton`) and the sampler panel
-//! ([re:7fc93e]).
+//! ([re:7fc93e]); the front panel's level strips by their `volEngine` /
+//! `masterSide` attrs.
 
 use dreist_engine::Meters;
 use dreist_gui::{Ctrl, meter};
@@ -55,8 +56,13 @@ pub fn update(root: &mut Ctrl, model: &Model, levels: &Meters) -> Vec<dreist_gui
         // [re:941836]: the logo (`MasterVU`,
         // [re:4f0f8e]) follows (L + R)/2 of the master
         // output with the same smoothing.
+        // The front panel's level strips: an engine's (`volEngine`) and the
+        // master's left / right (`masterSide`), with the same smoothing.
         let level_src = if c.overload == dreist_gui::render::LOGO_OVERLOAD {
             Some(levels.master)
+        } else if let Some(side) = c.attr("masterSide").and_then(|v| v.parse::<usize>().ok()) {
+            let v = levels.master[side.min(1)];
+            Some([v, v])
         } else {
             c.attr("volEngine").and_then(|v| v.parse::<usize>().ok()).map(|e| levels.engine[e.min(levels.engine.len() - 1)])
         };
@@ -67,6 +73,9 @@ pub fn update(root: &mut Ctrl, model: &Model, levels: &Meters) -> Vec<dreist_gui
             if (cur - next).abs() >= 1e-6 {
                 c.set_attr("volLevel", next.to_string());
                 c.set_attr("overlayAlpha", (next * 0.75).min(1.0).to_string());
+                if c.class == "CtrlLevelStrip" {
+                    c.value = next.min(1.0);
+                }
                 changed = true;
             }
         }

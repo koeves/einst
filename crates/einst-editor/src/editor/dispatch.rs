@@ -178,6 +178,7 @@ impl Editor {
         let mut changed = slicer_hit;
         if !slicer_hit {
             changed |= self.header.handle(&mut self.app, &mut self.model, ev, &mut self.outbox);
+            changed |= self.front.handle(&mut self.app, &mut self.model, ev, &mut self.outbox);
             changed |= self.dropped(ev);
             changed |= self.drag_out(ev);
             changed |= self.pad_menu(ev);
@@ -299,6 +300,7 @@ impl Editor {
         self.metadata.sync(&mut self.app);
         self.convertor.sync(&mut self.app);
         self.header.sync(&mut self.app, &self.model, self.learn.active);
+        self.front.sync(&mut self.app, &self.model);
         if self.sampler.sync(&mut self.app, &self.model) {
             self.pads.invalidate();
         }
@@ -339,7 +341,7 @@ impl Editor {
         } else {
             self.learn.rects.clear();
         }
-        if let Some(b) = self.app.root.find_mut("LearnButton") {
+        if let Some(b) = front::path_in(&self.app.root, "Transport", "LearnButton").and_then(|p| self.app.ctrl_mut(&p)) {
             b.on = self.learn.active;
         }
         let active = self.learn.active;
@@ -441,14 +443,8 @@ impl Editor {
             self.collapse_notification(path, *iconic, *end);
             return;
         }
-        // Splitter moves are layout only; the finished position is saved
-        // under the splitter's `strAutoSaveName`.
-        if let UiEvent::Split { path, pos, end } = ev {
-            if *end {
-                if let Some(key) = self.app.ctrl(path).and_then(|c| c.attr("strAutoSaveName")).filter(|k| !k.is_empty()) {
-                    save_split(key, *pos);
-                }
-            }
+        // Splitter moves are layout only (v1 has no saved splitters).
+        if let UiEvent::Split { .. } = ev {
             return;
         }
         // The drag is over: drag exit / drag end end the pad flash loops.
