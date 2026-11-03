@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/einst-formats", "crates/einst-editor", "crates/einst-plugin", "xtask"]
+members = ["crates/einst-formats", "crates/einst-dsp", "crates/einst-engine", "crates/einst-editor", "crates/einst-plugin", "xtask"]
 
 [workspace.package]
 edition = "2024"
@@ -24,7 +24,8 @@ manual_range_contains = "allow"
 [workspace.dependencies]
 # Dreist (Geist2 port) lives next to this repo: ~/Documents/projects/geist.
 geist-formats = { path = "../geist/crates/geist-formats" }
-geist-engine = { path = "../geist/crates/geist-engine" }
+# Einst's copy of Dreist's engine, under Dreist's crate name (see crates/einst-engine).
+geist-engine = { path = "crates/einst-engine", package = "einst-engine" }
 geist-dsp = { path = "../geist/crates/geist-dsp" }
 geist-gui = { path = "../geist/crates/geist-gui" }
 roxmltree = "0.20"

@@ -9,7 +9,7 @@
 
 use std::path::Path;
 
-use geist_formats::{EFFECT_TYPES, Node};
+use geist_formats::Node;
 
 use crate::{Error, FileKind};
 
@@ -133,7 +133,39 @@ pub fn as_project(kind: FileKind, converted: Node) -> Node {
     root
 }
 
-/// v1's effect types are a subset of Geist2's (`Effect::EffectTypeToString`).
+/// v1's effect types in v1's order (`Effect::EffectTypeToString`,
+/// ev_16b78c41): index = v1 `EEffectType`. Effect files store the name,
+/// which Geist2 and Dreist number differently (`geist_formats::EFFECT_TYPES`).
+pub const EFFECT_TYPES: [&str; 33] = [
+    "No Effect", "Gain", "Stereo Width", "Parametric EQ", "DJ EQ", "Vari-EQ", "Channel Compressor", "Bus Compressor", "Noise Gate", "Envelope Shaper", "Delay", "Flanger", "Chorus", "Phaser",
+    "Distortion", "Bit Crusher", "Ring Mod", "Frequency Shifter", "Filter", "Modulated Filter", "Comb Filter", "Three Oh! Three Filter", "Hoover Filter", "Grandad Filter", "Little Fatty Filter",
+    "Child Genius Filter", "Japan Filter", "Audio Freezer", "Breverb Hall", "Breverb Plate", "Breverb Room", "Breverb Inverse", "Tin Can Verb",
+];
+
+/// v1's effect menu categories (`Effect::EffectCategoryToString`, ev_b6c62234).
+pub const EFFECT_CATEGORIES: [&str; 6] = ["Distortion", "Dynamics", "EQ", "Filters", "FX", "Reverbs"];
+
+/// `Effect::GetCategoryForEffect` (0xf4720, ev_6494cf3e) for a v1 type index.
+pub fn effect_category(v1_type: usize) -> usize {
+    match v1_type {
+        1 | 2 | 6..=9 => 1,
+        3..=5 => 2,
+        14..=16 => 0,
+        18..=26 => 3,
+        28..=32 => 5,
+        _ => 4,
+    }
+}
+
+/// The effect types v1's menu offers in `category` (`EditorEffectPanel::
+/// DoShowEffectTypeMenu`, ev_ad49b2ff: "No Effect", then one submenu per
+/// category listing its types in type order).
+pub fn effect_menu(category: usize) -> impl Iterator<Item = &'static str> {
+    EFFECT_TYPES.iter().enumerate().skip(1).filter(move |(i, _)| effect_category(*i) == category).map(|(_, n)| *n)
+}
+
+/// An effect of one of v1's types ([`EFFECT_TYPES`]; all of them exist in
+/// Geist2 under the same names).
 fn check_effect(e: &Node) -> Result<(), Error> {
     let ty = e.attr("EffectType").ok_or_else(|| Error::Shape("Effect", "no EffectType".into()))?;
     if !EFFECT_TYPES.contains(&ty) {

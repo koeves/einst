@@ -31,13 +31,6 @@ use crate::command::{Command, msg};
 use crate::model::Model;
 
 pub const CATEGORIES: [&str; 6] = ["Distortion", "Dynamics", "EQ", "Filters", "FX", "Reverbs"];
-/// `GetCategoryForEffect` table 0x17f8b20 (types 1..=47).
-const CATEGORY_OF: [u8; 47] = [1, 1, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 5, 5, 5, 5, 5, 5, 4, 0, 0];
-
-pub fn category(kind: usize) -> usize {
-    kind.checked_sub(1).and_then(|i| CATEGORY_OF.get(i)).map(|&c| c as usize).unwrap_or(4)
-}
-
 /// System and user effect preset folders for a type.
 fn preset_dirs(resources: &std::path::Path, kind: usize) -> Vec<std::path::PathBuf> {
     let name = EFFECT_TYPES[kind];
@@ -851,7 +844,8 @@ impl FxPanel {
                     return true;
                 }
                 if let Action::Category(c) = action {
-                    let items = (1..EFFECT_TYPES.len()).filter(|&k| category(k) == c).map(|k| (geist_formats::params::effect_label(k).to_string(), Action::Type(k))).collect();
+                    // Einst: v1's 32 effect types in v1's order (`einst_formats::v1::effect_menu`).
+                    let items = einst_formats::v1::effect_menu(c).filter_map(effect_type_index).map(|k| (geist_formats::params::effect_label(k).to_string(), Action::Type(k))).collect();
                     self.open_menu(app, anchor, slot, items);
                 } else {
                     self.apply(model, t, slot, &action, out);
@@ -997,9 +991,15 @@ mod tests {
 
     #[test]
     fn categories_and_presets() {
-        assert_eq!(CATEGORIES[category(effect_type_index("Bit Crusher").unwrap())], "Distortion");
-        assert_eq!(CATEGORIES[category(effect_type_index("Breverb Hall").unwrap())], "Reverbs");
-        assert_eq!(CATEGORIES[category(effect_type_index("Comb Filter").unwrap())], "Filters");
+        assert_eq!(CATEGORIES[einst_formats::v1::effect_category(einst_formats::v1::EFFECT_TYPES.iter().position(|t| *t == "Bit Crusher").unwrap())], "Distortion");
+        assert_eq!(CATEGORIES[einst_formats::v1::effect_category(einst_formats::v1::EFFECT_TYPES.iter().position(|t| *t == "Breverb Hall").unwrap())], "Reverbs");
+        assert_eq!(CATEGORIES[einst_formats::v1::effect_category(einst_formats::v1::EFFECT_TYPES.iter().position(|t| *t == "Comb Filter").unwrap())], "Filters");
+        // Einst: v1's menu offers v1's 32 types, Gain first, Tin Can Verb last.
+        let menu: Vec<&str> = (0..6).flat_map(einst_formats::v1::effect_menu).collect();
+        assert_eq!(menu.len(), 32);
+        assert!(menu.iter().all(|n| effect_type_index(n).is_some()));
+        assert_eq!(einst_formats::v1::effect_menu(1).next(), Some("Gain"));
+        assert!(!menu.contains(&"Maul") && !menu.contains(&"Limiter"));
         let res = crate::paths::skin_dir();
         let k = effect_type_index("Bit Crusher").unwrap();
         let ps = presets(&res, k);

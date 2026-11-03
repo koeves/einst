@@ -60,17 +60,41 @@ and re-apply Einst's changes, which are all marked `Einst` or listed here:
   `v1io::read_project` / `read_document`, so Geist v1 files are converted. A converted v1 project
   has no project path (Save asks for a new name, as for Guru presets).
 - Every `geist_formats::paths::skin_dir()` → `crate::paths::skin_dir()` (Einst's factory data).
+- `fxchain.rs`: the effect type menu lists v1's types per category (`einst_formats::v1::
+  effect_menu`); Dreist's 47-type `category` table is removed.
 - `tests.rs` / `screens_test.rs`: `crate::DEFAULT_THEME`, "Remove all modulation from Einst";
   `tests/golden/screens.txt`: `modal-about` re-recorded (the About text), all other screens as
   Dreist's.
+
+## `einst-engine` and `einst-dsp`: Geist v1's own effects
+
+- `einst-dsp`: v1's mono effect nodes as `geist_dsp::fx::Node`s: `gain::Gain` (VAmpM),
+  `vari_eq::VariEq` (VFilterEQ2) and `envelope_shaper::EnvelopeShaper` (VDSPTransientDesigner;
+  Dreist's Geist2 node with Linked held off). The recovered DSP is in
+  `docs/re/loading-v1.md`; tests check it against the decompiled formulas.
+- Wiring: Dreist's engine keeps its effect chains private and builds every effect in one place
+  (`geist-engine/src/fx.rs`, `Effect::new` → `geist_dsp::fx::nodes::create`), and Cargo cannot
+  `[patch]` a path dependency. So `einst-engine` is a copy of Dreist's `crates/geist-engine` at
+  the same commit as the editor (`bc729de2…`). Its library keeps the name `geist_engine`, and
+  dependents use `geist-engine = { package = "einst-engine", ... }`, so the copied editor and
+  plugin compile unchanged. The only change is in `src/fx.rs` (marked `Einst`): after
+  `Effect::new`, `einst_dsp::create(kind)` replaces the node for Gain, Vari-EQ and Envelope
+  Shaper, with v1's internal ports set. To re-sync, copy the crate again and re-apply that
+  block, the `einst_tests` module at the end of `fx.rs`, and `Cargo.toml`.
+  `tests/golden/engine.txt` is re-recorded: the 16 Blister/Hollow scenarios differ from Dreist's
+  because both demos use Gain (and Blister Vari-EQ); with the v1 nodes switched off the copy
+  reproduces Dreist's fingerprints exactly (checked 2026-11-03).
+- The editor's effect menu offers v1's 32 types in v1's order and categories
+  (`einst_formats::v1::{EFFECT_TYPES, effect_menu}`). Effect files store type names, which v1 and
+  Geist2 share, so the converter keeps them; a test checks all 32.
 
 ## Known gaps (plugin shell / editor)
 
 - Dreist's UI graphics (skin, fonts, cursors, metronome sounds) still come from
   `Contents/Resources/Dreist` (`geist_formats::paths::ui_dir`, read inside `geist-gui` and
   `geist-engine`); the UI font is still "Dreist Sans". Changing those needs Dreist's crates.
-- The editor still offers Geist2's 47 effect types; the 15 that v1 lacks have no factory presets
-  in Einst's resources (v1 has 32).
+- Geist2-only effect types in a Geist2 document still load and play with Dreist's nodes; Einst's
+  menu just does not offer them.
 - The browser lists `.geist` and `.geistkit` as Dreist's does; v1 `.geistpad/.geistengine/
   .geistpattern/.geistbank` open through the Open dialog (into engine 0) and drag and drop.
 - No CLAP/VST3 validator is installed (clap-validator, pluginval); downloading one needs the user's
@@ -86,7 +110,6 @@ and re-apply Einst's changes, which are all marked `Einst` or listed here:
    traced.
 2. Remaining UI gaps above need Dreist's `geist-gui` / `geist-engine` (owner, 2026-11-03: keep
    Dreist untouched).
-3. v1-only DSP: `VAmpM` (Gain), `VFilterEQ2` (Vari-EQ), `VDSPTransientDesigner` (Envelope
-   Shaper) are mono versions of Geist2's `VAmpS`/`VFilterEQ2S`/`VDSPTransientDesignerS`; diff
-   them against Dreist's ports.
+3. The other 29 effects share their DSP class with Geist2 by name; check where v1's copies of
+   those classes differ from Geist2's (as VFilterEQCommon did).
 4. Diff behaviour of functions both versions share (voice, sequencer, mixer) and record v1 deltas.
