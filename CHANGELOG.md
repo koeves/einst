@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.0] - 2026-11-03
+## Unreleased (0.1.0)
 
 First release: the Geist v1.1.1.2 rebuild, a thin app on dreist-commons (Apple Silicon:
 VST3, CLAP, standalone).
