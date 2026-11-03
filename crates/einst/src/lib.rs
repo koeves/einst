@@ -46,10 +46,12 @@ pub fn effect_menu(category: usize) -> Vec<usize> {
 /// the loop end minus 3 frames (ev_29992d9a).
 pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules { sampler_auto_stop_seconds: 1.0, envelope_v1_ends: true, loop_v1: true };
 
-/// Install Einst's profile, effect nodes, v1's fast 2^x and v1's rules.
+/// Install Einst's profile, effect nodes, v1's fast 2^x, rules and voice
+/// parameter model.
 pub fn install() {
     dreist_formats::profile::install(&PROFILE);
     dreist_dsp::fx::install_factory(dreist_dsp::fx::NodeFactory { create: einst_dsp::create, internal_ports: einst_dsp::internal_ports });
     dreist_dsp::fx::install_exp2(einst_dsp::fast_exp2);
     dreist_dsp::rules::install(RULES);
+    dreist_dsp::model::install(&einst_dsp::voice_model::V1Voice);
 }

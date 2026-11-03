@@ -13,7 +13,7 @@ import tempfile
 import zlib
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-OUT = os.path.join(ROOT, "assets", "einst")
+OUT = os.path.join(ROOT, "assets", "ui")
 
 BG = (0x1d, 0x22, 0x2b)
 FG = (0xe8, 0xb3, 0x4a)

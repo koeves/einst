@@ -34,6 +34,7 @@ pub mod ssl_filter;
 pub mod tin_can;
 pub mod urei1176;
 pub mod vari_eq;
+pub mod voice_model;
 
 use dreist_dsp::fx::Node;
 

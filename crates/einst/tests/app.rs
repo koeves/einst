@@ -125,3 +125,45 @@ fn envelope_stops_at_zero_sustain() {
     assert!(buf.iter().rev().take(32).all(|v| *v == 0.0));
     assert!(dreist_dsp::rules::get().envelope_v1_ends && dreist_dsp::rules::get().loop_v1);
 }
+
+/// v1's voice paths the demo scenarios do not reach: short forward loops
+/// held in release, decays ending at zero sustain, pitch and cutoff
+/// envelope routings (golden set `v1voice`).
+fn v1_voice_scenario(doc: &mut dreist_formats::Node) {
+    use dreist_formats::params::{LayerParam, TransmodSource};
+    let amp_pitch = TransmodSource::AmpEnvelope.attr(LayerParam::CoarseTune.name()).unwrap();
+    let free_cut = TransmodSource::FreeEnvelope.attr(LayerParam::FilterCutoff.name()).unwrap();
+    dreist_engine::harness::layers(doc, |l, p, _| {
+        match p % 3 {
+            0 => {
+                l.set("PlaybackMode", "Looping").set("LoopInRelease", 1.0).set("AltLoopMode", 0.0).set("XFadeLoopTime", 0.3).set("SampleLoopStartPoint", 0.02).set("SampleLoopEndPoint", 0.08);
+            }
+            1 => {
+                l.set(LayerParam::AmpEnvSustain.name(), 0.0).set(LayerParam::AmpEnvDecay.name(), 0.3).set(LayerParam::AmpEnvDecayCurve.name(), 0.7);
+            }
+            _ => {}
+        }
+        if p % 2 == 0 {
+            l.set(&amp_pitch, 0.8);
+        }
+        l.set(&free_cut, -0.6).set("FilterActive", 1.0).set(LayerParam::FreeEnvDecay.name(), 0.4);
+    });
+}
+
+#[test]
+fn v1_voice_paths_match_einsts_goldens() {
+    setup();
+    use dreist_engine::harness::{doc_for, name, presets, render, sane};
+    let mut golden = dreist_testkit::Golden::open("v1voice");
+    let mut failures = Vec::new();
+    for p in presets() {
+        let samples = dreist_formats::model::samples_dir(&p);
+        let doc = doc_for(&p, v1_voice_scenario);
+        let (l, r) = render(&doc, &samples, 44_100.0, 512, 6.0);
+        let tag = name(&p);
+        failures.extend(sane(&tag, &l, &r));
+        golden.check(&tag, dreist_testkit::fnv(l.iter().chain(&r)), &l);
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    golden.finish();
+}
