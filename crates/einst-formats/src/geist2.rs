@@ -216,15 +216,18 @@ fn velocity_attr(p: LayerParam) -> String {
 /// order: Attack, Decay, Sustain, Hold, Release, three curves), clamped to
 /// 0..1. Below 3000 the holds are set to −1 and the old default decay
 /// (A 0, D 0.5, S 1, R 0.001) becomes 0.02, as in v1.
+///
+/// Hold follows v1, not Geist2 (owner's decision, 2026-11-03): a negative
+/// Hold stays −1 instead of Geist2's clamp to 0. v1's loader then calls
+/// `Layer::ResetHoldTime(true)` (ev_97d7ba71), which derives the hold from
+/// the sample; Dreist's loader does the same computation for a negative
+/// hold (`geist_engine::hold::reset_hold_time`, see docs/re/loading-v1.md).
 fn envelopes(n: &Node, ver: u32, out: &mut Node) {
     const FIRST: [LayerParam; 2] = [LayerParam::AmpEnvAttack, LayerParam::FreeEnvAttack];
     for (e, first) in FIRST.iter().enumerate() {
         let base = *first as usize;
-        // TODO(hold, pending the owner's decision): this clamps a v1 3.x layer's
-        // Hold of -1 to 0 as Geist2 does. v1 itself keeps -1 and recomputes the
-        // hold from the sample (`ResetHoldTime`); leaving `vals[3]` at -1 would
-        // make Dreist do the same. See docs/re/loading-v1.md, "Guesses".
-        let mut vals: [Option<f32>; 8] = std::array::from_fn(|i| n.f32(&format!("Envelope{e}Param{i}")).map(|v| v.min(1.0).max(0.0)));
+        let read = |i: usize| n.f32(&format!("Envelope{e}Param{i}")).map(|v| if i == 3 && v < 0.0 { -1.0 } else { v.min(1.0).max(0.0) });
+        let mut vals: [Option<f32>; 8] = std::array::from_fn(read);
         if ver < 3000 {
             vals[3] = Some(-1.0);
             let is = |i: usize, x: f32| (vals[i].unwrap_or(LayerParam::ALL[base + i].default_value()) - x).abs() <= 1e-6;

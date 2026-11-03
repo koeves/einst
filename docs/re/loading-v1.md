@@ -252,6 +252,24 @@ Load-time upgrades (only when loading):
 - Finally `Layer::ResetHoldTime(true)` if `Ver < 3.0` or either Hold is negative;
   `UpdateAllAudioMarkers` always.
 
+`Layer::ResetHoldTime(bool pitch)` 0xae910 (ev_97d7ba71; constants read from `__const`,
+`powf` exponent from the disassembly at 0xaeac0) [decomp, file]. Only with a loaded sample
+(rate `sr`, `frames`):
+
+1. t = (EndSample − StartSample)/sr of `StartEndMarkers`, at least 0; if |t| < 1e-6, the whole
+   file: frames/sr.
+2. With `pitch` (the load call passes true) and `UsesTimestretch` off: t /= 2^((coarse + fine)/12)
+   (skipped if that ratio is ~0), where coarse = `ConvertNormalisedValueToPitch(CoarseTune)` =
+   round(c·24) − 12 semitones (ev_d199da8c) and fine =
+   `ConvertNormalisedValueToPitchInCents(FineTune)` = 2f − 1 semitones (ev_439ec203).
+3. x = t − (A⁴·10 + (S ≠ 1 ? D⁴·10 : 0) + R⁴·15) with the amp envelope (`Envelope0`) values,
+   clamped to 0..`Envelope::kMaxHoldInSeconds` (60).
+4. Hold = (x/60)^0.25, clamped to 0..1, written to **both** envelopes' Hold.
+
+Geist2's `Layer::ResetHoldTime` (as ported in Dreist's `geist_engine::hold`) is the same
+computation, except that it uses CoarseTune unrounded. The two agree for coarse values on v1's
+semitone grid (the only values v1's UI writes).
+
 ### `LayerVelocitySplit` (ev_33d709c0)
 
 `Ver` 2.0 (write only); `LowPoint`, `LowTurn`, `HighTurn`, `Highest` int, each clamped to ≤ 127 on load.
@@ -552,10 +570,12 @@ against `<doc>.samples/` too, so `../` and bare names keep their v1 meaning).
 
 Guesses and deliberate choices (to confirm):
 
-- **Hold on v1 3.x layers.** v1 saves Hold = −1 ("compute from the sample") and its loader calls
-  `ResetHoldTime` for a negative hold. Geist2 clamps the value to 0 on these layers and does not
-  reset it. The converter follows Geist2 as briefed (`AmpEnvHold="0"`). Keeping −1 instead
-  would make Dreist recompute the hold like v1 does.
+- **Hold on v1 3.x layers: decided (owner, 2026-11-03), recompute like v1.** v1 saves Hold = −1
+  ("compute from the sample") and its loader calls `ResetHoldTime` for a negative hold. Geist2
+  clamps the value to 0 on these layers and does not reset it. The converter keeps a negative
+  Hold as −1 (other values are clamped to 0..1), so Dreist's loader recomputes the hold with the
+  sample's region, rate and the layer's pitch and envelope: v1's formula above. Residual
+  difference: for a CoarseTune off the semitone grid, v1 rounds it and Dreist does not.
 - **Output `Buss n` → `Aux n`.** Both are the four global aux buses; Geist2's name for them is
   taken from Dreist's `Route::from_name`, not from a decompiled v1→Geist2 mapping.
 - **FX-active step lanes.** v1's default for `FXnActive` is 1.0, Geist2's is 0. A v1 step that
