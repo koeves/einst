@@ -469,3 +469,144 @@ fn tb303_drive_clamp_and_hoover_mode_0() {
     let dreist_juno = |mode: f32| render_blocks(&mut Ladder::new(Kind::Juno), &[(0, 0.5), (1, mode), (2, -2.0), (3, 0.3), (4, 0.5), (5, 0.0), (6, 0.0)], 10);
     assert_eq!(dreist_juno(0.0), dreist_juno(1.0));
 }
+
+/// v1's gate opens on a key between the hysteresis level and the
+/// threshold (v2's stays closed there once its hold has run out).
+#[test]
+fn noise_gate_opens_over_the_hysteresis_level() {
+    use dreist_dsp::fx::nodes::noise_gate::NoiseGate;
+    let ctx = Ctx::new(48_000.0);
+    // v1 ports: 0 att, 1 hold, 2 rel, 3 thr, 4 hyst, 5 LP, 6 HP, 7 preview, 8 sc, 9 wet.
+    let mut v1 = einst_dsp::noise_gate::NoiseGate::new();
+    let mut v2 = NoiseGate::new();
+    let v1_ports = [(0, -6.0), (1, -6.0), (2, -4.0), (3, 0.5), (4, 0.25), (5, 13.0), (6, 3.0), (7, 0.0), (8, 0.0), (9, 1.0)];
+    for (i, v) in v1_ports {
+        v1.ports()[i].value = v;
+        v2.ports()[einst_dsp::noise_gate::V1_TO_V2[i]].value = v;
+    }
+    // A 1 kHz tone at 0.3: over hysteresis·threshold (0.125), under the threshold.
+    let x: Vec<f32> = (0..4800).map(|i| (i as f32 * 2.0 * std::f32::consts::PI * 1000.0 / 48_000.0).sin() * 0.3).collect();
+    let a = run(&mut v1, &ctx, &x, &x);
+    let b = run(&mut v2, &ctx, &x, &x);
+    let tail = |v: &[f32]| (v[2400..].iter().map(|s| s * s).sum::<f32>() / 2400.0).sqrt();
+    assert!(tail(&a.0) > 0.15, "v1 open: {}", tail(&a.0));
+    assert!(tail(&b.0) < 0.01, "v2 closed: {}", tail(&b.0));
+}
+
+/// Distortion: integer cutoff exponents match Dreist's; fractional ones differ.
+#[test]
+fn distortion_differs_only_by_fast_exp2() {
+    use dreist_dsp::fx::nodes::audio_shaper::AudioShaper;
+    // 0 mode, 1 drive, 2 LP, 3 HP, 4 dirty, 5 clean, 6 tone, 7 mix.
+    let int = [(0, 1.0), (1, 0.8), (2, 12.0), (3, 5.0), (4, 1.0), (5, 0.2), (6, 11.0), (7, 1.0)];
+    let a = render_blocks(&mut einst_dsp::audio_shaper::AudioShaper::new(), &int, 20);
+    let b = render_blocks(&mut AudioShaper::new(), &int, 20);
+    let (d, e) = rms_diff(&a, &b);
+    assert!(d < e * 1e-3, "{d} vs {e}");
+    let frac = [(0, 1.0), (1, 0.8), (2, 11.6), (3, 5.3), (4, 1.0), (5, 0.2), (6, 10.7), (7, 1.0)];
+    let a = render_blocks(&mut einst_dsp::audio_shaper::AudioShaper::new(), &frac, 20);
+    let b = render_blocks(&mut AudioShaper::new(), &frac, 20);
+    assert_ne!(a, b);
+}
+
+/// EQ and Filter: v1's fast 2^x for the frequencies (integer exponents
+/// match Dreist's), and a reset that keeps the filter tails.
+#[test]
+fn eq_and_filter_fast_exp2_and_tails_over_reset() {
+    use dreist_dsp::fx::nodes::ssl_eq::SslEq;
+    use dreist_dsp::fx::nodes::ssl_filter::SslFilter;
+    // EQ band 1 (LMF): 4 Q, 5 freq, 6 gain, 7 on; wet 17.
+    let eq = [(4, 0.5), (5, 9.0), (6, 0.8), (7, 1.0), (17, 1.0)];
+    let a = render_blocks(&mut einst_dsp::ssl_eq::SslEq::new(), &eq, 10);
+    let b = render_blocks(&mut SslEq::new(), &eq, 10);
+    let (d, e) = rms_diff(&a, &b);
+    assert!(d < e * 1e-4, "EQ integer exponent: {d} vs {e}");
+    // Filter: 0 HP in, 1 HP freq, 2 LP in, 3 LP freq, 4 wet.
+    let fl = [(0, 1.0), (1, 6.0), (2, 1.0), (3, 11.0), (4, 1.0)];
+    let a = render_blocks(&mut einst_dsp::ssl_filter::SslFilter::new(), &fl, 10);
+    let b = render_blocks(&mut SslFilter::new(), &fl, 10);
+    let (d, e) = rms_diff(&a, &b);
+    assert!(d < e * 1e-4, "Filter integer exponents: {d} vs {e}");
+    // After a reset, silence in: v1's tails ring on, v2's do not.
+    let ctx = Ctx::new(48_000.0);
+    let tail = |n: &mut dyn Node| {
+        let _ = render_blocks(n, &[], 4);
+        n.reset();
+        let z = vec![0.0f32; 64];
+        run(n, &ctx, &z, &z).0.iter().map(|v| v.abs()).fold(0.0f32, f32::max)
+    };
+    let mut v1 = einst_dsp::ssl_filter::SslFilter::new();
+    let mut v2 = SslFilter::new();
+    for (i, v) in fl {
+        v1.ports()[i].value = v;
+        v2.ports()[i].value = v;
+    }
+    // (v2 leaves only its ±1e−8 denormal offset.)
+    assert!(tail(&mut v1) > 1e-4);
+    assert!(tail(&mut v2) < 1e-6);
+}
+
+/// Delay: v1 caps the time at 8 s at the current rate; with integer
+/// exponents, no swing and a fixed time, it matches Dreist's.
+#[test]
+fn delay_max_length_and_fast_exp2() {
+    use dreist_dsp::fx::nodes::delay::Delay;
+    // 0 time, 1 mode, 2 feedback, 3 swing, 4 mono, 5 low cut, 6 high cut, 7 mix.
+    let p = [(0, 0.0), (1, 0.0), (2, 0.5), (3, 0.0), (4, 0.0), (5, 5.0), (6, 12.0), (7, 0.7)];
+    let a = render_blocks(&mut einst_dsp::delay::Delay::new(), &p, 30);
+    let b = render_blocks(&mut Delay::new(), &p, 30);
+    let (d, e) = rms_diff(&a, &b);
+    assert!(d < e * 1e-3, "{d} vs {e}");
+    // 10 s requested (2^(log2(10)+1−1)): v1 reaches its 8 s cap, v2 does not.
+    let ctx = Ctx::new(48_000.0);
+    let time = 10f32.log2() + 1.0;
+    let mut v1 = einst_dsp::delay::Delay::new();
+    let mut v2 = Delay::new();
+    for (i, v) in [(0, time), (1, 0.0), (2, 0.0), (3, 0.0), (4, 0.0), (5, 0.0), (6, 13.0), (7, 1.0)] {
+        v1.ports()[i].value = v;
+        v2.ports()[i].value = v;
+    }
+    let impulse: Vec<f32> = (0..512).map(|i| if i == 0 { 1.0 } else { 0.0 }).collect();
+    let z = vec![0.0f32; 512];
+    let first_echo = |n: &mut dyn Node| {
+        // The time glides to its target first; then one impulse.
+        for _ in 0..2000 {
+            run(n, &ctx, &z, &z);
+        }
+        let mut t = 0usize;
+        for b in 0..1100 {
+            let x = if b == 0 { &impulse } else { &z };
+            let (l, _) = run(n, &ctx, x, x);
+            if let Some(k) = l.iter().position(|v| v.abs() > 0.05) {
+                if b > 0 || k > 0 {
+                    t = b * 512 + k;
+                    break;
+                }
+            }
+        }
+        t
+    };
+    let (t1, t2) = (first_echo(&mut v1), first_echo(&mut v2));
+    assert!((t1 as f32 - 8.0 * 48_000.0).abs() < 600.0, "v1 echo at {t1}");
+    assert!(t2 as f32 > 9.0 * 48_000.0 || t2 == 0, "v2 echo at {t2}");
+}
+
+/// Tin Can Verb: v1 has no crossfeed, so a left-only input leaves the
+/// right output silent (v2 feeds 0.2 of each side into the other).
+#[test]
+fn tin_can_has_no_crossfeed() {
+    use dreist_dsp::fx::nodes::tin_can::TinCan;
+    let ctx = Ctx::new(48_000.0);
+    let x = noise(512, 9);
+    let z = vec![0.0f32; 512];
+    let right = |n: &mut dyn Node| {
+        n.ports()[6].value = 1.0;
+        let mut m = 0.0f32;
+        for _ in 0..20 {
+            m = m.max(run(n, &ctx, &x, &z).1.iter().map(|v| v.abs()).fold(0.0, f32::max));
+        }
+        m
+    };
+    assert!(right(&mut einst_dsp::tin_can::TinCan::new()) < 1e-6);
+    assert!(right(&mut TinCan::new()) > 1e-3);
+}
