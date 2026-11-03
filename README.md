@@ -1,7 +1,7 @@
 # Einst
 
 A native Apple Silicon rebuild of FXpansion **Geist** 1.1.1.2 (2012), the predecessor of Geist2,
-as a thin app on [dreist-commons](https://github.com/koeves/dreist-commons) (private), the crates
+as a thin app on [dreist-commons](https://github.com/koeves/dreist-commons), the crates
 it shares with Dreist (the Geist2 rebuild). Geist v1 and Geist2 share most of their code, so Einst
 adds what v1 needs on top: its file reader, its own effect DSP and its behaviour where it differs.
 
@@ -18,13 +18,9 @@ Outputs: `Einst.vst3`, `Einst.clap`, `Einst.app` (Apple Silicon). Plugin IDs: CL
 
 ## Build
 
-Dependencies on dreist-commons are pinned to a revision in `Cargo.toml` (`git`, `rev`); the
-private repository is fetched with the git CLI (`.cargo/config.toml`). To develop against a
-local checkout at `../dreist-commons`, add a `[patch."https://github.com/koeves/dreist-commons"]`
-section mapping each `dreist-*` crate to its path in `~/Documents/projects/.cargo/config.toml`
-(one file serves Dreist and Einst; it rewrites `Cargo.lock` locally, so do not commit the lock
-from such a build). To take a new commons revision, bump `rev` in `Cargo.toml` and run
-`cargo update -p dreist-formats`.
+dreist-commons is a git submodule at `commons` (clone with `--recursive`, or run
+`git submodule update --init`), and Cargo uses its crates by path. To change commons, commit
+and push inside `commons/`, then commit the new submodule revision here (`git add commons`).
 
     scripts/build.sh              # release: target/bundled/Einst.{app,vst3,clap}
     scripts/build.sh --debug
@@ -51,9 +47,9 @@ Status: [`docs/PROGRESS.md`](docs/PROGRESS.md). Reverse-engineering notes are in
 
 ## Related projects
 
-- [dreist-commons](https://github.com/koeves/dreist-commons): the shared library (formats, DSP,
-  engine, GUI, editor) that both apps are built on.
-- [Dreist](https://github.com/koeves/dreist): the Geist2 rebuild, an app on dreist-commons.
-- [Einst](https://github.com/koeves/einst): the Geist v1 rebuild, an app on dreist-commons.
+- [dreist-commons](https://github.com/koeves/dreist-commons) (public): the shared library
+  (formats, DSP, engine, GUI, editor) that both apps are built on; a submodule here.
+- [Dreist](https://github.com/koeves/dreist) (private): the Geist2 rebuild, an app on dreist-commons.
+- [Einst](https://github.com/koeves/einst) (private): the Geist v1 rebuild, an app on dreist-commons.
 
 The reverse-engineering notes behind all three are kept in a private repository.
