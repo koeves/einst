@@ -4,7 +4,7 @@
         <CtrlPanel name="Control4" rect="43, 3, 107, 15" id="100001" style="EmptyPanelStyle">
             <CtrlLabel name="CtrlLabel" rect="-8, 0, 123, 15" id="0" style="StandardLabelCenteredStyle" text="High Cut" />
         </CtrlPanel>
-        <CtrlPanel name="SplitFader" rect="43, 20, 107, 19" id="100000" overloadClass="SplitFader" />
+        <CtrlRangeSlider name="SplitFader" rect="43, 20, 107, 19" id="100000" legacyClass="CtrlPanel" overloadClass="SplitFader" style="LcdRangeStyle" />
         <CtrlPanel name="Control5" rect="43, 42, 107, 15" id="100001" style="EmptyPanelStyle">
             <CtrlLabel name="CtrlLabel" rect="-8, 1, 123, 15" id="0" style="StandardLabelCenteredStyle" text="Low Cut" />
         </CtrlPanel>

@@ -36,9 +36,19 @@ def L(parent, text=None, upper=False, ctrl=None, cls=None, decor=None, inset=Non
 
 
 # Pattern keys: the key face inside v1's 24 x 41 cell, with its lit strip.
-KEY = dict(inset=(3, 1, 2, 5), decor=[("inside", 3, -9, -6, 6, "PatternKeyLedStyle")])
+KEY = dict(inset=(0, 0, 3, 5))
+
+# Transport buttons: the face inside v1's 33 px cells (the rest was the
+# bitmap's shadow on the backing).
+TB = (0, 0, 2, 5)
 
 POPUP = {"renderer": "PopupButtonRenderer"}
+
+# Pad mode buttons: the face inside v1's 25 x 27 cells.
+PM = (1, 0, 0, 4)
+GRID_ICON = [("inside", 6 + 5 * (i % 3), 5 + 5 * (i // 3), 3, 3, "PadModeIconStyle") for i in range(9)]
+# (E with a small M over S: two 3 x 3 marks right of the E)
+EMS_ICON = [("inside", 17, 7, 3, 3, "PadModeIconStyle"), ("inside", 17, 13, 3, 3, "PadModeIconStyle")]
 CHECK = {"renderer": "CheckBoxButtonRenderer"}
 
 # ---------------------------------------------------------------- buttons
@@ -48,24 +58,25 @@ BUTTONS = [
     (r"^Tab(On|Off|Disabled)", L("TabButtonStyle", upper=True)),  # ("/" spaced, see convert.py)
     (r"^(Show|Hide)$", L("BezelIconButtonStyle", text=G["right"])),
     # Transport (hardware strip).
-    (r"^PlayButton", L("HwPlayButtonStyle", text=G["right"])),
-    (r"^RecButton", L("HwRecordButtonStyle", text=G["record"])),
-    (r"^SongButton", L("HwSongButtonStyle", text="SONG")),
-    (r"^RestartButton", L("HwIconButtonStyle", text=G["skip_start"])),
-    (r"^LoopButton", L("HwIconButtonStyle", text=G["loop"])),
-    (r"^RetroButton", L("HwIconButtonStyle", text=G["retrigger"])),
-    (r"^PanicButton", L("HwIconButtonStyle", text=G["warning"])),
-    (r"^LearnButton", L("HwIconButtonStyle", text=G["midi"])),
-    (r"^Quantize", L("HwIconButtonStyle", text=G["quantise"])),
-    (r"^MetroButton", L("HwIconButtonStyle", text=G["metronome"])),
+    (r"^PlayButton", L("HwPlayButtonStyle", text=G["right"], inset=TB)),
+    (r"^RecButton", L("HwRecordButtonStyle", text=G["record"], inset=TB)),
+    (r"^SongButton", L("HwSongButtonStyle", text="SONG", inset=TB)),
+    (r"^RestartButton", L("HwIconButtonStyle", text=G["skip_start"], inset=TB)),
+    (r"^LoopButton", L("HwGreyIconButtonStyle", text=G["loop"], inset=TB)),
+    (r"^RetroButton", L("HwIconButtonStyle", text=G["retrigger"], inset=TB)),
+    (r"^PanicButton", L("HwIconButtonStyle", text=G["warning"], inset=TB)),
+    (r"^LearnButton", L("HwGreyIconButtonStyle", text=G["midi"], inset=TB)),
+    (r"^Quantize", L("HwGreyIconButtonStyle", text=G["quantise"], inset=TB)),
+    (r"^MetroButton", L("HwGreyIconButtonStyle", text=G["metronome"], inset=TB)),
     (r"^UndoButton", L("HwDarkButtonStyle", text="UNDO", optRoundTopRight="false", optRoundBottomRight="false")),
     (r"^RedoButton", L("HwDarkButtonStyle", text="REDO", optRoundTopRight="false", optRoundBottomRight="false")),
     (r"^UndoRedoDropArrow", L("HwDarkIconButtonStyle", text=G["down"], optRoundTopLeft="false", optRoundBottomLeft="false")),
     # Pad mode column.
-    (r"^PadModePad", L("HwButtonStyle", text="PAD")),
-    (r"^PadModeChro", L("HwButtonStyle", text="CHR")),
-    (r"^PadModeVel", L("HwButtonStyle", text="VEL")),
-    (r"^PadModeEMS", L("HwButtonStyle", text="M/S")),
+    # (icons: a 3 x 3 grid of small squares, a note, a velocity ramp, E with M/S)
+    (r"^PadModePad", L("HwButtonStyle", text="", inset=PM, decor=GRID_ICON)),
+    (r"^PadModeChro", L("HwButtonStyle", text="♩", font=text_font(24), inset=PM)),
+    (r"^PadModeVel", L("HwButtonStyle", text="◢", font=text_font(24), inset=PM)),
+    (r"^PadModeEMS", L("HwButtonStyle", text="E", font=text_font(14, True), inset=PM, decor=EMS_ICON, realTextOffset="-3")),
     (r"^FullLevel", L("HwButtonStyle", text="FULL", font=text_font(8, True))),
     (r"^Erase(Up|Down)", L("HwIconButtonStyle", text=G["eraser"], font=icon_font(12))),
     (r"^Follow", L("HwButtonStyle", text="FLW", font=text_font(8, True))),
@@ -210,7 +221,7 @@ PANELS = [
 # ---------------------------------------------------------------- text boxes (imBackground)
 
 TEXT_BOXES = [
-    (r"Combo", L("BaseTextBoxStyle")),
+    (r"Combo", L("BaseTextBoxStyle", realPopupArrowSize="0.3", optPopupDivider="false")),
     (r"^SearchBox", L("BaseTextBoxStyle", realCornerRounding="8")),
     (r"", L("BaseTextBoxStyle")),
 ]
@@ -220,8 +231,8 @@ TEXT_BOXES = [
 # (rule, look, fit): fit = how the square dial sits in v1's rect ("top"
 # for the hardware knobs, whose film frames carry a scale under the dial).
 KNOBS = [
-    (r"^HARDKnobLarge", L("HardKnobStyle", ctrl={"realDialThickness": "0.12"}, inset=(6, 11, 6, 21)), "top"),
-    (r"^HARDKnobSmall", L("HardKnobSmallStyle", ctrl={"realDialThickness": "0.36"}, inset=(2, 2, 2, 4)), "top"),
+    (r"^HARDKnobLarge", L("HardKnobStyle", ctrl={"realDialThickness": "0.12"}, inset=(4, 12, 8, 20)), "top"),
+    (r"^HARDKnobSmall", L("HardKnobSmallStyle", ctrl={"realDialThickness": "0.07"}, inset=(2, 1, 2, 5)), "top"),
     (r"^LEDKnobLarge", L("LcdKnobStyle", ctrl={"realDialThickness": "0.14"}), "center"),
     (r"^LEDKnob(Small|Micro)", L("LcdKnobStyle", ctrl={"realDialThickness": "0.22"}), "center"),
     (r"^LEDSpinner", L("SpinnerStyle", ctrl={"realDialThickness": "0.2"}), "center"),
@@ -229,7 +240,7 @@ KNOBS = [
 
 # The body drawn under knobs big enough to have one: (theme style, inset as
 # a fraction of the dial).
-KNOB_BODY = {"HardKnobStyle": ("HardKnobBodyStyle", 0.12), "LcdKnobStyle": ("LcdKnobBodyStyle", 0.2)}
+KNOB_BODY = {}  # (the knobs draw their own face: colFace)
 
 # ---------------------------------------------------------------- faders, pans, meters (imBackingStrip)
 
@@ -238,14 +249,14 @@ KNOB_BODY = {"HardKnobStyle": ("HardKnobBodyStyle", 0.12), "LcdKnobStyle": ("Lcd
 # faders; pans size theirs with faderHeadSize) and their track back (v1's
 # noDefaultDrawing left it to the bitmap).
 LED = {"intSegmentSize": "3", "intSegmentGap": "1"}
-TRACK = {"colFill": "InkSoft"}
+TRACK = {"colFill": "LcdFace"}
 SLIDERS = [
     (r"^(HARDVU|EngineVU)", L("StripMeterStyle", **LED)),
-    (r"VU", L("LcdMeterStyle", **LED)),
-    (r"PanBase", L("LcdPanStyle", ctrl={"realTrackInset": "0.33"}, **TRACK)),
-    (r"^LEDSmVSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.36"}, realHandleLength="16", **TRACK)),
-    (r"^LEDFatSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.36"}, realHandleLength="22", **TRACK)),
-    (r"", L("LcdFaderStyle", ctrl={"realTrackInset": "0.36"}, **TRACK)),
+    (r"VU", L("LcdMeterStyle")),  # (v1's LCD meters: plain bars)
+    (r"PanBase", L("LcdPanStyle", ctrl={"realTrackInset": "0.0"}, **TRACK)),
+    (r"^LEDSmVSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="15", **TRACK)),
+    (r"^LEDFatSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="20", **TRACK)),
+    (r"", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, **TRACK)),
 ]
 
 # ---------------------------------------------------------------- meters and plots (imBackground)

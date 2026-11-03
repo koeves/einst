@@ -3,11 +3,8 @@
     <CtrlPanel name="CtrlPanel" rect="0, 0, 193, 150" id="0" style="EmptyPanelStyle">
         <CtrlPopupButton name="Control2" rect="59, 16, 75, 17" id="100002" legacyClass="CtrlComboBox" optSingleClickEdit="true" style="LEDComboBoxStyle" />
         <CtrlLabel name="CtrlLabel" rect="51, 37, 91, 15" id="100010" style="StandardLabelCenteredStyle" text="Mode" />
-        <CtrlPanel rect="82, 77, 28, 28" style="LcdKnobBodyStyle" />
         <CtrlKnob name="Control3" rect="71, 68, 50, 46" displayName="Pitch" id="100021" realDialThickness="0.14" style="LEDKnobLargeLR" />
-        <CtrlPanel rect="147, 77, 28, 28" style="LcdKnobBodyStyle" />
         <CtrlKnob name="Control4" rect="136, 68, 50, 46" displayName="Resonance" id="100012" realDialThickness="0.14" style="LEDKnobLargeLR" />
-        <CtrlPanel rect="18, 77, 28, 28" style="LcdKnobBodyStyle" />
         <CtrlKnob name="Control1" rect="7, 68, 50, 46" displayName="Drive" id="100020" realDialThickness="0.14" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="63, 118, 66, 15" id="100027" style="StandardLabelCenteredStyle" text="Pitch" />
         <CtrlLabel name="CtrlLabel" rect="128, 118, 66, 15" id="100015" style="StandardLabelCenteredStyle" text="Resonance" />

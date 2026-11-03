@@ -2,180 +2,180 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 224, 194" id="0" style="EmptyPanelStyle">
         <CtrlPanel name="Pad12" rect="0, 0, 56, 46" id="12" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad13" rect="56, 0, 56, 46" id="13" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad14" rect="112, 0, 56, 46" id="14" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad15" rect="168, 0, 56, 46" id="15" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad8" rect="0, 49, 56, 46" id="8" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad9" rect="56, 49, 56, 46" id="9" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad10" rect="112, 49, 56, 46" id="10" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad11" rect="168, 49, 56, 46" id="11" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad4" rect="0, 98, 56, 46" id="4" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad5" rect="56, 98, 56, 46" id="5" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad6" rect="112, 98, 56, 46" id="6" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad7" rect="168, 98, 56, 46" id="7" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad0" rect="0, 147, 56, 46" id="0" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad1" rect="56, 147, 56, 46" id="1" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad2" rect="112, 147, 56, 46" id="2" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
         <CtrlPanel name="Pad3" rect="168, 147, 56, 46" id="3" overloadClass="EditorPad" style="PadSlotStyle">
-            <CtrlPanel rect="2, 0, 52, 46" style="PadStyle" />
-            <CtrlPanel rect="9, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="14, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="19, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="24, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="29, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="34, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="39, 38, 3, 3" style="PadLedStyle" />
-            <CtrlPanel rect="44, 38, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="0, 0, 50, 42" style="PadStyle" />
+            <CtrlPanel rect="7, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="12, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="17, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="22, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="27, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="32, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="37, 34, 3, 3" style="PadLedStyle" />
+            <CtrlPanel rect="42, 34, 3, 3" style="PadLedStyle" />
         </CtrlPanel>
     </CtrlPanel>
 </root>

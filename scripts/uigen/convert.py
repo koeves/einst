@@ -65,6 +65,12 @@ CLASSES = {
     "Ctrl": ("CtrlPanel", "plain panel"),
 }
 
+# Code-drawn panels dreist-gui now draws natively, by overload class:
+# (class, style). The overload stays (the editor binds to it).
+PANEL_OVERLOADS = {
+    "SplitFader": ("CtrlRangeSlider", "LcdRangeStyle"),  # the delay's high / low cut
+}
+
 # Plain `Ctrl`s by overload class: None drops the control.
 CTRL_OVERLOADS = {
     "OverlayImage": None,  # the glass/shine bitmap over the window
@@ -100,7 +106,8 @@ UNSTYLED_CLASS = {"CtrlLabel": "BaseLabelStyle", "CtrlButton": "LcdButtonStyle",
 PANEL_DECOR = {
     # 52 px wide pad frames in a 56 px slot, with the row of eight status
     # LEDs along the bottom (the first one shows the pad's colour).
-    "EditorPad": [("inside", 2, 0, 52, 46, "PadStyle")] + [("inside", 9 + 5 * i, 38, 3, 3, "PadLedStyle") for i in range(8)],
+    # (measured on v1's screens: 50 x 43 from the slot's left edge)
+    "EditorPad": [("inside", 0, 0, 50, 42, "PadStyle")] + [("inside", 7 + 5 * i, 34, 3, 3, "PadLedStyle") for i in range(8)],
 }
 
 # Labels grow to fit their font (v1 drew label text unclipped; dreist-gui
@@ -499,6 +506,8 @@ class Converter:
                 self.dropped_ctrls.append((source, attrs.get("name"), ov))
                 return []
             cls, attrs["style"], attrs["text"] = spec
+        if v1cls == "CtrlPanel" and ov in PANEL_OVERLOADS:
+            cls, attrs["style"] = PANEL_OVERLOADS[ov]
         if (source, attrs.get("style")) in self.local:
             attrs["style"] = self.local[(source, attrs["style"])]
         if "style" not in attrs:

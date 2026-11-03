@@ -4,17 +4,14 @@
         <CtrlPanel name="Control3" rect="84, 3, 107, 15" id="100001" style="EmptyPanelStyle">
             <CtrlLabel name="CtrlLabel" rect="-8, 0, 123, 15" id="0" style="StandardLabelCenteredStyle" text="High Cut" />
         </CtrlPanel>
-        <CtrlPanel name="SplitFader" rect="84, 20, 107, 19" id="100000" overloadClass="SplitFader" />
+        <CtrlRangeSlider name="SplitFader" rect="84, 20, 107, 19" id="100000" legacyClass="CtrlPanel" overloadClass="SplitFader" style="LcdRangeStyle" />
         <CtrlPanel name="Control4" rect="84, 42, 107, 15" id="100001" style="EmptyPanelStyle">
             <CtrlLabel name="CtrlLabel" rect="-8, 0, 123, 15" id="0" style="StandardLabelCenteredStyle" text="Low Cut" />
         </CtrlPanel>
         <CtrlButton name="Control6" rect="25, 21, 16, 17" id="100002" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
         <CtrlLabel name="CtrlLabel" rect="-1, 43, 66, 13" id="100003" style="StandardLabelCenteredStyle" text="Sync" />
-        <CtrlPanel rect="18, 77, 28, 28" style="LcdKnobBodyStyle" />
         <CtrlKnob name="Control1" rect="7, 68, 50, 46" displayName="Delay time" id="100001" realDialThickness="0.14" style="LEDKnobLargeLR" />
-        <CtrlPanel rect="82, 77, 28, 28" style="LcdKnobBodyStyle" />
         <CtrlKnob name="Control2" rect="71, 68, 50, 46" id="100021" realDialThickness="0.14" style="LEDKnobLargeLR" />
-        <CtrlPanel rect="147, 77, 28, 28" style="LcdKnobBodyStyle" />
         <CtrlKnob name="Control5" rect="136, 68, 50, 46" id="100027" realDialThickness="0.14" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="-1, 118, 66, 15" id="100020" style="StandardLabelCenteredStyle" text="Delay Time" />
         <CtrlLabel name="CtrlLabel" rect="63, 118, 66, 15" id="100022" style="StandardLabelCenteredStyle" text="Feedback" />
