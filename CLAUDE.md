@@ -1,9 +1,8 @@
 # Einst
 
-Rebuild of the original v1 instrument as a thin app on **dreist-commons** (public
-`koeves/dreist-commons`, a git submodule at `commons`, used by path; change it by committing and
-pushing inside `commons/`, then `git add commons` here). Einst plugs in through dreist-commons' hooks: `crates/einst`
-holds the app profile (`dreist_formats::profile`) and installs v1's effect nodes
+Rebuild of the original v1 instrument as a thin app on **dreist-commons** (a git submodule at
+`commons`, used by path; see `.agents/git.md` for changing it). Einst plugs in through
+dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::profile`) and installs v1's effect nodes
 (`dreist_dsp::fx::install_factory`). Shared behaviour belongs in dreist-commons, v1 specifics here.
 
 - Outside README files: no original product, vendor or class names in code, comments or docs. Cite
@@ -15,7 +14,8 @@ holds the app profile (`dreist_formats::profile`) and installs v1's effect nodes
 - Goldens (`crates/einst/tests/golden`) must stay identical unless a change is meant to alter
   them; explain every change. Porting bugs found in dreist-commons get their own commit there.
 - Out of scope: licensing / copy protection, updates and registration, RTAS, inter-plugin audio.
-- Keep the repository private. Commits: plain messages, no attribution lines.
+- Keep the repository private. Git (Conventional Commits, no attribution lines, changelog,
+  releases, submodule bumps): `.agents/git.md`.
 
 ## Build
 

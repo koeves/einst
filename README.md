@@ -18,10 +18,6 @@ Outputs: `Einst.vst3`, `Einst.clap`, `Einst.app` (Apple Silicon). Plugin IDs: CL
 
 ## Build
 
-dreist-commons is a git submodule at `commons` (clone with `--recursive`, or run
-`git submodule update --init`), and Cargo uses its crates by path. To change commons, commit
-and push inside `commons/`, then commit the new submodule revision here (`git add commons`).
-
     scripts/build.sh              # release: target/bundled/Einst.{app,vst3,clap}
     scripts/build.sh --debug
     scripts/build.sh --install    # also into ~/Library/Audio/Plug-Ins and ~/Applications
@@ -45,11 +41,17 @@ metronomes) and `assets/v1/System` (v1's factory effect presets, effect chains a
 Status: [`docs/PROGRESS.md`](docs/PROGRESS.md). Reverse-engineering notes are in the private
 `dreist-re` repository (`einst/`).
 
+## Contributing
+
+- Commits follow Conventional Commits (`feat(scope): ...`); the changelog and release notes
+  are generated from them ([CONTRIBUTING.md](CONTRIBUTING.md)).
+- Checks: the `cargo fmt`, `cargo clippy` and `cargo test` lines under Build.
+- dreist-commons is a submodule at `commons`: clone with `--recursive`.
+- Git conventions for contributors and agents: [`.agents/git.md`](.agents/git.md).
+
 ## Related projects
 
-- [dreist-commons](https://github.com/koeves/dreist-commons) (public): the shared library
-  (formats, DSP, engine, GUI, editor) that both apps are built on; a submodule here.
-- [Dreist](https://github.com/koeves/dreist) (private): the Geist2 rebuild, an app on dreist-commons.
-- [Einst](https://github.com/koeves/einst) (private): the Geist v1 rebuild, an app on dreist-commons.
-
-The reverse-engineering notes behind all three are kept in a private repository.
+- [dreist-commons](https://github.com/koeves/dreist-commons): the shared library (formats, DSP,
+  engine, GUI, editor) that both apps are built on.
+- [Dreist](https://github.com/koeves/dreist): the Geist2 rebuild, an app on dreist-commons.
+- [Einst](https://github.com/koeves/einst): the Geist v1 rebuild, an app on dreist-commons.
