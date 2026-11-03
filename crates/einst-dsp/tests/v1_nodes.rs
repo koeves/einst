@@ -440,3 +440,33 @@ fn tin_can_has_no_crossfeed() {
     assert!(right(&mut einst_dsp::tin_can::TinCan::new()) < 1e-6);
     assert!(right(&mut TinCan::new()) > 1e-3);
 }
+
+/// Audio Freezer: freezing works (finite, the frozen loop repeats) and
+/// differs from v2 (whole-beat loops, v1's trigger and grain time).
+#[test]
+fn audio_freezer_freezes_with_v1_loops() {
+    use dreist_dsp::fx::nodes::audio_freeze::AudioFreeze;
+    let mut ctx = Ctx::new(48_000.0);
+    ctx.bpm = 120.0;
+    // 0 gate, 1 loop length, 2 grain time, 3 sync, 4 smooth, 5 scratch, 6 speed, 7 jump, 8 random, 9 wet.
+    let set = |n: &mut dyn Node, gate: f32| {
+        for (i, v) in [(0, gate), (1, 2.0), (2, 0.0), (3, 0.0), (4, 0.1), (5, 1.0), (6, 0.0), (7, 0.0), (8, 0.0), (9, 1.0)] {
+            n.ports()[i].value = v;
+        }
+    };
+    let mut render = |n: &mut dyn Node| {
+        let mut out = Vec::new();
+        for b in 0..200u32 {
+            set(n, if b < 50 { 0.0 } else { 1.0 });
+            ctx.ppq = (b * 256) as f64 / 48_000.0 * 2.0;
+            let x = noise(256, 700 + b);
+            out.extend(run(n, &ctx, &x, &x).0);
+        }
+        out
+    };
+    let a = render(&mut einst_dsp::audio_freeze::AudioFreeze::new());
+    let b = render(&mut AudioFreeze::new());
+    assert!(a.iter().all(|v| v.is_finite()));
+    assert!(a[40_000..].iter().any(|v| v.abs() > 1e-3), "frozen output");
+    assert_ne!(a, b);
+}

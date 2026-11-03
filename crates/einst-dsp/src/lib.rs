@@ -20,6 +20,7 @@
 //! chain builds them through [`create`] (`dreist_dsp::fx::install_factory`)
 //! in place of Dreist's v2 nodes.
 
+pub mod audio_freeze;
 pub mod comb;
 pub mod delay;
 pub mod envelope_shaper;
@@ -58,6 +59,7 @@ pub const GRANDAD_FILTER: usize = 33;
 pub const LITTLE_FATTY_FILTER: usize = 34;
 pub const CHILD_GENIUS_FILTER: usize = 35;
 pub const JAPAN_FILTER: usize = 36;
+pub const AUDIO_FREEZER: usize = 38;
 pub const TIN_CAN_VERB: usize = 43;
 pub const FREQUENCY_SHIFTER: usize = 25;
 
@@ -71,6 +73,7 @@ pub fn create(kind: usize) -> Option<Box<dyn Node>> {
         NOISE_GATE => Box::new(noise_gate::NoiseGate::new()),
         COMB_FILTER => Box::new(comb::Comb::new()),
         DELAY => Box::new(delay::Delay::new()),
+        AUDIO_FREEZER => Box::new(audio_freeze::AudioFreeze::new()),
         TIN_CAN_VERB => Box::new(tin_can::TinCan::new()),
         PARAMETRIC_EQ | DJ_EQ => Box::new(ssl_eq::SslEq::new()),
         FILTER => Box::new(ssl_filter::SslFilter::new()),
@@ -97,6 +100,7 @@ pub fn internal_ports(kind: usize) -> &'static [(usize, f32)] {
         // Same hidden ports as v2 (`dreist_dsp` setup) for the copied nodes.
         FILTER => &[(4, 1.0)],
         DELAY => &[(1, 1.0), (7, 1.0), (4, 0.0)],
+        AUDIO_FREEZER => &[(3, 1.0), (8, 0.0), (7, 0.0), (9, 1.0)],
         TIN_CAN_VERB => &[(6, 1.0), (5, 0.0)],
         PARAMETRIC_EQ => &[(3, 0.0), (7, 1.0), (11, 1.0), (15, 0.0), (16, 0.0), (17, 1.0)],
         DJ_EQ => &[(3, 1.0), (7, 0.0), (11, 1.0), (15, 1.0), (0, 0.0), (12, 0.0), (1, 0.3), (13, 0.75), (8, 0.5), (16, 0.0), (17, 1.0)],
