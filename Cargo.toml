@@ -24,12 +24,12 @@ manual_range_contains = "allow"
 [workspace.dependencies]
 # The shared crates: dreist-commons at a pinned revision. For development
 # against a local checkout, see README (a [patch] in ../.cargo/config.toml).
-dreist-formats = { git = "https://github.com/koeves/dreist-commons", rev = "8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2" }
-dreist-dsp = { git = "https://github.com/koeves/dreist-commons", rev = "8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2" }
-dreist-engine = { git = "https://github.com/koeves/dreist-commons", rev = "8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2" }
-dreist-gui = { git = "https://github.com/koeves/dreist-commons", rev = "8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2" }
-dreist-editor = { git = "https://github.com/koeves/dreist-commons", rev = "8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2" }
-dreist-testkit = { git = "https://github.com/koeves/dreist-commons", rev = "8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2" }
+dreist-formats = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
+dreist-dsp = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
+dreist-engine = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
+dreist-gui = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
+dreist-editor = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
+dreist-testkit = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
 roxmltree = "0.20"
 thiserror = "2"
 
@@ -42,7 +42,7 @@ opt-level = 2
 # dreist-commons' vendored patches: baseview with a re-entrancy guard for
 # modal dialogs, signalsmith-stretch with a fixed phase-randomisation seed.
 [patch."https://github.com/RustAudio/baseview.git"]
-baseview = { git = "https://github.com/koeves/dreist-commons", rev = "8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2" }
+baseview = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
 
 [patch.crates-io]
-signalsmith-stretch = { git = "https://github.com/koeves/dreist-commons", rev = "8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2" }
+signalsmith-stretch = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }

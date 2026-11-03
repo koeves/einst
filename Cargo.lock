@@ -374,7 +374,7 @@ dependencies = [
 [[package]]
 name = "baseview"
 version = "0.1.0"
-source = "git+https://github.com/koeves/dreist-commons?rev=8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2#8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2"
+source = "git+https://github.com/koeves/dreist-commons?rev=449b54a91f8bd6d65b086c35ee26e379b60179a8#449b54a91f8bd6d65b086c35ee26e379b60179a8"
 dependencies = [
  "cocoa",
  "core-foundation",
@@ -1004,7 +1004,7 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab8ecd87370524b461f8557c119c405552c396ed91fc0a8eec68679eab26f94a"
 dependencies = [
- "libloading 0.7.4",
+ "libloading 0.8.9",
 ]
 
 [[package]]
@@ -1016,7 +1016,7 @@ checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 [[package]]
 name = "dreist-dsp"
 version = "0.1.0"
-source = "git+https://github.com/koeves/dreist-commons?rev=8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2#8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2"
+source = "git+https://github.com/koeves/dreist-commons?rev=449b54a91f8bd6d65b086c35ee26e379b60179a8#449b54a91f8bd6d65b086c35ee26e379b60179a8"
 dependencies = [
  "rustfft",
  "signalsmith-stretch",
@@ -1025,7 +1025,7 @@ dependencies = [
 [[package]]
 name = "dreist-editor"
 version = "0.1.0"
-source = "git+https://github.com/koeves/dreist-commons?rev=8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2#8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2"
+source = "git+https://github.com/koeves/dreist-commons?rev=449b54a91f8bd6d65b086c35ee26e379b60179a8#449b54a91f8bd6d65b086c35ee26e379b60179a8"
 dependencies = [
  "dreist-dsp",
  "dreist-engine",
@@ -1038,7 +1038,7 @@ dependencies = [
 [[package]]
 name = "dreist-engine"
 version = "0.1.0"
-source = "git+https://github.com/koeves/dreist-commons?rev=8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2#8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2"
+source = "git+https://github.com/koeves/dreist-commons?rev=449b54a91f8bd6d65b086c35ee26e379b60179a8#449b54a91f8bd6d65b086c35ee26e379b60179a8"
 dependencies = [
  "dreist-dsp",
  "dreist-formats",
@@ -1049,7 +1049,7 @@ dependencies = [
 [[package]]
 name = "dreist-formats"
 version = "0.1.0"
-source = "git+https://github.com/koeves/dreist-commons?rev=8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2#8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2"
+source = "git+https://github.com/koeves/dreist-commons?rev=449b54a91f8bd6d65b086c35ee26e379b60179a8#449b54a91f8bd6d65b086c35ee26e379b60179a8"
 dependencies = [
  "roxmltree",
  "thiserror 2.0.21",
@@ -1058,7 +1058,7 @@ dependencies = [
 [[package]]
 name = "dreist-gui"
 version = "0.1.0"
-source = "git+https://github.com/koeves/dreist-commons?rev=8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2#8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2"
+source = "git+https://github.com/koeves/dreist-commons?rev=449b54a91f8bd6d65b086c35ee26e379b60179a8#449b54a91f8bd6d65b086c35ee26e379b60179a8"
 dependencies = [
  "baseview",
  "dreist-formats",
@@ -1074,7 +1074,7 @@ dependencies = [
 [[package]]
 name = "dreist-testkit"
 version = "0.1.0"
-source = "git+https://github.com/koeves/dreist-commons?rev=8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2#8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2"
+source = "git+https://github.com/koeves/dreist-commons?rev=449b54a91f8bd6d65b086c35ee26e379b60179a8#449b54a91f8bd6d65b086c35ee26e379b60179a8"
 
 [[package]]
 name = "einst"
@@ -1085,6 +1085,7 @@ dependencies = [
  "dreist-engine",
  "dreist-formats",
  "dreist-gui",
+ "dreist-testkit",
  "einst-dsp",
  "einst-formats",
 ]
@@ -2746,7 +2747,7 @@ dependencies = [
 [[package]]
 name = "signalsmith-stretch"
 version = "0.1.3"
-source = "git+https://github.com/koeves/dreist-commons?rev=8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2#8a03d51e97b8ef5fc0364e3dfd3aa5f57f71bec2"
+source = "git+https://github.com/koeves/dreist-commons?rev=449b54a91f8bd6d65b086c35ee26e379b60179a8#449b54a91f8bd6d65b086c35ee26e379b60179a8"
 dependencies = [
  "bindgen 0.70.1",
  "cc",
