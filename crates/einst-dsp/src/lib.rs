@@ -9,7 +9,9 @@
 //!
 //! and the shared classes whose v1 build differs (`docs/re/effects-v1.md`):
 //! Stereo Width, Phaser and Frequency Shifter (v1's fast 2^x), Noise Gate
-//! (v1's port order).
+//! (v1's port order), Channel Compressor (flat input gain, fast 2^x), Bus
+//! Compressor (fast 2^x for the side-chain high-pass), Modulated Filter
+//! (fast 2^x, FM from the left input only).
 //!
 //! v1's `VDSPNodeAdaptor::Process22` (0x4f3840, ev_964c5456) runs a mono
 //! node as two instances, one per channel, so each node here keeps one
@@ -17,6 +19,8 @@
 //! (`einst-engine`'s `fx.rs`) builds them through [`create`] in place of
 //! Dreist's Geist2 nodes.
 
+pub mod auto_filter;
+pub mod bus_comp;
 pub mod envelope_shaper;
 pub mod freq_shifter;
 pub mod gain;
@@ -24,6 +28,7 @@ mod math;
 pub mod noise_gate;
 pub mod phaser;
 pub mod stereo;
+pub mod urei1176;
 pub mod vari_eq;
 
 use geist_dsp::fx::Node;
@@ -32,9 +37,12 @@ use geist_dsp::fx::Node;
 pub const GAIN: usize = 1;
 pub const STEREO_WIDTH: usize = 2;
 pub const VARI_EQ: usize = 5;
+pub const CHANNEL_COMPRESSOR: usize = 8;
+pub const BUS_COMPRESSOR: usize = 9;
 pub const NOISE_GATE: usize = 11;
 pub const ENVELOPE_SHAPER: usize = 12;
 pub const PHASER: usize = 18;
+pub const MODULATED_FILTER: usize = 29;
 pub const FREQUENCY_SHIFTER: usize = 25;
 
 /// v1's node for an effect type (Geist2 numbering), or `None` where v1 and
@@ -44,8 +52,11 @@ pub fn create(kind: usize) -> Option<Box<dyn Node>> {
         GAIN => Box::new(gain::Gain::new()),
         STEREO_WIDTH => Box::new(stereo::StereoMixer::new()),
         VARI_EQ => Box::new(vari_eq::VariEq::new()),
+        CHANNEL_COMPRESSOR => Box::new(urei1176::Urei1176::new()),
+        BUS_COMPRESSOR => Box::new(bus_comp::BusComp::new()),
         NOISE_GATE => Box::new(noise_gate::NoiseGate::new()),
         PHASER => Box::new(phaser::Phaser::new()),
+        MODULATED_FILTER => Box::new(auto_filter::AutoFilter::new()),
         FREQUENCY_SHIFTER => Box::new(freq_shifter::FreqShifter::new()),
         ENVELOPE_SHAPER => Box::new(envelope_shaper::EnvelopeShaper::new()),
         _ => return None,
@@ -57,12 +68,18 @@ pub fn create(kind: usize) -> Option<Box<dyn Node>> {
 /// node's own (v1) port order.
 pub fn internal_ports(kind: usize) -> &'static [(usize, f32)] {
     match kind {
+        // v1 type 6: Mix, Active on, Q 0.5.
+        CHANNEL_COMPRESSOR => &[(7, 1.0), (8, 1.0), (3, 0.5)],
+        // v1 type 7: Mix, Active on, external side-chain off.
+        BUS_COMPRESSOR => &[(5, 1.0), (6, 1.0), (7, 0.0)],
         // v1 type 9: WetMix.
         ENVELOPE_SHAPER => &[(0, 1.0)],
         // v1 type 8: HPFreq, Preview, Sidechain off, WetMix 1.
         NOISE_GATE => &[(6, 0.0), (7, 0.0), (8, 0.0), (9, 1.0)],
         // v1 type 13.
         PHASER => &[(6, 1.0), (7, 0.0), (8, 0.0)],
+        // v1 type 19: Mix, Active on, external side-chain off, FM off.
+        MODULATED_FILTER => &[(5, 1.0), (6, 1.0), (7, 0.0), (11, 0.0)],
         // v1 type 17.
         FREQUENCY_SHIFTER => &[(2, 1.0)],
         _ => &[],

@@ -90,6 +90,12 @@ and re-apply Einst's changes, which are all marked `Einst` or listed here:
   Frequency Shifter differ only by v1's fast 2^x (copied Dreist nodes with that one call
   swapped: `einst_dsp::{stereo, phaser, freq_shifter}`); the rest are listed there as "to
   decompile".
+- Batch 2 (`docs/re/effects-v1.md`): Breverb identical; Channel Compressor (flat input gain,
+  fast 2^x: `einst_dsp::urei1176`), Bus Compressor (fast 2^x for the side-chain HP: wrapper
+  `einst_dsp::bus_comp`) and Modulated Filter (fast 2^x ×3, FM from the left input:
+  `einst_dsp::auto_filter`) differ and are fixed. Goldens: Blister and Hollow change (both use
+  Channel Compressor and Modulated Filter). Dreist's Modulated Filter takes FM per channel
+  where Geist2 takes it from one input (noted for Dreist).
 - The editor's effect menu offers v1's 32 types in v1's order and categories
   (`einst_formats::v1::{EFFECT_TYPES, effect_menu}`). Effect files store type names, which v1 and
   Geist2 share, so the converter keeps them; a test checks all 32.
@@ -117,7 +123,7 @@ and re-apply Einst's changes, which are all marked `Einst` or listed here:
 2. Remaining UI gaps above need Dreist's `geist-gui` / `geist-engine` (owner, 2026-11-03: keep
    Dreist untouched).
 3. Effects batch 2+: decompile the "to decompile" rows of `docs/re/effects-v1.md`, starting
-   with the clear model differences (Channel and Bus Compressor, Modulated Filter, Japan Filter,
-   Ring Mod, Tin Can Verb, Breverb, SSL EQ / Filter, Audio Freezer), then confirm the
+   with the clear model differences (Japan Filter, Ring Mod, Tin Can Verb, SSL EQ / Filter,
+   Audio Freezer, Delay, Distortion, Noise Gate DSP), then confirm the
    likely-equal-form ones (Comb, Hoover, Grandad, Child Genius, Bit Crusher).
 4. Diff behaviour of functions both versions share (voice, sequencer, mixer) and record v1 deltas.
