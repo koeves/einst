@@ -220,6 +220,10 @@ fn envelopes(n: &Node, ver: u32, out: &mut Node) {
     const FIRST: [LayerParam; 2] = [LayerParam::AmpEnvAttack, LayerParam::FreeEnvAttack];
     for (e, first) in FIRST.iter().enumerate() {
         let base = *first as usize;
+        // TODO(hold, pending the owner's decision): this clamps a v1 3.x layer's
+        // Hold of -1 to 0 as Geist2 does. v1 itself keeps -1 and recomputes the
+        // hold from the sample (`ResetHoldTime`); leaving `vals[3]` at -1 would
+        // make Dreist do the same. See docs/re/loading-v1.md, "Guesses".
         let mut vals: [Option<f32>; 8] = std::array::from_fn(|i| n.f32(&format!("Envelope{e}Param{i}")).map(|v| v.min(1.0).max(0.0)));
         if ver < 3000 {
             vals[3] = Some(-1.0);

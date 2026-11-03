@@ -1,0 +1,36 @@
+[package]
+name = "einst-plugin"
+edition.workspace = true
+version.workspace = true
+# The VST3 export links nih-plug's VST3 bindings (GPLv3), so this crate and
+# the plugins and app built from it are GPL-3.0-or-later (as Dreist's
+# geist-plugin, which this is a copy of).
+license = "GPL-3.0-or-later"
+description = "Einst CLAP/VST3 plugin and standalone (nih-plug), Dreist's shell with Geist v1 file support"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[[bin]]
+name = "einst-standalone"
+path = "src/main.rs"
+required-features = ["standalone"]
+
+[features]
+standalone = ["nih_plug/standalone", "dep:cpal", "dep:midir"]
+
+[dependencies]
+einst-formats = { path = "../einst-formats" }
+geist-dsp.workspace = true
+geist-engine.workspace = true
+geist-gui = { workspace = true, features = ["window"] }
+geist-editor = { workspace = true, features = ["window"] }
+geist-formats.workspace = true
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+cpal = { version = "=0.15.3", optional = true }
+midir = { version = "=0.9.1", optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[lints]
+workspace = true

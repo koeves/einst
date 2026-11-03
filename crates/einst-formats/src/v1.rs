@@ -82,6 +82,50 @@ impl Document {
     }
 }
 
+/// Open a file as a Geist2 project if it is a Geist v1 document: `Ok(None)`
+/// for anything else (a Geist2 file of the same extension loads as is).
+/// v1 roots carry no `version` attribute (Geist2's always do). Kits, pads,
+/// engines, patterns and banks are placed in engine 0 of an otherwise empty
+/// project. The second value is the folder relative sample paths resolve in
+/// (`<file>.samples`, as both versions do).
+pub fn open_as_project(path: &Path) -> Result<Option<(Node, std::path::PathBuf)>, Error> {
+    let Some(kind) = FileKind::from_path(path) else { return Ok(None) };
+    if matches!(kind, FileKind::EffectPreset | FileKind::EffectChain | FileKind::PatternTemplate | FileKind::SwingTemplate) {
+        return Ok(None);
+    }
+    let text = std::fs::read_to_string(path)?;
+    if crate::parse(&text)?.version.is_some() {
+        return Ok(None);
+    }
+    let doc = Document::from_str(kind, &text)?;
+    Ok(Some((as_project(kind, doc.to_geist2()?), geist_formats::model::samples_dir(path))))
+}
+
+/// A converted single-object document placed in engine 0 of a project.
+pub fn as_project(kind: FileKind, converted: Node) -> Node {
+    if kind == FileKind::Project {
+        return converted;
+    }
+    let rename = |mut n: Node, name: &str| {
+        n.name = Some(name.into());
+        n
+    };
+    let mut engine = Node::new("Engine", Some("Engine0"));
+    let mut root = Node::new("root", None);
+    root.version = converted.version;
+    for c in converted.children {
+        match (kind, c.class.as_str()) {
+            (FileKind::Engine, "Engine") => engine = rename(c, "Engine0"),
+            (FileKind::Pad, "Pad") => engine.children.push(rename(c, "Pad0")),
+            (FileKind::Pattern, "StepPattern") => engine.children.push(rename(c, "StepPattern0")),
+            (FileKind::Kit | FileKind::PatternBank, _) => engine.children.push(c),
+            _ => {}
+        }
+    }
+    root.children.push(engine);
+    root
+}
+
 /// v1's effect types are a subset of Geist2's (`Effect::EffectTypeToString`).
 fn check_effect(e: &Node) -> Result<(), Error> {
     let ty = e.attr("EffectType").ok_or_else(|| Error::Shape("Effect", "no EffectType".into()))?;

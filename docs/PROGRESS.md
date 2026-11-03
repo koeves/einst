@@ -28,14 +28,36 @@
   result, and `Geist::from_document` renders non-silent, finite audio from a pad playing v1's
   factory metronome click.
 
+- `einst-plugin` (VST3 + CLAP + standalone), `xtask` and `scripts/build.sh`: a copy of Dreist's
+  shell and build with Einst's names and IDs, on Dreist's crates, vendored patches and exact
+  dependency versions (Cargo.lock seeded from Dreist's). Geist v1 files open through
+  `load_project` (saved project path or `EINST_PROJECT`).
+
+## Known gaps (plugin shell)
+
+- Dreist's editor is used unpatched, so some UI text still says "Dreist": `geist_editor::PRODUCT`
+  (window title, transmodulation menu labels), the Open/Save dialog filter "Dreist project", the
+  UI theme name and font. Only the macOS menu bar uses Einst's own `PRODUCT`.
+- The editor's Open dialog, browser and drag and drop load files through Dreist's Geist2 readers;
+  a v1 file opened there is read as if it were Geist2. Fix needs a document-import hook in
+  `geist-editor` (an upstream change: ask the user before touching Dreist).
+- Einst shares Dreist's settings folder (`Geist-rs`, or `GEIST_SETTINGS_DIR`) and resource
+  lookups (`Contents/Resources/{Geist2,Dreist}`, `GEIST2_RESOURCES`, `DREIST_UI`).
+- The bundles carry Dreist's app icon, resources and licence files. v1's own factory resources
+  (`assets/geist1`) are not bundled yet.
+- No CLAP/VST3 validator is installed (clap-validator, pluginval); downloading one needs the user's
+  OK. Checked instead (2026-11-03): `tools/plugincheck.py` loads Einst.clap (descriptor
+  `rs.einst.einst`, create/init/activate at 48 kHz) and Einst.vst3 (class `EinstRsDrumSmplr`),
+  and Dreist's own validation harnesses (`geist-dsp` fx_harness / fx_realtime, `geist-engine`
+  harness / realtime) pass when run against its sources with `--target-dir target/dreist`.
+
 ## Next
 
 1. Decide the open conversion choices in `docs/re/loading-v1.md` ("Guesses and deliberate
    choices"), above all the Hold on v1 3.x layers (Geist2 clamps −1 to 0, v1 recomputes it).
    Convert v1 MIDI/host bindings once `Binding`'s message objects are traced.
-2. `einst-plugin`: nih-plug shell with Einst IDs, wrapping Dreist's engine/editor. Needs either a small
-   upstream change in Dreist (a product/ID parameter in `geist-plugin`) or an Einst copy of the shell.
-   Ask the user before touching Dreist.
+2. Close the plugin-shell gaps above: needs small upstream hooks in Dreist (product name,
+   document import, settings folder). Ask the user before touching Dreist.
 3. v1-only DSP: `VAmpM` (Gain), `VFilterEQ2` (Vari-EQ), `VDSPTransientDesigner` (Envelope
    Shaper) are mono versions of Geist2's `VAmpS`/`VFilterEQ2S`/`VDSPTransientDesignerS`; diff
    them against Dreist's ports.

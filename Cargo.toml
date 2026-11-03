@@ -1,7 +1,6 @@
 [workspace]
 resolver = "2"
-# einst-plugin and xtask join once the plugin shell lands (see docs/PROGRESS.md).
-members = ["crates/einst-formats"]
+members = ["crates/einst-formats", "crates/einst-plugin", "xtask"]
 
 [workspace.package]
 edition = "2024"
@@ -12,11 +11,13 @@ license = "MIT OR Apache-2.0"
 [workspace.lints.clippy]
 approx_constant = "allow"
 excessive_precision = "allow"
+assign_op_pattern = "allow"
 manual_clamp = "allow"
 needless_range_loop = "allow"
 collapsible_if = "allow"
 collapsible_else_if = "allow"
 too_many_arguments = "allow"
+neg_cmp_op_on_partial_ord = "allow"
 type_complexity = "allow"
 manual_range_contains = "allow"
 
@@ -24,6 +25,9 @@ manual_range_contains = "allow"
 # Dreist (Geist2 port) lives next to this repo: ~/Documents/projects/geist.
 geist-formats = { path = "../geist/crates/geist-formats" }
 geist-engine = { path = "../geist/crates/geist-engine" }
+geist-dsp = { path = "../geist/crates/geist-dsp" }
+geist-gui = { path = "../geist/crates/geist-gui" }
+geist-editor = { path = "../geist/crates/geist-editor" }
 roxmltree = "0.20"
 thiserror = "2"
 
@@ -32,3 +36,12 @@ strip = false
 
 [profile.test]
 opt-level = 2
+
+# Dreist's vendored patches, used by path (see ../geist/Cargo.toml): baseview
+# with a re-entrancy guard for modal dialogs, signalsmith-stretch with a fixed
+# phase-randomisation seed.
+[patch."https://github.com/RustAudio/baseview.git"]
+baseview = { path = "../geist/vendor/baseview" }
+
+[patch.crates-io]
+signalsmith-stretch = { path = "../geist/vendor/signalsmith-stretch" }
