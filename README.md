@@ -11,6 +11,7 @@ Outputs: `Einst.vst3`, `Einst.clap`, `Einst.app` (Apple Silicon). Plugin IDs: CL
 | Crate | Role |
 |---|---|
 | `einst` | Einst's app profile: names, theme, resources, the `.einst*` file family, v1's effect menu, v1 documents (`v1io`) and v1's effect nodes, installed with `einst::install()`; the engine and screen goldens under Einst's profile |
+| `einst-editor` | Einst's editor (started from Dreist's): panels, dialogs, settings, About text, the Open dialog's v1 parts |
 | `einst-formats` | Geist v1 file reader and converter onto the Geist2 document tree |
 | `einst-dsp` | Geist v1's effect DSP where it differs from Geist2 (Gain, Vari-EQ, Envelope Shaper, and the shared effects whose v1 build differs) as `dreist_dsp` nodes |
 | `einst-plugin` | nih-plug VST3 / CLAP plugin and standalone app |
@@ -52,6 +53,6 @@ Status: [`docs/PROGRESS.md`](docs/PROGRESS.md). Reverse-engineering notes are in
 ## Related projects
 
 - [dreist-commons](https://github.com/koeves/dreist-commons): the shared library (formats, DSP,
-  engine, GUI, editor) that both apps are built on.
+  engine, GUI toolkit) that both apps are built on.
 - [Dreist](https://github.com/koeves/dreist): the Geist2 rebuild, an app on dreist-commons.
 - [Einst](https://github.com/koeves/einst): the Geist v1 rebuild, an app on dreist-commons.

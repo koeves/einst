@@ -6,7 +6,7 @@
   `type(scope): summary`, imperative, lower-case summary, no trailing period.
   Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `chore`,
   `style`, `revert`; `!` after the type (or a `BREAKING CHANGE:` footer) for a breaking change.
-- Scopes are optional and short: a crate or area (`einst`, `einst-formats`, `einst-dsp`, `einst-plugin`, `ci`).
+- Scopes are optional and short: a crate or area (`einst`, `einst-editor`, `einst-formats`, `einst-dsp`, `einst-plugin`, `ci`).
 - A body only when the why is not obvious; wrap at 72 columns.
 - CI checks every new commit subject (`.github/workflows/commits.yml`).
 - No AI attribution of any kind: no `Co-Authored-By` for an assistant, no session trailers, no

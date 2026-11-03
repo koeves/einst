@@ -1,0 +1,17 @@
+editor-tab-0 84ca5d0507fdd86b
+editor-tab-1 57e8f94873df242c
+editor-tab-2 6d307ac7d7c09378
+editor-tab-3 0415b7cfbff1d62f
+editor-tab-4 02fd903cf3d73301
+editor-tab-5 dfb9d198bce0c54e
+editor-tab-6 1ae8387a8a468680
+main 84ca5d0507fdd86b
+modal-about 66bed8d3bdda176f
+modal-export eea42b6295e7d5f5
+modal-filefind 40bbe348c64c5ce8
+modal-metadata 118aeb254b95e5f8
+modal-preferences 5f2249942fe65224
+options-menu 71e830b7ed714010
+sampler-pads 0d7f414ec59e8efd
+transmod 7e746cc51ad61b8d
+transmod-source 59277ddf2e61d850
