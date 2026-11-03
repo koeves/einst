@@ -10,6 +10,7 @@ Outputs: `Einst.vst3`, `Einst.clap`, `Einst.app` (Apple Silicon).
 | Crate | Role |
 |---|---|
 | `einst-formats` | Geist v1 file reader and converter onto Dreist's Geist2 document tree |
+| `einst-editor` | the editor: a copy of Dreist's `geist-editor` with Einst's names, settings folder, resources (v1 factory presets and templates) and v1 file opening (source commit in `docs/PROGRESS.md`) |
 | `einst-plugin` | nih-plug VST3 / CLAP plugin and standalone app: a copy of Dreist's `geist-plugin` shell with Einst's names and IDs (CLAP `rs.einst.einst`, VST3 class `EinstRsDrumSmplr`), opening Geist v1 files |
 | `xtask` | nih-plug bundler (`cargo xtask bundle einst-plugin`) |
 
@@ -29,10 +30,10 @@ uses its vendored `baseview` / `signalsmith-stretch` patches, and bundles its re
 
 A Geist v1 `.geist`, `.geistkit`, `.geistpad`, `.geistengine`, `.geistpattern` or `.geistbank` is
 converted to Geist2's document (`einst_formats::v1::open_as_project`) when the plugin loads its
-project: the project path saved with the host session, or `EINST_PROJECT=<file>` (e.g.
-`EINST_PROJECT=~/Kit.geistkit open target/bundled/Einst.app`). Single-object files land in
-engine 0. Samples resolve in `<file>.samples/` as in v1. The editor's own Open dialog, browser and
-drag and drop are Dreist's and read Geist2 files only (see `docs/PROGRESS.md`).
+project (the project path saved with the host session, or `EINST_PROJECT=<file>`) and when the
+editor opens it: File › Open (any of these extensions; single-object files land in engine 0), the
+browser, and drag and drop of projects, kits and engines. Samples resolve in `<file>.samples/` as
+in v1.
 
 Status and next steps: [`docs/PROGRESS.md`](docs/PROGRESS.md).
 

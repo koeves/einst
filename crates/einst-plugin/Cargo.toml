@@ -24,7 +24,7 @@ einst-formats = { path = "../einst-formats" }
 geist-dsp.workspace = true
 geist-engine.workspace = true
 geist-gui = { workspace = true, features = ["window"] }
-geist-editor = { workspace = true, features = ["window"] }
+einst-editor = { path = "../einst-editor", features = ["window"] }
 geist-formats.workspace = true
 nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git" }
 cpal = { version = "=0.15.3", optional = true }

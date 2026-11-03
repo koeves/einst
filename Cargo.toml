@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/einst-formats", "crates/einst-plugin", "xtask"]
+members = ["crates/einst-formats", "crates/einst-editor", "crates/einst-plugin", "xtask"]
 
 [workspace.package]
 edition = "2024"
@@ -27,7 +27,6 @@ geist-formats = { path = "../geist/crates/geist-formats" }
 geist-engine = { path = "../geist/crates/geist-engine" }
 geist-dsp = { path = "../geist/crates/geist-dsp" }
 geist-gui = { path = "../geist/crates/geist-gui" }
-geist-editor = { path = "../geist/crates/geist-editor" }
 roxmltree = "0.20"
 thiserror = "2"
 

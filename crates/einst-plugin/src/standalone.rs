@@ -1,10 +1,10 @@
 //! The standalone app's side of the audio / MIDI settings panels
-//! (`geist_editor::devices`): audio devices through cpal, MIDI ports
+//! (`einst_editor::devices`): audio devices through cpal, MIDI ports
 //! through midir, and an audio restart that relaunches the app with the
 //! current document (nih-plug opens its devices once, at start-up).
 
 use cpal::traits::{DeviceTrait, HostTrait};
-use geist_editor::devices::{AudioSetup, DeviceHost, MidiSetup};
+use einst_editor::devices::{AudioSetup, DeviceHost, MidiSetup};
 
 /// Rates offered when a device supports them.
 const RATES: [u32; 6] = [44100, 48000, 88200, 96000, 176400, 192000];

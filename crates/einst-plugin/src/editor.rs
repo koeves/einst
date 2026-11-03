@@ -1,4 +1,4 @@
-//! Plugin editor: `geist-editor` (the installed Geist2 skin) in the host's
+//! Plugin editor: `einst-editor` (Einst's copy of Dreist's editor) in the host's
 //! parent view. The GUI talks to the audio thread through [`Bridge`]:
 //! commands one way, a state snapshot the other, both behind locks the
 //! audio thread only ever `try_lock`s.
@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex, OnceLock, PoisonError, Weak};
 
-use geist_editor::{Command, Editor as GeistGui, Model};
+use einst_editor::{Command, Editor as GeistGui, Model};
 use geist_engine::Geist;
 use geist_formats::Node;
 use nih_plug::prelude::*;
@@ -32,7 +32,7 @@ pub struct UiState {
     /// Bound parameters moved by MIDI CCs / host automation (latest per
     /// target), for the editor's document.
     pub automation: Vec<geist_engine::binding::Message>,
-    pub sampler: geist_editor::model::SamplerView,
+    pub sampler: einst_editor::model::SamplerView,
     /// Last MIDI CC (count, channel, controller) for MIDI learn.
     pub last_cc: (u32, u8, u8),
     /// Peak levels since the editor's last meter tick.
@@ -70,7 +70,7 @@ struct Inbox {
     host_loop: bool,
     editor_messages: Vec<geist_engine::binding::Message>,
     automation: Vec<geist_engine::binding::Message>,
-    sampler: Option<geist_editor::model::SamplerView>,
+    sampler: Option<einst_editor::model::SamplerView>,
     last_cc: (u32, u8, u8),
     meters: geist_engine::Meters,
     takes: Vec<(geist_engine::sampler::Take, f32)>,
@@ -292,8 +292,8 @@ impl Bridge {
                 *lock(&counter) = Some((n / total).min(1.0));
             }));
             let built = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                let mut g = Geist::from_document(doc, &samples, sr, geist_editor::options::render_options(), &mut cache)?;
-                g.set_metronome_sound(&geist_editor::options::metronome_sound());
+                let mut g = Geist::from_document(doc, &samples, sr, einst_editor::options::render_options(), &mut cache)?;
+                g.set_metronome_sound(&einst_editor::options::metronome_sound());
                 g.set_document_mirroring(false);
                 Some(g)
             }));
@@ -354,7 +354,7 @@ pub struct GeistEditor {
 /// `Editor::ComputeStartupSize`: `LastEditorSize` (window pixels) or the
 /// default size × the UI scale.
 fn startup_size() -> (u32, u32) {
-    let o = geist_editor::options::Options::load();
+    let o = einst_editor::options::Options::load();
     let ui = o.int("LastEditorScaleFactor", 100).clamp(50, 300) as f64 / 100.0;
     let saved = o.string("LastEditorSize", "0,0");
     let parsed = saved.split_once(',').and_then(|(w, h)| Some((w.trim().parse::<u32>().ok()?, h.trim().parse::<u32>().ok()?))).filter(|(w, h)| *w > 0 && *h > 0);
@@ -421,7 +421,7 @@ impl Editor for GeistEditor {
                 {
                     g.devices.host = Some(Box::new(crate::standalone::Host));
                     let (app_items, menus) = g.menu_bar_items();
-                    geist_gui::menubar::install(crate::PRODUCT, &app_items, &menus);
+                    geist_gui::menubar::install(einst_editor::PRODUCT, &app_items, &menus);
                 }
                 g
             }
@@ -475,7 +475,7 @@ impl Editor for GeistEditor {
                         let sr = if sr > 0.0 { sr as u32 } else { 44100 };
                         std::thread::spawn(move || {
                             let samples = samples.unwrap_or_else(|| std::path::PathBuf::from("."));
-                            match geist_editor::command::run_export(&doc, &samples, &path, sr, &options, status.as_ref()) {
+                            match einst_editor::command::run_export(&doc, &samples, &path, sr, &options, status.as_ref()) {
                                 Ok(r) => {
                                     if r.clipped > 0 {
                                         nih_log!("export: {} clipped samples", r.clipped);
@@ -562,7 +562,7 @@ impl Editor for GeistEditor {
             ed.set_playback(inbox.playing, inbox.steps, inbox.song_pos);
             // The preview volume is editor-side.
             if let Some(view) = inbox.sampler.take() {
-                let sampler = geist_editor::model::SamplerView { preview_volume: ed.model.sampler.preview_volume, ..view };
+                let sampler = einst_editor::model::SamplerView { preview_volume: ed.model.sampler.preview_volume, ..view };
                 if ed.model.sampler != sampler {
                     ed.model.sampler = sampler;
                     ed.app.dirty = true;
@@ -596,7 +596,7 @@ impl Editor for GeistEditor {
             }
             inbox.clear();
         });
-        Box::new(Handle(geist_editor::window::open_parented(&parent, gui, link)))
+        Box::new(Handle(einst_editor::window::open_parented(&parent, gui, link)))
     }
 
     fn size(&self) -> (u32, u32) {

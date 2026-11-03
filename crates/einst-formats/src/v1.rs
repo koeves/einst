@@ -90,6 +90,14 @@ impl Document {
 /// (`<file>.samples`, as both versions do).
 pub fn open_as_project(path: &Path) -> Result<Option<(Node, std::path::PathBuf)>, Error> {
     let Some(kind) = FileKind::from_path(path) else { return Ok(None) };
+    Ok(convert_file(path)?.map(|doc| (as_project(kind, doc), geist_formats::model::samples_dir(path))))
+}
+
+/// A Geist v1 project, kit, pad, engine, pattern or bank file converted to
+/// Geist2's tree as is (the same root shape: one `Pad`, `Engine` or
+/// `StepPattern` for single-object files); `Ok(None)` for anything else.
+pub fn convert_file(path: &Path) -> Result<Option<Node>, Error> {
+    let Some(kind) = FileKind::from_path(path) else { return Ok(None) };
     if matches!(kind, FileKind::EffectPreset | FileKind::EffectChain | FileKind::PatternTemplate | FileKind::SwingTemplate) {
         return Ok(None);
     }
@@ -97,8 +105,7 @@ pub fn open_as_project(path: &Path) -> Result<Option<(Node, std::path::PathBuf)>
     if crate::parse(&text)?.version.is_some() {
         return Ok(None);
     }
-    let doc = Document::from_str(kind, &text)?;
-    Ok(Some((as_project(kind, doc.to_geist2()?), geist_formats::model::samples_dir(path))))
+    Ok(Some(Document::from_str(kind, &text)?.to_geist2()?))
 }
 
 /// A converted single-object document placed in engine 0 of a project.
