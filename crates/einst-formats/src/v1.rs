@@ -3,9 +3,9 @@
 //! Status per file kind (see `docs/re/formats-v1.md`):
 //! * effect presets, chains, pattern and swing templates: same schema as
 //!   Geist2 [file]: 198 of 260 factory presets are byte-identical. Loaded as is.
-//! * project, kit, pad, engine, pattern, bank: structure known from the save
-//!   code [sym]; the mapping onto Geist2's tree needs Geist2's legacy load
-//!   path and v1's `SerializeAsXML` bodies [decomp, pending].
+//! * project, kit, pad, engine, pattern, bank: converted onto Geist2's tree by
+//!   [`crate::geist2`], following v1's `SerializeAsXML` bodies and Geist2's
+//!   legacy load branches (`docs/re/loading-v1.md`) [decomp].
 
 use std::path::Path;
 
@@ -54,8 +54,22 @@ impl Document {
             }
             FileKind::PatternTemplate => self.single("InsertablePattern").map(|_| ()),
             FileKind::SwingTemplate => self.single("SwingTemplate").map(|_| ()),
-            // Structure checks for these land with the decompiled loaders.
-            FileKind::Project | FileKind::Kit | FileKind::Pad | FileKind::Engine | FileKind::Pattern | FileKind::PatternBank => Ok(()),
+            // `Grid::LoadEntireState` loads nothing when `StateVersion` < 2.0 (missing reads as 0).
+            FileKind::Project => match self.root.f32("StateVersion") {
+                Some(v) if v >= 2.0 => Ok(()),
+                v => Err(Error::Shape("project", format!("StateVersion {v:?} < 2.0"))),
+            },
+            FileKind::Kit => match self.root.children_of("Pad").next() {
+                Some(_) => Ok(()),
+                None => Err(Error::Shape("kit", "no <Pad> under <root>".into())),
+            },
+            FileKind::Pad => self.single("Pad").map(|_| ()),
+            FileKind::Engine => self.single("Engine").map(|_| ()),
+            FileKind::Pattern => self.single("StepPattern").map(|_| ()),
+            FileKind::PatternBank => match self.root.children_of("StepPattern").next() {
+                Some(_) => Ok(()),
+                None => Err(Error::Shape("pattern bank", "no <StepPattern> under <root>".into())),
+            },
         }
     }
 
@@ -63,12 +77,7 @@ impl Document {
     pub fn to_geist2(&self) -> Result<Node, Error> {
         match self.kind {
             FileKind::EffectPreset | FileKind::EffectChain | FileKind::PatternTemplate | FileKind::SwingTemplate => Ok(self.root.clone()),
-            FileKind::Project => Err(Error::Unsupported("project (.geist)")),
-            FileKind::Kit => Err(Error::Unsupported("kit (.geistkit)")),
-            FileKind::Pad => Err(Error::Unsupported("pad (.geistpad)")),
-            FileKind::Engine => Err(Error::Unsupported("engine (.geistengine)")),
-            FileKind::Pattern => Err(Error::Unsupported("pattern (.geistpattern)")),
-            FileKind::PatternBank => Err(Error::Unsupported("pattern bank (.geistbank)")),
+            FileKind::Project | FileKind::Kit | FileKind::Pad | FileKind::Engine | FileKind::Pattern | FileKind::PatternBank => Ok(crate::geist2::convert_root(&self.root)),
         }
     }
 }

@@ -23,6 +23,7 @@ manual_range_contains = "allow"
 [workspace.dependencies]
 # Dreist (Geist2 port) lives next to this repo: ~/Documents/projects/geist.
 geist-formats = { path = "../geist/crates/geist-formats" }
+geist-engine = { path = "../geist/crates/geist-engine" }
 roxmltree = "0.20"
 thiserror = "2"
 

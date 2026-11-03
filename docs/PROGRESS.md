@@ -19,12 +19,20 @@
   pattern serializer, version constants and load-time upgrades, enum name tables, and the effect
   type → DSP class registry: `docs/re/loading-v1.md`. Driver for long analyses:
   `re/scripts/rea_drive.py`.
+- v1 object defaults (constructors / `Initialize` / `ResetState`) and the Sampler, BindingMap and
+  MIDIMap serializers: `docs/re/loading-v1.md`.
+- `Document::to_geist2` for projects, kits, pads, engines, patterns and banks
+  (`einst_formats::geist2`), following Geist2's own legacy branches (decompiled: root,
+  `Layer`, `Step`, `Track`). Tested on synthetic v1 documents built from the serializer field
+  lists (`tests/v1_documents.rs`): every kind converts, Dreist's `geist_formats` loads the
+  result, and `Geist::from_document` renders non-silent, finite audio from a pad playing v1's
+  factory metronome click.
 
 ## Next
 
-1. Write `v1::Document::to_geist2` for projects, kits, pads, engines, patterns and banks from
-   `docs/re/loading-v1.md`. Still to recover first: constructor/`Initialize` defaults for
-   attributes v1 leaves untouched when missing (Engine, Pad, Layer, StepPattern, Track, Effect).
+1. Decide the open conversion choices in `docs/re/loading-v1.md` ("Guesses and deliberate
+   choices"), above all the Hold on v1 3.x layers (Geist2 clamps −1 to 0, v1 recomputes it).
+   Convert v1 MIDI/host bindings once `Binding`'s message objects are traced.
 2. `einst-plugin`: nih-plug shell with Einst IDs, wrapping Dreist's engine/editor. Needs either a small
    upstream change in Dreist (a product/ID parameter in `geist-plugin`) or an Einst copy of the shell.
    Ask the user before touching Dreist.
