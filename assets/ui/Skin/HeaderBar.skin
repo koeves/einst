@@ -10,7 +10,7 @@
             <CtrlLabel name="DropArrowLabel" rect="128, 3, 10, 10" style="HeaderBarMenuDropButtonStyle" text="▾" />
         </CtrlPanel>
         <CtrlLabeller rect="5, 5, 66, 50" ARTop="FNear 5.0000" ARBottom="FNear 5.0000" enumTextPosition="Below" intTextOffset="-1" style="SmallControlLabellerStyle">
-            <CtrlPanel name="MasterVU" rect="0, 0, 50, 50" overloadClass="GeistLogo" style="Geist2LogoStyle" />
+            <CtrlPanel name="MasterVU" rect="0, 0, 50, 50" overloadClass="LogoMeter" style="LogoStyle" />
             <CtrlSlider name="GlobalGain" rect="54, 0, 12, 50" displayName="Master level" realTrackInset="0.3000" style="SliderStyle" />
         </CtrlLabeller>
         <CtrlPanel name="PresetPanel" rect="76, 20, 200, 35" ARTop="FFar 40.0000" ARBottom="FFar 35.0000" id="100002" style="HeaderBarConsoleStyle">

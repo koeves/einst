@@ -1,14 +1,14 @@
-//! Einst: Dreist's port of `VDSP::VFreqShifterS` (`dreist_dsp::fx::nodes::freq_shifter`,
+//! Einst: Dreist's port of [re:61a767] (`dreist_dsp::fx::nodes::freq_shifter`,
 //! copied from Dreist at bc729de2) with v1's one difference: the 2^x in
 //! `Voice::ProcessBuffer` is v1's [`fast_exp2`](crate::fast_exp2) (one
 //! inlined instance in v1, the rest of the function's constants and callees
-//! as Geist2's; `docs/re/effects-v1.md`).
+//! as v2's; dreist-re `einst/docs/re/effects-v1.md`).
 //!
-//! `VDSP::VFreqShifterS` (Frequency Shifter; `Voice::ProcessBuffer` 0x4dc600,
-//! `Reset` 0x4dc5e0): the input is modulated by (−1)ⁿ (a shift of fs/2),
+//! [re:61a767] (Frequency Shifter; `Voice::ProcessBuffer` [re:e4377c],
+//! `Reset` [re:8c22fd]): the input is modulated by (−1)ⁿ (a shift of fs/2),
 //! run at 2× through polyphase half-band allpass pairs
-//! (`VDownsampler2FltNoDecimate`), mixed with a quadrature oscillator at
-//! `fs/2 + (2^pitch − 1)·tune` and decimated back (`VDownsampler2Flt`).
+//! ([re:8ef854]), mixed with a quadrature oscillator at
+//! `fs/2 + (2^pitch − 1)·tune` and decimated back ([re:613387]).
 
 use crate::math::clip01;
 use dreist_dsp::analog::sin_tab;
@@ -17,7 +17,7 @@ use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 /// Allpass coefficients; branch 1 uses the even entries, branch 2 the odd.
 const C: [f32; 7] = [0.0457281, 0.168088, 0.332501, 0.504486, 0.663202, 0.803781, 0.933856];
 
-/// One two-branch half-band section (states in `VDownsampler2Flt` order).
+/// One two-branch half-band section (states in [re:613387] order).
 #[derive(Debug, Clone, Copy, Default)]
 struct HalfBand {
     x1: f32,
@@ -52,7 +52,7 @@ impl HalfBand {
     }
 }
 
-/// `VDownsampler2FltNoDecimate`: the two 2×-rate phases of one input.
+/// [re:8ef854]: the two 2×-rate phases of one input.
 #[derive(Debug, Clone, Copy, Default)]
 struct Upper {
     a: HalfBand,
@@ -95,7 +95,7 @@ pub struct FreqShifter {
 
 impl FreqShifter {
     pub fn new() -> FreqShifter {
-        FreqShifter { ports: ports_from(ports::VFreqShifterS), sign: 1.0, phase: 0.0, amp: 0.0, ch: [Chan::default(); 2] }
+        FreqShifter { ports: ports_from(ports::FREQUENCY_SHIFTER), sign: 1.0, phase: 0.0, amp: 0.0, ch: [Chan::default(); 2] }
     }
 }
 

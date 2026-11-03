@@ -13,12 +13,12 @@
     <CtrlOptionMenuStyle name="MenuStyle" parentStyle0="CornerRounding5Style" optDrawShadow="true" colFill="ToolTipPanelColour" colBorder="ToolTipBorderColour" colAltFill="EditorAltBrightest" colDivider="PanelMedium" colSubMenuArrow="ToolTipTextColour" colText="ToolTipTextColour" font="Standard" />
 
     <!-- Logo -->
-    <CtrlStyle name="Geist2LogoStyle" parentStyle0="ApplicationStyle" optDrawBorder="false" enumDisabledDrawMode="NormalDrawing" colFill="EditorAltBrightestAlpha05" colAltFill="PanelBrightestAlpha05" />
+    <CtrlStyle name="LogoStyle" parentStyle0="ApplicationStyle" optDrawBorder="false" enumDisabledDrawMode="NormalDrawing" colFill="EditorAltBrightestAlpha05" colAltFill="PanelBrightestAlpha05" />
 
     <!-- Panels -->
-    <CtrlStyle name="Geist2BackPanelStyle" parentStyle0="ShadowStyle" optDrawBorder="true" colFill="PanelDarkest" colBorder="PanelDarkest" />
+    <CtrlStyle name="BackPanelStyle" parentStyle0="ShadowStyle" optDrawBorder="true" colFill="PanelDarkest" colBorder="PanelDarkest" />
     <CtrlStyle name="BasicPanelStyle" parentStyle0="ShadowStyle" optDrawBorder="true" colFill="PanelBrightest" colBorder="PanelBrightest" />
-    <CtrlStyle name="SplitterStyle" parentStyle0="Geist2BackPanelStyle" colAltBorder="PanelMedium" />
+    <CtrlStyle name="SplitterStyle" parentStyle0="BackPanelStyle" colAltBorder="PanelMedium" />
     <CtrlStyle name="DarkPanelStyle" parentStyle0="ApplicationStyle" optDrawBorder="true" colFill="PanelDark" colBorder="PanelDark" />
     <CtrlStyle name="LayerPanelStyle" parentStyle0="BasicPanelStyle" realCornerRounding="6" optRoundTopLeft="true" optRoundTopRight="false" optRoundBottomLeft="false" optRoundBottomRight="false" />
     <CtrlStyle name="SidebarPanelStyle" parentStyle0="BasicPanelStyle" realCornerRounding="6" optRoundTopLeft="false" optRoundTopRight="false" optRoundBottomLeft="false" optRoundBottomRight="true" />
@@ -108,7 +108,7 @@
     <CtrlStyle name="LinkPanelStyle" parentStyle0="LayerPanelStyle" colBorder="PanelDarkest" />
 
     <!-- Main tabs -->
-    <CtrlStyle name="TabPanelStyle" parentStyle0="Geist2BackPanelStyle" optDrawBorder="true" />
+    <CtrlStyle name="TabPanelStyle" parentStyle0="BackPanelStyle" optDrawBorder="true" />
     <CtrlStyle name="TabPanelHeaderStyle" parentStyle0="ShadowStyle" optDrawBorder="true" colFill="PanelDark" colBorder="PanelDark" />
     <CtrlStyle name="TabPanelHeaderLeftStyle" parentStyle0="TabPanelHeaderStyle" realCornerRounding="6" optRoundTopLeft="false" optRoundTopRight="true" optRoundBottomLeft="false" optRoundBottomRight="false" />
     <CtrlStyle name="TabPanelHeaderRightStyle" parentStyle0="TabPanelHeaderStyle" realCornerRounding="6" optRoundTopLeft="true" optRoundTopRight="false" optRoundBottomLeft="false" optRoundBottomRight="false" />

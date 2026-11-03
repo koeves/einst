@@ -1,14 +1,14 @@
-//! Einst: `VDSP::VCompressorUrei1176S` (Channel Compressor) as v1 builds it.
+//! Einst: [re:0585f8] (Channel Compressor) as v1 builds it.
 //! A copy of Dreist's port (`dreist_dsp::fx::nodes::urei1176`, Dreist bc729de2)
-//! with v1's code where it differs (`docs/re/effects-v1.md`):
+//! with v1's code where it differs (dreist-re `einst/docs/re/effects-v1.md`):
 //!
-//! - `Urei1176Comp::Solve1176A` 0x53ed… (ev_9b3b4723) and `SolveDRCR2`
+//! - [re:df80e4] 0x53ed… (ev_9b3b4723) and `SolveDRCR2`
 //!   (ev_7029d2a1) transcribed from v1's decompile: the same circuit
-//!   equations as Geist2's with the constants folded by v1's compiler
+//!   equations as v2's with the constants folded by v1's compiler
 //!   (`12500 = 0.001·10000·1250`, `2.20125e10 = 10000·2.20125e6`,
 //!   1/4.40125e6 when the FET is off, `vcrit = ln(1.8228e13)·0.02577878`).
-//! - `Urei1176Comp::process` (ev_adb9af66): the input gain
-//!   `10^((in − 10)·0.05)` is applied flat for the block; Geist2 ramps it
+//! - [re:8a73b6] (ev_adb9af66): the input gain
+//!   `10^((in − 10)·0.05)` is applied flat for the block; v2 ramps it
 //!   per sample.
 //! - `Voice::ProcessBuffer` (ev_d402f63f): attack and release take v1's
 //!   fast 2^x (`setAttackTime` = x·23636362 = x·5.2/2.2e−7, ev_f7e912e2;
@@ -148,7 +148,7 @@ pub fn solve_drcr2(p1: &mut f32, p2: &mut f32, p3: &mut f32, p4: f32, p5: f32, p
     }
 }
 
-/// `Urei1176Comp` state.
+/// [re:c17f34] state.
 struct Comp {
     inv_sr: f32,
     alt: f32,
@@ -184,7 +184,7 @@ impl Comp {
         }
     }
 
-    /// `process` 0x4e5ca0.
+    /// `process` [re:364f59].
     fn process(&mut self, sr: f32, inp: [&[f32]; 2], out: [&mut [f32]; 2]) {
         self.inv_sr = 1.0 / sr;
         let n = inp[0].len();
@@ -290,8 +290,8 @@ pub struct Urei1176 {
 
 impl Urei1176 {
     pub fn new() -> Urei1176 {
-        let mut ports = ports_from(ports::VCompressorUrei1176S);
-        // Ratio: int ctor over `ConvertRatioMode` (5 items).
+        let mut ports = ports_from(ports::CHANNEL_COMPRESSOR);
+        // Ratio: int ctor over [re:b70f73] (5 items).
         ports[5] = Port::new(0.0, 0.0, 4.0);
         Urei1176 { ports, comp: Comp::new() }
     }

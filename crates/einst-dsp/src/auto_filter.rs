@@ -1,15 +1,15 @@
-//! Einst: Dreist's port of `VDSP::VFilterAutoS` (`dreist_dsp::fx::nodes::auto_filter`,
-//! copied from Dreist at bc729de) with v1's differences (`docs/re/effects-v1.md`):
+//! Einst: Dreist's port of [re:55b4db] (`dreist_dsp::fx::nodes::auto_filter`,
+//! copied from Dreist at bc729de) with v1's differences (dreist-re `einst/docs/re/effects-v1.md`):
 //!
-//! - v1's `Voice::ProcessBuffer` 0x553a10 (ev_9fed2d28) takes the attack
+//! - v1's `Voice::ProcessBuffer` [re:ebbd86] (ev_9fed2d28) takes the attack
 //!   and release times, 2^(Attack − 1) and 2^(Release − 1), and the cutoff
 //!   2^(clamp(pitch + envelope, ±10)) from v1's [`fast_exp2`](crate::fast_exp2)
-//!   where Geist2 calls `exp2f`.
+//!   where v2 calls `exp2f`.
 //! - The FM term is computed once per sample from the left side-chain
-//!   input and used for both channels, as in v1 and in Geist2's
-//!   `ProcessBuffer` 0x4df120 (one `exp2f` call and one 0.24 clamp per
-//!   sample in each mode loop, from one buffer); Dreist's port takes it per
-//!   channel.
+//!   input and used for both channels, as in v2's `ProcessBuffer`
+//!   [re:4f3743] (one `exp2f` call and one 0.24 clamp per sample in each
+//!   mode loop, from one buffer); dreist-commons has the same since
+//!   baff023, so this is no longer a difference.
 //!
 //! The rest matches, with GCC's folded constants: the attack time constant
 //! −2127659.5/(t·8199999.5) = −1/((t/0.001)·8200·4.7e−7), the release
@@ -18,12 +18,12 @@
 //! clamp(w)·1024 from `ms_sin_tab + 0x1000` with the clamp's halving folded
 //! in; the diode solve (3 Newton steps from the previous currents,
 //! 0.0475·ln 5.9e−9 at run time), the state-variable stage
-//! `Process121NonlinSem2` 0x557410 (ev_2cbcc7ed, out of line in v1) and
-//! `Voice::Reset` 0x553580 (ev_51bf7baa) are Geist2's.
+//! `Process121NonlinSem2` [re:2ec315] (ev_2cbcc7ed, out of line in v1) and
+//! `Voice::Reset` [re:1d5488] (ev_51bf7baa) are v2's.
 //!
-//! `VDSP::VFilterAutoS` (Modulated Filter; Geist2 `InitializePorts` 0x4ddf20,
-//! `Voice::Reset` 0x4defd0, `PrepareStream` 0x4df080, `ProcessBuffer`
-//! 0x4df120): Chamberlin state-variable filter with a polynomial soft
+//! [re:55b4db] (Modulated Filter; v2 `InitializePorts` [re:4ea5f6],
+//! `Voice::Reset` [re:c59236], `PrepareStream` [re:8abef9], `ProcessBuffer`
+//! [re:4f3743]): Chamberlin state-variable filter with a polynomial soft
 //! clipper and diode feedback, cutoff modulated by a diode/RC envelope
 //! follower (Newton-solved per sample) and optional FM from the sidechain.
 //! Modes: Low, Band, High, Peak, Notch.
@@ -63,7 +63,7 @@ pub struct AutoFilter {
 
 impl AutoFilter {
     pub fn new() -> AutoFilter {
-        let mut ports = ports_from(ports::VFilterAutoS);
+        let mut ports = ports_from(ports::MODULATED_FILTER);
         ports[1].max = 4.0;
         AutoFilter { ports, env: Vec::with_capacity(256), ..AutoFilter::state() }
     }
@@ -105,7 +105,7 @@ impl Node for AutoFilter {
         &mut self.ports
     }
 
-    /// `Voice::Reset` 0x4defd0 (`state` is its field values); the rate
+    /// `Voice::Reset` [re:c59236] (`state` is its field values); the rate
     /// coefficients and the voice's denormal offset are kept.
     fn reset(&mut self) {
         let mut env = std::mem::take(&mut self.env);

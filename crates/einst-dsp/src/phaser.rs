@@ -1,11 +1,11 @@
-//! Einst: Dreist's port of `VDSP::VFilterPhaser8` (`dreist_dsp::fx::nodes::phaser`,
+//! Einst: Dreist's port of [re:297af4] (`dreist_dsp::fx::nodes::phaser`,
 //! copied from Dreist at bc729de2) with v1's one difference: the 2^x in
 //! `Voice::ProcessBuffer` is v1's [`fast_exp2`](crate::fast_exp2) (one
 //! inlined instance in v1, the rest of the function's constants and callees
-//! as Geist2's; `docs/re/effects-v1.md`).
+//! as v2's; dreist-re `einst/docs/re/effects-v1.md`).
 //!
-//! `VDSP::VFilterPhaser8` (Phaser, kind 18, dual-mono; `Reset` 0x4a4850,
-//! `ProcessBuffer` 0x4a4940): 2/4/6/8 first-order allpass stages (Mode
+//! [re:297af4] (Phaser, kind 18, dual-mono; `Reset` [re:bcfa17],
+//! `ProcessBuffer` [re:a6a78c]): 2/4/6/8 first-order allpass stages (Mode
 //! 0–7; odd modes flip the feedback and output polarity), coefficient from
 //! a per-mode polynomial of the cosine-LFO-swept frequency, saturated
 //! input and DC-blocked feedback, ramped dry/wet gains.
@@ -153,7 +153,7 @@ pub struct Phaser {
 
 impl Phaser {
     pub fn new() -> Phaser {
-        let mut ports = ports_from(ports::VFilterPhaser8);
+        let mut ports = ports_from(ports::PHASER);
         // Float-form enum: max = item count (8).
         ports[1] = Port::new(5.0, 0.0, 8.0);
         Phaser { ports, voices: [Voice::new(), Voice::new()] }

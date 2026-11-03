@@ -1,24 +1,24 @@
-//! `VDSP::VAmpM` ("Gain"): `InitializePorts` 0x536b50 (ev_cfa257f1, one
-//! port "Amp", amp-log, 0 dB, −oo..36 dB, the same table as Geist2's
-//! `VAmpS`), `Voice::ProcessBuffer` 0x5369d0 (ev_9b98b0fe), `Voice::Reset`
-//! 0x536b10 (gain 0).
+//! [re:275da3] ("Gain"): `InitializePorts` [re:a18c5d] (ev_cfa257f1, one
+//! port "Amp", amp-log, 0 dB, −oo..36 dB, the same table as v2's
+//! [re:3fed9b]), `Voice::ProcessBuffer` [re:dba687] (ev_9b98b0fe), `Voice::Reset`
+//! [re:bf87c8] (gain 0).
 //!
 //! Per block: the port value clamped to ±10, a = 2^x − 0.016367754 with v1's
 //! [`fast_exp2`](crate::fast_exp2), floored at 0; the gain ramps linearly from
-//! its last value to `a` over the block (`SongInfo + 0x2c` = 1/block size).
-//! Dreist's `VAmpS` port uses an exact `exp2`.
+//! its last value to `a` over the block ([re:84e26c] = 1/block size).
+//! Dreist's [re:3fed9b] port uses an exact `exp2`.
 
 use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
 pub struct Gain {
     ports: Vec<Port>,
-    /// One voice per channel (`VDSPNodeAdaptor::Process22`); both ramp alike.
+    /// One voice per channel ([re:4ff8f4]); both ramp alike.
     gain: [f32; 2],
 }
 
 impl Gain {
     pub fn new() -> Gain {
-        Gain { ports: ports_from(ports::VAmpS), gain: [0.0; 2] }
+        Gain { ports: ports_from(ports::GAIN), gain: [0.0; 2] }
     }
 
     /// The level a port value ramps to.

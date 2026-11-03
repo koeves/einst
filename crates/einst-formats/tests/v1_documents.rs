@@ -1,6 +1,6 @@
-//! Synthetic Geist v1 documents (no v1 user files exist): built from the
-//! serializer field lists in `docs/re/loading-v1.md`, converted with
-//! `Document::to_geist2` and loaded by Dreist's formats and engine.
+//! Synthetic the original v1 documents (no v1 user files exist): built from the
+//! serializer field lists in dreist-re `einst/docs/re/loading-v1.md`, converted with
+//! `Document::to_v2` and loaded by Dreist's formats and engine.
 
 use std::path::{Path, PathBuf};
 
@@ -13,7 +13,7 @@ fn samples() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/v1/System/Metronomes/Default")
 }
 
-/// A v1 layer with every attribute `Layer::SerializeAsXML` writes (`Ver` 3.2).
+/// A v1 layer with every attribute [re:0d77d9] writes (`Ver` 3.2).
 fn layer(name: &str, ver: &str, extra: &str) -> String {
     format!(
         r#"<Layer name="{name}" Ver="{ver}" LockState="false" Gain="0.793701" Pan="0.5" Mute="false" Solo="false" OutputLocation="Parent"
@@ -138,7 +138,7 @@ fn project_converts_loads_and_plays() {
     assert_eq!(layer.raw.version, Some(3300));
     assert_eq!(layer.audio_file.as_deref(), Some("Beat.wav"));
     assert_eq!(layer.name.as_deref(), Some("Click"));
-    // 3.2 layers take Geist2's < 3300 branch: envelopes and switches renamed; a hold of -1 stays
+    // 3.2 layers take v2's < 3300 branch: envelopes and switches renamed; a hold of -1 stays
     // (v1 recomputes it on load, and so does Dreist).
     for k in ["Ver", "V2C", "V2P", "UsesTimestretch", "TSMode", "Envelope0Param0", "EnvelopeType0"] {
         assert!(layer.raw.attr(k).is_none(), "{k} left over");
@@ -149,7 +149,7 @@ fn project_converts_loads_and_plays() {
     assert_eq!(layer.raw.f32("TimestretchActive"), Some(0.0));
     assert_eq!(layer.raw.f32("Cutoff_Velocity"), Some(0.0));
     assert!(layer.raw.children_of("LayerModulationRouting").next().is_none());
-    // Steps keep Geist2's lanes only; the track keeps modifiers of those lanes.
+    // Steps keep v2's lanes only; the track keeps modifiers of those lanes.
     let track = &p.engines[0].patterns[0].tracks[0];
     assert_eq!(track.steps.len(), 4);
     assert_eq!(track.steps[1].velocity, Some(0.9));
@@ -159,7 +159,7 @@ fn project_converts_loads_and_plays() {
     assert!(render(&doc, 3.0) > 1e-3, "silent");
 }
 
-/// v1's `Layer::ResetHoldTime(true)` (ev_97d7ba71), transcribed: region (or
+/// v1's [re:bd735d] (ev_97d7ba71), transcribed: region (or
 /// whole file) in seconds, divided by 2^((coarse + fine)/12) unless
 /// timestretching, minus A⁴·10 + (S ≠ 1 ? D⁴·10 : 0) + R⁴·15, clamped to
 /// 0..60 s, then (x/60)^0.25 clamped to 0..1. Coarse is
@@ -223,7 +223,7 @@ fn defaults_only_project_plays() {
     </root>"#;
     let doc = convert(FileKind::Project, text);
     let layer = first(first(first(&doc, "Engine"), "Pad"), "Layer");
-    // No `Ver`: Geist2 reads it as 3300 and converts nothing.
+    // No `Ver`: v2 reads it as 3300 and converts nothing.
     assert_eq!(layer.version, Some(3300));
     assert!(layer.attr("TimestretchActive").is_none());
     assert!(render(&doc, 2.0) > 1e-3, "silent");
@@ -334,7 +334,7 @@ fn single_object_files() {
     assert_eq!(p.engines[0].patterns[1].tracks[0].steps.len(), 4);
 }
 
-/// Every v1 effect type keeps its name and exists in Geist2's table.
+/// Every v1 effect type keeps its name and exists in v2's table.
 #[test]
 fn v1_effect_types_map_onto_v2() {
     for (i, name) in einst_formats::v1::EFFECT_TYPES.iter().enumerate() {
