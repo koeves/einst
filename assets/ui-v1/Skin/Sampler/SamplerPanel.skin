@@ -11,7 +11,7 @@
             <CtrlPanel name="ThresholdPanel" rect="317, 13, 300, 25" id="100001" style="EmptyPanelStyle">
                 <CtrlLabel name="Label" rect="-50, -1, 90, 17" id="100000" style="StandardLabelRightAlignedStyle" text="Start" />
                 <CtrlSlider name="StartThresholdSlider" rect="38, 2, 128, 9" displayName="Start sampling at" id="100004" style="SamplerThresholdTopSliderStyle" />
-                <CtrlProgressBar name="ThresholdVU" rect="42, 11, 120, 3" id="100004" legacyClass="CtrlLevelStrip" style="VU120Horizontal" />
+                <CtrlLevelStrip name="ThresholdVU" rect="42, 11, 120, 3" id="100004" style="VU120Horizontal" />
                 <CtrlLabel name="Label" rect="-51, 12, 90, 17" id="100000" style="StandardLabelRightAlignedStyle" text="Stop" />
                 <CtrlSlider name="StopThresholdSlider" rect="38, 14, 128, 9" displayName="Stop sampling below" id="100004" style="SamplerThresholdBottomSliderStyle" />
             </CtrlPanel>
@@ -62,14 +62,14 @@
         </CtrlPanel>
         <CtrlPanel name="CtrlPanel" rect="1, 122, 812, 270" id="100008" style="SamplerPanelOuterBackgroundStyle">
             <CtrlPanel name="CtrlPanel" rect="6, 6, 64, 258" id="100000" style="SamplerPanelInnerBackgroundStyle">
-                <CtrlProgressBar name="VUMeterLeft" rect="28, 7, 4, 106" id="100003" legacyClass="CtrlLevelStrip" style="VU106" />
-                <CtrlProgressBar name="VUMeterRight" rect="33, 7, 4, 106" id="100004" legacyClass="CtrlLevelStrip" style="VU106" />
+                <CtrlLevelStrip name="VUMeterLeft" rect="28, 7, 4, 106" id="100003" style="VU106" />
+                <CtrlLevelStrip name="VUMeterRight" rect="33, 7, 4, 106" id="100004" style="VU106" />
                 <CtrlLabel name="CtrlLabel" rect="-6, 116, 76, 15" id="100000" style="StandardLabelCenteredStyle" text="Input Gain" />
-                <CtrlKnob name="InputGain" rect="21, 133, 24, 24" displayName="Input signal Gain" id="100001" realDialThickness="0.22" style="LEDKnobSmallLR" />
+                <CtrlKnob name="InputGain" rect="21, 132, 24, 26" displayName="Input signal Gain" id="100001" realDialThickness="0.22" style="LEDKnobSmallLR" />
                 <CtrlButton name="MonoButton" rect="7, 165, 50, 17" displayName="Sample in Mono" id="100028" optIsMomentary="false" overloadClass="FlashingButton" style="LEDLatchingButtonStyle" text="Mono" />
                 <CtrlButton name="ThruButton" rect="7, 185, 50, 17" displayName="Audition input signal" id="100028" optIsMomentary="false" overloadClass="FlashingButton" style="LEDLatchingButtonStyle" text="Thru" />
                 <CtrlLabel name="CtrlLabel" rect="-6, 210, 76, 15" id="100000" style="StandardLabelCenteredStyle" text="Preview vol" />
-                <CtrlKnob name="PreviewVolume" rect="21, 227, 24, 24" displayName="Thru Output Level" id="100001" realDialThickness="0.22" style="LEDKnobSmallLR" />
+                <CtrlKnob name="PreviewVolume" rect="21, 226, 24, 26" displayName="Thru Output Level" id="100001" realDialThickness="0.22" style="LEDKnobSmallLR" />
             </CtrlPanel>
             <CtrlPanel name="CtrlPanel" rect="74, 6, 732, 258" id="100008" style="SamplerPanelInnerBackgroundStyle">
                 <CtrlPanel name="WaveArea" rect="4, 4, 724, 208" id="100000" />

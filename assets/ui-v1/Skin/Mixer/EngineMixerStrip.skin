@@ -3,14 +3,14 @@
     <CtrlPanel name="CtrlPanel" rect="0, 0, 97, 161" id="0" style="EngineChannelBackgroundOdd">
         <CtrlPanel name="ClickPanel" rect="0, 0, 97, 161" id="0" style="EmptyPanelStyle">
             <CtrlLabel name="NameLabel" rect="-6, 16, 109, 15" displayName=" " id="100011" style="StandardLabelCenteredStyle" text="Engine X" />
-            <CtrlSlider name="PanKnob" rect="11, 49, 75, 12" displayName="Pan" id="100000" legacyClass="CtrlPanSlider" realTrackInset="0.36" style="LargePanStyle" />
+            <CtrlPanSlider name="PanKnob" rect="11, 49, 75, 12" displayName="Pan" id="100000" realTrackInset="0.33" style="LargePanStyle" />
             <CtrlButton name="MuteButton" rect="30, 30, 19, 17" displayName="Mute" id="100019" optIsMomentary="false" style="LEDMuteButtonStyle" text="M" />
             <CtrlButton name="SoloButton" rect="50, 30, 19, 17" displayName="Solo" id="100018" optIsMomentary="false" style="LEDSoloButtonStyle" text="S" />
             <CtrlLabel name="EnginePitchLabel" rect="18, 84, 30, 15" id="100013" style="StandardLabelStyle" text="Pitch" />
             <CtrlKnob name="EnginePitchKnob" rect="18, 97, 20, 20" displayName="Engine Pitch" id="100003" realDialThickness="0.22" style="LEDKnobSmallLR" />
             <CtrlSlider name="GainSlider" rect="41, 63, 15, 75" displayName="Engine Gain" id="100003" realTrackInset="0.36" style="SmallVerticalFaderStyle" />
-            <CtrlProgressBar name="VUMeterLeft" rect="58, 63, 4, 75" id="100016" legacyClass="CtrlLevelStrip" style="VU75Dark" />
-            <CtrlProgressBar name="VUMeterRight" rect="63, 63, 4, 75" id="100017" legacyClass="CtrlLevelStrip" style="VU75Dark" />
+            <CtrlLevelStrip name="VUMeterLeft" rect="58, 63, 4, 75" id="100016" style="VU75Dark" />
+            <CtrlLevelStrip name="VUMeterRight" rect="63, 63, 4, 75" id="100017" style="VU75Dark" />
             <CtrlLabel name="TempoLabel" rect="14, 126, 69, 15" id="100005" style="StandardLabelStyle" text="Tempo modifier" />
             <CtrlValueBox name="EngineNumBox" rect="16, 140, 30, 17" id="100001" optSingleClickEdit="false" style="LEDSmallValueBoxCenteredStyle" />
             <CtrlValueBox name="EngineDenomBox" rect="51, 140, 30, 17" id="100002" optSingleClickEdit="false" style="LEDSmallValueBoxCenteredStyle" />

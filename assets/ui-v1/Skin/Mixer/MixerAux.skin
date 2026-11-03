@@ -10,8 +10,8 @@
                 <CtrlButton name="PostButton" rect="58, 0, 60, 17" displayName="Post fade" id="100002" optIsMomentary="false" style="RadioButtonRightStyle" text="Post" />
             </CtrlButtonGroup>
             <CtrlSlider name="GainSlider" rect="89, 63, 15, 75" displayName="Gain" id="100012" realTrackInset="0.36" style="SmallVerticalFaderStyle" />
-            <CtrlProgressBar name="VUMeterLeft" rect="106, 63, 4, 75" id="100000" legacyClass="CtrlLevelStrip" style="VU75Dark" />
-            <CtrlProgressBar name="VUMeterRight" rect="111, 63, 4, 75" id="100001" legacyClass="CtrlLevelStrip" style="VU75Dark" />
+            <CtrlLevelStrip name="VUMeterLeft" rect="106, 63, 4, 75" id="100000" style="VU75Dark" />
+            <CtrlLevelStrip name="VUMeterRight" rect="111, 63, 4, 75" id="100001" style="VU75Dark" />
             <CtrlPopupButton name="OutputCombo" rect="59, 140, 75, 17" id="100010" legacyClass="CtrlComboBox" optSingleClickEdit="true" style="LEDComboBoxStyle" />
         </CtrlPanel>
     </CtrlPanel>

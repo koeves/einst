@@ -70,7 +70,8 @@
     <CtrlStyle name="LcdKnobStyle" parentStyle0="BaseKnobStyle" />
     <CtrlStyle name="LcdKnobBodyStyle" colBorder="InkSoft" colFill="LcdLight" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="100" />
     <CtrlStyle name="SpinnerStyle" colFill="LcdDim" colFillHighlight="LcdDim" parentStyle0="BaseKnobStyle" />
-    <CtrlStyle name="LcdFaderStyle" parentStyle0="BaseSliderStyle" />
+    <CtrlStyle name="LcdFaderStyle" enumHandleShape="Rect" parentStyle0="BaseSliderStyle" />
+    <CtrlStyle name="LcdPanStyle" enumHandleShape="Rect" parentStyle0="BaseSliderStyle" realHandleLength="10" />
     <CtrlStyle name="LcdScrollBarStyle" colAltFill="InkMid" colFill="LcdLight" parentStyle0="BaseSliderStyle" />
     <CtrlStyle name="LcdMeterStyle" parentStyle0="BaseMeterStyle" />
     <CtrlStyle name="StripMeterStyle" colAltBorder="Readout" colAltFill="Readout" colFill="ReadoutDim" parentStyle0="BaseMeterStyle" />
@@ -94,14 +95,14 @@
     <CtrlStyle name="ModalPanelCollectionStyle" colBorder="ModalBorder" colFill="ModalGroup" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="5" />
     <CtrlStyle name="ModalPanelTitleStyle" colBorder="#969696" colFill="#969696" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="ModalPanelBackgroundStyle" colBorder="#969696" colFill="#969696" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="5" />
-    <CtrlStyle name="HardKnobSmallLR" parentStyle0="HardKnobStyle" />
-    <CtrlStyle name="HardKnobLargeLR" parentStyle0="HardKnobStyle" />
-    <CtrlStyle name="HardKnobLargeC" parentStyle0="HardKnobStyle" />
-    <CtrlStyle name="LEDKnobMicroLR" parentStyle0="LcdKnobStyle" />
-    <CtrlStyle name="LEDKnobSmallLR" parentStyle0="LcdKnobStyle" />
-    <CtrlStyle name="LEDKnobLargeLR" parentStyle0="LcdKnobStyle" />
-    <CtrlStyle name="LEDKnobLargeC" parentStyle0="LcdKnobStyle" />
-    <CtrlStyle name="LargeSpinnerStyle" parentStyle0="SpinnerStyle" />
+    <CtrlStyle name="HardKnobSmallLR" enumDialAlign="Top" parentStyle0="HardKnobStyle" />
+    <CtrlStyle name="HardKnobLargeLR" enumDialAlign="Top" parentStyle0="HardKnobStyle" />
+    <CtrlStyle name="HardKnobLargeC" enumDialAlign="Top" parentStyle0="HardKnobStyle" />
+    <CtrlStyle name="LEDKnobMicroLR" enumDialAlign="Center" parentStyle0="LcdKnobStyle" />
+    <CtrlStyle name="LEDKnobSmallLR" enumDialAlign="Center" parentStyle0="LcdKnobStyle" />
+    <CtrlStyle name="LEDKnobLargeLR" enumDialAlign="Center" parentStyle0="LcdKnobStyle" />
+    <CtrlStyle name="LEDKnobLargeC" enumDialAlign="Center" parentStyle0="LcdKnobStyle" />
+    <CtrlStyle name="LargeSpinnerStyle" enumDialAlign="Center" parentStyle0="SpinnerStyle" />
     <CtrlStyle name="ZoomInButtonStyle" font="Icons8" parentStyle0="LcdIconButtonStyle" />
     <CtrlStyle name="ZoomOutButtonStyle" font="Icons8" parentStyle0="LcdIconButtonStyle" />
     <CtrlStyle name="LinkSmallButtonStyle" parentStyle0="LcdButtonStyle" />
@@ -140,18 +141,18 @@
     <CtrlStyle name="StandardLargeLabelCenteredNotificationStyle" colText="Ink" enumTextHorizontalAlign="center" font="Sans32" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="ModalLargeLabelCenteredNotificationStyle" colText="Ink" enumTextHorizontalAlign="center" font="Sans32" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="StandardLargeLabelCenteredNotificationStyleLight" colText="#FFFFFF" enumTextHorizontalAlign="center" font="Sans32" parentStyle0="BaseLabelStyle" />
-    <CtrlStyle name="GlobalTableStyle" colBorder="Ink" colFill="Transparent" font="Sans12" optDrawBorder="true" parentStyle0="BaseTableStyle" />
-    <CtrlStyle name="GlobalTableStyleAlwaysVisibleHSlider" colBorder="Ink" colFill="Transparent" font="Sans12" optDrawBorder="true" parentStyle0="BaseTableStyle" />
+    <CtrlTableViewStyle name="GlobalTableStyle" colBorder="Ink" colColumnDivider="Ink" colFill="Transparent" colHeaderDivider="Ink" colHeaderFill="Transparent" colHeaderText="Ink" colRow="169, 176, 191, 80" colRowAlt="199, 206, 217, 40" colSelection="Transparent" colText="Ink" font="Sans12" optAltRowColours="true" optColumnDividers="true" optDrawBorder="true" optHeader="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
+    <CtrlTableViewStyle name="GlobalTableStyleAlwaysVisibleHSlider" colBorder="Ink" colColumnDivider="Ink" colFill="Transparent" colHeaderDivider="Ink" colHeaderFill="Transparent" colHeaderText="Ink" colRow="169, 176, 191, 80" colRowAlt="199, 206, 217, 40" colSelection="197, 151, 34, 120" colText="Ink" font="Sans12" optAltRowColours="true" optColumnDividers="true" optDrawBorder="true" optHeader="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
     <CtrlStyle name="VerticalScrollbarStyle" colAltFill="Ink" colBorder="Ink" colFill="LcdLight" colFillHighlight="Ink" optDrawBorder="true" parentStyle0="BaseSliderStyle" />
     <CtrlStyle name="HorizontalScrollbarStyle" colAltFill="Ink" colBorder="Ink" colFill="LcdLight" colFillHighlight="Ink" optDrawBorder="true" parentStyle0="BaseSliderStyle" />
     <CtrlStyle name="StandardScrollViewStyle" colBorder="Transparent" colFill="Transparent" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="EmptyScrollViewStyle" colBorder="Transparent" colFill="Transparent" optDrawBorder="false" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="FieldEditorHistogramStyle" colAltFill="255, 0, 0, 180" colBorder="Transparent" colFill="Transparent" colFillHighlight="255, 0, 0, 180" parentStyle0="BaseSliderStyle" />
-    <CtrlStyle name="SmallVerticalFaderStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="LcdFaderStyle" />
-    <CtrlStyle name="FatVerticalFaderStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="LcdFaderStyle" />
-    <CtrlStyle name="SmallPanStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="LcdFaderStyle" />
-    <CtrlStyle name="LargePanStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="LcdFaderStyle" />
-    <CtrlStyle name="FatPanStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="LcdFaderStyle" />
+    <CtrlStyle name="SmallVerticalFaderStyle" colFill="InkSoft" optDrawBorder="false" parentStyle0="LcdFaderStyle" realHandleLength="16" />
+    <CtrlStyle name="FatVerticalFaderStyle" colFill="InkSoft" optDrawBorder="false" parentStyle0="LcdFaderStyle" realHandleLength="22" />
+    <CtrlStyle name="SmallPanStyle" colFill="InkSoft" optDrawBorder="false" parentStyle0="LcdPanStyle" realHandleLength="10" />
+    <CtrlStyle name="LargePanStyle" colFill="InkSoft" optDrawBorder="false" parentStyle0="LcdPanStyle" realHandleLength="10" />
+    <CtrlStyle name="FatPanStyle" colFill="InkSoft" optDrawBorder="false" parentStyle0="LcdPanStyle" realHandleLength="10" />
     <CtrlStyle name="LEDEditBoxStyle" colFill="LcdLight" colText="Ink" font="Sans12" parentStyle0="BaseTextBoxStyle" />
     <CtrlStyle name="ModalEditBoxStyle" colBorder="Ink" colFill="ModalField" colText="Ink" font="Sans12" optDrawBorder="true" parentStyle0="ModalFieldStyle" />
     <CtrlStyle name="ModalNonEditableEditBoxStyle" colBorder="Ink" colFill="ModalField" colText="Ink" font="Sans12" optDrawBorder="true" parentStyle0="ModalFieldStyle" />
@@ -178,8 +179,8 @@
     <CtrlStyle name="LEDLargeMenuButtonStyle" enumTextHorizontalAlign="left" font="Sans12" parentStyle0="LcdMenuButtonStyle" realTextOffset="7" />
     <CtrlStyle name="LEDUltraMenuButtonStyle" enumTextHorizontalAlign="left" font="Sans12" parentStyle0="LcdMenuButtonStyle" realTextOffset="7" />
     <CtrlStyle name="LEDMomentaryButtonStyle" font="Sans12" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="ModalMomentaryButtonStyle" colAltFill="ModalOn" colAltText="Ink" colBorder="Ink" colFill="ModalGroup" colText="Ink" font="Sans12" optDrawBorder="true" parentStyle0="ModalButtonStyle" />
-    <CtrlStyle name="ModalLatchingButtonStyle" colAltFill="ModalOn" colAltText="Ink" colBorder="Ink" colFill="ModalGroup" colText="Ink" font="Sans12" optDrawBorder="true" parentStyle0="ModalButtonStyle" />
+    <CtrlStyle name="ModalMomentaryButtonStyle" colAltFill="ModalOn" colAltText="Ink" colBorder="Ink" colFill="ModalGroup" colText="Ink" colTextDisabled="#969696" font="Sans12" optDrawBorder="true" parentStyle0="ModalButtonStyle" />
+    <CtrlStyle name="ModalLatchingButtonStyle" colAltFill="ModalOn" colAltText="Ink" colBorder="Ink" colFill="ModalGroup" colText="Ink" colTextDisabled="#969696" font="Sans12" optDrawBorder="true" parentStyle0="ModalButtonStyle" />
     <CtrlStyle name="LEDLatchingButtonStyle" font="Sans12" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="LEDSmallMomentaryButtonStyle" parentStyle0="LcdIconButtonStyle" />
     <CtrlStyle name="LEDSmallLatchingButtonStyle" parentStyle0="LcdIconButtonStyle" />
@@ -188,15 +189,15 @@
     <CtrlStyle name="LEDMMixButton" parentStyle0="LcdBigButtonStyle" />
     <CtrlStyle name="LEDMSendButton" parentStyle0="LcdBigButtonStyle" />
     <CtrlStyle name="LEDMSetupButton" parentStyle0="LcdBigButtonStyle" />
-    <CtrlStyle name="StandardDBReduceMeterStyle" parentStyle0="LcdPlotStyle" />
-    <CtrlStyle name="EQGraphStyle" parentStyle0="LcdPlotStyle" realCornerRounding="0" />
-    <CtrlStyle name="VU75Dark" parentStyle0="LcdMeterStyle" />
-    <CtrlStyle name="VU75Light" parentStyle0="LcdMeterStyle" />
-    <CtrlStyle name="VU45Dark" parentStyle0="LcdMeterStyle" />
-    <CtrlStyle name="VU45Light" parentStyle0="LcdMeterStyle" />
-    <CtrlStyle name="VU106" parentStyle0="LcdMeterStyle" />
-    <CtrlStyle name="HardVU120" parentStyle0="StripMeterStyle" />
-    <CtrlStyle name="VU120Horizontal" parentStyle0="LcdMeterStyle" />
+    <CtrlMeterStyle name="StandardDBReduceMeterStyle" colAltBorder="InkMid" colLine="Ink" parentStyle0="LcdPlotStyle" realAngleSize="90" realAngleStart="135" realPivotX="0.5" realPivotY="1.10" realRadius="0.90" textLeftRange="-∞" textRightRange="0" textUnits="dB" />
+    <CtrlStyle name="EQGraphStyle" colLine="Ink" parentStyle0="LcdPlotStyle" realCornerRounding="0" realLineWidth="2" realPlotInset="0" />
+    <CtrlStyle name="VU75Dark" intSegmentGap="1" intSegmentSize="3" parentStyle0="LcdMeterStyle" />
+    <CtrlStyle name="VU75Light" intSegmentGap="1" intSegmentSize="3" parentStyle0="LcdMeterStyle" />
+    <CtrlStyle name="VU45Dark" intSegmentGap="1" intSegmentSize="3" parentStyle0="LcdMeterStyle" />
+    <CtrlStyle name="VU45Light" intSegmentGap="1" intSegmentSize="3" parentStyle0="LcdMeterStyle" />
+    <CtrlStyle name="VU106" intSegmentGap="1" intSegmentSize="3" parentStyle0="LcdMeterStyle" />
+    <CtrlStyle name="HardVU120" intSegmentGap="1" intSegmentSize="3" parentStyle0="StripMeterStyle" />
+    <CtrlStyle name="VU120Horizontal" intSegmentGap="1" intSegmentSize="3" parentStyle0="LcdMeterStyle" />
     <CtrlStyle name="SongTrackPanelStyle0" colBorder="Transparent" colFill="Transparent" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="SongTrackPanelStyle1" colBorder="Transparent" colFill="255, 255, 255, 50" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="SongTrackPanelSelectedStyle" colBorder="Transparent" colFill="232, 204, 91, 80" parentStyle0="BasePanelStyle" realCornerRounding="0" />
@@ -255,11 +256,11 @@
     <CtrlStyle name="EngineButtonPowerOffStyle7" parentStyle0="EngineButtonPowerOffStyle" />
     <CtrlStyle name="EngineButtonPowerOffStyle8" parentStyle0="EngineButtonPowerOffStyle" />
     <CtrlStyle name="EnginePatternPowerStyle" parentStyle0="HwPowerButtonStyle" />
-    <CtrlStyle name="EngineVUStyle" parentStyle0="StripMeterStyle" />
+    <CtrlStyle name="EngineVUStyle" intSegmentGap="1" intSegmentSize="3" parentStyle0="StripMeterStyle" />
     <CtrlStyle name="MuteIndiStyle" parentStyle0="IndicatorMuteStyle" />
     <CtrlStyle name="SoloIndiStyle" parentStyle0="IndicatorSoloStyle" />
     <!-- From v1 Global/FileFindPanel.skin -->
-    <CtrlStyle name="FindFileListBoxStyle" colBorder="Ink" colFill="Transparent" colText="Ink" font="Sans12" optDrawBorder="true" parentStyle0="BaseTableStyle" />
+    <CtrlListBoxStyle name="FindFileListBoxStyle" colBorder="Ink" colFill="Transparent" colText="Ink" font="Sans12" optDrawBorder="true" parentStyle0="BaseTableStyle" />
     <!-- From v1 Global/ImportPanel.skin -->
     <CtrlStyle name="ImportPanelStyle" colBorder="Transparent" colFill="255, 255, 255, 180" font="Sans10" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <!-- From v1 Global/MasterControls.skin -->

@@ -225,11 +225,25 @@ KNOB_BODY = {"HardKnobStyle": ("HardKnobBodyStyle", 0.2), "LcdKnobStyle": ("LcdK
 
 # ---------------------------------------------------------------- faders, pans, meters (imBackingStrip)
 
+# LED level strips: 3 px segments 1 px apart. Faders and pans get
+# rectangular caps (v1's heads: 15 x 16 / 18 x 22 on the 15 / 18 px
+# faders; pans size theirs with faderHeadSize) and their track back (v1's
+# noDefaultDrawing left it to the bitmap).
+LED = {"intSegmentSize": "3", "intSegmentGap": "1"}
+TRACK = {"colFill": "InkSoft"}
 SLIDERS = [
-    (r"^(HARDVU|EngineVU)", L("StripMeterStyle")),
-    (r"VU", L("LcdMeterStyle")),
-    (r"", L("LcdFaderStyle", ctrl={"realTrackInset": "0.36"})),
+    (r"^(HARDVU|EngineVU)", L("StripMeterStyle", **LED)),
+    (r"VU", L("LcdMeterStyle", **LED)),
+    (r"PanBase", L("LcdPanStyle", ctrl={"realTrackInset": "0.33"}, **TRACK)),
+    (r"^LEDSmVSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.36"}, realHandleLength="16", **TRACK)),
+    (r"^LEDFatSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.36"}, realHandleLength="22", **TRACK)),
+    (r"", L("LcdFaderStyle", ctrl={"realTrackInset": "0.36"}, **TRACK)),
 ]
+
+# ---------------------------------------------------------------- meters and plots (imBackground)
+
+METER = L("LcdPlotStyle", colAltBorder="InkMid", colLine="Ink")
+PLOT = L("LcdPlotStyle", colLine="Ink")
 
 # ---------------------------------------------------------------- image views (`image=`)
 

@@ -2,11 +2,11 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 193, 150" id="0" style="EmptyPanelStyle">
         <CtrlPanel rect="18, 53, 28, 28" style="LcdKnobBodyStyle" />
-        <CtrlKnob name="Control1" rect="9, 44, 46, 46" id="100014" realDialThickness="0.14" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control1" rect="7, 44, 50, 46" id="100014" realDialThickness="0.14" style="LEDKnobLargeLR" />
         <CtrlPanel rect="82, 53, 28, 28" style="LcdKnobBodyStyle" />
-        <CtrlKnob name="Control2" rect="73, 44, 46, 46" id="100016" realDialThickness="0.14" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control2" rect="71, 44, 50, 46" id="100016" realDialThickness="0.14" style="LEDKnobLargeLR" />
         <CtrlPanel rect="147, 53, 28, 28" style="LcdKnobBodyStyle" />
-        <CtrlKnob name="Control3" rect="138, 44, 46, 46" id="100018" realDialThickness="0.14" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control3" rect="136, 44, 50, 46" id="100018" realDialThickness="0.14" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="-1, 94, 66, 15" id="100015" style="StandardLabelCenteredStyle" text="Frequency" />
         <CtrlLabel name="CtrlLabel" rect="63, 94, 66, 15" id="100017" style="StandardLabelCenteredStyle" text="Depth" />
         <CtrlLabel name="CtrlLabel" rect="128, 94, 66, 15" id="100019" style="StandardLabelCenteredStyle" text="Spread" />

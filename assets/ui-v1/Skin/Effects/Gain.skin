@@ -2,7 +2,7 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 193, 150" id="0" style="EmptyPanelStyle">
         <CtrlPanel rect="82, 48, 28, 28" style="LcdKnobBodyStyle" />
-        <CtrlKnob name="Control1" rect="73, 39, 46, 46" id="100014" realDialThickness="0.14" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control1" rect="71, 39, 50, 46" id="100014" realDialThickness="0.14" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="63, 90, 66, 15" id="100015" style="StandardLabelCenteredStyle" text="Gain" />
     </CtrlPanel>
 </root>

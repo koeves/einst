@@ -7,7 +7,9 @@ writes the same layout in the syntax dreist-gui reads
 - rects `[x:0 y:0 w:10 h:10]` -> `0, 0, 10, 10`;
 - control classes the engine does not draw -> the nearest one it does
   (CLASSES; the v1 class is kept in `legacyClass` so dreist-gui can take
-  them over as it learns them);
+  them over as it learns them); level strips, pan sliders, needle meters,
+  plots, tables and list boxes keep their class (dreist-gui draws them;
+  meters and tables with a style of their v1 style class, NATIVE_STYLES);
 - style attributes -> dreist-gui's names (STYLE_ATTRS); attributes that
   dreist-gui reads from the control rather than the style
   (`optIsMomentary`, ...) are copied onto every control using the style;
@@ -43,22 +45,22 @@ CLASSES = {
     "CtrlButton": ("CtrlButton", "as is (image states -> fill / border / text colours)"),
     "CtrlButtonGroup": ("CtrlButtonGroup", "as is (radio behaviour)"),
     "CtrlLabel": ("CtrlLabel", "as is"),
-    "CtrlKnob": ("CtrlKnob", "as is; the rect shrinks to the square dial (film frames held a scale too)"),
-    "CtrlSlider": ("CtrlSlider", "as is"),
+    "CtrlKnob": ("CtrlKnob", "as is; a square dial at the top / centre of v1's rect (enumDialAlign; film frames held a scale too)"),
+    "CtrlSlider": ("CtrlSlider", "as is (rectangular fader caps: enumHandleShape)"),
     "CtrlTextBox": ("CtrlTextBox", "as is (drawn as a label, edited in place)"),
     "CtrlValueBox": ("CtrlValueBox", "as is (drawn as a label)"),
     "CtrlComboBox": ("CtrlPopupButton", "a popup button: text, arrow and divider"),
     "CtrlSearchTextBox": ("CtrlSearchBox", "search box with magnifier"),
     "VProgressBar": ("CtrlProgressBar", "horizontal bar"),
-    "CtrlLevelStrip": ("CtrlProgressBar", "track + horizontal bar; no LED segments, vertical strips fill sideways"),
-    "CtrlPanSlider": ("CtrlSlider", "plain horizontal fader; no centre detent"),
+    "CtrlLevelStrip": ("CtrlLevelStrip", "as is (LED segments: intSegmentSize)"),
+    "CtrlPanSlider": ("CtrlPanSlider", "as is (lit from the centre, centre detent)"),
     "CtrlImageView": ("CtrlPanel", "vector panel, or a CtrlLabel for text / icon images (looks.IMAGES)"),
     "CtrlScrollView": ("CtrlPanel", "plain panel; no scrolling"),
     "CtrlScrollViewSlider": ("CtrlScrollBar", "scroll bar (track + thumb)"),
-    "CtrlTableView": ("CtrlPanel", "framed panel; rows, header and slider are code-built"),
-    "CtrlListBox": ("CtrlPanel", "framed panel; rows are code-built"),
-    "CtrlPlot": ("CtrlPanel", "framed plot area; the curve is code-drawn"),
-    "CtrlMeter": ("CtrlPanel", "framed meter area; no needle"),
+    "CtrlTableView": ("CtrlTableView", "as is: header and rows (code-filled); no scrolling"),
+    "CtrlListBox": ("CtrlListBox", "as is: rows (code-filled); no scrolling"),
+    "CtrlPlot": ("CtrlPlot", "as is: frame + curve (`points`, code-filled)"),
+    "CtrlMeter": ("CtrlMeter", "as is: needle meter (scale arc, range texts, needle)"),
     "Ctrl": ("CtrlPanel", "plain panel"),
 }
 
@@ -117,9 +119,41 @@ STYLE_ATTRS = {
     "optMomentary": ("ctrl:optIsMomentary", "v1 default true"),
     "optSendOnMouseDown": ("ctrl:optSendOnMouseDown", "same value"),
     "optSingleClickEdit": ("ctrl:optSingleClickEdit", "same value"),
-    "optDrawText": (None, "dropped: with the bitmaps gone the text is the label"),
-    "colTextDisabled": (None, "dropped: disabled controls fade (realDisabledAlpha)"),
+    "optDrawText": ("optDrawText", "false kept only on styles without a look (a look's text is the label)"),
+    "colTextDisabled": ("colTextDisabled", "colour (text of disabled controls)"),
+    "optFlipDirection": ("ctrl:optFlipDirection", "per control by orientation (see Converter.ctrl)"),
+    "faderHeadSize": ("realHandleLength", "same value (rectangular caps)"),
+    # Tables and list boxes.
+    "optHeader": ("optHeader", "same value"),
+    "optAltRowColours": ("optAltRowColours", "same value"),
+    "optColumnDividers": ("optColumnDividers", "same value"),
+    "optRowDividers": ("optRowDividers", "same value"),
+    "colSelect": ("colSelection", "colour"),
+    "colRow": ("colRow", "colour"),
+    "colRowAlt": ("colRowAlt", "colour"),
+    "colHeaderBackground": ("colHeaderFill", "colour"),
+    "colHeaderText": ("colHeaderText", "colour"),
+    "colHeaderDivider": ("colHeaderDivider", "colour"),
+    "colColumnDivider": ("colColumnDivider", "colour"),
+    "colColumnText": ("colText", "colour (cell text)"),
+    # Needle meters and plots.
+    "units": ("textUnits", "same value"),
+    "leftRangeText": ("textLeftRange", "same value (-oo -> -∞)"),
+    "rightRangeText": ("textRightRange", "same value (-oo -> -∞)"),
+    "colUnits": ("colText", "colour"),
+    "pivotX": ("realPivotX", "same value"),
+    "pivotY": ("realPivotY", "same value"),
+    "angleStart": ("realAngleStart", "same value"),
+    "angleSize": ("realAngleSize", "same value"),
+    "radius": ("realRadius", "same value"),
+    "lineWidth": ("realLineWidth", "same value"),
+    "colLine": ("colLine", "colour"),
+    "plotRectInset": ("realPlotInset", "same value"),
 }
+
+# v1 style classes dreist-gui needs as the style's element class to draw the
+# control natively (other converted styles are plain CtrlStyles).
+NATIVE_STYLES = {"CtrlMeterStyle", "CtrlTableViewStyle", "CtrlListBoxStyle"}
 
 # Attributes with no dreist-gui equivalent yet, dropped (kept here so a
 # new v1 attribute is noticed: the generator fails on unknown ones).
@@ -127,15 +161,11 @@ DROPPED = {
     "name", "imUp", "imDown", "imDisabled", "imBackground", "imKnobNormal", "imBackingStrip", "imAltBackingStrip",
     "imKnobOff", "imKnobOn", "imOff", "imOn", "optSmartTile", "intSmartTileEdgeSize", "optNoGraphics", "clippingRect",
     "optEditable", "dragable", "optSendValueWhenFocusLost", "optAlphaDisabled", "optGreyOutDisabled", "optNoBackground",
-    "fineScale", "incDecButtonMode", "snapSteps", "optScaleKnob", "optHistogram", "optFlipDirection",
+    "fineScale", "incDecButtonMode", "snapSteps", "optScaleKnob", "optHistogram",
     "optNoClickOutsideKnobMove", "optNoClickOutsideKnobPage", "optIsScrollbar", "optXFineBehaviour",
-    "optShiftFineBehaviour", "optStripInverted", "macroValueScaler", "microValueScaler", "longDim", "faderHeadSize",
+    "optShiftFineBehaviour", "optStripInverted", "macroValueScaler", "microValueScaler", "longDim",
     "optBorder", "optBackground", "optMouseHandle", "alwaysShowVSlider", "alwaysHideHSlider", "optVSlider",
-    "optHSlider", "optHeader", "optAltRowColours", "optColumnDividers", "optRowDividers", "colSelect", "colRow",
-    "colRowAlt", "colHeaderBackground", "colHeaderSelBackground", "colHeaderText", "colHeaderDivider",
-    "colColumnDivider", "colColumnText", "optNotEditable", "optNoSelection", "units", "unitMarkings",
-    "leftRangeText", "rightRangeText", "colUnits", "pivotX", "pivotY", "angleStart", "angleSize", "radius",
-    "lineWidth", "colLine", "plotRectInset",
+    "optHSlider", "colHeaderSelBackground", "optNotEditable", "optNoSelection", "unitMarkings",
 }
 
 # v1 style class -> theme base style.
@@ -304,6 +334,8 @@ class Converter:
         images = {k: v for k, v in a.items() if k.startswith("im")}
         out = {}
         ctrl = {}
+        flip = False
+        draw_text = True
         for k, v in a.items():
             if k == "name" or k in DROPPED:
                 continue
@@ -312,7 +344,11 @@ class Converter:
             dest, _ = STYLE_ATTRS[k]
             if dest is None:
                 continue
-            if dest.startswith("ctrl:"):
+            if k == "optFlipDirection":
+                flip = truthy(v)
+            elif k == "optDrawText":
+                draw_text = truthy(v)
+            elif dest.startswith("ctrl:"):
                 ctrl[dest[5:]] = "true" if truthy(v) else "false"
             elif k == "noDefaultDrawing":
                 if truthy(v):
@@ -321,6 +357,8 @@ class Converter:
             elif k in ("centeredText", "rightAlignText", "optTextLeftJustify"):
                 if truthy(v):
                     out[dest] = {"centeredText": "center", "rightAlignText": "right", "optTextLeftJustify": "left"}[k]
+            elif k in ("leftRangeText", "rightRangeText"):
+                out[dest] = v.replace("-oo", "-∞")
             elif dest.startswith("col"):
                 if images and el.tag != "CtrlTextBoxStyle":
                     continue  # the look replaces the bitmap's colours
@@ -338,8 +376,12 @@ class Converter:
         if el.tag == "CtrlButtonStyle" and "optIsMomentary" not in ctrl:
             ctrl["optIsMomentary"] = "true"
         look, fit = self.look_for_style(el.tag, name, images, a)
+        if not draw_text and not look:
+            out["optDrawText"] = "false"
+        if fit:
+            out["enumDialAlign"] = "Top" if fit == "top" else "Center"
         parent = STYLE_BASES.get(el.tag, "BaseStyle")
-        cls = "CtrlStyle"
+        cls = el.tag if el.tag in NATIVE_STYLES else "CtrlStyle"
         if look:
             parent = look["parent"]
             if look["text"] and any("\ue000" <= ch <= "\uf8ff" for ch in look["text"]) and "font" not in look["attrs"]:
@@ -350,7 +392,7 @@ class Converter:
                 cls, parent = "CheckBoxButtonRendererStyle", "CheckBoxStyle"
         attrs = {"name": name, "parentStyle0": parent}
         attrs.update(out)
-        info = {"ctrl": ctrl, "look": look, "fit": fit, "class": el.tag}
+        info = {"ctrl": ctrl, "look": look, "fit": fit, "class": el.tag, "flip": flip}
         if name in self.theme_names:
             self.info[name] = info
             return  # the theme's own style of that name wins (e.g. LogoStyle)
@@ -405,8 +447,10 @@ class Converter:
             r = looks.match(looks.IMAGES, looks.stem(images["imBackground"]))
             if r:
                 return r[1], None
-        if cls == "CtrlMeterStyle" or cls == "CtrlPlotStyle":
-            return looks.L("LcdPlotStyle"), None
+        if cls == "CtrlMeterStyle":
+            return looks.METER, None
+        if cls == "CtrlPlotStyle":
+            return looks.PLOT, None
         return None, None
 
     # -- controls
@@ -477,8 +521,14 @@ class Converter:
                 if cls == "CtrlButton" or not k.startswith("optIs"):
                     attrs[k] = v
             if info["fit"]:
-                rect = self.fit_knob(rect, info, out_before)
-                attrs["rect"] = rect
+                self.knob_body(rect, info, out_before)
+            if v1cls in ("CtrlSlider", "CtrlPanSlider"):
+                # v1's flip on its vertical faders gives what dreist-gui's
+                # vertical sliders do by default (up is more); so flip
+                # vertical ones v1 left unflipped and horizontal ones it
+                # flipped (inferred from the faders, no evidence yet).
+                if info["flip"] != (rect[3] > rect[2]):
+                    attrs["optFlipDirection"] = "true"
         if v1cls in ("CtrlKnob",) and info and info["look"] and info["look"]["parent"] in ("HardKnobStyle", "LcdKnobStyle"):
             if attrs.get("style", "").endswith("C"):
                 attrs["optCentered"] = "true"
@@ -553,7 +603,9 @@ class Converter:
             w += LABEL_REACH
         return [x, y, w, h]
 
-    def fit_knob(self, rect, info, decor):
+    def knob_body(self, rect, info, decor):
+        """The body panel under the square dial dreist-gui draws in a knob's
+        rect (enumDialAlign)."""
         x, y, w, h = rect
         s = min(w, h)
         nx = x + (w - s) // 2
@@ -563,7 +615,6 @@ class Converter:
             i = int(round(s * body[1]))
             decor.append(E("CtrlPanel", {"rect": [nx + i, ny + i, s - 2 * i, s - 2 * i], "style": body[0]}))
             self.decor += 1
-        return [nx, ny, s, s]
 
     # -- files
 

@@ -3,7 +3,7 @@
     <CtrlPanel name="CtrlPanel" rect="0, 0, 390, 410" id="0" style="ModalPanelStyle">
         <CtrlPanel name="HoldingPanel" rect="0, 0, 390, 410" id="0" style="EmptyPanelStyle">
             <CtrlLabel name="CtrlLabel" rect="20, 2, 350, 20" id="100003" style="ModalLabelStyle" text="The listed audio files could not be found whilst loading" />
-            <CtrlPanel name="FileList" rect="3, 24, 382, 350" id="100002" legacyClass="CtrlListBox" style="FindFileListBoxStyle" />
+            <CtrlListBox name="FileList" rect="3, 24, 382, 350" id="100002" style="FindFileListBoxStyle" />
             <CtrlButton name="IgnoreButton" rect="115, 383, 50, 17" id="100004" optIsMomentary="true" style="ModalMomentaryButtonStyle" text="Close" />
             <CtrlButton name="ManualButton" rect="168, 383, 50, 17" id="100006" optIsMomentary="true" style="ModalMomentaryButtonStyle" text="Manual" />
             <CtrlButton name="AutoButton" rect="221, 383, 50, 17" id="100005" optIsMomentary="true" style="ModalMomentaryButtonStyle" text="Auto" />

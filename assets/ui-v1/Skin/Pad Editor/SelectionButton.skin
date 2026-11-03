@@ -6,8 +6,8 @@
         <CtrlButton name="Solo" rect="24, 20, 19, 17" displayName="Solo" id="100001" optIsMomentary="false" style="LEDSoloButtonStyle" text="S" />
         <CtrlButton name="Clear" rect="44, 20, 19, 17" displayName="Clear" id="100016" optIsMomentary="true" style="StandardClearButtonStyle" text="" />
         <CtrlButton name="Lock" rect="64, 20, 19, 17" displayName="Lock" id="100017" optIsMomentary="false" style="StandardLockButtonStyle" text="" />
-        <CtrlProgressBar name="VULeft" rect="84, 21, 45, 4" id="100019" legacyClass="CtrlLevelStrip" style="VU45Dark" />
-        <CtrlProgressBar name="VURight" rect="84, 26, 45, 4" id="100018" legacyClass="CtrlLevelStrip" style="VU45Dark" />
+        <CtrlLevelStrip name="VULeft" rect="84, 21, 45, 4" id="100019" style="VU45Dark" />
+        <CtrlLevelStrip name="VURight" rect="84, 26, 45, 4" id="100018" style="VU45Dark" />
         <CtrlButton name="Trigger" rect="84, 31, 45, 6" id="100001" optIsMomentary="true" overloadClass="SingleFlashButton" style="FlashingButtonLayerStyle" text="" />
     </CtrlPanel>
 </root>

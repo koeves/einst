@@ -108,19 +108,23 @@ fn mount_into(skin: &mut Skin, host: &mut Ctrl, rel: &str) {
 
 /// Mount sub-skins into every code-built panel below `c`.
 fn mount_all(skin: &mut Skin, c: &mut Ctrl, depth: usize) {
+    mount_rec(skin, c, depth, &mut 0);
+}
+
+/// [`mount_all`], counting the effect slots filled so far (`fx`).
+fn mount_rec(skin: &mut Skin, c: &mut Ctrl, depth: usize, fx: &mut usize) {
     assert!(depth < 16, "mount loop at {}", c.name);
-    let mut fx = 0;
     for ch in &mut c.children {
         if let Some(rel) = skin_for(ch) {
             mount_into(skin, ch, rel);
         }
         if ch.name == "EffectPanel" && ch.rect.w == 193 {
             // An effect's own skin inside its slot.
-            let rel = EFFECTS[fx.min(EFFECTS.len() - 1)];
-            fx += 1;
+            let rel = EFFECTS[(*fx).min(EFFECTS.len() - 1)];
+            *fx += 1;
             mount_into(skin, ch, rel);
         }
-        mount_all(skin, ch, depth + 1);
+        mount_rec(skin, ch, depth + 1, fx);
     }
 }
 
@@ -170,6 +174,21 @@ fn demo_state(c: &mut Ctrl) {
         }
         if k.class == "CtrlSlider" {
             k.value = 0.7;
+        }
+        // The natively drawn v1 controls: levels, pans, a gain-reduction
+        // needle, an EQ curve and table rows.
+        match k.class.as_str() {
+            "CtrlLevelStrip" => k.value = if k.name.contains("Right") { 0.55 } else { 0.7 },
+            "CtrlPanSlider" => k.value = 0.35,
+            "CtrlMeter" => k.value = 0.7,
+            "CtrlPlot" => k.set_attr("points", "0,0.5 0.15,0.5 0.3,0.62 0.45,0.5 0.6,0.42 0.75,0.36 1,0.34".into()),
+            "CtrlTableView" => {
+                k.set_attr("columns", "Parameter|Control".into());
+                k.set_attr("rows", "Engine 1 Volume|CC 7\nEngine 1 Pan|CC 10\nMaster Volume|Host 1".into());
+                k.set_attr("intSelectedRow", "1".into());
+            }
+            "CtrlListBox" => k.set_attr("rows", "Kick 01.wav\nSnare 03.wav\nHat Closed.wav".into()),
+            _ => {}
         }
     });
 }
@@ -260,6 +279,7 @@ fn main() {
     for (name, rel) in PANELS {
         let mut panel = load(&mut skin, rel);
         mount_all(&mut skin, &mut panel, 0);
+        demo_state(&mut panel);
         let mut back = Ctrl { class: "CtrlPanel".into(), style: "ScreenLcdStyle".into(), rect: Rect::new(0, 0, panel.rect.w + 10, panel.rect.h + 10), visible: true, enabled: true, ..Ctrl::default() };
         panel.rect = Rect::new(5, 5, panel.rect.w, panel.rect.h);
         back.children.push(panel);
