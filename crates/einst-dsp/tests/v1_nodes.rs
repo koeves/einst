@@ -225,3 +225,131 @@ fn noise_gate_takes_v1_port_order() {
     // The v1 names sit where v1 puts them.
     assert_eq!(einst_dsp::internal_ports(einst_dsp::NOISE_GATE), &[(6, 0.0), (7, 0.0), (8, 0.0), (9, 1.0)]);
 }
+
+/// v1's Channel Compressor: Dreist's circuit (v1's solvers agree with
+/// Geist2's to float-folding precision) with a flat per-block input gain and
+/// v1's fast 2^x for attack and release.
+#[test]
+fn channel_compressor_matches_dreist_but_for_gain_ramp_and_fast_exp2() {
+    use geist_dsp::fx::nodes::urei1176::Urei1176 as Geist2;
+    let ctx = Ctx::new(48_000.0);
+    let mut v1 = einst_dsp::urei1176::Urei1176::new();
+    let mut g2 = Geist2::new();
+    // 0 In dB, 1 Attack, 2 Release, 3 Q, 5 Ratio, 6 Out dB, 7 Mix, 8 Active.
+    // In at 0 dB: Geist2's input ramp starts at 0 dB, so only v1's solvers and
+    // the fast 2^x (compensated on Geist2's side) remain.
+    let set = [(0usize, 0.0f32), (1, 0.4), (2, 1.6), (3, 0.5), (5, 2.0), (6, 3.0), (7, 1.0), (8, 1.0)];
+    for (i, v) in set {
+        v1.ports()[i].value = v;
+        g2.ports()[i].value = if i == 1 || i == 2 { einst_dsp::fast_exp2(v - 1.0).log2() + 1.0 } else { v };
+    }
+    let n = 32;
+    let sig: Vec<f32> = (0..n * 200).map(|i| (i as f32 * std::f32::consts::TAU * 180.0 / 48_000.0).sin() * if i < n * 60 { 0.1 } else { 2.0 }).collect();
+    let (mut worst, mut peak) = (0.0f32, 0.0f32);
+    for x in sig.chunks(n) {
+        let (mut l1, mut r1, mut l2, mut r2) = (vec![0.0; n], vec![0.0; n], vec![0.0; n], vec![0.0; n]);
+        v1.process(&ctx, [x, x], [&mut l1, &mut r1]);
+        g2.process(&ctx, [x, x], [&mut l2, &mut r2]);
+        worst = worst.max(l1.iter().zip(&l2).map(|(a, b)| (a - b).abs()).fold(0.0f32, f32::max));
+        peak = peak.max(l2.iter().fold(0.0f32, |m, v| m.max(v.abs())));
+        assert!(l1.iter().all(|v| v.is_finite()));
+    }
+    // Both solvers stop at a 0.1 % step, so folding differences can shift an
+    // iteration: within 0.1 % of the output level.
+    assert!(worst < peak * 1e-3, "{worst} of {peak}");
+    // A gain change: v1 jumps to it for the whole block, Geist2 ramps.
+    v1.ports()[0].value = 12.0;
+    g2.ports()[0].value = 12.0;
+    let x = &sig[..n];
+    let (mut l1, mut r1, mut l2, mut r2) = (vec![0.0; n], vec![0.0; n], vec![0.0; n], vec![0.0; n]);
+    v1.process(&ctx, [x, x], [&mut l1, &mut r1]);
+    g2.process(&ctx, [x, x], [&mut l2, &mut r2]);
+    assert!((l1[1] - l2[1]).abs() > 1e-4, "{} vs {}", l1[1], l2[1]);
+}
+
+/// v1's solvers equal Geist2's algebra: the FET stage's "off" shortcut is
+/// 1/4.40125e6, and `vcrit` is ln(1.8228e13)·0.02577878 = 0.787129.
+#[test]
+fn channel_compressor_solver_constants() {
+    let (mut a, mut b) = (0.0f32, -3.0f32);
+    einst_dsp::urei1176::solve_1176a(&mut a, &mut b, 0.0, 0.0);
+    assert!(a.is_finite() && b.is_finite());
+    assert!((f32::from_bits(0x5584_a0f3).ln() * 0.02577878 - 0.7871292).abs() < 1e-6);
+    assert!((1.0f32 / 4.40125e6 - 2.2720818e-07).abs() < 1e-13);
+}
+
+/// v1's Bus Compressor is Dreist's fed log2(fast2^(HPFreq + 1)) − 1.
+#[test]
+fn bus_compressor_differs_only_by_fast_exp2_side_chain_hp() {
+    use geist_dsp::fx::nodes::bus_comp::BusComp;
+    let ctx = Ctx::new(48_000.0);
+    // Threshold, Attack, Ratio, Release, Makeup, Mix, Active, (ext SC), HPFreq, Clip.
+    let set = [(0, 0.1), (1, 1.0), (2, 2.0), (3, 1.0), (4, 0.4), (5, 1.0), (6, 1.0), (7, 0.0), (8, 7.3), (9, 1.0)];
+    let mut v1 = einst_dsp::bus_comp::BusComp::new();
+    let (mut g2, mut g2_exact) = (BusComp::new(), BusComp::new());
+    for &(i, v) in &set {
+        v1.ports()[i].value = v;
+        g2.ports()[i].value = if i == 8 { einst_dsp::fast_exp2(v + 1.0).log2() - 1.0 } else { v };
+        g2_exact.ports()[i].value = v;
+    }
+    let (l, r) = (noise(4096, 3), noise(4096, 4));
+    let a = run(&mut v1, &ctx, &l, &r);
+    assert_eq!(a, run(&mut g2, &ctx, &l, &r));
+    assert_ne!(a, run(&mut g2_exact, &ctx, &l, &r));
+    // The port keeps the value the engine wrote.
+    assert_eq!(v1.ports()[8].value, 7.3);
+}
+
+/// Modulated Filter ports: 0 Drive, 1 Mode, 2 Pitch, 3 Resonance, 4 Out drive,
+/// 5 Mix, 6 Active, 7 ext SC, 8 Attack, 9 Release, 10 Depth, 11 FM.
+fn auto_filter_ports(n: &mut dyn Node, pitch: f32, depth: f32, fm: f32) {
+    let v = [1.0, 0.0, pitch, 0.4, 1.0, 1.0, 1.0, 0.0, -6.0, -3.0, depth, fm];
+    for (i, v) in v.into_iter().enumerate() {
+        n.ports()[i].value = v;
+    }
+}
+
+/// Without envelope or FM, v1's filter is Dreist's at the pitch whose exact
+/// 2^x is v1's fast one (once the first block's pitch ramp has passed).
+#[test]
+fn modulated_filter_cutoff_uses_fast_exp2() {
+    use geist_dsp::fx::nodes::auto_filter::AutoFilter;
+    let ctx = Ctx::new(48_000.0);
+    let pitch = 1.37;
+    let mut v1 = einst_dsp::auto_filter::AutoFilter::new();
+    let (mut g2, mut g2_exact) = (AutoFilter::new(), AutoFilter::new());
+    auto_filter_ports(&mut v1, pitch, 0.0, 0.0);
+    auto_filter_ports(&mut g2, einst_dsp::fast_exp2(pitch).log2(), 0.0, 0.0);
+    auto_filter_ports(&mut g2_exact, pitch, 0.0, 0.0);
+    let (mut worst, mut worst_exact, mut peak) = (0.0f32, 0.0f32, 0.0f32);
+    for b in 0..40 {
+        let (l, r) = (noise(256, 10 + b), noise(256, 100 + b));
+        let a = run(&mut v1, &ctx, &l, &r);
+        let g = run(&mut g2, &ctx, &l, &r);
+        let e = run(&mut g2_exact, &ctx, &l, &r);
+        if b >= 20 {
+            for k in 0..256 {
+                worst = worst.max((a.0[k] - g.0[k]).abs()).max((a.1[k] - g.1[k]).abs());
+                worst_exact = worst_exact.max((a.0[k] - e.0[k]).abs());
+                peak = peak.max(a.0[k].abs());
+            }
+        }
+    }
+    assert!(worst < peak * 1e-4, "worst {worst}, peak {peak}");
+    assert!(worst_exact > worst * 10.0, "exact {worst_exact} vs {worst}");
+}
+
+/// The FM term comes from the left input only, for both channels: with the
+/// envelope off, changing the left input changes the right output only
+/// when FM is on.
+#[test]
+fn modulated_filter_fm_is_taken_from_the_left_input() {
+    let ctx = Ctx::new(48_000.0);
+    let right = |fm: f32, left_seed: u32| {
+        let mut f = einst_dsp::auto_filter::AutoFilter::new();
+        auto_filter_ports(&mut f, 2.0, 0.0, fm);
+        run(&mut f, &ctx, &noise(1024, left_seed), &noise(1024, 7)).1
+    };
+    assert_eq!(right(0.0, 1), right(0.0, 2));
+    assert_ne!(right(0.8, 1), right(0.8, 2));
+}

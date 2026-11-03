@@ -68,8 +68,8 @@ impl FxChain {
                 let r =
                     SlotRows { is_active: e.bool("IsActive").unwrap_or(true), mix: row(e, &["Mix".into()], 0.5), level: row(e, &["Level".into()], 1.0), trim: row(e, &["Trim".into()], 1.0), params };
                 let mut fx = Effect::new(kind, sample_rate);
-                // Einst: Geist v1's own nodes (Gain, Vari-EQ, Envelope
-                // Shaper; `einst_dsp`) replace Dreist's Geist2 ones.
+                // Einst: Geist v1's own nodes and the shared ones whose
+                // v1 build differs (`einst_dsp`) replace Dreist's.
                 if let Some(mut node) = einst_dsp::create(kind) {
                     for &(port, v) in einst_dsp::internal_ports(kind) {
                         if let Some(p) = node.ports().get_mut(port) {
