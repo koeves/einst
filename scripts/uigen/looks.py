@@ -15,8 +15,11 @@ the rules below to a look, which is
 - `decor`: unnamed panels standing in for the parts of a bitmap one style
   cannot draw (the screen inside a bezel, knob bodies), each
   `(where, x, y, w, h, style)`: `inside` the control (its first children)
-  or `behind` it (siblings drawn before it); x, y relative to the control,
-  w, h below 1 relative to its size.
+  or `behind` it (siblings drawn before it); x, y relative to the control
+  (a negative y from its bottom), w, h below 1 relative to its size,
+- `inset`: `(left, top, right, bottom)` taken off the rect of every
+  control using the look: the part of v1's bitmap the art filled (round
+  engine buttons, knob dials, pattern keys had transparent margins).
 
 Rules match the image file name (no folder, no extension) with a regular
 expression; the first match wins. Buttons use their `imUp` image.
@@ -27,9 +30,13 @@ import re
 from theme import G, icon_font, text_font
 
 
-def L(parent, text=None, upper=False, ctrl=None, cls=None, decor=None, **attrs):
-    return {"parent": parent, "text": text, "upper": upper, "ctrl": ctrl or {}, "cls": cls, "decor": decor or [], "attrs": attrs}
+def L(parent, text=None, upper=False, ctrl=None, cls=None, decor=None, inset=None, **attrs):
+    return {"parent": parent, "text": text, "upper": upper, "ctrl": ctrl or {}, "cls": cls, "decor": decor or [], "inset": inset,
+            "attrs": attrs}
 
+
+# Pattern keys: the key face inside v1's 24 x 41 cell, with its lit strip.
+KEY = dict(inset=(3, 1, 2, 5), decor=[("inside", 3, -9, -6, 6, "PatternKeyLedStyle")])
 
 POPUP = {"renderer": "PopupButtonRenderer"}
 CHECK = {"renderer": "CheckBoxButtonRenderer"}
@@ -38,22 +45,22 @@ CHECK = {"renderer": "CheckBoxButtonRenderer"}
 
 BUTTONS = [
     # Page tabs on the screen bezels: text labels instead of image text.
-    (r"^Tab(On|Off|Disabled)", L("TabButtonStyle", upper=True)),
-    (r"^(Show|Hide)$", L("BezelIconButtonStyle", text=G["chev_left"])),
+    (r"^Tab(On|Off|Disabled)", L("TabButtonStyle", upper=True)),  # ("/" spaced, see convert.py)
+    (r"^(Show|Hide)$", L("BezelIconButtonStyle", text=G["right"])),
     # Transport (hardware strip).
     (r"^PlayButton", L("HwPlayButtonStyle", text=G["right"])),
     (r"^RecButton", L("HwRecordButtonStyle", text=G["record"])),
-    (r"^SongButton", L("HwButtonStyle", text="SONG")),
+    (r"^SongButton", L("HwSongButtonStyle", text="SONG")),
     (r"^RestartButton", L("HwIconButtonStyle", text=G["skip_start"])),
     (r"^LoopButton", L("HwIconButtonStyle", text=G["loop"])),
     (r"^RetroButton", L("HwIconButtonStyle", text=G["retrigger"])),
     (r"^PanicButton", L("HwIconButtonStyle", text=G["warning"])),
-    (r"^LearnButton", L("HwButtonStyle", text="LEARN", font=text_font(8, True))),
+    (r"^LearnButton", L("HwIconButtonStyle", text=G["midi"])),
     (r"^Quantize", L("HwIconButtonStyle", text=G["quantise"])),
     (r"^MetroButton", L("HwIconButtonStyle", text=G["metronome"])),
-    (r"^UndoButton", L("HwIconButtonStyle", text=G["undo"])),
-    (r"^RedoButton", L("HwIconButtonStyle", text=G["redo"])),
-    (r"^UndoRedoDropArrow", L("HwSmallIconButtonStyle", text=G["chev_down"])),
+    (r"^UndoButton", L("HwDarkButtonStyle", text="UNDO", optRoundTopRight="false", optRoundBottomRight="false")),
+    (r"^RedoButton", L("HwDarkButtonStyle", text="REDO", optRoundTopRight="false", optRoundBottomRight="false")),
+    (r"^UndoRedoDropArrow", L("HwDarkIconButtonStyle", text=G["down"], optRoundTopLeft="false", optRoundBottomLeft="false")),
     # Pad mode column.
     (r"^PadModePad", L("HwButtonStyle", text="PAD")),
     (r"^PadModeChro", L("HwButtonStyle", text="CHR")),
@@ -65,25 +72,25 @@ BUTTONS = [
     (r"^RepeatOptions", L("HwButtonStyle", font=text_font(11), enumTextHorizontalAlign="left", realTextOffset="5")),
     (r"^Repeat", L("HwButtonStyle", text="REPEAT")),
     # Utility menus under the master section (40 x 10).
-    (r"^(Load|Save)Button", L("HwTinyButtonStyle", upper=True)),
+    (r"^(Load|Save)Button", L("ReadoutMenuStyle", upper=True)),  # ("..." -> "▼", see convert.py)
     # (the third of them, the options menu, is matched by name in convert.py)
     # Engine selectors.
-    (r"^EngineButtonUpPowerOff", L("EngineButtonPowerOffStyle")),
-    (r"^EngineButtonUp", L("EngineButtonStyle")),
+    (r"^EngineButtonUpPowerOff", L("EngineButtonPowerOffStyle", inset=(6, 6, 6, 6))),
+    (r"^EngineButtonUp", L("EngineButtonStyle", inset=(6, 6, 6, 6))),
     (r"^PatternPower", L("HwPowerButtonStyle", text=G["power"])),
     (r"^MuteIndi", L("IndicatorMuteStyle", text="")),
     (r"^SoloIndi", L("IndicatorSoloStyle", text="")),
     (r"^HARDMute", L("HwMuteButtonStyle")),
     (r"^HARDSolo", L("HwSoloButtonStyle")),
     # Master section.
-    (r"^MIDIIndiError", L("IndicatorErrorStyle", text="MIDI")),
-    (r"^MIDIIndi", L("IndicatorStyle", text="MIDI")),
-    (r"^VoiceIndi", L("IndicatorStyle", text="VOICE")),
+    (r"^MIDIIndiError", L("IndicatorLabelStyle", text="● MIDI", colText="LedMute")),
+    (r"^MIDIIndi", L("IndicatorLabelStyle", text="● MIDI")),
+    (r"^VoiceIndi", L("IndicatorLabelStyle", text="● VOICE")),
     # Pattern memory keys.
-    (r"^PatternButtonOff", L("PatternKeyStyle")),
-    (r"^PatternButtonOn", L("PatternKeyAllocatedStyle")),
-    (r"^PatternButtonEditing", L("PatternKeyEditingStyle")),
-    (r"^PatternButtonSelected", L("PatternKeySelectedStyle")),
+    (r"^PatternButtonOff", L("PatternKeyStyle", **KEY)),
+    (r"^PatternButtonOn", L("PatternKeyAllocatedStyle", **KEY)),
+    (r"^PatternButtonEditing", L("PatternKeyEditingStyle", **KEY)),
+    (r"^PatternButtonSelected", L("PatternKeySelectedStyle", **KEY)),
     # LCD buttons.
     (r"^LED(Standard|Link)Button|^LinkButton", L("LcdButtonStyle")),
     (r"^LEDSmallButton", L("LcdIconButtonStyle", text=G["power"])),
@@ -106,7 +113,8 @@ BUTTONS = [
     (r"^LEDNoZoom", L("LcdIconButtonStyle", text=G["ring"], font=icon_font(8))),
     (r"^LEDDiv2", L("LcdButtonStyle", text="÷2", font=text_font(11))),
     (r"^LEDx2", L("LcdButtonStyle", text="×2", font=text_font(11))),
-    (r"^LEDM?(Mix|Send|Setup)Button", L("LcdBigButtonStyle", upper=True)),
+    (r"^LEDM(Mix|Send|Setup)Button", L("LcdSideTabStyle", upper=True)),
+    (r"^LED(Mix|Send|Setup)Button", L("LcdBigButtonStyle", upper=True)),
     (r"^LargePowerButton", L("LcdPowerButtonStyle", text=G["power"])),
     (r"^LargePresetBackButton", L("LcdFlatIconButtonStyle", text=G["left"])),
     (r"^LargePresetNextButton", L("LcdFlatIconButtonStyle", text=G["right"])),
@@ -166,7 +174,7 @@ BUTTONS = [
 # bitmap is shared by controls that need different captions, and the
 # options menu button (its v1 name carries the product name).
 BY_NAME = {
-    "OptionsButtonStyle": L("HwTinyButtonStyle", upper=True),
+    "OptionsButtonStyle": L("ReadoutMenuStyle", text="EINST▼"),
     "AutoButtonStyle": L("LcdButtonStyle", text="AUTO", font=text_font(8, True)),
     "FooterLatchingButtonStyle": L("LcdButtonStyle", font=text_font(10)),
 }
@@ -212,8 +220,8 @@ TEXT_BOXES = [
 # (rule, look, fit): fit = how the square dial sits in v1's rect ("top"
 # for the hardware knobs, whose film frames carry a scale under the dial).
 KNOBS = [
-    (r"^HARDKnobLarge", L("HardKnobStyle", ctrl={"realDialThickness": "0.16"}), "top"),
-    (r"^HARDKnobSmall", L("HardKnobStyle", ctrl={"realDialThickness": "0.2"}), "top"),
+    (r"^HARDKnobLarge", L("HardKnobStyle", ctrl={"realDialThickness": "0.12"}, inset=(6, 11, 6, 21)), "top"),
+    (r"^HARDKnobSmall", L("HardKnobSmallStyle", ctrl={"realDialThickness": "0.36"}, inset=(2, 2, 2, 4)), "top"),
     (r"^LEDKnobLarge", L("LcdKnobStyle", ctrl={"realDialThickness": "0.14"}), "center"),
     (r"^LEDKnob(Small|Micro)", L("LcdKnobStyle", ctrl={"realDialThickness": "0.22"}), "center"),
     (r"^LEDSpinner", L("SpinnerStyle", ctrl={"realDialThickness": "0.2"}), "center"),
@@ -221,7 +229,7 @@ KNOBS = [
 
 # The body drawn under knobs big enough to have one: (theme style, inset as
 # a fraction of the dial).
-KNOB_BODY = {"HardKnobStyle": ("HardKnobBodyStyle", 0.2), "LcdKnobStyle": ("LcdKnobBodyStyle", 0.2)}
+KNOB_BODY = {"HardKnobStyle": ("HardKnobBodyStyle", 0.12), "LcdKnobStyle": ("LcdKnobBodyStyle", 0.2)}
 
 # ---------------------------------------------------------------- faders, pans, meters (imBackingStrip)
 
@@ -251,12 +259,13 @@ IMAGES = [
     (r"^(Background|BackgroundSmall)$", L("ChassisStyle")),
     (r"^(Screen|Browser)$", L("ScreenBezelStyle", decor=[("inside", 3, 20, -6, -23, "ScreenLcdStyle")])),
     (r"^StatusStrip", L("StatusStripStyle")),
-    (r"^EngineText$", L("SectionLabelStyle", text="ENGINE", cls="CtrlLabel")),
-    (r"^PatternText$", L("SectionLabelStyle", text="PATTERN", cls="CtrlLabel")),
+    (r"^EngineText$", L("SectionLabelStyle", text="ENGINES", cls="CtrlLabel")),
+    (r"^PatternText$", L("SectionLabelStyle", text="PATTERNS", cls="CtrlLabel")),
     (r"^MasterText$", L("SectionLabelStyle", text="MASTER", cls="CtrlLabel")),
     (r"^PadText$", L("SectionLabelStyle", text="PADS", cls="CtrlLabel")),
-    (r"^ModesText$", L("SectionLabelStyle", text="MODES", cls="CtrlLabel")),
-    (r"^Logo$", L("LogoStyle", cls="CtrlPanel", ctrl={"overloadClass": "Logo"})),
+    (r"^ModesText$", L("SectionLabelLeftStyle", text="MODES", cls="CtrlLabel")),
+    # The wordmark in the logo's place (lower-case, as v1's): text, not art.
+    (r"^Logo$", L("WordmarkStyle", text="einst.", cls="CtrlLabel")),
     (r"^SendArrow$", L("GlyphLabelStyle", text=G["right"], cls="CtrlLabel", font=icon_font(8))),
     (r"^Glue", L("LcdGlueStyle")),
     (r"^(Pad|Layer)Glue$", L("LcdGlueStyle")),

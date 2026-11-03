@@ -8,12 +8,12 @@
             <CtrlButton name="CtrlButton" rect="26, 24, 25, 27" displayName="Engine Mute / Solo mode" id="3" optIsMomentary="false" style="PadModeEMSStyle" text="M/S" />
         </CtrlButtonGroup>
         <CtrlButton name="FullLevelButton" rect="4, 69, 25, 27" displayName="Full level mode" id="100000" optIsMomentary="false" style="FullLevelStyle" text="FULL" />
-        <CtrlKnob name="FullLevelKnob" rect="31, 69, 24, 26" displayName="Full level" id="100001" realDialThickness="0.2" style="HardKnobSmallLR" />
+        <CtrlKnob name="FullLevelKnob" rect="33, 71, 20, 20" displayName="Full level" id="100001" realDialThickness="0.36" style="HardKnobSmallLR" />
         <CtrlButton name="EraseButton" rect="4, 95, 25, 27" displayName="Note erase" id="100002" optIsMomentary="false" style="EraseButtonStyle" text="" />
         <CtrlButton name="FollowButton" rect="30, 95, 25, 27" displayName="Pad selection follows MIDI notes" id="100000" optIsMomentary="false" style="FollowModeButtonStyle" text="FLW" />
         <CtrlButton name="RepeatButton" rect="4, 123, 51, 27" displayName="Pad repeat" id="100001" optIsMomentary="false" style="RepeatButtonStyle" text="REPEAT" />
         <CtrlButton name="RepeatCount" rect="4, 147, 51, 27" displayName="Repeat Count" id="100000" optIsMomentary="true" style="RepeatOptionStyle" text="1/16" />
-        <CtrlKnob name="InstoSlider" rect="31, 174, 24, 26" displayName="Focus Graph" id="100000" realDialThickness="0.2" style="HardKnobSmallLR" />
+        <CtrlKnob name="InstoSlider" rect="33, 176, 20, 20" displayName="Focus Graph" id="100000" realDialThickness="0.36" style="HardKnobSmallLR" />
         <CtrlLabel name="IconStyle" rect="8, 180, 17, 12" id="0" legacyClass="CtrlImageView" style="ChassisGlyphLabelStyle" text="" />
     </CtrlPanel>
 </root>

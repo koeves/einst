@@ -6,14 +6,14 @@
         <CtrlButton name="ZoomOutButton" rect="782, 327, 12, 12" id="100001" optIsMomentary="true" style="ZoomOutButtonStyle" text="" />
         <CtrlButton name="ZoomInButton" rect="795, 327, 12, 12" id="100001" optIsMomentary="true" style="ZoomInButtonStyle" text="" />
         <CtrlPanel name="Controls" rect="9, 345, 800, 40" id="0" style="EmptyPanelStyle">
-            <CtrlLabel name="CtrlLabel" rect="-8, 1, 66, 15" id="100000" style="StandardLabelCenteredStyle" text="File BPM" />
-            <CtrlLabel name="CtrlLabel" rect="51, 1, 66, 15" id="100017" style="StandardLabelCenteredStyle" text="BPM" />
-            <CtrlLabel name="CtrlLabel" rect="104, 1, 66, 15" id="100018" style="StandardLabelCenteredStyle" text="Bars" />
-            <CtrlLabel name="CtrlLabel" rect="157, 1, 66, 15" id="100019" style="StandardLabelCenteredStyle" text="Beats" />
-            <CtrlLabel name="CtrlLabel" rect="216, 1, 136, 15" id="100006" style="StandardLabelCenteredStyle" text="Detection Mode" />
-            <CtrlLabel name="SenseLabel" rect="338, 1, 81, 15" id="100013" style="StandardLabelCenteredStyle" text="Sensitivity" />
-            <CtrlLabel name="CtrlLabel" rect="406, 1, 121, 15" id="100000" style="StandardLabelCenteredStyle" text="Assignment mode" />
-            <CtrlLabel name="ExtractLabel" rect="521, 1, 171, 15" id="100005" style="StandardLabelCenteredStyle" text="Extract..." />
+            <CtrlLabel name="CtrlLabel" rect="-8, 2, 66, 13" id="100000" style="StandardLabelCenteredStyle" text="File BPM" />
+            <CtrlLabel name="CtrlLabel" rect="51, 2, 66, 13" id="100017" style="StandardLabelCenteredStyle" text="BPM" />
+            <CtrlLabel name="CtrlLabel" rect="104, 2, 66, 13" id="100018" style="StandardLabelCenteredStyle" text="Bars" />
+            <CtrlLabel name="CtrlLabel" rect="157, 2, 66, 13" id="100019" style="StandardLabelCenteredStyle" text="Beats" />
+            <CtrlLabel name="CtrlLabel" rect="216, 2, 136, 13" id="100006" style="StandardLabelCenteredStyle" text="Detection Mode" />
+            <CtrlLabel name="SenseLabel" rect="338, 2, 81, 13" id="100013" style="StandardLabelCenteredStyle" text="Sensitivity" />
+            <CtrlLabel name="CtrlLabel" rect="406, 2, 121, 13" id="100000" style="StandardLabelCenteredStyle" text="Assignment mode" />
+            <CtrlLabel name="ExtractLabel" rect="521, 2, 171, 13" id="100005" style="StandardLabelCenteredStyle" text="Extract..." />
             <CtrlLabel name="SrcBPM" rect="-8, 15, 66, 17" displayName="The original BPM of the file, detected from the file" id="100002" style="StandardLabelCenteredStyle" />
             <CtrlTextBox name="BPMBox" rect="59, 15, 50, 17" id="100014" optSingleClickEdit="true" style="LEDEditBoxStyle" />
             <CtrlTextBox name="BarsBox" rect="112, 15, 50, 17" id="100015" optSingleClickEdit="true" style="LEDEditBoxStyle" />

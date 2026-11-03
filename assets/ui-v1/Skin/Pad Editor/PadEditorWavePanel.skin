@@ -5,9 +5,9 @@
         <CtrlPanel name="TSPanel" rect="253, 12, 135, 155" id="100003" overloadClass="EditorPadTimestretchPanel" />
         <CtrlPanel name="EnvPanel" rect="531, 13, 131, 185" id="100001" overloadClass="EditorPadEnvelopePanel" />
         <CtrlButton name="AmpButton" rect="551, 36, 14, 15" id="100000" optIsMomentary="false" renderer="CheckBoxButtonRenderer" style="StandardCheckButtonStyle" text="" />
-        <CtrlLabel name="CtrlLabel" rect="567, 38, 75, 15" id="100003" style="StandardLabelStyle" text="Amp Env Visible" />
+        <CtrlLabel name="CtrlLabel" rect="567, 39, 75, 13" id="100003" style="StandardLabelStyle" text="Amp Env Visible" />
         <CtrlButton name="FreeButton" rect="551, 116, 14, 15" id="100001" optIsMomentary="false" renderer="CheckBoxButtonRenderer" style="StandardCheckButtonStyle" text="" />
-        <CtrlLabel name="CtrlLabel" rect="567, 118, 75, 15" id="100004" style="StandardLabelStyle" text="Free Env Visible" />
+        <CtrlLabel name="CtrlLabel" rect="567, 119, 75, 13" id="100004" style="StandardLabelStyle" text="Free Env Visible" />
         <CtrlPanel name="WavePanel" rect="14, 202, 653, 170" id="100011" overloadClass="LayerWaveDisplay" />
         <CtrlPanel name="WaveZoomSlider" rect="14, 373, 575, 12" id="100000" overloadClass="WaveDisplayZoomSlider" />
         <CtrlButtonGroup name="AutoZoomGroup" rect="590, 373, 52, 12" id="100000" style="BasePanelStyle">

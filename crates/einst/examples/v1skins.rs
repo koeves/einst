@@ -41,7 +41,10 @@ const BY_OVERLOAD: &[(&str, &str)] = &[
 ];
 
 /// Effects shown in the chain's first four slots.
-const EFFECTS: [&str; 4] = ["Effects/Filter.skin", "Effects/Delay.skin", "Effects/BusComp.skin", "Effects/ParaEQ.skin"];
+const EFFECTS: [&str; 4] = ["Effects/Delay.skin", "Effects/ParaEQ.skin", "Effects/Gain.skin", "Effects/ChanComp.skin"];
+
+/// Their names (the slots' type menus and the chain's slot buttons).
+const EFFECT_NAMES: [&str; 6] = ["Delay", "Parametric EQ", "Gain", "Channel Compressor", "No Effect", "No Effect"];
 
 /// The LCD pages: (image name, page skin).
 const PAGES: &[(&str, &str)] = &[
@@ -128,45 +131,115 @@ fn mount_rec(skin: &mut Skin, c: &mut Ctrl, depth: usize, fx: &mut usize) {
     }
 }
 
-/// Some state so the images show the looks' on states: engine numbers and
-/// the selected engine, first tabs, a pattern key, selected strips.
+/// Some state so the images show the looks' on states, set up like the
+/// reference screens: engine 3 selected, pattern power on, a pattern key,
+/// named pads with their colour LEDs, a selected pad, the mixers' mix view.
 fn demo_state(c: &mut Ctrl) {
     for i in 0..8 {
         if let Some(sel) = c.find_mut(&format!("EngineSelector{i}")) {
             if let Some(b) = sel.find_mut("EngineSelectionButton") {
                 b.text = (i + 1).to_string();
                 b.style = format!("EngineButtonStyle{}", i + 1);
-                b.on = i == 0;
+                b.on = i == 2;
             }
-            if i == 3 {
-                if let Some(b) = sel.find_mut("EngineMutedIcon") {
-                    b.on = true;
-                }
+            if let Some(b) = sel.find_mut("PatternPower") {
+                b.on = true;
+            }
+            if let Some(v) = sel.find_mut("VULeft") {
+                v.value = [0.0, 0.0, 0.15, 0.0, 0.0, 0.0, 0.55, 0.0][i];
             }
         }
     }
-    for group in ["MainTabButtons", "BrowserTabButtons"] {
+    for group in ["MainTabButtons", "BrowserTabButtons", "ModeGroup", "PadMode"] {
         if let Some(g) = c.find_mut(group) {
             if let Some(b) = g.children.first_mut() {
                 b.on = true;
             }
         }
     }
-    for (key, style) in [("Key0", "SelectorStyleSelected"), ("Key2", "SelectorStyleAllocated"), ("Key4", "SelectorStyleEditing"), ("Key1", "SelectorStyleAllocated")] {
-        if let Some(k) = c.find_mut(key) {
-            k.style = style.into();
-        }
+    if let Some(k) = c.find_mut("Key20") {
+        k.style = "SelectorStyleSelected".into();
     }
-    for name in ["PlayButton", "MetroButton", "Pad0"] {
+    for name in ["PlayButton", "MetroButton"] {
         if let Some(b) = c.find_mut(name) {
             b.on = true;
         }
     }
+    if let Some(b) = c.find_mut("RedoButton") {
+        b.enabled = false;
+    }
+    if let Some(b) = c.find_mut("RedoHistory") {
+        b.enabled = false;
+    }
     if let Some(b) = c.find_mut("BPMTextBox") {
-        b.text = "120.00".into();
+        b.text = "132.00".into();
     }
     if let Some(b) = c.find_mut("MemoryUsageBox") {
-        b.text = "12 MB".into();
+        b.text = "19.7MB".into();
+    }
+    // Pads: names, the first status LED in the pad's colour, pad 15 selected.
+    const PADS: [&str; 16] = ["Kick", "Perc 1", "Tick", "Beep", "Warble", "EpicClap", "Noise", "ElecTom", "ElecTom 2", "ElecTom 3", "11", "12", "Tap", "Glitch", "Zaap", "Noise Bst"];
+
+    for (i, name) in PADS.iter().enumerate() {
+        if let Some(pad) = c.find_mut(&format!("Pad{i}")) {
+            if pad.overload != "EditorPad" {
+                continue;
+            }
+            if i == 15 {
+                pad.children[0].style = "PadSelectedStyle".into();
+            }
+            if let Some(led) = pad.children.get_mut(1) {
+                led.style = format!("PadLed{}Style", i / 4 + 1);
+            }
+            pad.children.push(label(Rect::new(2, 10, 52, 18), "PadNameStyle", name));
+        }
+    }
+    // Mixer strips in the mix view: number, mute / solo, pan, fader, meters
+    // and the output.
+    let mut n = 0;
+    c.walk_mut(&mut |k| {
+        if k.overload == "EditorEngineMixerChannel" || k.overload == "EditorMixerPadChannel" {
+            n += 1;
+            let no = n;
+            k.walk_mut(&mut |s| match s.name.as_str() {
+                "NameLabel" => s.text = no.to_string(),
+                "OutputCombo" => s.text = "Master".into(),
+                n if n.starts_with("Swing")
+                    || n.starts_with("EngineSwing")
+                    || n.starts_with("EnginePitch")
+                    || n.starts_with("Tempo")
+                    || n.starts_with("Send")
+                    || n.ends_with("NumBox")
+                    || n.ends_with("DenomBox") =>
+                {
+                    s.visible = false
+                }
+                _ => {}
+            });
+        }
+    });
+    // Effect slots: type and preset menus, the chain's slot buttons.
+    let mut fx = 0;
+    c.walk_mut(&mut |k| match k.name.as_str() {
+        "EffectTypeCombo" => {
+            k.text = EFFECT_NAMES[fx.min(5)].into();
+            fx += 1;
+        }
+        "PresetCombo" => k.text = "Default".into(),
+        _ if k.overload == "EditorEffectPanelScrollbar" => {
+            for (i, n) in EFFECT_NAMES.iter().enumerate() {
+                k.children.push(ctrl("CtrlButton", Rect::new(i as i32 * 75, 4, 74, 27), "LcdButtonStyle", n));
+            }
+        }
+        _ => {}
+    });
+    for name in ["BlackoutPanel", "PatternRenameTextBox"] {
+        if let Some(b) = c.find_mut(name) {
+            b.visible = false;
+        }
+    }
+    if let Some(b) = c.find_mut("HitLoopModeButton") {
+        b.on = true;
     }
     c.walk_mut(&mut |k| {
         if k.class == "CtrlKnob" {
@@ -178,11 +251,11 @@ fn demo_state(c: &mut Ctrl) {
         // The natively drawn v1 controls: levels, pans, a gain-reduction
         // needle, an EQ curve and table rows.
         match k.class.as_str() {
-            "CtrlLevelStrip" => k.value = if k.name.contains("Right") { 0.55 } else { 0.7 },
+            "CtrlLevelStrip" if !k.name.starts_with("VULeft") => k.value = if k.name.contains("Right") { 0.55 } else { 0.7 },
             "CtrlPanSlider" => k.value = 0.35,
             "CtrlMeter" => k.value = 0.7,
             "CtrlPlot" => k.set_attr("points", "0,0.5 0.15,0.5 0.3,0.62 0.45,0.5 0.6,0.42 0.75,0.36 1,0.34".into()),
-            "CtrlTableView" => {
+            "CtrlTableView" if k.style != "BrowserListStyle" => {
                 k.set_attr("columns", "Parameter|Control".into());
                 k.set_attr("rows", "Engine 1 Volume|CC 7\nEngine 1 Pan|CC 10\nMaster Volume|Host 1".into());
                 k.set_attr("intSelectedRow", "1".into());
@@ -190,7 +263,230 @@ fn demo_state(c: &mut Ctrl) {
             "CtrlListBox" => k.set_attr("rows", "Kick 01.wav\nSnare 03.wav\nHat Closed.wav".into()),
             _ => {}
         }
+        match k.name.as_str() {
+            "MasterPitch" => k.value = 0.5,
+            "MasterSlider" => k.value = 0.72,
+            "EngineSwingDepthKnob" => k.value = 0.3,
+            "FullLevelKnob" | "MetroVol" | "InstoSlider" => k.value = 0.8,
+            "Spinner" => k.value = 0.0,
+            _ => {}
+        }
     });
+}
+
+// ---------------------------------------------------------------- code-drawn content
+
+// The editor draws the step grid, the song's parts and the browser's tree
+// and lists in code; these stand-ins (with the theme's content styles) make
+// the previews comparable with v1's screens.
+
+fn ctrl(class: &str, r: Rect, style: &str, text: &str) -> Ctrl {
+    // zorder 1: the skin's default, so these draw after the skin's own children.
+    Ctrl { class: class.into(), style: style.into(), text: text.into(), rect: r, zorder: 1, visible: true, enabled: true, ..Ctrl::default() }
+}
+
+fn panel(r: Rect, style: &str) -> Ctrl {
+    ctrl("CtrlPanel", r, style, "")
+}
+
+fn label(r: Rect, style: &str, text: &str) -> Ctrl {
+    ctrl("CtrlLabel", r, style, text)
+}
+
+/// A bar ruler `w` wide: a number every `every` cells of `cell` px.
+fn timeline(r: Rect, cell: i32, every: i32, first: i32, step: i32) -> Ctrl {
+    let mut t = panel(r, "TimelineStyle");
+    let mut x = 0;
+    let mut n = first;
+    while x < r.w {
+        t.children.push(panel(Rect::new(x, r.h - 4, 1, 4), "TimelineTickStyle"));
+        t.children.push(label(Rect::new(x + 2, 0, 30, r.h - 2), "TimelineLabelStyle", &n.to_string()));
+        x += cell * every;
+        n += step;
+    }
+    t
+}
+
+/// The pattern page's track rows and step grid (16 pads, 32 steps).
+fn pattern_grid(skin: &mut Skin) -> Vec<Ctrl> {
+    const NAMES: [&str; 16] =
+        ["TickClap", "HattySnare", "Snare 5", "SnareDirt", "Snare 4", "Snare 3", "Snare 2", "Snare 1", "Clap 6", "Clap 5", "Clap 4", "Clap 3", "Clap 2", "ClickClap", "NoiseClap", "Clap 1"];
+    let (x0, y0, cw, rh) = (152, 52, 20, 20);
+    let mut out = Vec::new();
+    out.push(timeline(Rect::new(x0, 37, 32 * cw, 15), cw, 4, 1, 4));
+    let mut grid = panel(Rect::new(x0, y0, 32 * cw, 16 * rh), "GridBackStyle");
+    for beat in (4..32).step_by(8) {
+        grid.children.push(panel(Rect::new(beat * cw, 0, 4 * cw, 16 * rh), "GridShadeStyle"));
+    }
+    grid.children.push(panel(Rect::new(10, 10 * rh, 32 * cw - 10, rh), "GridRowSelectedStyle"));
+    grid.children.push(panel(Rect::new(22 * cw, 0, cw, 16 * rh), "GridPositionStyle"));
+    for i in 1..32 {
+        grid.children.push(panel(Rect::new(i * cw, 0, 1, 16 * rh), "GridLineStyle"));
+    }
+    for i in 1..16 {
+        grid.children.push(panel(Rect::new(0, i * rh, 32 * cw, 1), "GridLineStyle"));
+    }
+    for row in 0..16 {
+        for step in 0..32 {
+            let on = match row {
+                0 => step % 8 == 2 || step == 27,
+                1 | 2 => step % 16 == 12,
+                3 => step == 31,
+                _ => (step + row) % 8 == 0 || (row % 3 == 0 && step % 16 == 9),
+            };
+            if on {
+                grid.children.push(panel(Rect::new(step * cw + 4, row * rh + 4, cw - 7, rh - 7), "StepOnStyle"));
+            }
+        }
+    }
+    out.push(grid);
+    for (i, name) in NAMES.iter().enumerate() {
+        let mut row = load(skin, "Pattern Editor/TrackControls.skin");
+        row.rect.x = 2;
+        row.rect.y = y0 + i as i32 * rh;
+        if let Some(l) = row.find_mut("SelectArea") {
+            l.text = (*name).into();
+            l.style = "TrackNameStyle".into();
+        }
+        if let Some(b) = row.find_mut("AutomateButton") {
+            b.text = "\u{25BA}".into();
+            b.style = "TrackArrowStyle".into();
+        }
+        out.push(row);
+    }
+    out
+}
+
+/// The song page's track numbers, lanes and parts.
+fn song_lanes(skin: &mut Skin, page: &mut Ctrl) {
+    // (track, first bar, bars, pattern, name)
+    const PARTS: &[(i32, i32, i32, i32, &str)] = &[
+        (0, 0, 16, 1, "Intro Beats"),
+        (1, 4, 24, 16, "Bass Loop"),
+        (1, 29, 4, 16, "Bass Loop"),
+        (2, 0, 4, 1, ""),
+        (2, 4, 40, 21, "Percussion & Noise"),
+        (3, 12, 8, 1, "Trashy Vox"),
+        (3, 20, 8, 11, "Chorus Vox"),
+        (3, 28, 8, 17, "Multi Vox"),
+        (4, 0, 4, 1, "Riff"),
+        (4, 4, 10, 1, "Main Riff"),
+        (4, 12, 18, 1, "Main Riff"),
+        (4, 31, 10, 11, "Variation Riff"),
+        (4, 41, 10, 8, "Breakdown"),
+        (5, 20, 10, 11, "Nasty Loop"),
+        (5, 29, 10, 10, "Build Up"),
+        (6, 20, 40, 5, "Slow Moving Drone"),
+        (7, 12, 40, 1, "Sparks"),
+    ];
+    let (bar, th) = (16, 40);
+    let Some(header) = page.find_mut("TrackHeaderPanel") else { return };
+    for t in 0..8 {
+        let mut h = load(skin, "Song/SongTrackHeaderPanel.skin");
+        h.rect = Rect::new(0, 20 + t * th, 48, th);
+        h.style = if t == 2 { "SongTrackPanelSelectedStyle".into() } else { format!("SongTrackPanelStyle{}", t % 2) };
+        if let Some(l) = h.find_mut("TrackNumberLabel") {
+            l.text = (t + 1).to_string();
+            l.style = "TrackNumberStyle".into();
+        }
+        header.children.push(h);
+    }
+    let Some(view) = page.find_mut("TrackScrollView") else { return };
+    let w = view.rect.w;
+    view.children.push(timeline(Rect::new(0, 0, w, 20), bar, 4, 1, 4));
+    for t in 0..8 {
+        let style = if t == 2 {
+            "SongLaneSelectedStyle"
+        } else if t % 2 == 1 {
+            "SongLaneAltStyle"
+        } else {
+            "SongLaneStyle"
+        };
+        view.children.push(panel(Rect::new(0, 20 + t * th, w, th), style));
+        for x in (bar..w).step_by(bar as usize) {
+            view.children.push(panel(Rect::new(x, 20 + t * th, 1, th), "GridLineStyle"));
+        }
+    }
+    for &(t, at, len, pat, name) in PARTS {
+        let r = Rect::new(at * bar, 20 + t * th + 1, (len * bar).min(w - at * bar), th - 2);
+        let style = if t == 6 { "SongPartSelectedBodyStyle" } else { "SongPartBodyStyle" };
+        let mut p = label(r, style, &format!("{pat}\n{name}"));
+        p.class = "CtrlMultiLineLabel".into();
+        p.text = format!("\n{pat}\n{name}");
+        p.set_attr("intLineHeight", "11".into());
+        p.children.push(panel(Rect::new(0, r.h - 4, r.w, 4), "SongPartFootStyle"));
+        view.children.push(p);
+    }
+}
+
+/// The browser column between its header and footer: crumbs, the source
+/// tree, the file list and the shortlist (BrowserTabs coordinates).
+fn browser(tabs: &mut Ctrl) {
+    let mut x = 1;
+    for (i, crumb) in ["samples", "Einst Content", "Factory", "Loops", "Hip Hop"].iter().enumerate() {
+        let w = 12 + 5 * crumb.len() as i32;
+        let mut b = ctrl("CtrlButton", Rect::new(x, 37, w, 18), "BrowserCrumbStyle", crumb);
+        b.on = i == 4;
+        tabs.children.push(b);
+        x += w + 1;
+    }
+    let tree: &[(&str, bool, &str)] = &[
+        ("\u{25BC} CONTENT", true, ""),
+        ("Factory", false, "folder"),
+        ("\u{25BC} PLACES", true, ""),
+        ("Home", false, "folder"),
+        ("Documents", false, "folder"),
+        ("Desktop", false, "folder"),
+        ("\u{25BC} DRIVES", true, ""),
+        ("Hard Drive", false, "folder"),
+        ("\u{25BC} FAVOURITES", true, ""),
+        ("Lo Fi", false, "folder"),
+        ("Processed", false, "folder"),
+        ("SEARCHES", true, ""),
+        ("SHORTLISTS", true, ""),
+    ];
+    for (i, (text, head, icon)) in tree.iter().enumerate() {
+        let r = Rect::new(1, 60 + i as i32 * 20, 110, 20);
+        let style = if *head {
+            "BrowserTreeHeadStyle"
+        } else if i == 1 {
+            "BrowserTreeSelectedStyle"
+        } else {
+            "BrowserTreeItemStyle"
+        };
+        tabs.children.push(label(r, style, text));
+        if !icon.is_empty() {
+            tabs.children.push(label(Rect::new(8, r.y, 14, 20), "BrowserTreeIconStyle", "\u{E911}"));
+        }
+    }
+    tabs.children.push(ctrl("CtrlButton", Rect::new(116, 58, 176, 18), "BrowserParentStyle", "Parent folder"));
+    let files = [
+        "065 Elecbeat 01 KS", "075 Kick&Snare 01 GC", "075 Kick&Snare 02 GC", "075 Kick&Snare 03 GC", "075 Percussion 02 GC", "075 Percussion 03 GC", "080 Elecbeat 01 KS", "080 Hats 01 GC",
+        "080 Kick&Snare 01 GC", "085 Elecbeat 01 KS", "085 Elecbeat 02 KS", "085 Kick&Snare 01 GC", "085 Kick&Snare 02 GC", "085 Kick&Snare 03 GC",
+    ];
+    let list = |r: Rect, rows: &[&str], ty: &str, badge: &str, header: bool| {
+        let mut t = ctrl("CtrlTableView", r, "BrowserListStyle", "");
+        if header {
+            t.set_attr("columns", "Name \u{25BC}|Type".into());
+        } else {
+            t.set_attr("optHeader", "false".into());
+        }
+        t.set_attr("columnWidths", "118".into());
+        t.set_attr("rows", rows.iter().map(|f| format!("       {f}|{ty}")).collect::<Vec<_>>().join("\n"));
+        t.set_attr("intSelectedRow", "0".into());
+        let hh = if header { 17 } else { 0 };
+        for i in 0..rows.len() as i32 {
+            let y = hh + i * 25 + 3;
+            if y + 19 > r.h {
+                break;
+            }
+            t.children.push(ctrl("CtrlButton", Rect::new(3, y, 18, 19), "BrowserBadgeStyle", badge));
+        }
+        t.children.push(panel(Rect::new(r.w - 9, hh + 2, 7, 60), "BrowserScrollStyle"));
+        t
+    };
+    tabs.children.push(list(Rect::new(116, 78, 176, 384), &files, "REX 2", "RX2", true));
+    tabs.children.push(list(Rect::new(116, 466, 176, 110), &["CB Boss 01 GC", "CB Boss 02 GC"], "Wave", "WAV", false));
 }
 
 /// The editor draws the logo mark itself; this preview fills Einst's "E"
@@ -232,29 +528,57 @@ fn main() {
     let mut skin = Skin::load(&Skin::resources_dir(), dreist_gui::skin::default_theme()).expect("skin");
     let mut fonts = Fonts::new(&skin.font_dir());
 
-    // The window, with the pattern page's toolbar on the screen.
-    let mut root = skin.load_skin("RootSkin.skin").expect("RootSkin.skin");
-    root.rect = Rect::new(0, 0, 1135, 640);
-    mount_all(&mut skin, &mut root, 0);
-    if let Some(tabs) = root.find_mut("MainTabs") {
-        let mut page = load(&mut skin, "Pattern Editor/GlobalControls.skin");
-        mount_all(&mut skin, &mut page, 0);
-        tabs.children.push(page);
+    // The window, with the pattern page (`root`), the song page
+    // (`root-song`) and the engine mixer (`root-mixer`) on the screen.
+    for (name, tab) in [("root", 0), ("root-song", 2), ("root-mixer", 6)] {
+        let mut root = skin.load_skin("RootSkin.skin").expect("RootSkin.skin");
+        root.rect = Rect::new(0, 0, 1135, 640);
+        mount_all(&mut skin, &mut root, 0);
+        if let Some(tabs) = root.find_mut("MainTabs") {
+            if tab == 0 {
+                let mut page = load(&mut skin, "Pattern Editor/GlobalControls.skin");
+                mount_all(&mut skin, &mut page, 0);
+                tabs.children.push(page);
+                tabs.children.extend(pattern_grid(&mut skin));
+            } else {
+                let rel = PAGES.iter().find(|(n, _)| *n == if tab == 2 { "song" } else { "engine-mixer" }).map(|(_, r)| *r).unwrap_or_default();
+                let mut page = load(&mut skin, rel);
+                mount_all(&mut skin, &mut page, 0);
+                if tab == 2 {
+                    song_lanes(&mut skin, &mut page);
+                }
+                tabs.children.push(page);
+            }
+        }
+        if let Some(tabs) = root.find_mut("BrowserTabs") {
+            let mut header = load(&mut skin, "Browser/Header.skin");
+            header.rect.y = 0;
+            let mut footer = load(&mut skin, "Browser/Footer.skin");
+            footer.rect.y = tabs.rect.h - footer.rect.h;
+            tabs.children.push(header);
+            tabs.children.push(footer);
+            browser(tabs);
+        }
+        demo_state(&mut root);
+        if let Some(g) = root.find_mut("MainTabButtons") {
+            for (i, b) in g.children.iter_mut().enumerate() {
+                b.on = i == tab;
+            }
+        }
+        save(&skin, &mut fonts, &root, &out, name);
     }
-    if let Some(tabs) = root.find_mut("BrowserTabs") {
-        let mut header = load(&mut skin, "Browser/Header.skin");
-        header.rect.y = 0;
-        let mut footer = load(&mut skin, "Browser/Footer.skin");
-        footer.rect.y = tabs.rect.h - footer.rect.h;
-        tabs.children.push(header);
-        tabs.children.push(footer);
-    }
-    demo_state(&mut root);
-    save(&skin, &mut fonts, &root, &out, "root");
 
     for (name, rel) in PAGES {
         let mut page = load(&mut skin, rel);
         mount_all(&mut skin, &mut page, 0);
+        match *name {
+            "pattern" => {
+                page.rect.h = 395;
+                page.children.extend(pattern_grid(&mut skin));
+            }
+            "song" => song_lanes(&mut skin, &mut page),
+            _ => {}
+        }
         demo_state(&mut page);
         // The pad/layer page shows one editor at a time.
         let hide = match *name {

@@ -4,14 +4,14 @@
         <CtrlKnob name="Control1" rect="21, 35, 24, 26" id="100022" realDialThickness="0.22" style="LEDKnobSmallLR" />
         <CtrlKnob name="Control2" rect="82, 35, 24, 26" id="100023" realDialThickness="0.22" style="LEDKnobSmallLR" />
         <CtrlKnob name="Control4" rect="144, 35, 24, 26" id="100025" realDialThickness="0.22" style="LEDKnobSmallLR" />
-        <CtrlLabel name="CtrlLabel" rect="0, 63, 66, 15" id="100028" style="StandardLabelCenteredStyle" text="Frequency" />
-        <CtrlLabel name="CtrlLabel" rect="60, 63, 66, 15" id="100029" style="StandardLabelCenteredStyle" text="Depth" />
-        <CtrlLabel name="CtrlLabel" rect="123, 63, 66, 15" id="100031" style="StandardLabelCenteredStyle" text="Feedback" />
+        <CtrlLabel name="CtrlLabel" rect="0, 64, 66, 13" id="100028" style="StandardLabelCenteredStyle" text="Frequency" />
+        <CtrlLabel name="CtrlLabel" rect="60, 64, 66, 13" id="100029" style="StandardLabelCenteredStyle" text="Depth" />
+        <CtrlLabel name="CtrlLabel" rect="123, 64, 66, 13" id="100031" style="StandardLabelCenteredStyle" text="Feedback" />
         <CtrlKnob name="Control6" rect="21, 90, 24, 26" id="100021" realDialThickness="0.22" style="LEDKnobSmallLR" />
         <CtrlKnob name="Control3" rect="82, 90, 24, 26" id="100024" realDialThickness="0.22" style="LEDKnobSmallLR" />
         <CtrlKnob name="Control5" rect="144, 90, 24, 26" id="100020" realDialThickness="0.22" style="LEDKnobSmallLR" />
-        <CtrlLabel name="CtrlLabel" rect="-2, 118, 66, 15" id="100027" style="StandardLabelCenteredStyle" text="Phase" />
-        <CtrlLabel name="CtrlLabel" rect="59, 118, 66, 15" id="100030" style="StandardLabelCenteredStyle" text="Pos" />
-        <CtrlLabel name="CtrlLabel" rect="122, 118, 66, 15" id="100026" style="StandardLabelCenteredStyle" text="Spread" />
+        <CtrlLabel name="CtrlLabel" rect="-2, 119, 66, 13" id="100027" style="StandardLabelCenteredStyle" text="Phase" />
+        <CtrlLabel name="CtrlLabel" rect="59, 119, 66, 13" id="100030" style="StandardLabelCenteredStyle" text="Pos" />
+        <CtrlLabel name="CtrlLabel" rect="122, 119, 66, 13" id="100026" style="StandardLabelCenteredStyle" text="Spread" />
     </CtrlPanel>
 </root>

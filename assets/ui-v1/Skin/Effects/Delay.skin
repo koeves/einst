@@ -9,7 +9,7 @@
             <CtrlLabel name="CtrlLabel" rect="-8, 0, 123, 15" id="0" style="StandardLabelCenteredStyle" text="Low Cut" />
         </CtrlPanel>
         <CtrlButton name="Control6" rect="25, 21, 16, 17" id="100002" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
-        <CtrlLabel name="CtrlLabel" rect="-1, 42, 66, 15" id="100003" style="StandardLabelCenteredStyle" text="Sync" />
+        <CtrlLabel name="CtrlLabel" rect="-1, 43, 66, 13" id="100003" style="StandardLabelCenteredStyle" text="Sync" />
         <CtrlPanel rect="18, 77, 28, 28" style="LcdKnobBodyStyle" />
         <CtrlKnob name="Control1" rect="7, 68, 50, 46" displayName="Delay time" id="100001" realDialThickness="0.14" style="LEDKnobLargeLR" />
         <CtrlPanel rect="82, 77, 28, 28" style="LcdKnobBodyStyle" />
