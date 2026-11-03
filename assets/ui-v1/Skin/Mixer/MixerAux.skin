@@ -2,7 +2,7 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 193, 161" id="0" style="AuxChannelBackgroundOdd">
         <CtrlPanel name="ClickPanel" rect="0, 0, 193, 161" id="0" style="EmptyPanelStyle">
-            <CtrlLabel name="NameLabel" rect="-6, 16, 205, 15" id="100011" style="StandardLabelCenteredStyle" text="Global aux" />
+            <CtrlLabel name="NameLabel" rect="-6, 17, 205, 13" id="100011" style="StandardLabelCenteredStyle" text="Global aux" />
             <CtrlButton name="MuteButton" rect="17, 30, 19, 17" displayName="Mute" id="100019" optIsMomentary="false" style="LEDMuteButtonStyle" text="M" />
             <CtrlButton name="SoloButton" rect="37, 30, 19, 17" displayName="Solo" id="100018" optIsMomentary="false" style="LEDSoloButtonStyle" text="S" />
             <CtrlButtonGroup name="PrePostButton" rect="64, 30, 120, 17" id="100000" style="BasePanelStyle">

@@ -4,15 +4,15 @@
         <CtrlPanel name="BackStat" rect="2, 2, 132, 57" id="0" legacyClass="CtrlImageView" style="StatusStripStyle" />
         <CtrlLevelStrip name="MasterVULeft" rect="8, 22, 120, 3" id="100012" style="HardVU120" />
         <CtrlLevelStrip name="MasterVURight" rect="8, 26, 120, 3" id="100013" style="HardVU120" />
-        <CtrlButton name="MIDIIndi" rect="30, 32, 40, 8" displayName="MIDI activity" id="100001" optIsMomentary="true" style="MIDIIndiStyle" text="MIDI" />
-        <CtrlButton name="VoiceIndi" rect="72, 32, 40, 8" displayName="Indicates a voice has been stolen" id="100001" optIsMomentary="true" style="VoiceIndiStyle" text="VOICE" />
-        <CtrlButton name="TapBox" rect="5, 40, 38, 16" id="1" legacyClass="Ctrl" overloadClass="TapTempoBox" style="ReadoutButtonStyle" text="TAP" />
+        <CtrlButton name="MIDIIndi" rect="30, 32, 40, 8" displayName="MIDI activity" id="100001" optIsMomentary="true" style="MIDIIndiStyle" text="● MIDI" />
+        <CtrlButton name="VoiceIndi" rect="72, 32, 40, 8" displayName="Indicates a voice has been stolen" id="100001" optIsMomentary="true" style="VoiceIndiStyle" text="● VOICE" />
+        <CtrlButton name="TapBox" rect="5, 40, 38, 16" id="1" legacyClass="Ctrl" overloadClass="TapTempoBox" style="ReadoutMenuStyle" text="" />
         <CtrlValueBox name="BPMTextBox" rect="42, 40, 44, 16" id="100003" overloadClass="TempoBox" style="ReadoutStyle" />
         <CtrlLabel name="MemoryUsageBox" rect="81, 40, 54, 16" displayName="Memory usage" id="100006" style="GlobalLabelStyle" text="" />
-        <CtrlPanel rect="18, 77, 33, 33" style="HardKnobBodyStyle" />
-        <CtrlKnob name="MasterPitch" rect="7, 66, 55, 75" displayName="Master pitch" id="100000" optCentered="true" realDialThickness="0.16" style="HardKnobLargeC" />
-        <CtrlPanel rect="85, 77, 33, 33" style="HardKnobBodyStyle" />
-        <CtrlKnob name="MasterSlider" rect="74, 66, 55, 75" displayName="Master gain" id="100000" realDialThickness="0.16" style="HardKnobLargeLR" />
+        <CtrlPanel rect="18, 82, 33, 33" style="HardKnobBodyStyle" />
+        <CtrlKnob name="MasterPitch" rect="13, 77, 43, 43" displayName="Master pitch" id="100000" optCentered="true" realDialThickness="0.12" style="HardKnobLargeC" />
+        <CtrlPanel rect="85, 82, 33, 33" style="HardKnobBodyStyle" />
+        <CtrlKnob name="MasterSlider" rect="80, 77, 43, 43" displayName="Master gain" id="100000" realDialThickness="0.12" style="HardKnobLargeLR" />
         <CtrlLabel name="CtrlImageView" rect="28, 136, 12, 11" id="100000" legacyClass="CtrlImageView" style="ChassisGlyphLabelStyle" text="" />
         <CtrlLabel name="CtrlImageView" rect="95, 136, 12, 10" id="100001" legacyClass="CtrlImageView" style="ChassisGlyphLabelStyle" text="" />
     </CtrlPanel>

@@ -6,10 +6,10 @@
         <CtrlButton name="Div2Button" rect="53, 20, 19, 17" id="100000" optIsMomentary="true" style="Div2ButtonStyle" text="÷2" />
         <CtrlButton name="x2Button" rect="73, 20, 19, 17" id="100001" optIsMomentary="true" style="x2ButtonStyle" text="×2" />
         <CtrlButton name="LearnButton" rect="93, 20, 50, 17" id="100014" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Learn" />
-        <CtrlLabel name="CtrlLabel" rect="3, 39, 26, 15" id="100002" style="StandardLabelStyle" text="Offset" />
-        <CtrlLabel name="CtrlLabel" rect="32, 39, 26, 15" id="100006" style="StandardLabelStyle" text="Comp" />
-        <CtrlLabel name="CtrlLabel" rect="65, 39, 26, 15" id="100003" style="StandardLabelStyle" text="Rand" />
-        <CtrlLabel name="CtrlLabel" rect="85, 39, 66, 15" id="100002" style="StandardLabelCenteredStyle" text="Mode" />
+        <CtrlLabel name="CtrlLabel" rect="3, 40, 26, 13" id="100002" style="StandardLabelStyle" text="Offset" />
+        <CtrlLabel name="CtrlLabel" rect="32, 40, 26, 13" id="100006" style="StandardLabelStyle" text="Comp" />
+        <CtrlLabel name="CtrlLabel" rect="65, 40, 26, 13" id="100003" style="StandardLabelStyle" text="Rand" />
+        <CtrlLabel name="CtrlLabel" rect="85, 40, 66, 13" id="100002" style="StandardLabelCenteredStyle" text="Mode" />
         <CtrlKnob name="ScaleKnob" rect="5, 52, 17, 17" displayName="Offset" id="100001" overloadClass="TimedKnob" realDialThickness="0.22" style="LEDKnobMicroLR" />
         <CtrlKnob name="CompKnob" rect="37, 52, 17, 17" displayName="Compression" id="100005" overloadClass="TimedKnob" realDialThickness="0.22" style="LEDKnobMicroLR" />
         <CtrlKnob name="RandKnob" rect="69, 52, 17, 17" displayName="Randomisation" id="100002" overloadClass="TimedKnob" realDialThickness="0.22" style="LEDKnobMicroLR" />

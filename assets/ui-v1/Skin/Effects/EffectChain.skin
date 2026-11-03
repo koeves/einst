@@ -8,7 +8,7 @@
                 <CtrlButton name="PresetPrev" rect="264, 8, 16, 18" displayName="Previous preset" id="100000" optIsMomentary="true" style="LargePrevPresetButtonStyle" text="" />
                 <CtrlButton name="PresetNext" rect="283, 8, 16, 18" displayName="Next preset" id="100001" optIsMomentary="true" style="LargeNextPresetButtonStyle" text="" />
                 <CtrlButton name="ActiveButton" rect="6, 5, 24, 24" displayName="Chain active" id="100006" optIsMomentary="false" style="LargePowerButtonStyle" text="" />
-                <CtrlLabel name="CtrlLabel" rect="29, 21, 36, 15" id="100002" style="StandardLabelCenteredStyle" text="Mix" />
+                <CtrlLabel name="CtrlLabel" rect="29, 22, 36, 13" id="100002" style="StandardLabelCenteredStyle" text="Mix" />
             </CtrlPanel>
             <CtrlScrollBar name="ScrollBar" rect="353, 3, 450, 35" id="100003" legacyClass="CtrlScrollViewSlider" overloadClass="EditorEffectPanelScrollbar" style="FXScrollerStyle" />
         </CtrlPanel>

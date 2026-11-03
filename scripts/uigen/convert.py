@@ -14,7 +14,8 @@ writes the same layout in the syntax dreist-gui reads
   dreist-gui reads from the control rather than the style
   (`optIsMomentary`, ...) are copied onto every control using the style;
 - nested `<VFont vSize= fontName=>` -> a named font of the theme's type
-  scale (Liberation Sans standing in for Arial and Verdana);
+  scale (Liberation Sans standing in for Arial and Verdana), at
+  theme.TEXT_SCALE of v1's size;
 - every bitmap reference -> a vector look (looks.py);
 - identifiers carrying the legacy product name -> neutral names (RENAMES).
 
@@ -67,7 +68,7 @@ CLASSES = {
 # Plain `Ctrl`s by overload class: None drops the control.
 CTRL_OVERLOADS = {
     "OverlayImage": None,  # the glass/shine bitmap over the window
-    "TapTempoBox": ("CtrlButton", "ReadoutButtonStyle", "TAP"),
+    "TapTempoBox": ("CtrlButton", "ReadoutMenuStyle", ""),  # v1 drew no art there: a click area left of the tempo
 }
 
 # Controls v1 left unstyled (code-drawn) that need a vector style to be
@@ -80,13 +81,26 @@ UNSTYLED = {
     ("CtrlPanel", "EditorPad"): "PadSlotStyle",
 }
 
+# Control texts by name: the debug frame-rate label stays empty until code
+# fills it.
+CTRL_TEXT = {"FPSLabel": ""}
+
+
+def upper_caption(t):
+    """v1's image captions: upper case, "Pad / Layers" spaced, "Load..."
+    menus with a drop mark."""
+    return t.upper().replace("/", " / ").replace("...", "▼")
+
+
 # Other unstyled controls (dreist-gui would give them its white default).
 UNSTYLED_CLASS = {"CtrlLabel": "BaseLabelStyle", "CtrlButton": "LcdButtonStyle", "CtrlImageView": "BaseImageStyle"}
 
 # Code-drawn panels the editor paints over, with the shape v1's bitmaps
 # gave them (looks.py decor entries).
 PANEL_DECOR = {
-    "EditorPad": [("inside", 2, 0, 52, 46, "PadStyle")],  # 52 px wide pad frames in a 56 px slot
+    # 52 px wide pad frames in a 56 px slot, with the row of eight status
+    # LEDs along the bottom (the first one shows the pad's colour).
+    "EditorPad": [("inside", 2, 0, 52, 46, "PadStyle")] + [("inside", 9 + 5 * i, 38, 3, 3, "PadLedStyle") for i in range(8)],
 }
 
 # Labels grow to fit their font (v1 drew label text unclipped; dreist-gui
@@ -261,7 +275,7 @@ class Fonts:
         self.used = set(theme.TEXT_SIZES)
 
     def name(self, vfont):
-        size = int(round(float(vfont.get("vSize", "12"))))
+        size = max(7, int(round(float(vfont.get("vSize", "12")) * theme.TEXT_SCALE)))
         bold = (vfont.get("weight") or "").lower() == "bold"
         self.used.add((size, bold))
         return theme.text_font(size, bold)
@@ -515,7 +529,13 @@ class Converter:
             if look["text"] is not None:
                 attrs["text"] = look["text"]
             elif look["upper"] and attrs.get("text"):
-                attrs["text"] = attrs["text"].upper()
+                attrs["text"] = upper_caption(attrs["text"])
+            if look["inset"]:
+                l, t, r, b = look["inset"]
+                rect = [rect[0] + l, rect[1] + t, rect[2] - l - r, rect[3] - t - b]
+        attrs["text"] = CTRL_TEXT.get(attrs.get("name"), attrs.get("text"))
+        if attrs["text"] is None:
+            del attrs["text"]
         if info:
             for k, v in info["ctrl"].items():
                 if cls == "CtrlButton" or not k.startswith("optIs"):
@@ -537,6 +557,7 @@ class Converter:
             for where, x, y, w, h, st in decor:
                 w = w if w >= 1 else rect[2] + w
                 h = h if h >= 1 else rect[3] + h
+                y = y if y >= 0 else rect[3] + y
                 d = E("CtrlPanel", {"rect": [x, y, w, h], "style": st})
                 if where == "inside":
                     kids.append(d)
@@ -665,7 +686,7 @@ CHASSIS = {
             ("2, 443, 58, 58", "ChassisFrameStyle"),
             ("2, 504, 58, 56", "ChassisWellStyle"),
             ("688, 437, 138, 160", "ChassisFrameStyle"),
-            ("421, 602, 405, 34", "ChassisBackingStyle"),
+            ("421, 602, 316, 34", "ChassisBackingStyle"),
         ]
     ],
 }
