@@ -26,10 +26,13 @@ COLOURS = {
     "AmberDeep": (226, 165, 20),
     "AmberTint": (232, 204, 91, 120),
     # The chassis around the screens.
-    "Chassis": (207, 208, 210),
+    "Chassis": (222, 224, 223),
+    "ChassisLow": (196, 198, 197),
     "ChassisEdge": (58, 59, 62),
-    "ChassisBar": (128, 129, 131),
-    "ChassisBacking": (118, 119, 121),
+    "ChassisBar": (139, 144, 145),
+    "ChassisBacking": (160, 164, 165),
+    "ChassisBackingLow": (146, 150, 151),
+    "ChassisBackingEdge": (112, 116, 117),
     "ChassisLine": (128, 129, 132),
     "ChassisWell": (128, 129, 133),
     "ChassisText": (236, 236, 236),
@@ -38,9 +41,16 @@ COLOURS = {
     "BezelTextOn": (176, 212, 245),
     "BezelTabOn": (38, 46, 78),
     # Hardware buttons, keys and pads.
-    "HwFace": (226, 227, 229),
-    "HwFaceOn": (236, 228, 160),
-    "HwFrame": (120, 122, 126),
+    "HwFace": (230, 231, 233),
+    "HwFaceLow": (194, 198, 200),
+    "HwFaceOn": (241, 250, 177),
+    "HwFaceOnLow": (228, 232, 164),
+    "HwFacePressed": (204, 207, 209),
+    "HwFacePressedLow": (182, 185, 187),
+    "HwGrey": (186, 187, 189),
+    "HwGreyLow": (162, 164, 166),
+    "HwGreyIcon": (244, 245, 246),
+    "HwFrame": (58, 62, 63),
     "HwFrameDark": (52, 54, 58),
     "HwInk": (62, 64, 68),
     "HwInkOn": (18, 25, 60),
@@ -48,13 +58,14 @@ COLOURS = {
     "HwGreenOn": (60, 200, 70),
     "HwRed": (200, 34, 30),
     "HwRedOn": (240, 60, 50),
-    "PadFace": (74, 75, 77),
+    "PadFace": (96, 100, 101),
+    "PadFaceLow": (76, 78, 81),
     "PadFaceTop": (84, 85, 87),
     "PadText": (214, 214, 217),
-    "PadFrame": (38, 39, 41),
-    "EngineFace": (78, 79, 81),
+    "PadFrame": (50, 53, 55),
+    "EngineFace": (70, 71, 74),
     "EngineFaceOff": (40, 40, 42),
-    "EngineRim": (150, 152, 156),
+    "EngineRim": (126, 127, 129),
     "EngineDigit": (212, 212, 215),
     "EngineDigitOff": (110, 110, 114),
     # Status strips (black displays in the hardware area).
@@ -64,16 +75,31 @@ COLOURS = {
     "Readout": (112, 175, 240),
     "ReadoutDim": (36, 48, 66),
     "LedOff": (54, 55, 58),
-    "HwDark": (40, 41, 44),
+    "HwDark": (93, 93, 94),
+    "HwDarkLow": (40, 40, 41),
     "HwDarkFrame": (22, 23, 25),
     "HwDarkText": (92, 94, 98),
     "HwDarkTextLight": (232, 233, 235),
     "HwBlueOn": (46, 84, 122),
     "HwBlueText": (120, 170, 220),
     "SongText": (84, 158, 200),
-    "KeyLed": (186, 205, 231),
-    "KnobFace": (196, 197, 199),
-    "KnobRing": (44, 45, 47),
+    "KeyLed": (176, 197, 226),
+    "KeyLedOn": (150, 180, 232),
+    "KeyLedSelected": (229, 218, 100),
+    "KeyFace": (247, 248, 248),
+    "KeyFaceLow": (232, 233, 232),
+    "KeyFaceSelected": (240, 238, 214),
+    "KeyFrame": (140, 142, 141),
+    "KeyAmber": (240, 210, 50),
+    "KnobFace": (248, 247, 248),
+    "KnobFaceLow": (190, 194, 193),
+    "KnobRing": (22, 25, 26),
+    "KnobArc": (44, 70, 120),
+    "KnobDot": (70, 150, 230),
+    "KnobPointer": (44, 46, 48),
+    "SmallKnobFace": (66, 67, 66),
+    "SmallKnobFaceLow": (26, 28, 27),
+    "SmallKnobRim": (105, 109, 110),
     "ReadoutMid": (62, 82, 106),
     "LedMute": (230, 40, 36),
     "LedSolo": (246, 214, 40),
@@ -81,15 +107,30 @@ COLOURS = {
     # LCD state colours.
     "MuteOn": (232, 84, 76),
     "SoloOn": (240, 214, 64),
-    "VuTrack": (120, 127, 148),
+    "VuTrack": (160, 167, 182),
     "VuLit": (18, 25, 60),
     # LCD content drawn by code (grid, song parts, browser).
     "RowSelected": (232, 226, 190),
     "PlayPosition": (158, 180, 198),
+    "GridLine": (186, 193, 205),
+    "GridBack": (208, 213, 222),
+    "GridDash": (150, 158, 174),
     "StepOn": (98, 106, 136),
     "LaneAlt": (204, 211, 221),
     "PartSelected": (229, 216, 158),
     "Crumb": (190, 195, 204),
+    # LCD controls (light faces, mid blue-grey edges).
+    "LcdFace": (240, 245, 251),
+    "LcdFaceLow": (222, 228, 238),
+    "LcdEdge": (140, 149, 164),
+    "LcdOn": (64, 72, 104),
+    "LcdOnLow": (18, 25, 60),
+    "LcdCap": (46, 53, 66),
+    "LcdCapLow": (14, 20, 32),
+    "LcdGrip": (200, 208, 222),
+    "LcdGroove": (138, 145, 160),
+    "StripOdd": (189, 196, 209),
+    "StripEven": (158, 166, 181),
     "BrowserSel": (150, 157, 177),
     # Modal dialogs.
     "ModalFill": (237, 237, 237),
@@ -171,11 +212,13 @@ def base_styles():
        colFill="Transparent", colAltFill="Transparent", colBorder="Transparent", colAltBorder="Transparent")
     st("BasePanelStyle", "BaseStyle", optDrawBorder="false")
     st("BaseLabelStyle", "BaseStyle", optDrawBorder="false", enumTextHorizontalAlign="left")
-    st("BaseTextBoxStyle", "BaseStyle", colFill="LcdLight", colBorder="Ink", realCornerRounding="2",
+    st("BaseTextBoxStyle", "BaseStyle", colFill="LcdFace", colBorder="LcdEdge", realCornerRounding="2", realGradientShade="0.05",
        enumTextHorizontalAlign="left", realTextOffset="3")
     st("BaseButtonStyle", "BaseStyle", colFill="LcdLight", colBorder="Ink", colAltFill="Ink", colAltBorder="Ink",
        colAltText="LcdLight", realCornerRounding="2", enumTextShortenAlgorithm="end")
-    st("BaseKnobStyle", "BaseStyle", colFill="InkSoft", colFillHighlight="Ink", colAltFill="LcdLight", colAltBorder="Ink")
+    st("BaseKnobStyle", "BaseStyle", colFill="InkSoft", colFillHighlight="Ink", colAltFill="LcdLight", colAltBorder="Ink",
+       colFace="LcdFace", colFaceGradientTo="LcdFaceLow", realFaceInset="1", optPointer="true", colPointer="Ink",
+       realPointerWidth="2", realPointerInset="2")
     st("BaseSliderStyle", "BaseStyle", colFill="InkSoft", colFillHighlight="Ink", colAltFill="LcdLight",
        colAltBorder="Ink", realCornerRounding="2")
     st("BaseImageStyle", "BasePanelStyle")
@@ -183,16 +226,21 @@ def base_styles():
     st("BaseTableStyle", "BaseStyle", colFill="LcdMid", colBorder="Ink", optDrawBorder="true")
 
     # Chassis and screens.
-    st("ChassisStyle", "BasePanelStyle", colFill="Chassis", colBorder="ChassisEdge", optDrawBorder="true", realCornerRounding="5")
-    st("ChassisBarStyle", "BasePanelStyle", colFill="ChassisBar", realCornerRounding="1")
+    st("ChassisStyle", "BasePanelStyle", colFill="Chassis", colFillGradientTo="ChassisLow", colBorder="ChassisEdge", optDrawBorder="true",
+       realCornerRounding="5")
+    st("ChassisBarStyle", "BasePanelStyle", colFill="ChassisBar", realCornerRounding="1", optBevel="true", colBevelLight="0, 0, 0, 40",
+       colBevelDark="255, 255, 255, 150")
     st("ChassisFrameStyle", "BasePanelStyle", colBorder="ChassisLine", optDrawBorder="true", realCornerRounding="2")
     st("ChassisWellStyle", "BasePanelStyle", colFill="ChassisWell", realCornerRounding="5")
-    st("ChassisBackingStyle", "BasePanelStyle", colFill="ChassisBacking", realCornerRounding="5")
+    st("ChassisBackingStyle", "BasePanelStyle", colFill="ChassisBacking", colFillGradientTo="ChassisBackingLow", colBorder="ChassisBackingEdge",
+       optDrawBorder="true", realCornerRounding="5", optBevel="true", colBevelLight="0, 0, 0, 50", colBevelDark="255, 255, 255, 120")
     st("SectionLabelStyle", "BaseLabelStyle", colText="ChassisText", font=text_font(9, True), enumTextHorizontalAlign="right")
     st("SectionLabelLeftStyle", "SectionLabelStyle", enumTextHorizontalAlign="left")
-    st("WordmarkStyle", "BaseLabelStyle", colText="ChassisText", font=text_font(14, True), enumTextHorizontalAlign="left")
+    st("WordmarkStyle", "BaseLabelStyle", colText="ChassisText", font=text_font(14, True), enumTextHorizontalAlign="left",
+       realTextScaleX="0.88", realLetterSpacing="-0.3")
     st("ScreenBezelStyle", "BasePanelStyle", colFill="Bezel", colBorder="ChassisEdge", optDrawBorder="true", realCornerRounding="4")
-    st("ScreenLcdStyle", "BasePanelStyle", colFill="Lcd", realCornerRounding="9")
+    st("ScreenLcdStyle", "BasePanelStyle", colFill="Lcd", realCornerRounding="9", optBevel="true", colBevelLight="0, 0, 0, 110",
+       colBevelDark="255, 255, 255, 90")
     st("StatusStripStyle", "BasePanelStyle", colFill="Strip", colBorder="StripFrame", optDrawBorder="true", realCornerRounding="3")
     st("LogoStyle", "BasePanelStyle", enumDisabledDrawMode="NormalDrawing", colFill="Amber", colAltFill="AmberSoft")
     st("GlyphLabelStyle", "BaseLabelStyle", colText="InkMid", font=icon_font(12), enumTextHorizontalAlign="center")
@@ -202,23 +250,24 @@ def base_styles():
     st("LcdPanelStyle", "BasePanelStyle", colFill="Lcd", colBorder="InkMid", optDrawBorder="true", realCornerRounding="4")
     st("LcdHeaderStyle", "BasePanelStyle", colFill="LcdDim", colBorder="InkMid", optDrawBorder="true", realCornerRounding="3")
     st("LcdSlotStyle", "BasePanelStyle", colFill="LcdMid", colBorder="InkSoft", optDrawBorder="true", realCornerRounding="3")
-    st("LcdRowEvenStyle", "BasePanelStyle", colFill="LcdMid", colBorder="InkSoft", optDrawBorder="true", realCornerRounding="2")
-    st("LcdRowOddStyle", "LcdRowEvenStyle", colFill="LcdShade")
+    st("LcdRowEvenStyle", "BasePanelStyle", colFill="StripEven", colBorder="InkSoft", optDrawBorder="true", realCornerRounding="2")
+    st("LcdRowOddStyle", "LcdRowEvenStyle", colFill="StripOdd")
     st("LcdRowSelectedStyle", "LcdRowEvenStyle", colFill="AmberSoft", colBorder="Ink")
-    st("LcdGlueStyle", "BasePanelStyle", colFill="AmberSoft")
+    st("LcdGlueStyle", "BasePanelStyle", colFill="LcdOnLow")
     st("LcdRulerStyle", "BasePanelStyle", colFill="LcdDim", realCornerRounding="1")
     st("LcdFieldStyle", "BasePanelStyle", colFill="LcdLight", colBorder="Ink", optDrawBorder="true", realCornerRounding="2")
     st("LcdPlotStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkMid", optDrawBorder="true", realCornerRounding="2")
 
     # LCD buttons.
-    st("LcdButtonStyle", "BaseButtonStyle")
+    st("LcdButtonStyle", "BaseButtonStyle", colFill="LcdFace", colBorder="LcdEdge", colAltFill="LcdOn", colAltBorder="Ink",
+       realGradientShade="0.08")
     st("LcdIconButtonStyle", "LcdButtonStyle", font=icon_font(10))
-    st("LcdMuteButtonStyle", "LcdButtonStyle", colAltFill="MuteOn", colAltText="Ink")
-    st("LcdSoloButtonStyle", "LcdButtonStyle", colAltFill="SoloOn", colAltText="Ink")
+    st("LcdMuteButtonStyle", "LcdButtonStyle", colAltFill="MuteOn", colAltText="Ink", font=text_font(10, True), realCornerRounding="3")
+    st("LcdSoloButtonStyle", "LcdButtonStyle", colAltFill="SoloOn", colAltText="Ink", font=text_font(10, True), realCornerRounding="3")
     st("LcdMenuButtonStyle", "LcdButtonStyle", enumTextHorizontalAlign="left", realTextOffset="5")
     st("LcdBigButtonStyle", "LcdButtonStyle", font=text_font(11, True), realCornerRounding="3")
     st("LcdSideTabStyle", "LcdBigButtonStyle", colFill="InkMid", colBorder="Ink", colText="LcdLight", colAltFill="Ink",
-       colAltBorder="Ink", colAltText="LcdLight", font=text_font(10, True))
+       colAltBorder="Ink", colAltText="LcdLight", font=text_font(10, True), realTextSlant="14")
     st("LcdPowerButtonStyle", "LcdIconButtonStyle", font=icon_font(14), colAltFill="Amber", colAltText="Ink", realCornerRounding="3")
     st("LcdFlatButtonStyle", "LcdButtonStyle", colFill="Transparent", colBorder="Transparent", colText="InkMid",
        colAltFill="Transparent", colAltBorder="Transparent", colAltText="Ink")
@@ -231,22 +280,29 @@ def base_styles():
     st("BezelIconButtonStyle", "TabButtonStyle", font=icon_font(11), colText="ChassisText", colAltText="ChassisText")
 
     # Hardware buttons.
-    st("HwButtonStyle", "BaseButtonStyle", colFill="HwFace", colBorder="HwFrame", colText="HwInk", colAltFill="HwFaceOn",
-       colAltBorder="HwFrameDark", colAltText="HwInkOn", realCornerRounding="3", font=text_font(9, True))
-    st("HwIconButtonStyle", "HwButtonStyle", font=icon_font(14))
+    st("HwButtonStyle", "BaseButtonStyle", colFill="HwFace", colFillGradientTo="HwFaceLow", colBorder="HwFrame", colText="HwInk",
+       colAltFill="HwFaceOn", colAltFillGradientTo="HwFaceOnLow", colAltBorder="HwFrameDark", colAltText="HwInkOn",
+       realCornerRounding="2", font=text_font(9, True), optBevel="true", colBevelLight="255, 255, 255, 170", colBevelDark="0, 0, 0, 45")
+    # Transport buttons: pressed / on is darker, not yellow.
+    st("HwIconButtonStyle", "HwButtonStyle", font=icon_font(18), colAltFill="HwFacePressed", colAltFillGradientTo="HwFacePressedLow")
+    st("HwGreyIconButtonStyle", "HwIconButtonStyle", colFill="HwGrey", colFillGradientTo="HwGreyLow", colText="HwGreyIcon",
+       colAltText="HwGreyIcon", colBorder="HwFrameDark")
     st("HwSmallIconButtonStyle", "HwButtonStyle", font=icon_font(10))
-    st("HwPlayButtonStyle", "HwIconButtonStyle", colText="HwGreen", colAltText="HwGreenOn", colAltFill="HwFace", font=icon_font(16))
+    st("HwPlayButtonStyle", "HwIconButtonStyle", colText="HwGreen", colAltText="HwGreenOn", font=icon_font(18), colAltFill="HwFace",
+       colAltFillGradientTo="HwFaceLow")
     st("HwRecordButtonStyle", "HwIconButtonStyle", colText="HwRed", colAltText="HwRedOn", font=icon_font(16))
     st("HwTinyButtonStyle", "HwButtonStyle", font=text_font(7, True), realCornerRounding="2")
-    st("HwDarkTinyButtonStyle", "HwTinyButtonStyle", colFill="HwDark", colBorder="HwDarkFrame", colText="HwDarkText",
-       colAltBorder="HwDarkFrame", realCornerRounding="0")
-    st("HwMuteButtonStyle", "HwDarkTinyButtonStyle", colAltFill="LedMute", colAltText="HwFace")
-    st("HwSoloButtonStyle", "HwDarkTinyButtonStyle", colAltFill="LedSolo", colAltText="HwInk")
-    st("HwPowerButtonStyle", "HwDarkTinyButtonStyle", font=icon_font(8), colAltFill="HwBlueOn", colAltText="HwBlueText")
-    st("HwDarkButtonStyle", "HwButtonStyle", colFill="HwDark", colBorder="HwDarkFrame", colText="HwDarkTextLight", realDisabledAlpha="0.3",
-       colAltFill="HwDarkFrame", colAltBorder="HwDarkFrame", colAltText="HwDarkTextLight")
+    st("HwDarkTinyButtonStyle", "HwTinyButtonStyle", colFill="HwDarkFrame", colFillGradientTo="HwDarkFrame", colBorder="HwDarkFrame",
+       colText="HwDarkText", colAltBorder="HwDarkFrame", realCornerRounding="0", optBevel="false")
+    st("HwMuteButtonStyle", "HwDarkTinyButtonStyle", colAltFill="LedMute", colAltFillGradientTo="LedMute", colAltText="HwFace")
+    st("HwSoloButtonStyle", "HwDarkTinyButtonStyle", colAltFill="LedSolo", colAltFillGradientTo="LedSolo", colAltText="HwInk")
+    st("HwPowerButtonStyle", "HwDarkTinyButtonStyle", font=icon_font(8), colAltFill="HwBlueOn", colAltFillGradientTo="HwBlueOn", colAltText="HwBlueText")
+    st("HwDarkButtonStyle", "HwButtonStyle", colFill="HwDark", colFillGradientTo="HwDarkLow", colBorder="HwDarkFrame",
+       colText="HwDarkTextLight", realDisabledAlpha="0.3", colAltFill="HwDarkLow", colAltFillGradientTo="HwDarkFrame",
+       colAltBorder="HwDarkFrame", colAltText="HwDarkTextLight", realCornerRounding="3", colBevelLight="255, 255, 255, 60")
     st("HwDarkIconButtonStyle", "HwDarkButtonStyle", font=icon_font(8))
-    st("HwSongButtonStyle", "HwButtonStyle", colText="SongText", colAltText="SongText", colAltFill="LcdLight")
+    st("HwSongButtonStyle", "HwButtonStyle", colText="SongText", colAltText="SongText", colAltFill="HwFacePressed",
+       colAltFillGradientTo="HwFacePressedLow", font=text_font(9, True))
     st("IndicatorStyle", "BaseButtonStyle", colFill="LedOff", colBorder="Strip", colText="HwInk", colAltFill="Readout",
        colAltBorder="Strip", colAltText="Strip", realCornerRounding="1", font=text_font(7, True))
     st("IndicatorLabelStyle", "IndicatorStyle", colFill="Transparent", colBorder="Transparent", colText="ReadoutMid",
@@ -256,20 +312,23 @@ def base_styles():
     st("IndicatorErrorStyle", "IndicatorStyle", colFill="LedMute")
 
     # Engine selectors, pattern keys, pads.
-    st("EngineButtonStyle", "BaseButtonStyle", colFill="EngineFace", colBorder="EngineRim", colText="EngineDigit",
+    st("EngineButtonStyle", "BaseButtonStyle", colFill="EngineFace", realGradientShade="-0.15", colBorder="EngineRim", colText="EngineDigit",
        colAltFill="EngineFace", colAltBorder="Amber", colAltText="ChassisText", realBorderWidth="2",
        realCornerRounding="13", font=text_font(14, True))
     st("EngineButtonPowerOffStyle", "EngineButtonStyle", colFill="EngineFaceOff", colAltFill="EngineFaceOff",
        colText="EngineDigitOff", colAltText="EngineDigitOff")
-    st("PatternKeyStyle", "BaseButtonStyle", colFill="HwFace", colBorder="HwFrame", colText="HwInk", colAltFill="HwFace",
-       colAltBorder="HwFrameDark", realCornerRounding="3", font=text_font(8))
-    st("PatternKeyAllocatedStyle", "PatternKeyStyle", colFill="LcdLight", colAltFill="LcdLight", colBorder="InkMid")
-    st("PatternKeyEditingStyle", "PatternKeyStyle", colBorder="AmberSoft", colAltBorder="AmberSoft", realBorderWidth="2")
-    st("PatternKeySelectedStyle", "PatternKeyStyle", colBorder="Amber", colAltBorder="Amber", realBorderWidth="2")
-    st("PatternKeyLedStyle", "BasePanelStyle", colFill="KeyLed", realCornerRounding="1")
+    st("PatternKeyStyle", "BaseButtonStyle", colFill="KeyFace", colFillGradientTo="KeyFaceLow", colBorder="KeyFrame", colText="HwInk",
+       colAltFill="KeyFace", colAltFillGradientTo="KeyFaceLow", colAltBorder="HwFrameDark", realCornerRounding="3", font=text_font(8),
+       realBorderWidth="2", optBevel="true", colBevelLight="255, 255, 255, 220", colBevelDark="0, 0, 0, 0",
+       realStripHeight="6", realStripInset="3", colStripOff="KeyLed", colStripOn="KeyLed")
+    st("PatternKeyAllocatedStyle", "PatternKeyStyle", colStripOff="KeyLedOn", colStripOn="KeyLedOn")
+    st("PatternKeyEditingStyle", "PatternKeyStyle", colBorder="AmberSoft", colAltBorder="AmberSoft")
+    st("PatternKeySelectedStyle", "PatternKeyStyle", colFill="KeyFaceSelected", colFillGradientTo="KeyFaceSelected", colBorder="KeyAmber",
+       colAltBorder="KeyAmber", colStripOff="KeyLedSelected", colStripOn="KeyLedSelected")
+    st("PadModeIconStyle", "BasePanelStyle", colFill="HwInk", realCornerRounding="0")
     st("PadSlotStyle", "BasePanelStyle")
-    st("PadStyle", "BasePanelStyle", colFill="PadFace", colBorder="PadFrame", optDrawBorder="true", realCornerRounding="4",
-       colText="PadText")
+    st("PadStyle", "BasePanelStyle", colFill="PadFace", colFillGradientTo="PadFaceLow", colBorder="PadFrame", optDrawBorder="true",
+       realCornerRounding="3", colText="PadText", optBevel="true", colBevelLight="255, 255, 255, 45", colBevelDark="0, 0, 0, 70")
     st("PadSelectedStyle", "PadStyle", colBorder="Amber", realBorderWidth="2")
     st("PadNameStyle", "BaseLabelStyle", colText="PadText", font=text_font(10), enumTextHorizontalAlign="center")
     st("PadLedStyle", "BasePanelStyle", colFill="PadFrame", realCornerRounding="1")
@@ -277,14 +336,23 @@ def base_styles():
         st(f"PadLed{i}Style", "PadLedStyle", colFill=f"PadColour{i}")
 
     # Knobs, faders, meters.
-    st("HardKnobStyle", "BaseKnobStyle", colFill="KnobRing", colFillHighlight="Readout", colAltFill="KnobRing", colAltBorder="HwFace")
+    st("HardKnobStyle", "BaseKnobStyle", colFill="KnobRing", colFillHighlight="KnobArc",
+       colFace="KnobFace", colFaceGradientTo="KnobFaceLow", realFaceInset="-5.2", colFaceBorder="KnobRing", realFaceBorderWidth="5",
+       colPointer="KnobPointer", realPointerStart="0.3", realPointerInset="-2", optPointerDot="true", colAltFill="KnobDot",
+       colAltBorder="KnobDot")
     st("HardKnobBodyStyle", "BasePanelStyle", colFill="KnobFace", colBorder="HwFrame", optDrawBorder="true", realCornerRounding="100")
-    st("HardKnobSmallStyle", "BaseKnobStyle", colFill="KnobRing", colFillHighlight="HwDarkText", colAltFill="KnobRing", colAltBorder="HwFace")
+    st("HardKnobSmallStyle", "BaseKnobStyle", colFill="SmallKnobRim", colFillHighlight="SmallKnobRim", colAltFill="KnobRing",
+       colAltBorder="HwFace", colFace="SmallKnobFace", colFaceGradientTo="SmallKnobFaceLow", realFaceInset="0", colPointer="HwFace",
+       realPointerWidth="1.5", realPointerInset="1")
     st("LcdKnobStyle", "BaseKnobStyle")
+    st("SpinnerFaceStyle", "BaseKnobStyle")
     st("LcdKnobBodyStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkSoft", optDrawBorder="true", realCornerRounding="100")
-    st("SpinnerStyle", "BaseKnobStyle", colFill="Transparent", colFillHighlight="InkSoft")
-    st("LcdFaderStyle", "BaseSliderStyle", enumHandleShape="Rect")
-    st("LcdPanStyle", "BaseSliderStyle", enumHandleShape="Rect", realHandleLength="10")
+    st("SpinnerStyle", "BaseKnobStyle", colFill="Transparent", colFillHighlight="InkSoft", optPointer="false", colFace="Transparent")
+    st("LcdFaderStyle", "BaseSliderStyle", enumHandleShape="Rect", colFill="LcdFace", colFillHighlight="Transparent",
+       colTrackBorder="LcdEdge", colGroove="LcdGroove", colAltFill="LcdCap", colAltFillGradientTo="LcdCapLow", colAltBorder="LcdCapLow",
+       colGrip="LcdGrip", intGripLines="2", realCornerRounding="3", realHandleInset="2")
+    st("LcdPanStyle", "LcdFaderStyle", realHandleLength="9", realHandleInset="1", colBorder="Transparent", intGripLines="1")
+    st("LcdRangeStyle", "LcdFaderStyle", realHandleLength="9", colFillHighlight="InkSoft", intGripLines="1")
     st("LcdScrollBarStyle", "BaseSliderStyle", colFill="LcdLight", colAltFill="InkMid")
     st("LcdMeterStyle", "BaseMeterStyle")
     st("StripMeterStyle", "BaseMeterStyle", colFill="ReadoutDim", colAltFill="Readout", colAltBorder="Readout")
@@ -310,9 +378,11 @@ def base_styles():
     st("TimelineStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkMid", optDrawBorder="true")
     st("TimelineLabelStyle", "BaseLabelStyle", font=text_font(9, True))
     st("TimelineTickStyle", "BasePanelStyle", colFill="InkMid")
-    st("GridBackStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkMid", optDrawBorder="true")
+    st("GridBackStyle", "BasePanelStyle", colFill="GridBack", colBorder="InkMid", optDrawBorder="true")
     st("GridShadeStyle", "BasePanelStyle", colFill="LcdMid")
-    st("GridLineStyle", "BasePanelStyle", colFill="LcdDim")
+    st("GridLineStyle", "BasePanelStyle", colFill="GridLine")
+    st("GridDashStyle", "GridLineStyle", colFill="GridDash", intDashLength="2", intDashGap="2")
+    st("GridBarLineStyle", "GridLineStyle", colFill="InkSoft")
     st("GridRowSelectedStyle", "BasePanelStyle", colFill="RowSelected")
     st("GridPositionStyle", "BasePanelStyle", colFill="PlayPosition")
     st("StepOnStyle", "BasePanelStyle", colFill="StepOn", colBorder="Ink", optDrawBorder="true", realCornerRounding="1")
@@ -326,7 +396,8 @@ def base_styles():
     st("TrackNameStyle", "BaseLabelStyle", colFill="LcdLight", colBorder="InkSoft", optDrawBorder="true", font=text_font(10), realTextOffset="3")
     st("TrackArrowStyle", "LcdFlatButtonStyle", colText="InkMid", font=text_font(9))
     st("TrackNumberStyle", "BaseLabelStyle", font=text_font(24), enumTextHorizontalAlign="center")
-    st("BrowserCrumbStyle", "BaseButtonStyle", colFill="Crumb", colBorder="InkMid", realCornerRounding="3", font=text_font(10))
+    st("BrowserCrumbStyle", "BaseButtonStyle", colFill="LcdFace", realGradientShade="0.1", colBorder="LcdEdge", colAltFill="Crumb",
+       colAltText="Ink", realCornerRounding="0", font=text_font(10), enumShape="Arrow", realArrowDepth="6")
     st("BrowserTreeHeadStyle", "BaseLabelStyle", font=text_font(10), realTextOffset="4")
     st("BrowserTreeItemStyle", "BaseLabelStyle", font=text_font(10), realTextOffset="22")
     st("BrowserTreeSelectedStyle", "BrowserTreeItemStyle", colFill="BrowserSel")

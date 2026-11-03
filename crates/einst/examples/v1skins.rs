@@ -218,6 +218,18 @@ fn demo_state(c: &mut Ctrl) {
             });
         }
     });
+    // Mixer strips alternate (v1's code picks the even / odd backgrounds).
+    c.walk_mut(&mut |k| {
+        if let Some(n) = k.name.strip_prefix("Channel").and_then(|n| n.parse::<u32>().ok()) {
+            if k.style == "EngineChannelBackgroundOdd" && n % 2 == 1 {
+                k.style = "EngineChannelBackgroundEven".into();
+            }
+        }
+        if k.class == "CtrlRangeSlider" {
+            k.set_attr("valueLow", "0.2".into());
+            k.set_attr("valueHigh", "0.75".into());
+        }
+    });
     // Effect slots: type and preset menus, the chain's slot buttons.
     let mut fx = 0;
     c.walk_mut(&mut |k| match k.name.as_str() {
@@ -321,10 +333,11 @@ fn pattern_grid(skin: &mut Skin) -> Vec<Ctrl> {
     grid.children.push(panel(Rect::new(10, 10 * rh, 32 * cw - 10, rh), "GridRowSelectedStyle"));
     grid.children.push(panel(Rect::new(22 * cw, 0, cw, 16 * rh), "GridPositionStyle"));
     for i in 1..32 {
-        grid.children.push(panel(Rect::new(i * cw, 0, 1, 16 * rh), "GridLineStyle"));
+        let style = if i % 4 == 0 { "GridBarLineStyle" } else { "GridDashStyle" };
+        grid.children.push(panel(Rect::new(i * cw, 0, 1, 16 * rh), style));
     }
     for i in 1..16 {
-        grid.children.push(panel(Rect::new(0, i * rh, 32 * cw, 1), "GridLineStyle"));
+        grid.children.push(panel(Rect::new(0, i * rh, 32 * cw, 1), "GridDashStyle"));
     }
     for row in 0..16 {
         for step in 0..32 {
@@ -406,6 +419,7 @@ fn song_lanes(skin: &mut Skin, page: &mut Ctrl) {
         for x in (bar..w).step_by(bar as usize) {
             view.children.push(panel(Rect::new(x, 20 + t * th, 1, th), "GridLineStyle"));
         }
+        view.children.push(panel(Rect::new(0, 20 + t * th + th - 1, w, 1), "GridDashStyle"));
     }
     for &(t, at, len, pat, name) in PARTS {
         let r = Rect::new(at * bar, 20 + t * th + 1, (len * bar).min(w - at * bar), th - 2);
@@ -424,11 +438,15 @@ fn song_lanes(skin: &mut Skin, page: &mut Ctrl) {
 fn browser(tabs: &mut Ctrl) {
     let mut x = 1;
     for (i, crumb) in ["samples", "Einst Content", "Factory", "Loops", "Hip Hop"].iter().enumerate() {
-        let w = 12 + 5 * crumb.len() as i32;
+        let w = 16 + 5 * crumb.len() as i32;
         let mut b = ctrl("CtrlButton", Rect::new(x, 37, w, 18), "BrowserCrumbStyle", crumb);
         b.on = i == 4;
+        if i == 0 {
+            b.set_attr("optArrowNotch", "false".into());
+        }
         tabs.children.push(b);
-        x += w + 1;
+        // The next crumb's notch takes this one's point.
+        x += w - 5;
     }
     let tree: &[(&str, bool, &str)] = &[
         ("\u{25BC} CONTENT", true, ""),
@@ -509,6 +527,18 @@ impl CustomDraw for Preview {
     }
 }
 
+/// Absolute rects of every visible control (name, class, style, x, y, w, h).
+fn dump_rects(c: &Ctrl, x: i32, y: i32, out: &mut String) {
+    if !c.visible {
+        return;
+    }
+    let (ax, ay) = (x + c.rect.x, y + c.rect.y);
+    out.push_str(&format!("{}\t{}\t{}\t{}\t{}\t{}\t{}\n", c.name, c.class, c.style, ax, ay, c.rect.w, c.rect.h));
+    for k in &c.children {
+        dump_rects(k, ax, ay, out);
+    }
+}
+
 fn save(skin: &Skin, fonts: &mut Fonts, c: &Ctrl, out: &Path, name: &str) {
     let pm = dreist_gui::render_ctrl_with(skin, fonts, c, 1.0, Some(&Preview));
     let p = out.join(format!("{name}.png"));
@@ -566,6 +596,11 @@ fn main() {
             }
         }
         save(&skin, &mut fonts, &root, &out, name);
+        if std::env::var_os("V1SKINS_RECTS").is_some() {
+            let mut lines = String::new();
+            dump_rects(&root, 0, 0, &mut lines);
+            std::fs::write(out.join(format!("{name}.rects.tsv")), lines).expect("rects");
+        }
     }
 
     for (name, rel) in PAGES {

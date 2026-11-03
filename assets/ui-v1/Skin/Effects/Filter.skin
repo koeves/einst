@@ -6,9 +6,7 @@
         <CtrlButton name="Control3" rect="164, 16, 16, 17" displayName="LP Active" id="100003" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
         <CtrlLabel name="CtrlLabel" rect="-8, 37, 56, 15" id="100006" style="StandardLabelCenteredStyle" text="HP On" />
         <CtrlLabel name="CtrlLabel" rect="144, 37, 56, 15" id="100005" style="StandardLabelCenteredStyle" text="LP On" />
-        <CtrlPanel rect="47, 77, 28, 28" style="LcdKnobBodyStyle" />
         <CtrlKnob name="Control2" rect="36, 68, 50, 46" displayName="HP Frequency" id="100021" realDialThickness="0.14" style="LEDKnobLargeLR" />
-        <CtrlPanel rect="117, 77, 28, 28" style="LcdKnobBodyStyle" />
         <CtrlKnob name="Control4" rect="106, 68, 50, 46" displayName="LP Frequency" id="100020" realDialThickness="0.14" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="28, 121, 66, 15" id="100027" style="StandardLabelCenteredStyle" text="HP Freq" />
         <CtrlLabel name="CtrlLabel" rect="98, 121, 66, 15" id="100026" style="StandardLabelCenteredStyle" text="LP Freq" />

@@ -5,7 +5,6 @@
         <CtrlPopupButton name="TSModeCombo" rect="54, 3, 75, 17" id="100032" legacyClass="CtrlComboBox" optSingleClickEdit="true" style="LEDComboBoxStyle" />
         <CtrlLabel name="CtrlLabel" rect="-2, 24, 76, 13" id="100003" style="StandardLabelCenteredStyle" text="Timestretch" />
         <CtrlLabel name="CtrlLabel" rect="66, 24, 56, 13" id="100000" style="StandardLabelCenteredStyle" text="Src" />
-        <CtrlPanel rect="22, 46, 28, 28" style="LcdKnobBodyStyle" />
         <CtrlKnob name="AmountKnob" rect="11, 37, 50, 46" displayName="Timestretch amount" id="100002" optCentered="true" realDialThickness="0.14" style="LEDKnobLargeC" />
         <CtrlTextBox name="SourceBPMBox" rect="74, 37, 40, 17" id="100030" optSingleClickEdit="true" style="LEDEditBoxCenteredStyle" />
         <CtrlLabel name="CtrlLabel" rect="66, 56, 56, 13" id="100002" style="StandardLabelCenteredStyle" text="Dest" />
