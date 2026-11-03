@@ -389,3 +389,83 @@ fn comb_differs_only_by_fast_exp2_and_rounding() {
     assert!(worst < peak * 1e-3, "worst {worst}, peak {peak}");
     assert!(worst_exact > worst * 10.0, "exact {worst_exact} vs {worst}");
 }
+
+fn render_blocks(n: &mut dyn Node, ports: &[(usize, f32)], blocks: u32) -> (Vec<f32>, Vec<f32>) {
+    let ctx = Ctx::new(48_000.0);
+    for &(i, v) in ports {
+        n.ports()[i].value = v;
+    }
+    let (mut l, mut r) = (Vec::new(), Vec::new());
+    for b in 0..blocks {
+        let (x, y) = run(n, &ctx, &noise(256, 300 + b), &noise(256, 400 + b));
+        l.extend(x);
+        r.extend(y);
+    }
+    (l, r)
+}
+
+fn rms_diff(a: &(Vec<f32>, Vec<f32>), b: &(Vec<f32>, Vec<f32>)) -> (f32, f32) {
+    let d = a.0.iter().zip(&b.0).map(|(x, y)| (x - y) * (x - y)).sum::<f32>();
+    let e = a.0.iter().map(|x| x * x).sum::<f32>();
+    ((d / a.0.len() as f32).sqrt(), (e / a.0.len() as f32).sqrt())
+}
+
+/// Where every 2^x argument is an integer, v1's fast 2^x is exact to
+/// float rounding, so the copied node matches Dreist's; elsewhere it
+/// differs by at most v1's 0.4 % in each 2^x.
+#[test]
+fn bit_crusher_and_little_fatty_differ_only_by_fast_exp2() {
+    use dreist_dsp::fx::nodes::analog_filters::Ms20Filter;
+    use dreist_dsp::fx::nodes::bitcrusher::BitCrusher;
+    // Bit Crusher: 0 drive, 1 freq, 2 bits, 3 LP, 4 HP, 5 dirty, 6 clean, 7 tone, 8 mix.
+    let int = [(0, 0.8), (1, 2.0), (2, 4.0), (3, 3.0), (4, -1.0), (5, 1.0), (6, 0.3), (7, 4.0), (8, 1.0)];
+    let frac = [(0, 0.8), (1, 2.37), (2, 4.4), (3, 3.3), (4, -0.6), (5, 1.0), (6, 0.3), (7, 3.7), (8, 1.0)];
+    let a = render_blocks(&mut einst_dsp::bitcrusher::BitCrusher::new(), &int, 20);
+    let b = render_blocks(&mut BitCrusher::new(), &int, 20);
+    let (d, e) = rms_diff(&a, &b);
+    assert!(d < e * 1e-3, "integer exponents: {d} vs {e}");
+    let a = render_blocks(&mut einst_dsp::bitcrusher::BitCrusher::new(), &frac, 20);
+    let b = render_blocks(&mut BitCrusher::new(), &frac, 20);
+    assert_ne!(a, b);
+    // Little Fatty: 0 drive, 1 mode, 2 cutoff, 3 res, 4 output.
+    let a = render_blocks(&mut einst_dsp::analog_filters::Ms20Filter::new(), &[(0, 0.7), (1, 1.0), (2, -3.0), (3, 0.5), (4, 0.8)], 20);
+    let b = render_blocks(&mut Ms20Filter::new(), &[(0, 0.7), (1, 1.0), (2, -3.0), (3, 0.5), (4, 0.8)], 20);
+    let (d, e) = rms_diff(&a, &b);
+    assert!(d < e * 1e-3, "integer cutoff: {d} vs {e}");
+}
+
+/// Grandad, Child Genius and Japan differ from Dreist's only by v1's fast
+/// 2^x (cutoff, warp, drive): close, not equal.
+#[test]
+fn warped_filters_stay_close_to_dreist() {
+    use dreist_dsp::fx::nodes::analog_filters::Sh101Filter;
+    use dreist_dsp::fx::nodes::ladder::{Kind, Ladder};
+    let ports = [(0, 0.3), (1, 3.0), (2, -2.3), (3, 0.4), (4, 0.2), (5, 0.0), (6, 0.0)];
+    for (name, v1, v2) in [("Grandad", einst_dsp::ladder::Kind::Moog, Kind::Moog), ("Child Genius", einst_dsp::ladder::Kind::Prodigy, Kind::Prodigy)] {
+        let a = render_blocks(&mut einst_dsp::ladder::Ladder::new(v1), &ports, 20);
+        let b = render_blocks(&mut Ladder::new(v2), &ports, 20);
+        let (d, e) = rms_diff(&a, &b);
+        assert!(d > 0.0 && d < e * 0.2, "{name}: {d} vs {e}");
+    }
+    let sp = [(0, 0.3), (1, 3.0), (2, -2.3), (3, 0.4), (4, 0.0), (5, 1.0)];
+    let a = render_blocks(&mut einst_dsp::analog_filters::Sh101Filter::new(), &sp, 20);
+    let b = render_blocks(&mut Sh101Filter::new(), &sp, 20);
+    let (d, e) = rms_diff(&a, &b);
+    assert!(d > 0.0 && d < e * 0.2, "Japan: {d} vs {e}");
+}
+
+/// Three Oh! Three: v1 clamps drive and output to 2.4 (3.0 sounds as 2.4);
+/// Hoover: v1's mode 0 is its own row, v2's equals mode 1.
+#[test]
+fn tb303_drive_clamp_and_hoover_mode_0() {
+    use dreist_dsp::fx::nodes::ladder::{Kind, Ladder};
+    use einst_dsp::ladder::{Kind as V1Kind, Ladder as V1Ladder};
+    let tb = |drive: f32| render_blocks(&mut V1Ladder::new(V1Kind::Tb303), &[(0, drive), (1, 1.0), (2, -2.0), (3, 0.3), (4, drive), (5, 0.0), (6, 0.0)], 10);
+    assert_eq!(tb(3.0), tb(2.4));
+    let dreist_tb = |drive: f32| render_blocks(&mut Ladder::new(Kind::Tb303), &[(0, drive), (1, 1.0), (2, -2.0), (3, 0.3), (4, drive), (5, 0.0), (6, 0.0)], 10);
+    assert_ne!(dreist_tb(3.0), dreist_tb(2.4));
+    let juno = |mode: f32| render_blocks(&mut V1Ladder::new(V1Kind::Juno), &[(0, 0.5), (1, mode), (2, -2.0), (3, 0.3), (4, 0.5), (5, 0.0), (6, 0.0)], 10);
+    assert_ne!(juno(0.0), juno(1.0));
+    let dreist_juno = |mode: f32| render_blocks(&mut Ladder::new(Kind::Juno), &[(0, 0.5), (1, mode), (2, -2.0), (3, 0.3), (4, 0.5), (5, 0.0), (6, 0.0)], 10);
+    assert_eq!(dreist_juno(0.0), dreist_juno(1.0));
+}

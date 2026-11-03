@@ -19,12 +19,15 @@
 //! (`einst-engine`'s `fx.rs`) builds them through [`create`] in place of
 //! Dreist's v2 nodes.
 
+pub mod analog_filters;
 pub mod auto_filter;
+pub mod bitcrusher;
 pub mod bus_comp;
 pub mod comb;
 pub mod envelope_shaper;
 pub mod freq_shifter;
 pub mod gain;
+pub mod ladder;
 mod math;
 pub mod noise_gate;
 pub mod phaser;
@@ -43,8 +46,15 @@ pub const BUS_COMPRESSOR: usize = 9;
 pub const NOISE_GATE: usize = 11;
 pub const ENVELOPE_SHAPER: usize = 12;
 pub const PHASER: usize = 18;
+pub const BIT_CRUSHER: usize = 23;
 pub const MODULATED_FILTER: usize = 29;
 pub const COMB_FILTER: usize = 30;
+pub const THREE_OH_THREE_FILTER: usize = 31;
+pub const HOOVER_FILTER: usize = 32;
+pub const GRANDAD_FILTER: usize = 33;
+pub const LITTLE_FATTY_FILTER: usize = 34;
+pub const CHILD_GENIUS_FILTER: usize = 35;
+pub const JAPAN_FILTER: usize = 36;
 pub const FREQUENCY_SHIFTER: usize = 25;
 
 /// v1's node for an effect type (v2 numbering), or `None` where v1 and
@@ -60,6 +70,13 @@ pub fn create(kind: usize) -> Option<Box<dyn Node>> {
         PHASER => Box::new(phaser::Phaser::new()),
         MODULATED_FILTER => Box::new(auto_filter::AutoFilter::new()),
         COMB_FILTER => Box::new(comb::Comb::new()),
+        THREE_OH_THREE_FILTER => Box::new(ladder::Ladder::new(ladder::Kind::Tb303)),
+        HOOVER_FILTER => Box::new(ladder::Ladder::new(ladder::Kind::Juno)),
+        GRANDAD_FILTER => Box::new(ladder::Ladder::new(ladder::Kind::Moog)),
+        CHILD_GENIUS_FILTER => Box::new(ladder::Ladder::new(ladder::Kind::Prodigy)),
+        BIT_CRUSHER => Box::new(bitcrusher::BitCrusher::new()),
+        LITTLE_FATTY_FILTER => Box::new(analog_filters::Ms20Filter::new()),
+        JAPAN_FILTER => Box::new(analog_filters::Sh101Filter::new()),
         FREQUENCY_SHIFTER => Box::new(freq_shifter::FreqShifter::new()),
         ENVELOPE_SHAPER => Box::new(envelope_shaper::EnvelopeShaper::new()),
         _ => return None,
@@ -83,6 +100,11 @@ pub fn internal_ports(kind: usize) -> &'static [(usize, f32)] {
         PHASER => &[(6, 1.0), (7, 0.0), (8, 0.0)],
         // v1 type 19: Mix, Active on, external side-chain off, FM off.
         MODULATED_FILTER => &[(5, 1.0), (6, 1.0), (7, 0.0), (11, 0.0)],
+        // Same hidden ports as v2 (`dreist_dsp` setup) for the copied nodes.
+        BIT_CRUSHER => &[(8, 1.0), (5, 1.0), (6, 0.0)],
+        THREE_OH_THREE_FILTER | HOOVER_FILTER | LITTLE_FATTY_FILTER | CHILD_GENIUS_FILTER => &[(4, 0.33262002), (6, 0.0), (5, 0.0)],
+        GRANDAD_FILTER => &[(4, 0.6010388), (5, 0.0), (6, 0.0)],
+        JAPAN_FILTER => &[(5, 1.0), (4, 0.0)],
         // v1 type 17.
         FREQUENCY_SHIFTER => &[(2, 1.0)],
         _ => &[],
