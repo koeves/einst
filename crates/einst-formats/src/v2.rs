@@ -12,8 +12,10 @@
 //! * step lanes and track modifiers that v2 does not have are dropped
 //!   (v2's [re:9b6bed] reads only its own lane names).
 //! * output names and sample paths are rewritten to v2's forms.
-//! * MIDI/host bindings are dropped (v1's `Binding` message format is not
-//!   traced).
+//! * MIDI/host bindings go through [`crate::bindings`]. v1's `MIDIMap`
+//!   holds nothing but its version (v1's serializer reads no items,
+//!   ev_93038a78): the note map is always v1's built-in default, as v2's
+//!   is, so it is dropped.
 
 use dreist_formats::node::format_g16;
 use dreist_formats::{LayerParam, Node, STEP_LANES, TransmodSource};
@@ -39,14 +41,22 @@ pub fn convert_root(v1: &Node) -> Node {
             }
         }
     }
-    out.children = v1.children.iter().filter_map(convert).collect();
+    out.children = v1
+        .children
+        .iter()
+        .filter_map(|c| match c.class.as_str() {
+            "BindingMap" => Some(crate::bindings::convert_binding_map(c, Some(v1)).0),
+            _ => convert(c),
+        })
+        .collect();
     out
 }
 
 /// One object, recursively; `None` drops it.
 fn convert(n: &Node) -> Option<Node> {
     Some(match n.class.as_str() {
-        "BindingMap" | "MIDIMap" => return None,
+        "MIDIMap" => return None,
+        "BindingMap" => crate::bindings::convert_binding_map(n, None).0,
         "Layer" => layer(n),
         "Step" => step(n),
         "Track" => track(n),
