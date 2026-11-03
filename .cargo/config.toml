@@ -1,0 +1,4 @@
+# dreist-commons is a private GitHub repository: fetch it with the git CLI
+# (and its credentials).
+[net]
+git-fetch-with-cli = true
