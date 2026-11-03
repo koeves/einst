@@ -33,6 +33,10 @@
   dependency versions (Cargo.lock seeded from Dreist's). Geist v1 files open through
   `load_project` (saved project path or `EINST_PROJECT`).
 
+- Hold of v1 layers recomputed like v1 (owner's decision, 2026-11-03): a v1 Hold of −1 stays −1,
+  so Dreist's load-time `reset_hold_time` (the same formula as v1's `Layer::ResetHoldTime`,
+  ev_97d7ba71) derives it from the sample; `tests/v1_documents.rs` checks the two agree.
+
 ## Known gaps (plugin shell)
 
 - Dreist's editor is used unpatched, so some UI text still says "Dreist": `geist_editor::PRODUCT`
@@ -53,9 +57,9 @@
 
 ## Next
 
-1. Decide the open conversion choices in `docs/re/loading-v1.md` ("Guesses and deliberate
-   choices"), above all the Hold on v1 3.x layers (Geist2 clamps −1 to 0, v1 recomputes it).
-   Convert v1 MIDI/host bindings once `Binding`'s message objects are traced.
+1. Confirm the remaining conversion guesses in `docs/re/loading-v1.md` ("Guesses and
+   deliberate choices"). Convert v1 MIDI/host bindings once `Binding`'s message objects are
+   traced.
 2. Close the plugin-shell gaps above: needs small upstream hooks in Dreist (product name,
    document import, settings folder). Ask the user before touching Dreist.
 3. v1-only DSP: `VAmpM` (Gain), `VFilterEQ2` (Vari-EQ), `VDSPTransientDesigner` (Envelope

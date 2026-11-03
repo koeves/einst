@@ -138,12 +138,14 @@ fn project_converts_loads_and_plays() {
     assert_eq!(layer.raw.version, Some(3300));
     assert_eq!(layer.audio_file.as_deref(), Some("Beat.wav"));
     assert_eq!(layer.name.as_deref(), Some("Click"));
-    // 3.2 layers take Geist2's < 3300 branch: envelopes and switches renamed, holds clamped.
+    // 3.2 layers take Geist2's < 3300 branch: envelopes and switches renamed; a hold of -1 stays
+    // (v1 recomputes it on load, and so does Dreist).
     for k in ["Ver", "V2C", "V2P", "UsesTimestretch", "TSMode", "Envelope0Param0", "EnvelopeType0"] {
         assert!(layer.raw.attr(k).is_none(), "{k} left over");
     }
     assert_eq!(layer.raw.f32("AmpEnvDecay"), Some(0.02));
-    assert_eq!(layer.raw.f32("FreeEnvHold"), Some(0.0));
+    assert_eq!(layer.raw.f32("FreeEnvHold"), Some(-1.0));
+    assert!(geist_engine::hold::needs_reset_on_load(&layer.raw));
     assert_eq!(layer.raw.f32("TimestretchActive"), Some(0.0));
     assert_eq!(layer.raw.f32("Cutoff_Velocity"), Some(0.0));
     assert!(layer.raw.children_of("LayerModulationRouting").next().is_none());
@@ -155,6 +157,60 @@ fn project_converts_loads_and_plays() {
     assert_eq!(track.raw.attr("VelocityRand"), Some("0.6"));
     assert!(track.raw.attr("AmpenvdepthRand").is_none());
     assert!(render(&doc, 3.0) > 1e-3, "silent");
+}
+
+/// v1's `Layer::ResetHoldTime(true)` (ev_97d7ba71), transcribed: region (or
+/// whole file) in seconds, divided by 2^((coarse + fine)/12) unless
+/// timestretching, minus A⁴·10 + (S ≠ 1 ? D⁴·10 : 0) + R⁴·15, clamped to
+/// 0..60 s, then (x/60)^0.25 clamped to 0..1. Coarse is
+/// `round(c·24) − 12` semitones, fine `2f − 1`.
+fn v1_reset_hold_time(l: &Node, region: f64, total: f64, sr: f32) -> f32 {
+    let p = |k: &str, d: f32| l.f32(k).unwrap_or(d);
+    let mut t = (region / sr as f64).max(0.0);
+    if t.abs() < 1e-6 {
+        t = (total as f32 / sr) as f64;
+    }
+    let coarse = {
+        let v = p("CoarseTune", 0.5) * 24.0;
+        (if v < 0.0 { v - 0.5 } else { v + 0.5 }) as i32 as f32 - 12.0
+    };
+    let fine = p("FineTune", 0.5) * 2.0 - 1.0;
+    let ratio = 2f64.powf((fine as f64 + coarse as f64) / 12.0);
+    if ratio.abs() >= 1e-6 && p("TimestretchActive", 0.0) < 0.5 {
+        t *= 1.0 / ratio;
+    }
+    let q = |x: f32| x * x * x * x;
+    let d = if (p("AmpEnvSustain", 1.0) - 1.0).abs() >= 1e-6 { q(p("AmpEnvDecay", 0.02)) * 10.0 } else { 0.0 };
+    let x = ((t - (d + q(p("AmpEnvAttack", 0.0)) * 10.0 + q(p("AmpEnvRelease", 0.001)) * 15.0) as f64) as f32).min(60.0).max(0.0);
+    (x / 60.0).powf(0.25).min(1.0).max(0.0)
+}
+
+/// A v1 layer saved with Hold -1 gets the hold v1 computes from its sample:
+/// Dreist's load-time recomputation (which the converted layer triggers)
+/// gives the same value for v1's semitone-grid coarse tunes.
+#[test]
+fn hold_is_recomputed_like_v1() {
+    let text = layer("Layer0", "3.2", "")
+        .replace(r#"CoarseTune="0.5""#, r#"CoarseTune="0.583333""#)
+        .replace(r#"FineTune="0.5""#, r#"FineTune="0.6""#)
+        .replace(r#"Envelope0Param0="0" Envelope0Param1="0.02" Envelope0Param2="1""#, r#"Envelope0Param0="0.2" Envelope0Param1="0.3" Envelope0Param2="0.5""#);
+    let doc = convert(FileKind::Pad, &format!("<root>{}</root>", pad("Pad", &text)));
+    let l = first(first(&doc, "Pad"), "Layer");
+    assert_eq!(l.f32("AmpEnvHold"), Some(-1.0));
+    assert!(geist_engine::hold::needs_reset_on_load(l));
+    let lp = |k: geist_formats::LayerParam| l.f32(k.name()).unwrap_or(k.default_value()).clamp(0.0, 1.0);
+    // A region shorter than the envelope gives 0; longer ones a hold in between.
+    for (region, total, sr, inside) in [(4000.0, 4000.0, 44_100.0, false), (0.0, 88_200.0, 44_100.0, true), (120_000.0, 200_000.0, 48_000.0, true)] {
+        let dreist = geist_engine::hold::reset_hold_time(&lp, false, region, total, sr, true);
+        let v1 = v1_reset_hold_time(l, region, total, sr);
+        assert!((dreist - v1).abs() < 1e-5, "region {region}: Dreist {dreist} vs v1 {v1}");
+        assert_eq!(v1 > 0.0 && v1 < 1.0, inside, "region {region}: {v1}");
+    }
+    // A saved hold is kept (clamped to 0..1).
+    let kept = convert(FileKind::Pad, &format!("<root>{}</root>", pad("Pad", &text.replace(r#"Envelope0Param3="-1""#, r#"Envelope0Param3="0.4""#))));
+    let k = first(first(&kept, "Pad"), "Layer");
+    assert_eq!((k.f32("AmpEnvHold"), k.f32("FreeEnvHold")), (Some(0.4), Some(-1.0)));
+    assert!(geist_engine::hold::needs_reset_on_load(k), "either hold negative → reset, as in v1");
 }
 
 #[test]
