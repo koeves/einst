@@ -130,7 +130,8 @@ fn project_converts_loads_and_plays() {
     let doc = convert(FileKind::Project, &project(&engine("Engine0")));
     assert_eq!(doc.version, Some(3000));
     assert!(doc.attr("StateVersion").is_none());
-    assert!(doc.children_of("BindingMap").next().is_none());
+    // An empty v1 binding map stays an empty v2 one (see `v1_bindings.rs`).
+    assert!(first(&doc, "BindingMap").children.is_empty());
     assert_eq!(first(&doc, "GlobalAux").attr("OutputLocation"), Some("Aux 1"));
     let p = dreist_formats::Project::from_node(doc.clone()).unwrap();
     assert_eq!(p.audio_files, ["Beat.wav"]);
