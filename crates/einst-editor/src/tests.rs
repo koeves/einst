@@ -2998,9 +2998,14 @@ fn dragging_a_pattern_key_highlights_the_target_key() {
     let (Some(k0), Some(k1)) = (key(&ed.app.root, "Key0", &mut Vec::new()), key(&ed.app.root, "Key1", &mut Vec::new())) else { return };
     ed.handle(&UiEvent::DragOver { from: k0.clone(), to: k1.clone(), x: 0.0, y: 0.0 });
     assert_eq!(ed.app.ctrl(&k1).unwrap().attr("dragAlpha"), Some("0"));
-    std::thread::sleep(std::time::Duration::from_millis(40));
-    ed.animate();
-    // One 1/30 s tick (+25), or more on a slow machine.
+    // One 1/30 s tick (+25), or more on a slow machine: wait up to 1 s for it.
+    for _ in 0..25 {
+        std::thread::sleep(std::time::Duration::from_millis(40));
+        ed.animate();
+        if ed.app.ctrl(&k1).unwrap().attr("dragAlpha") != Some("0") {
+            break;
+        }
+    }
     assert!(matches!(ed.app.ctrl(&k1).unwrap().attr("dragAlpha"), Some("25" | "50" | "75" | "100")));
     // Back over the source: no highlight.
     ed.handle(&UiEvent::DragOver { from: k0.clone(), to: k0.clone(), x: 0.0, y: 0.0 });
