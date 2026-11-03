@@ -53,7 +53,7 @@ pub struct UiState {
     /// Scene notifications.
     pub scene_events: Vec<dreist_engine::scene::SceneEvent>,
     /// A reserved buffer for the sampler's next take (see
-    /// `Sampler::give_spare`), kept ready by the rebuild worker.
+    /// [re:23fa47]), kept ready by the rebuild worker.
     pub spare_take: Option<dreist_engine::sampler::Take>,
 }
 
@@ -351,7 +351,7 @@ pub struct DreistEditor {
     pub size: Arc<std::sync::atomic::AtomicU64>,
 }
 
-/// `Editor::ComputeStartupSize`: `LastEditorSize` (window pixels) or the
+/// [re:46068f]: `LastEditorSize` (window pixels) or the
 /// default size × the UI scale.
 fn startup_size() -> (u32, u32) {
     let o = dreist_editor::options::Options::load();
@@ -426,7 +426,7 @@ impl Editor for DreistEditor {
                 g
             }
             Err(e) => {
-                nih_log!("Geist2 resources not usable: {e}");
+                nih_log!("Factory resources not usable: {e}");
                 self.bridge.editor_open.store(false, std::sync::atomic::Ordering::Release);
                 return Box::new(());
             }

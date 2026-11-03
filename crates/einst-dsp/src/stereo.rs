@@ -1,11 +1,11 @@
-//! Einst: Dreist's port of `VDSP::VStereoMixer` (`dreist_dsp::fx::nodes::stereo`,
+//! Einst: Dreist's port of [re:3d22ad] (`dreist_dsp::fx::nodes::stereo`,
 //! copied from Dreist at bc729de2) with v1's one difference: the 2^x in
 //! `Voice::ProcessBuffer` is v1's [`fast_exp2`](crate::fast_exp2) (one
 //! inlined instance in v1, the rest of the function's constants and callees
-//! as Geist2's; `docs/re/effects-v1.md`).
+//! as v2's; dreist-re `einst/docs/re/effects-v1.md`).
 //!
-//! `VDSP::VStereoMixer` (Stereo Width; `InitializePorts` 0x4e1d70,
-//! `Voice::ProcessBuffer`, `Voice::Reset`).
+//! [re:3d22ad] (Stereo Width; `InitializePorts` [re:675068],
+//! `Voice::ProcessBuffer` [re:ef9b38], `Voice::Reset` [re:e883e3]).
 
 use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
@@ -17,7 +17,7 @@ pub struct StereoMixer {
 
 impl StereoMixer {
     pub fn new() -> StereoMixer {
-        StereoMixer { ports: ports_from(ports::VStereoMixer), gain: 0.0, width: 1.0 }
+        StereoMixer { ports: ports_from(ports::STEREO_WIDTH), gain: 0.0, width: 1.0 }
     }
 }
 
@@ -32,7 +32,7 @@ impl Node for StereoMixer {
         &mut self.ports
     }
 
-    /// `Voice::Reset`.
+    /// `Voice::Reset` [re:e883e3].
     fn reset(&mut self) {
         self.gain = 0.0;
         self.width = 1.0;

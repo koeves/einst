@@ -1,42 +1,45 @@
 # Einst
 
-A native Apple Silicon rebuild of FXpansion **Geist** 1.1.1.2 (2012), the predecessor of Geist2.
-It is built on [Dreist](../geist)'s Rust crates, because Geist v1 and Geist2 share most of their code:
-93 of v1's 97 DSP classes and all 32 of its effects also exist in Geist2. See
-[`docs/re/v1-vs-geist2.md`](docs/re/v1-vs-geist2.md).
+A native Apple Silicon rebuild of FXpansion **Geist** 1.1.1.2 (2012), the predecessor of Geist2,
+as a thin app on [dreist-commons](https://github.com/koeves/dreist-commons) (private), the crates
+it shares with Dreist (the Geist2 rebuild). Geist v1 and Geist2 share most of their code, so Einst
+adds what v1 needs on top: its file reader, its own effect DSP and its behaviour where it differs.
 
-Outputs: `Einst.vst3`, `Einst.clap`, `Einst.app` (Apple Silicon).
+Outputs: `Einst.vst3`, `Einst.clap`, `Einst.app` (Apple Silicon). Plugin IDs: CLAP
+`rs.einst.einst`, VST3 class `EinstRsDrumSmplr`.
 
 | Crate | Role |
 |---|---|
-| `einst-formats` | Geist v1 file reader and converter onto Dreist's Geist2 document tree |
-| `einst-dsp` | Geist v1's own effect DSP (Gain, Vari-EQ, Envelope Shaper) as `dreist_dsp` nodes |
-| `einst-engine` | Dreist's `dreist-engine` copied, building those nodes (used under the name `dreist-engine`) |
-| `einst-editor` | the editor: a copy of Dreist's `dreist-editor` with Einst's names, settings folder, resources (v1 factory presets and templates) and v1 file opening (source commit in `docs/PROGRESS.md`) |
-| `einst-plugin` | nih-plug VST3 / CLAP plugin and standalone app: a copy of Dreist's `dreist-plugin` shell with Einst's names and IDs (CLAP `rs.einst.einst`, VST3 class `EinstRsDrumSmplr`), opening Geist v1 files |
+| `einst` | Einst's app profile: names, theme, resources, the `.einst*` file family, v1's effect menu, v1 documents (`v1io`) and v1's effect nodes, installed with `einst::install()`; the engine and screen goldens under Einst's profile |
+| `einst-formats` | Geist v1 file reader and converter onto the Geist2 document tree |
+| `einst-dsp` | Geist v1's effect DSP where it differs from Geist2 (Gain, Vari-EQ, Envelope Shaper, and the shared effects whose v1 build differs) as `dreist_dsp` nodes |
+| `einst-plugin` | nih-plug VST3 / CLAP plugin and standalone app |
 | `xtask` | nih-plug bundler (`cargo xtask bundle einst-plugin`) |
 
 ## Build
 
-Dreist must be checked out next to this repository (`../geist`): Einst builds on its crates by path,
-uses its vendored `baseview` / `signalsmith-stretch` patches, and bundles its resources.
+dreist-commons must be checked out next to this repository (`../dreist-commons`; `Cargo.toml`
+points there).
 
     scripts/build.sh              # release: target/bundled/Einst.{app,vst3,clap}
     scripts/build.sh --debug
     scripts/build.sh --install    # also into ~/Library/Audio/Plug-Ins and ~/Applications
     cargo test --workspace
-    cargo clippy --workspace --all-targets -- -D warnings
+    cargo clippy --workspace --all-targets --features einst-plugin/standalone -- -D warnings
     cargo fmt --all --check
 
-## Opening Geist v1 files
+## Files
 
-A Geist v1 `.geist`, `.geistkit`, `.geistpad`, `.geistengine`, `.geistpattern` or `.geistbank` is
-converted to Geist2's document (`einst_formats::v1::open_as_project`) when the plugin loads its
-project (the project path saved with the host session, or `EINST_PROJECT=<file>`) and when the
-editor opens it: File › Open (any of these extensions; single-object files land in engine 0), the
-browser, and drag and drop of projects, kits and engines. Samples resolve in `<file>.samples/` as
-in v1.
+Einst opens Geist v1 files (`.geist`, `.geistkit`, `.geistpad`, `.geistengine`, `.geistpattern`,
+`.geistbank`), Geist2 and Dreist files, and saves its own family (`.einst`, `.einstkit`, ...;
+Geist2's XML). A v1 file is converted to the Geist2 document when the plugin loads its project
+(the project path saved with the host session, or `EINST_PROJECT=<file>`) and when the editor
+opens it: File › Open (single-object files land in engine 0), the browser, and drag and drop.
+Samples resolve in `<file>.samples/` as in v1. Settings: `~/Library/Application Support/Einst`.
 
-Status and next steps: [`docs/PROGRESS.md`](docs/PROGRESS.md).
+Resources: `assets/ui` (Einst's copy of the UI graphics: skin, Einst theme, fonts, cursors,
+metronomes) and `assets/v1/System` (v1's factory effect presets, effect chains and templates).
+`assets/v1` holds FXpansion's original resources; keep this repository private.
 
-`assets/v1` holds FXpansion's original resources. Keep this repository private.
+Status: [`docs/PROGRESS.md`](docs/PROGRESS.md). Reverse-engineering notes are in the private
+`dreist-re` repository (`einst/`).

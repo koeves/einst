@@ -1,4 +1,4 @@
-//! Reads every XML file of the Geist v1 factory install (`assets/v1`).
+//! Reads every XML file of the the original v1 factory install (`assets/v1`).
 
 use std::path::{Path, PathBuf};
 

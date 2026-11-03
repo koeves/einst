@@ -1,26 +1,26 @@
-//! v1 document tree → Geist2 document tree (what Dreist's `dreist_formats`
-//! and `dreist_engine` read). See `docs/re/loading-v1.md`.
+//! v1 document tree → v2 document tree (what Dreist's `dreist_formats`
+//! and `dreist_engine` read). See dreist-re `einst/docs/re/loading-v1.md`.
 //!
-//! v1 and Geist2 share the element shape (tag = class, `name` = instance
+//! v1 and v2 share the element shape (tag = class, `name` = instance
 //! key) and most attribute names, so the conversion walks the tree and
 //! rewrites only what differs:
 //! * per-object `Ver` floats are dropped; layers get `version="3300"` and
 //!   the root `version="3000"`.
-//! * layers go through Geist2's legacy branch (`Layer::Serialize`
+//! * layers go through v2's legacy branch ([re:0cef81]
 //!   for `Ver` < 3300, ev_5075e9a1): envelopes, modulation routings,
-//!   velocity amounts and timestretch switches become Geist2 parameters.
-//! * step lanes and track modifiers that Geist2 does not have are dropped
-//!   (Geist2's `Step::Serialize` reads only its own lane names).
-//! * output names and sample paths are rewritten to Geist2's forms.
+//!   velocity amounts and timestretch switches become v2 parameters.
+//! * step lanes and track modifiers that v2 does not have are dropped
+//!   (v2's [re:9b6bed] reads only its own lane names).
+//! * output names and sample paths are rewritten to v2's forms.
 //! * MIDI/host bindings are dropped (v1's `Binding` message format is not
 //!   traced).
 
 use dreist_formats::node::format_g16;
 use dreist_formats::{LayerParam, Node, STEP_LANES, TransmodSource};
 
-/// Layer version Geist2 writes (`Layer::Serialize`, 0xce4).
+/// Layer version v2 writes ([re:87acba], 0xce4).
 const LAYER_VERSION: u32 = 3300;
-/// Root version of a Geist2 `.geist` (`Geist::empty` in Dreist).
+/// Root version of a v2 `.geist` ([re:8b0f28] in Dreist).
 const ROOT_VERSION: u32 = 3000;
 
 /// Convert a v1 `<root>` (project, kit, pad, engine, pattern or bank).
@@ -29,7 +29,7 @@ pub fn convert_root(v1: &Node) -> Node {
     out.version = Some(ROOT_VERSION);
     for (k, v) in &v1.attrs {
         match k.as_str() {
-            // `Grid::LoadEntireState` gates on it; Geist2 reads it only below root version 3000.
+            // [re:7e3d37] gates on it; v2 reads it only below root version 3000.
             "StateVersion" => {}
             "PreviewOutput" => {
                 out.set(k, output_name(v));
@@ -76,8 +76,8 @@ fn copy(n: &Node) -> Node {
     out
 }
 
-/// `AudioOutputs::GetNameOfOutputLocation` (v1, ev_a80119bf) → Geist2 route
-/// names. v1's four `Buss n` outputs are the global aux buses, which Geist2
+/// [re:59154a] (v1, ev_a80119bf) → v2 route
+/// names. v1's four `Buss n` outputs are the global aux buses, which v2
 /// calls `Aux n` [guess: same buses, renamed].
 fn output_name(v: &str) -> String {
     match v.strip_prefix("Buss ") {
@@ -86,7 +86,7 @@ fn output_name(v: &str) -> String {
     }
 }
 
-/// v1 sample paths (`XMLFile::ConvertSamplePath`, ev_e162a1c9) are
+/// v1 sample paths ([re:5b6ca8], ev_e162a1c9) are
 /// relative to `<doc>.samples/`: a leading `../` climbs out of it, and
 /// `_RELATIVE_x` means `x` next to the document. Dreist resolves relative
 /// names against the samples folder too, so only the prefix changes.
@@ -113,8 +113,8 @@ fn audio_files(n: &Node) -> Node {
     out
 }
 
-/// `Step::Serialize` (Geist2): `State` plus lanes Geist2 knows. v1's
-/// `Ampenvdepth1/2`, `Freeenvdepth1/2` lanes have no Geist2 counterpart.
+/// [re:a71e0c] (v2): `State` plus lanes v2 knows. v1's
+/// `Ampenvdepth1/2`, `Freeenvdepth1/2` lanes have no v2 counterpart.
 fn step(n: &Node) -> Node {
     let mut out = Node { class: n.class.clone(), name: n.name.clone(), version: None, attrs: Vec::new(), children: Vec::new() };
     for (k, v) in &n.attrs {
@@ -125,10 +125,10 @@ fn step(n: &Node) -> Node {
     out
 }
 
-/// `Track`: Geist2 reads the same `S%d` steps (`Ver` 2.2) and v1's older
-/// `Steps` array (`Ver` 2.1, `Track::SerializeFromData`); the array
+/// `Track`: v2 reads the same `S%d` steps (`Ver` 2.2) and v1's older
+/// `Steps` array (`Ver` 2.1, [re:ef2cfc]); the array
 /// is unpacked into `S%d` children [guess: array children are the steps in
-/// order]. Lane modifiers are kept for lanes Geist2 has.
+/// order]. Lane modifiers are kept for lanes v2 has.
 fn track(n: &Node) -> Node {
     let mut out = copy(n);
     out.attrs.retain(|(k, _)| match ["Rand", "Scal", "Comp"].iter().find_map(|s| k.strip_suffix(s)) {
@@ -155,14 +155,14 @@ fn track(n: &Node) -> Node {
     out
 }
 
-/// The v1 layer `Ver` as Geist2 reads it: `round(Ver·1000)`, 3300 when absent.
+/// The v1 layer `Ver` as v2 reads it: `round(Ver·1000)`, 3300 when absent.
 fn layer_version(n: &Node) -> u32 {
     n.attr("Ver").and_then(|v| v.parse::<f32>().ok()).map(|v| (v * 1000.0 + 0.5) as u32).unwrap_or(LAYER_VERSION)
 }
 
 const V1_ONLY_LAYER_ATTRS: [&str; 7] = ["Ver", "V2C", "V2P", "UsesTimestretch", "TSTracksBPM", "SourceBPM", "DestinationBPM"];
 
-/// `Layer::Serialize` (Geist2 0x71c10, ev_5075e9a1) loading a v1 layer.
+/// [re:87acba] (v2 [re:6f7ded], ev_5075e9a1) loading a v1 layer.
 fn layer(n: &Node) -> Node {
     let ver = layer_version(n);
     let mut out = copy(n);
@@ -189,7 +189,7 @@ fn layer(n: &Node) -> Node {
         set(&mut out, LayerParam::TimestretchMode.name(), if fast { 1.0 } else { 0.0 });
     }
     // Below 3200 (v1 `Ver` < 3.2): the old cutoff/resonance scales. v1's own
-    // remap (ev_7c48010c) and Geist2's are the same formula.
+    // remap (ev_7c48010c) and v2's are the same formula.
     if ver < 3200 {
         if let Some(c) = f("Cutoff") {
             let c2 = c * c;
@@ -212,16 +212,16 @@ fn velocity_attr(p: LayerParam) -> String {
     TransmodSource::Velocity.attr(p.name()).unwrap_or_default()
 }
 
-/// `Envelope{e}Param{i}` → AmpEnv*/FreeEnv* (Geist2 params 14..29, same
+/// `Envelope{e}Param{i}` → AmpEnv*/FreeEnv* (v2 params 14..29, same
 /// order: Attack, Decay, Sustain, Hold, Release, three curves), clamped to
 /// 0..1. Below 3000 the holds are set to −1 and the old default decay
 /// (A 0, D 0.5, S 1, R 0.001) becomes 0.02, as in v1.
 ///
-/// Hold follows v1, not Geist2 (owner's decision, 2026-11-03): a negative
-/// Hold stays −1 instead of Geist2's clamp to 0. v1's loader then calls
-/// `Layer::ResetHoldTime(true)` (ev_97d7ba71), which derives the hold from
+/// Hold follows v1, not v2 (owner's decision, 2026-11-03): a negative
+/// Hold stays −1 instead of v2's clamp to 0. v1's loader then calls
+/// [re:bd735d] (ev_97d7ba71), which derives the hold from
 /// the sample; Dreist's loader does the same computation for a negative
-/// hold (`dreist_engine::hold::reset_hold_time`, see docs/re/loading-v1.md).
+/// hold (`dreist_engine::hold::reset_hold_time`, see dreist-re `einst/docs/re/loading-v1.md`).
 fn envelopes(n: &Node, ver: u32, out: &mut Node) {
     const FIRST: [LayerParam; 2] = [LayerParam::AmpEnvAttack, LayerParam::FreeEnvAttack];
     for (e, first) in FIRST.iter().enumerate() {

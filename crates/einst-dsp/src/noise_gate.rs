@@ -1,20 +1,20 @@
-//! `VDSP::VNoiseGateS` (Noise Gate) in v1's port layout. v1's
+//! [re:8fc789] (Noise Gate) in v1's port layout. v1's
 //! `InitializePorts` (ev_df3a50d3) orders the ports Attack, Hold, Release,
 //! Threshold, Hysteresis, LPFreq, HPFreq, Preview, Sidechain, WetMix;
-//! Geist2's (and Dreist's port, `dreist_dsp::fx::nodes::noise_gate`) puts
+//! v2's (and Dreist's port, `dreist_dsp::fx::nodes::noise_gate`) puts
 //! Sidechain and WetMix at 4 and 5. v1 maps front-panel parameter n to port
-//! n (`Effect::PushParameterValue`, ev_a735042f), so a v1 "Hysteresis" or
+//! n ([re:61a195], ev_a735042f), so a v1 "Hysteresis" or
 //! "LPF" value must reach those ports, not Sidechain/WetMix.
 //!
 //! This node exposes v1's layout and feeds Dreist's node. The gate's own
 //! processing is Dreist's; v1's `Voice::ProcessBuffer` uses v1's fast 2^x
 //! and differs in some constants, which is still to be compared
-//! (`docs/re/effects-v1.md`).
+//! (dreist-re `einst/docs/re/effects-v1.md`).
 
 use dreist_dsp::fx::nodes::noise_gate::NoiseGate as V2Gate;
 use dreist_dsp::fx::{Ctx, Node, Port};
 
-/// Geist2 port index for each v1 port.
+/// v2 port index for each v1 port.
 pub const V1_TO_V2: [usize; 10] = [0, 1, 2, 3, 6, 7, 8, 9, 4, 5];
 
 pub struct NoiseGate {

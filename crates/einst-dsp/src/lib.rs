@@ -1,23 +1,23 @@
-//! Geist v1's mono effect nodes, the ones v1 does not share with Geist2
-//! (`docs/re/loading-v1.md`, "Effect types and the v1-only DSP"):
+//! the original v1's mono effect nodes, the ones v1 does not share with v2
+//! (dreist-re `einst/docs/re/loading-v1.md`, "Effect types and the v1-only DSP"):
 //!
-//! | Effect | v1 class | Geist2 class (Dreist's port) |
+//! | Effect | v1 class | v2 class (Dreist's port) |
 //! |---|---|---|
-//! | Gain | `VAmpM` | `VAmpS` |
-//! | Vari-EQ | `VFilterEQ2` | `VFilterEQ2S` |
-//! | Envelope Shaper | `VDSPTransientDesigner` | `VDSPTransientDesignerS` |
+//! | Gain | [re:6ffb08] | [re:3fed9b] |
+//! | Vari-EQ | [re:5a35c5] | [re:928f80] |
+//! | Envelope Shaper | [re:9679d7] | [re:bc6b0a] |
 //!
-//! and the shared classes whose v1 build differs (`docs/re/effects-v1.md`):
+//! and the shared classes whose v1 build differs (dreist-re `einst/docs/re/effects-v1.md`):
 //! Stereo Width, Phaser and Frequency Shifter (v1's fast 2^x), Noise Gate
 //! (v1's port order), Channel Compressor (flat input gain, fast 2^x), Bus
 //! Compressor (fast 2^x for the side-chain high-pass), Modulated Filter
 //! (fast 2^x, FM from the left input only).
 //!
-//! v1's `VDSPNodeAdaptor::Process22` (0x4f3840, ev_964c5456) runs a mono
+//! v1's [re:4ff8f4] ([re:5bcf80], ev_964c5456) runs a mono
 //! node as two instances, one per channel, so each node here keeps one
 //! state per channel. They implement `dreist_dsp::fx::Node`; the engine
 //! (`einst-engine`'s `fx.rs`) builds them through [`create`] in place of
-//! Dreist's Geist2 nodes.
+//! Dreist's v2 nodes.
 
 pub mod auto_filter;
 pub mod bus_comp;
@@ -33,7 +33,7 @@ pub mod vari_eq;
 
 use dreist_dsp::fx::Node;
 
-/// Effect type indices as Geist2 / Dreist number them (`EFFECT_TYPES`).
+/// Effect type indices as v2 / Dreist number them (`EFFECT_TYPES`).
 pub const GAIN: usize = 1;
 pub const STEREO_WIDTH: usize = 2;
 pub const VARI_EQ: usize = 5;
@@ -45,8 +45,8 @@ pub const PHASER: usize = 18;
 pub const MODULATED_FILTER: usize = 29;
 pub const FREQUENCY_SHIFTER: usize = 25;
 
-/// v1's node for an effect type (Geist2 numbering), or `None` where v1 and
-/// Geist2 share the DSP and Dreist's node stands.
+/// v1's node for an effect type (v2 numbering), or `None` where v1 and
+/// v2 share the DSP and Dreist's node stands.
 pub fn create(kind: usize) -> Option<Box<dyn Node>> {
     Some(match kind {
         GAIN => Box::new(gain::Gain::new()),
@@ -63,7 +63,7 @@ pub fn create(kind: usize) -> Option<Box<dyn Node>> {
     })
 }
 
-/// The hidden ports v1's `Effect::SetupInternalParameters` (0x2f0250,
+/// The hidden ports v1's [re:1160d2] ([re:17fdea],
 /// ev_5107cdbc) sets for these types, as `(port, value 0..1)` in the
 /// node's own (v1) port order.
 pub fn internal_ports(kind: usize) -> &'static [(usize, f32)] {
@@ -86,8 +86,8 @@ pub fn internal_ports(kind: usize) -> &'static [(usize, f32)] {
     }
 }
 
-/// v1's fast 2^x (inlined in `VAmpM::Voice::ProcessBuffer` and
-/// `VFilterEQ2::Voice::ProcessBuffer`): `i = floor(x − 0.5)`,
+/// v1's fast 2^x (inlined in [re:7bb6eb] and
+/// [re:6953af]): `i = floor(x − 0.5)`,
 /// `f = x − i` in 0.5..1.5, a cubic for 2^f (within 0.4 %), and `i` added to the float's
 /// exponent bits.
 pub fn fast_exp2(x: f32) -> f32 {

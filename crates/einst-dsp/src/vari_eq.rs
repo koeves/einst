@@ -1,23 +1,23 @@
-//! `VDSP::VFilterEQ2` (Vari-EQ): `InitializePorts`  (ev_6e577663;
+//! [re:bbf625] (Vari-EQ): `InitializePorts` [re:a59794] (ev_6e577663;
 //! Mode 0..8, Freq −4..4.5 frequency-pitch, Q 0.5..4 double-log, Gain
-//! ±15 dB: the same table as Geist2's `VFilterEQ2S`), `CreateVoice` 0x51fe80
-//! (ev_d61d4f58), `Voice::Reset` (ev_9a6184d3),
-//! `Voice::ProcessBuffer` (ev_b33db815) and v1's
-//! `VFilterEQCommon::SetCoeffs` (ev_a7794e4b; the per-mode cases
-//! from the disassembly of its jump table at 0x521664).
+//! ±15 dB: the same table as v2's [re:928f80]), `CreateVoice` [re:ce62fa]
+//! (ev_d61d4f58), `Voice::Reset` [re:c6464d] (ev_9a6184d3),
+//! `Voice::ProcessBuffer` [re:854d6f] (ev_b33db815) and v1's
+//! [re:e99938] (ev_a7794e4b; the per-mode cases
+//! from the disassembly of its jump table at [re:dd221c]).
 //!
-//! Differences from Dreist's port of Geist2's `VFilterEQ2S`: the frequency
+//! Differences from Dreist's port of v2's [re:928f80]: the frequency
 //! comes from v1's fast 2^x; the normalised frequency is clamped to
-//! 0.001..0.45 (Geist2: 1e−5..0.45); the shelf and bell gain factor is
+//! 0.001..0.45 (v2: 1e−5..0.45); the shelf and bell gain factor is
 //! `powf(10, g·0.025)` (the bell's in double precision); every sample feeds
 //! the x history an alternating ±1e−8 offset against denormals.
 
 use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
-/// `VFilterEQ2::ConvertMode`: Bell, Low Shelf, High Shelf, LPF, BPF, BPF 0dB, HPF, Notch, Allpass.
+/// [re:6c05b8]: Bell, Low Shelf, High Shelf, LPF, BPF, BPF 0dB, HPF, Notch, Allpass.
 pub const MODES: usize = 9;
 
-/// One voice: `VFilterEQCommon` (coefficients, key, history) and the
+/// One voice: [re:862c9f] (coefficients, key, history) and the
 /// voice's anti-denormal term (`Voice + 0x1b8`, 1e−8 at `CreateVoice`).
 #[derive(Debug, Clone, Copy)]
 pub struct Filter {
@@ -47,7 +47,7 @@ impl Filter {
         *self = Filter { denormal: self.denormal, ..Filter::default() };
     }
 
-    /// v1's `VFilterEQCommon::SetCoeffs(mode, f/fs, Q, gain dB)`.
+    /// v1's [re:6a8d60].
     pub fn set(&mut self, mode: i32, f: f32, q: f32, gain: f32) {
         if self.key.0 == mode {
             if f == self.key.1 && q == self.key.2 && gain == self.key.3 {
@@ -192,13 +192,13 @@ impl Filter {
 
 pub struct VariEq {
     ports: Vec<Port>,
-    /// One voice per channel (`VDSPNodeAdaptor::Process22`).
+    /// One voice per channel ([re:4ff8f4]).
     f: [Filter; 2],
 }
 
 impl VariEq {
     pub fn new() -> VariEq {
-        let mut ports = ports_from(ports::VFilterEQ2S);
+        let mut ports = ports_from(ports::VARI_EQ);
         ports[0].max = (MODES - 1) as f64;
         VariEq { ports, f: [Filter::default(); 2] }
     }

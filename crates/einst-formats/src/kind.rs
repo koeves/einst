@@ -1,28 +1,28 @@
-//! File types Geist v1 registers (`Grid` file extension strings) [sym].
+//! File types the original v1 registers ([re:8df586] file extension strings) [sym].
 
 use std::path::Path;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileKind {
-    /// `.geist`: whole state, `Grid::SaveEntireStateToFile`.
+    /// `.geist`: whole state, [re:b5f535].
     Project,
-    /// `.geistkit`: one engine's 16 pads, `Grid::SerializeCurrentKit`.
+    /// `.geistkit`: one engine's 16 pads, [re:58c6b0].
     Kit,
-    /// `.geistpad`: one pad, `Grid::SerializeCurrentPad`.
+    /// `.geistpad`: one pad, [re:bd8f2d].
     Pad,
-    /// `.geistengine`: one engine, `Grid::SerializeCurrentEngine`.
+    /// `.geistengine`: one engine, [re:06276a].
     Engine,
-    /// `.geistpattern`: one step pattern, `Grid::SerializeCurrentPattern`.
+    /// `.geistpattern`: one step pattern, [re:682a5f].
     Pattern,
-    /// `.geistbank`: `StepPattern0..N`, `Grid::SerializeCurrentPatternBank`.
+    /// `.geistbank`: `StepPattern0..N`, [re:6b9684].
     PatternBank,
-    /// `.fxpreset`: one `Effect` (same shape as Geist2).
+    /// `.fxpreset`: one `Effect` (same shape as v2).
     EffectPreset,
-    /// `.fxchain`: one `EffectChain` (same shape as Geist2).
+    /// `.fxchain`: one [re:49ad8e] (same shape as v2).
     EffectChain,
-    /// `.patterntemplate`: `InsertablePattern`.
+    /// `.patterntemplate`: [re:05588f].
     PatternTemplate,
-    /// `.swingtemplate`: `SwingTemplate`.
+    /// `.swingtemplate`: [re:9f001e].
     SwingTemplate,
 }
 

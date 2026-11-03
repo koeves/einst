@@ -1,4 +1,4 @@
-//! v1's nodes against the decompiled formulas (`docs/re/loading-v1.md`).
+//! v1's nodes against the decompiled formulas (dreist-re `einst/docs/re/loading-v1.md`).
 
 use dreist_dsp::fx::{Ctx, Node};
 use einst_dsp::envelope_shaper::EnvelopeShaper;
@@ -13,7 +13,7 @@ fn run(node: &mut dyn Node, ctx: &Ctx, l: &[f32], r: &[f32]) -> (Vec<f32>, Vec<f
     (ol, or)
 }
 
-/// `VAmpM::Voice::ProcessBuffer`: a linear ramp from the last gain to
+/// [re:a21df5]: a linear ramp from the last gain to
 /// max(fast2^x − 0.016367754, 0) across the block, then flat.
 #[test]
 fn gain_ramps_to_the_fast_exp2_level() {
@@ -127,7 +127,7 @@ fn vari_eq_node_maps_ports_like_v1() {
 /// left and right. With Linked on, v1's node equals Dreist's with it off.
 #[test]
 fn envelope_shaper_never_links_channels() {
-    use dreist_dsp::fx::nodes::envelope_shaper::EnvelopeShaper as Geist2;
+    use dreist_dsp::fx::nodes::envelope_shaper::EnvelopeShaper as V2;
     let ctx = Ctx::new(44_100.0);
     let set = |n: &mut dyn Node, linked: f32| {
         for (i, v) in [1.0, 0.9, 0.2, 0.6, 0.5, linked].iter().enumerate() {
@@ -138,14 +138,14 @@ fn envelope_shaper_never_links_channels() {
     let r: Vec<f32> = (0..4096).map(|i| if (i + 512) % 1024 < 40 { 0.9 } else { 0.05 }).collect();
     let mut v1 = EnvelopeShaper::new();
     set(&mut v1, 1.0);
-    let (mut unlinked, mut linked) = (Geist2::new(), Geist2::new());
+    let (mut unlinked, mut linked) = (V2::new(), V2::new());
     set(&mut unlinked, 0.0);
     set(&mut linked, 1.0);
     let a = run(&mut v1, &ctx, &l, &r);
     let b = run(&mut unlinked, &ctx, &l, &r);
     let c = run(&mut linked, &ctx, &l, &r);
     assert_eq!(a, b);
-    assert_ne!(a, c, "Geist2's linked detector differs");
+    assert_ne!(a, c, "v2's linked detector differs");
 }
 
 fn noise(n: usize, seed: u32) -> Vec<f32> {
@@ -206,14 +206,14 @@ fn stereo_width_gain_uses_fast_exp2() {
     assert!((l[63] - Gain::target(1.3)).abs() < 1e-3, "{} vs {}", l[63], Gain::target(1.3));
 }
 
-/// v1's Noise Gate ports in v1 order reach Dreist's gate at Geist2's indices.
+/// v1's Noise Gate ports in v1 order reach Dreist's gate at v2's indices.
 #[test]
 fn noise_gate_takes_v1_port_order() {
-    use dreist_dsp::fx::nodes::noise_gate::NoiseGate as Geist2;
+    use dreist_dsp::fx::nodes::noise_gate::NoiseGate as V2;
     use einst_dsp::noise_gate::{NoiseGate, V1_TO_V2};
     let ctx = Ctx::new(44_100.0);
     let mut v1 = NoiseGate::new();
-    let mut g2 = Geist2::new();
+    let mut g2 = V2::new();
     // v1 values: Attack, Hold, Release, Threshold, Hysteresis, LPFreq, HPFreq, Preview, Sidechain, WetMix.
     let vals = [0.002f32, 0.05, 0.2, 0.1, 0.5, 8000.0, 30.0, 0.0, 0.0, 1.0];
     for (i, v) in vals.iter().enumerate() {
@@ -227,17 +227,17 @@ fn noise_gate_takes_v1_port_order() {
 }
 
 /// v1's Channel Compressor: Dreist's circuit (v1's solvers agree with
-/// Geist2's to float-folding precision) with a flat per-block input gain and
+/// v2's to float-folding precision) with a flat per-block input gain and
 /// v1's fast 2^x for attack and release.
 #[test]
 fn channel_compressor_matches_dreist_but_for_gain_ramp_and_fast_exp2() {
-    use dreist_dsp::fx::nodes::urei1176::Urei1176 as Geist2;
+    use dreist_dsp::fx::nodes::urei1176::Urei1176 as V2;
     let ctx = Ctx::new(48_000.0);
     let mut v1 = einst_dsp::urei1176::Urei1176::new();
-    let mut g2 = Geist2::new();
+    let mut g2 = V2::new();
     // 0 In dB, 1 Attack, 2 Release, 3 Q, 5 Ratio, 6 Out dB, 7 Mix, 8 Active.
-    // In at 0 dB: Geist2's input ramp starts at 0 dB, so only v1's solvers and
-    // the fast 2^x (compensated on Geist2's side) remain.
+    // In at 0 dB: v2's input ramp starts at 0 dB, so only v1's solvers and
+    // the fast 2^x (compensated on v2's side) remain.
     let set = [(0usize, 0.0f32), (1, 0.4), (2, 1.6), (3, 0.5), (5, 2.0), (6, 3.0), (7, 1.0), (8, 1.0)];
     for (i, v) in set {
         v1.ports()[i].value = v;
@@ -257,7 +257,7 @@ fn channel_compressor_matches_dreist_but_for_gain_ramp_and_fast_exp2() {
     // Both solvers stop at a 0.1 % step, so folding differences can shift an
     // iteration: within 0.1 % of the output level.
     assert!(worst < peak * 1e-3, "{worst} of {peak}");
-    // A gain change: v1 jumps to it for the whole block, Geist2 ramps.
+    // A gain change: v1 jumps to it for the whole block, v2 ramps.
     v1.ports()[0].value = 12.0;
     g2.ports()[0].value = 12.0;
     let x = &sig[..n];
@@ -267,7 +267,7 @@ fn channel_compressor_matches_dreist_but_for_gain_ramp_and_fast_exp2() {
     assert!((l1[1] - l2[1]).abs() > 1e-4, "{} vs {}", l1[1], l2[1]);
 }
 
-/// v1's solvers equal Geist2's algebra: the FET stage's "off" shortcut is
+/// v1's solvers equal v2's algebra: the FET stage's "off" shortcut is
 /// 1/4.40125e6, and `vcrit` is ln(1.8228e13)·0.02577878 = 0.787129.
 #[test]
 fn channel_compressor_solver_constants() {

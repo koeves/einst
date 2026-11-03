@@ -1,24 +1,24 @@
-//! `VDSP::VDSPTransientDesigner` (Envelope Shaper): `InitializePorts`
-//! 0x31ddc0 (WetMix, Attack, Sustain, Gain, Sensitivity, Linked; a Meter
-//! out; mono `In1`/`Out1`), `Voice::ProcessBuffer` (ev_ed247fe9)
-//! around a `TransientDesigner` (`TDImpl`, `CreateNewTransientDesigner`
-//! 0x321010).
+//! [re:07d815] (Envelope Shaper): `InitializePorts`
+//! [re:b35229] (WetMix, Attack, Sustain, Gain, Sensitivity, Linked; a Meter
+//! out; mono `In1`/`Out1`), `Voice::ProcessBuffer` [re:d0685b] (ev_ed247fe9)
+//! around a [re:73432e] ([re:1800b5], `CreateNewTransientDesigner`
+//! [re:c01c22]).
 //!
-//! v1's `TDImpl` is the transient designer Geist2's `VDSPTransientDesignerS`
+//! v1's [re:1800b5] is the transient designer v2's [re:bc6b0a]
 //! wraps, which Dreist ports as `dreist_dsp::fx::nodes::envelope_shaper`:
-//! `TDChannel::BuildCoeffs` (ev_d7897614) gives the same time
+//! [re:ee961d] (ev_d7897614) gives the same time
 //! constants (e.g. exp(−1/(2π·sr·39000·100e−9)) = exp(−40.809/sr)),
-//! `ConvertParameter01ToParameterValue`  (ev_8c86f1ce) the same
-//! ranges (Attack ±15, Sustain ±24, Gain ±12 dB) and `TDChannel::Process`
-//! 0x31fb40 the same constants (compared, not re-transcribed line by line).
+//! `ConvertParameter01ToParameterValue` [re:d0530c] (ev_8c86f1ce) the same
+//! ranges (Attack ±15, Sustain ±24, Gain ±12 dB) and [re:fbc6c0]
+//! [re:dbfaaa] the same constants (compared, not re-transcribed line by line).
 //!
-//! What differs is the wiring: v1's node is mono, so `VDSPNodeAdaptor::
-//! Process22` runs one instance per channel, each with its own detector.
-//! `TDImpl::Process` (ev_8c1c8c76) links channels only across the
+//! What differs is the wiring: v1's node is mono, so [re:4ff8f4]
+//!  runs one instance per channel, each with its own detector.
+//! [re:d018db] (ev_8c1c8c76) links channels only across the
 //! channels of one instance, so "Linked" never links left and right in v1.
 //! This node is Dreist's with Linked held off. v1's voice has no `Reset` of
-//! its own (the base `VDSPVoice::Reset` is empty), so a panic keeps the
-//! parameters where Dreist's Geist2 voice resets them.
+//! its own (the base [re:1740cf] is empty), so a panic keeps the
+//! parameters where Dreist's v2 voice resets them.
 
 use dreist_dsp::fx::nodes::envelope_shaper::EnvelopeShaper as V2Shaper;
 use dreist_dsp::fx::{Ctx, Node, Port};
