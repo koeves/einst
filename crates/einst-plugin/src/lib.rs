@@ -1,9 +1,10 @@
 //! Einst as a CLAP/VST3 instrument (nih-plug): a copy of Dreist's
-//! `geist-plugin` shell with Einst's names and IDs. The engine is
-//! `geist_engine::Geist`; this crate maps host MIDI, transport, automation
+//! `dreist-plugin` shell with Einst's names and IDs. The engine is
+//! `dreist_engine::Geist`; this crate maps host MIDI, transport, automation
 //! parameters and output buses onto it. The editor (`editor.rs`) is
-//! `einst-editor`, Einst's copy of Dreist's editor. Geist v1 documents open through
-//! `einst_formats` (converted to Geist2's tree, see [`load_project`]).
+//! `dreist-editor` under Einst's profile (`einst::install`). v1 documents
+//! open through `einst_formats` (converted to the v2 tree, see
+//! [`load_project`]).
 
 // nih-plug's `nih_export_vst3!` expands to a statement with a trailing
 // semicolon in expression position (upstream).
@@ -17,16 +18,16 @@ use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
-use geist_engine::Geist;
+use dreist_engine::Dreist;
 use nih_plug::prelude::*;
 
 /// A project file: a Geist v1 document (any of `.geist`, `.geistkit`,
 /// `.geistpad`, `.geistengine`, `.geistpattern`, `.geistbank`) converted by
 /// `einst_formats`, anything else through Dreist's loader.
-pub fn load_project(p: &std::path::Path, sr: f32, options: geist_engine::RenderOptions, cache: &mut geist_engine::audio::SampleCache) -> Result<Geist, String> {
+pub fn load_project(p: &std::path::Path, sr: f32, options: dreist_engine::RenderOptions, cache: &mut dreist_engine::audio::SampleCache) -> Result<Dreist, String> {
     match einst_formats::v1::open_as_project(p) {
-        Ok(Some((doc, samples))) => Geist::from_document(&doc, &samples, sr, options, cache).ok_or_else(|| "the converted Geist v1 document did not build".into()),
-        Ok(None) => Geist::load_cached(p, sr, options, cache).map_err(|e| e.to_string()),
+        Ok(Some((doc, samples))) => Dreist::from_document(&doc, &samples, sr, options, cache).ok_or_else(|| "the converted Geist v1 document did not build".into()),
+        Ok(None) => Dreist::load_cached(p, sr, options, cache).map_err(|e| e.to_string()),
         Err(e) => Err(e.to_string()),
     }
 }
@@ -43,7 +44,7 @@ pub struct AutoParam {
 }
 
 #[derive(Params)]
-pub struct GeistParams {
+pub struct DreistParams {
     /// The loaded `.geist` project (restored with the host session).
     #[persist = "project-path"]
     pub project_path: RwLock<String>,
@@ -64,9 +65,9 @@ pub struct Session {
     pub samples: Option<String>,
 }
 
-impl Default for GeistParams {
+impl Default for DreistParams {
     fn default() -> Self {
-        GeistParams {
+        DreistParams {
             project_path: RwLock::new(String::new()),
             session: RwLock::new(None),
             automation: (0..AUTOMATION_PARAMS).map(|i| AutoParam { value: FloatParam::new(format!("Automation {}", i + 1), 0.0, FloatRange::Linear { min: 0.0, max: 1.0 }) }).collect(),
@@ -75,11 +76,11 @@ impl Default for GeistParams {
 }
 
 pub struct EinstPlugin {
-    params: Arc<GeistParams>,
-    engine: Option<Box<Geist>>,
+    params: Arc<DreistParams>,
+    engine: Option<Box<Dreist>>,
     /// A swapped-out engine waiting for room in `Bridge::retired` (never
     /// dropped on the audio thread).
-    retiring: Option<Box<Geist>>,
+    retiring: Option<Box<Dreist>>,
     /// The rebuild request the running engine was built for.
     built: u64,
     replay: Replay,
@@ -87,21 +88,22 @@ pub struct EinstPlugin {
     recent_writes: RecentWrites,
     /// Commands being applied (with their queue tags) / applied and
     /// waiting to go back to the GUI.
-    cmds: Vec<(u64, einst_editor::Command)>,
-    applied: Vec<einst_editor::Command>,
+    cmds: Vec<(u64, dreist_editor::Command)>,
+    applied: Vec<dreist_editor::Command>,
     last_auto: Vec<f32>,
     sub_scratch: Vec<[Vec<f32>; 2]>,
     input_scratch: [Vec<f32>; 2],
     bridge: Arc<editor::Bridge>,
-    live_take: einst_editor::model::LiveTake,
-    /// Editor window size shared with the open editor (see `GeistEditor`).
+    live_take: dreist_editor::model::LiveTake,
+    /// Editor window size shared with the open editor (see `DreistEditor`).
     editor_size: Arc<std::sync::atomic::AtomicU64>,
 }
 
 impl Default for EinstPlugin {
     fn default() -> Self {
+        einst::install();
         EinstPlugin {
-            params: Arc::new(GeistParams::default()),
+            params: Arc::new(DreistParams::default()),
             engine: None,
             retiring: None,
             built: 0,
@@ -124,20 +126,20 @@ impl Default for EinstPlugin {
 /// document predates the ones tagged `n` or later, so those are replayed
 /// onto it; earlier ones are in it already.
 #[derive(Default)]
-struct Replay(Vec<(u64, geist_engine::binding::Message)>);
+struct Replay(Vec<(u64, dreist_engine::binding::Message)>);
 
 impl Replay {
     /// Keep `m` (tagged `tag`) if a rebuild newer than the running one
     /// (`built`) was requested before it was queued. Bounded by the room
     /// reserved at initialize.
-    fn record(&mut self, tag: u64, built: u64, m: &geist_engine::binding::Message) {
+    fn record(&mut self, tag: u64, built: u64, m: &dreist_engine::binding::Message) {
         if tag > built && self.0.len() < self.0.capacity() {
             self.0.push((tag, m.clone()));
         }
     }
 
     /// Apply to rebuilt engine `n` what its document lacks.
-    fn onto(&mut self, n: u64, g: &mut Geist) {
+    fn onto(&mut self, n: u64, g: &mut Dreist) {
         self.0.retain(|(t, _)| *t >= n);
         for (_, m) in &self.0 {
             g.apply_message(m);
@@ -152,14 +154,14 @@ impl Replay {
 #[derive(Default)]
 struct RecentWrites {
     /// (sample clock when handed over, write).
-    writes: Vec<(u64, geist_engine::StepWrite)>,
+    writes: Vec<(u64, dreist_engine::StepWrite)>,
     clock: u64,
 }
 
 impl RecentWrites {
     /// One block's writes; older than `grace` samples are forgotten while
     /// no rebuild is pending. Bounded by the room reserved at initialize.
-    fn record(&mut self, writes: &[geist_engine::StepWrite], pending: bool, grace: u64) {
+    fn record(&mut self, writes: &[dreist_engine::StepWrite], pending: bool, grace: u64) {
         for w in writes {
             if self.writes.len() < self.writes.capacity() {
                 self.writes.push((self.clock, w.clone()));
@@ -264,14 +266,14 @@ impl Plugin for EinstPlugin {
 
     fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
         // Option `StyleSheet` (Preferences › UI style; `EINST_THEME` overrides).
-        let theme = std::env::var("EINST_THEME").unwrap_or_else(|_| einst_editor::options::Options::load().string("StyleSheet", einst_editor::DEFAULT_THEME));
-        Some(Box::new(editor::GeistEditor { bridge: self.bridge.clone(), theme, params: self.params.clone(), size: self.editor_size.clone() }))
+        let theme = std::env::var("EINST_THEME").unwrap_or_else(|_| dreist_editor::options::Options::load().string("StyleSheet", dreist_gui::skin::default_theme()));
+        Some(Box::new(editor::DreistEditor { bridge: self.bridge.clone(), theme, params: self.params.clone(), size: self.editor_size.clone() }))
     }
 
     fn initialize(&mut self, _layout: &AudioIOLayout, buffer_config: &BufferConfig, _context: &mut impl InitContext<Self>) -> bool {
         let sr = buffer_config.sample_rate;
         self.bridge.sample_rate.store(sr.to_bits(), std::sync::atomic::Ordering::Relaxed);
-        let options = einst_editor::options::render_options();
+        let options = dreist_editor::options::render_options();
         if let Ok(mut bp) = self.bridge.project_path.lock() {
             *bp = self.project_path();
         }
@@ -287,12 +289,12 @@ impl Plugin for EinstPlugin {
         let mut cache = editor::lock(&cache_handle);
         let session = self.params.session.read().ok().and_then(|s| s.clone());
         let from_session = session.as_ref().and_then(|s| {
-            let doc = geist_formats::Node::parse(&s.doc).ok()?;
+            let doc = dreist_formats::Node::parse(&s.doc).ok()?;
             let samples = s.samples.as_ref().map(PathBuf::from);
-            let g = Geist::from_document(&doc, samples.as_deref().unwrap_or(std::path::Path::new(".")), sr, options, &mut cache)?;
+            let g = Dreist::from_document(&doc, samples.as_deref().unwrap_or(std::path::Path::new(".")), sr, options, &mut cache)?;
             Some((g, samples))
         });
-        let mut samples = self.project_path().map(|p| geist_formats::model::samples_dir(&p));
+        let mut samples = self.project_path().map(|p| dreist_formats::model::samples_dir(&p));
         let engine = match (from_session, self.project_path()) {
             (Some((g, s)), _) => {
                 samples = s;
@@ -300,19 +302,19 @@ impl Plugin for EinstPlugin {
             }
             (None, Some(p)) => load_project(&p, sr, options, &mut cache).unwrap_or_else(|e| {
                 nih_log!("failed to load {}: {e}", p.display());
-                Geist::empty(sr, options)
+                Dreist::empty(sr, options)
             }),
             // `Geist::LoadDefaultPresets` (from the constructor):
             // Tools › Save as default preset, when one was saved.
-            (None, None) => einst_editor::options::settings_dir()
+            (None, None) => dreist_editor::options::settings_dir()
                 .map(|d| d.join("DefaultPreset.geist"))
                 .filter(|p| p.is_file())
-                .and_then(|p| Geist::load_cached(&p, sr, options, &mut cache).ok())
-                .unwrap_or_else(|| Geist::empty(sr, options)),
+                .and_then(|p| Dreist::load_cached(&p, sr, options, &mut cache).ok())
+                .unwrap_or_else(|| Dreist::empty(sr, options)),
         };
         drop(cache);
         let mut engine = engine;
-        engine.set_metronome_sound(&einst_editor::options::metronome_sound());
+        engine.set_metronome_sound(&dreist_editor::options::metronome_sound());
         let spare = engine.sampler.new_spare();
         engine.sampler.give_spare(spare);
         self.bridge.set_document(engine.document().clone(), samples);
@@ -330,7 +332,7 @@ impl Plugin for EinstPlugin {
             s.retro_events.reserve(EVENT_QUEUE);
             s.step_writes.reserve(EVENT_QUEUE);
             s.song_events.reserve(EVENT_QUEUE);
-            s.takes.reserve(geist_engine::sampler::FINISHED_MAX);
+            s.takes.reserve(dreist_engine::sampler::FINISHED_MAX);
         }
         editor::lock(&self.bridge.commands).reserve(COMMAND_QUEUE);
         self.bridge.start(&self.params);
@@ -386,7 +388,7 @@ impl Plugin for EinstPlugin {
         }
         for (tag, mut c) in self.cmds.drain(..) {
             c.apply(engine);
-            if let einst_editor::Command::Message(m) = &c {
+            if let dreist_editor::Command::Message(m) = &c {
                 self.replay.record(tag, self.built, m);
             }
             if self.applied.len() < self.applied.capacity() {
@@ -420,7 +422,7 @@ impl Plugin for EinstPlugin {
             s.seq_steps = Some(engine.seq_steps());
             s.mods_triggered |= std::mem::take(&mut engine.mods_triggered);
             let held = s.sampler.meters;
-            s.sampler = einst_editor::model::SamplerView::of(&engine.sampler);
+            s.sampler = dreist_editor::model::SamplerView::of(&engine.sampler);
             s.sampler.meters = (held.0.max(engine.sampler.meters.0), held.1.max(engine.sampler.meters.1));
             engine.sampler.meters = (0.0, 0.0);
             s.last_cc = engine.last_cc;
@@ -551,11 +553,11 @@ mod tests {
     /// A Geist v1 kit (no `version` on its root) opens through
     /// `einst_formats` into engine 0 and plays its pads.
     #[test]
-    fn opens_geist_v1_files() {
+    fn opens_v1_files() {
         let dir = std::env::temp_dir().join(format!("einst-plugin-v1-{}", std::process::id()));
         let samples = dir.join("Kit.samples");
         std::fs::create_dir_all(&samples).unwrap();
-        let click = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/geist1/System/Metronomes/Default/Beat.wav");
+        let click = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/v1/System/Metronomes/Default/Beat.wav");
         std::fs::copy(&click, samples.join("Beat.wav")).unwrap();
         let kit = dir.join("Kit.geistkit");
         std::fs::write(&kit, r#"<root><Pad name="Pad0" Ver="2" PadMode="All layers"><Layer name="Layer0" Ver="3.2" AudioFileName="Beat.wav" Envelope0Param3="-1" /></Pad></root>"#).unwrap();
@@ -571,11 +573,11 @@ mod tests {
 
     #[test]
     fn session_round_trips_through_host_state() {
-        let p = GeistParams::default();
+        let p = DreistParams::default();
         let s = Session { doc: "<root version=\"3000\"><TimeInfo Tempo=\"97\" /></root>".into(), samples: Some("/tmp/x.samples".into()) };
         *p.session.write().unwrap() = Some(s.clone());
         let saved = p.serialize_fields();
-        let q = GeistParams::default();
+        let q = DreistParams::default();
         q.deserialize_fields(&saved);
         assert_eq!(q.session.read().unwrap().as_ref(), Some(&s));
     }
@@ -585,7 +587,7 @@ mod tests {
     /// apply twice); one queued after the request is replayed.
     #[test]
     fn replay_skips_what_the_rebuild_document_has() {
-        use geist_engine::binding::{Message, id};
+        use dreist_engine::binding::{Message, id};
         let tempo = |bpm: f32| Message::new(id::SET_TEMPO, &[], &[bpm]);
         let mut r = Replay(Vec::with_capacity(16));
         let built = 0;
@@ -595,11 +597,11 @@ mod tests {
         assert!(r.0.is_empty(), "the rebuild's document has it");
         // Queued while rebuild 1 is pending: tag 1.
         r.record(1, built, &tempo(133.0));
-        let mut g = Geist::empty(44_100.0, Default::default());
+        let mut g = Dreist::empty(44_100.0, Default::default());
         r.onto(1, &mut g);
         assert_eq!(g.tempo(), 133.0, "replayed onto rebuild 1");
         // Rebuild 2 (requested after it was queued) has it in its document.
-        r.onto(2, &mut Geist::empty(44_100.0, Default::default()));
+        r.onto(2, &mut Dreist::empty(44_100.0, Default::default()));
         assert!(r.0.is_empty());
     }
 
@@ -607,7 +609,7 @@ mod tests {
     /// period after, then forgotten.
     #[test]
     fn recent_writes_cover_pending_rebuilds() {
-        let w = geist_engine::StepWrite { engine: 0, pattern: 1, track: 2, step: 3, data: geist_engine::pattern::StepData::off() };
+        let w = dreist_engine::StepWrite { engine: 0, pattern: 1, track: 2, step: 3, data: dreist_engine::pattern::StepData::off() };
         let mut r = RecentWrites { writes: Vec::with_capacity(4), clock: 0 };
         r.record(std::slice::from_ref(&w), false, 100);
         r.advance(64);

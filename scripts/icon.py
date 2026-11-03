@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Einst's placeholder app icon: a geometric "E" on a dark rounded square.
 
-Writes assets/einst/AppIcon.png (1024 px) and, on macOS, assets/einst/AppIcon.icns
+Writes assets/ui/AppIcon.png (1024 px) and, on macOS, assets/ui/AppIcon.icns
 through `iconutil`. No third-party modules; the PNGs are written by hand.
 
     python3 scripts/icon.py

@@ -3,10 +3,10 @@ name = "einst-dsp"
 edition.workspace = true
 version.workspace = true
 license.workspace = true
-description = "Geist v1's own effect DSP (VAmpM, VFilterEQ2, VDSPTransientDesigner) as geist_dsp nodes"
+description = "Geist v1's own effect DSP (VAmpM, VFilterEQ2, VDSPTransientDesigner) as dreist_dsp nodes"
 
 [dependencies]
-geist-dsp.workspace = true
+dreist-dsp.workspace = true
 
 [lints]
 workspace = true

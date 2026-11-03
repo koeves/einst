@@ -1,0 +1,7 @@
+<root>
+    <vector name="defaultStyles">
+        <VString string="/Styles/Einst.style/Colours.stylesheet" />
+        <VString string="/Styles/Einst.style/Fonts.stylesheet" />
+        <VString string="/Styles/Einst.style/Styles.stylesheet" />
+    </vector>
+</root>

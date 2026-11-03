@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build Einst: VST3 + CLAP bundles and the standalone macOS app.
-# A copy of Dreist's scripts/build.sh (../geist) with Einst's names.
+# A copy of Dreist's scripts/build.sh with Einst's names.
 #
 #   scripts/build.sh            release build into target/bundled/
 #   scripts/build.sh --debug    debug build
@@ -14,12 +14,10 @@
 # also set (a `xcrun notarytool store-credentials` profile) they are
 # notarised and stapled.
 #
-# Dreist must be checked out next to this repository (../geist): its crates
-# build the engine, and its assets/dreist (UI graphics: skin, fonts, cursors,
-# metronomes, read by geist-gui / geist-engine) and licence files go into
-# the bundles. Einst's own resources (Geist v1's factory effect presets,
-# effect chains, pattern and swing templates; the app icon) come from this
-# repository.
+# The shared crates come from dreist-commons (Cargo.toml; a local checkout
+# next to this repository overrides the pinned revision, see README).
+# Einst's resources (UI graphics, v1's factory data, the app icon) come from
+# this repository.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -37,10 +35,8 @@ for a in "$@"; do
 done
 flag=$([ "$profile" = release ] && echo --release || true)
 version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
-dreist=../geist
 out=target/bundled
 mkdir -p "$out"
-[ -d "$dreist/assets/dreist" ] || { echo "Dreist not found at $dreist" >&2; exit 1; }
 
 echo "==> VST3 / CLAP ($profile)"
 cargo run --package xtask --release -- bundle einst-plugin $flag
@@ -70,30 +66,27 @@ cat > "$app/Contents/Info.plist" <<PLIST
 </dict>
 </plist>
 PLIST
-# App icon: Einst's placeholder (assets/einst, drawn by scripts/icon.py).
-cp assets/einst/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
+# App icon (assets/ui/AppIcon.icns, drawn by scripts/icon.py).
+cp assets/ui/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
 
-# Resources: Einst's factory data in Contents/Resources/Einst (where
-# einst_editor::paths looks: Geist v1's effect presets, effect chains,
-# pattern and swing templates, which einst-formats reads 1:1), Dreist's UI
-# graphics in Contents/Resources/Dreist (geist_formats::paths::ui_dir), plus
-# the Einst theme folder the editor selects by default (empty: the base skin).
+# Resources: Einst's UI graphics (assets/ui: skin, fonts, cursors,
+# metronomes) in Contents/Resources/Einst and v1's factory data (effect
+# presets, effect chains, pattern and swing templates, which einst-formats
+# reads 1:1) in Contents/Resources/Factory, where Einst's profile looks.
 echo "==> Resources"
 for b in "$app" "$out/Einst.vst3" "$out/Einst.clap"; do
-    mkdir -p "$b/Contents/Resources/Einst"
-    rm -rf "$b/Contents/Resources/Geist2" "$b/Contents/Resources/Dreist" "$b/Contents/Resources/Einst"/*
+    mkdir -p "$b/Contents/Resources/Factory"
+    rm -rf "$b/Contents/Resources/Einst" "$b/Contents/Resources/Factory"/*
     for d in "Effects" "Effect Chains" "Pattern Templates" "Swing Templates"; do
-        cp -R "assets/geist1/System/$d" "$b/Contents/Resources/Einst/$d"
+        cp -R "assets/v1/System/$d" "$b/Contents/Resources/Factory/$d"
     done
-    cp -R "$dreist/assets/dreist" "$b/Contents/Resources/Dreist"
-    rm -f "$b/Contents/Resources/Dreist/preview.png" "$b/Contents/Resources/Dreist/AppIcon.png" "$b/Contents/Resources/Dreist/AppIcon.icns"
-    mkdir -p "$b/Contents/Resources/Dreist/Skin/Styles/Einst.style"
-    echo "Einst's theme: the base skin (no overrides)." > "$b/Contents/Resources/Dreist/Skin/Styles/Einst.style/README.txt"
+    cp -R assets/ui "$b/Contents/Resources/Einst"
+    rm -f "$b/Contents/Resources/Einst/AppIcon.png" "$b/Contents/Resources/Einst/AppIcon.icns"
 done
-# Licence and notices travel with every bundle (Dreist's: the plugin
-# links nih-plug's GPLv3 VST3 bindings and Dreist's crates).
+# Licence and notices travel with every bundle (the plugin links nih-plug's
+# GPLv3 VST3 bindings).
 for b in "$app" "$out/Einst.vst3" "$out/Einst.clap"; do
-    cp "$dreist/LICENSE" "$dreist/LICENSE-GPL-3.0" "$dreist/THIRD_PARTY_NOTICES.md" "$b/Contents/Resources/"
+    cp LICENSE LICENSE-GPL-3.0 THIRD_PARTY_NOTICES.md "$b/Contents/Resources/"
 done
 for b in "$app" "$out/Einst.vst3" "$out/Einst.clap"; do
     if [ -n "${EINST_SIGN_IDENTITY:-}" ]; then

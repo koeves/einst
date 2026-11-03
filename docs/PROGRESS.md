@@ -5,7 +5,7 @@
 - 2026-11-02: Einst is its own app (VST3 + CLAP + standalone) on Dreist's crates as dependencies.
 - Same principles as Dreist (see `../geist/docs/PROGRESS.md`): faithful to the decompiled original,
   no licensing code, no FXpansion graphics in Einst's own UI.
-- The user has no Geist v1 user files; the v1 factory install (`assets/geist1`) is the only real
+- The user has no Geist v1 user files; the v1 factory install (`assets/v1`) is the only real
   content to test against.
 
 ## Done
@@ -24,7 +24,7 @@
 - `Document::to_geist2` for projects, kits, pads, engines, patterns and banks
   (`einst_formats::geist2`), following Geist2's own legacy branches (decompiled: root,
   `Layer`, `Step`, `Track`). Tested on synthetic v1 documents built from the serializer field
-  lists (`tests/v1_documents.rs`): every kind converts, Dreist's `geist_formats` loads the
+  lists (`tests/v1_documents.rs`): every kind converts, Dreist's `dreist_formats` loads the
   result, and `Geist::from_document` renders non-silent, finite audio from a pad playing v1's
   factory metronome click.
 
@@ -43,11 +43,11 @@
 
 ## `einst-editor`: Einst's copy of Dreist's editor
 
-Copied from Dreist `crates/geist-editor` at commit `bc729de21717d9788e959a71f91b99e1276004db`
+Copied from Dreist `crates/dreist-editor` at commit `bc729de21717d9788e959a71f91b99e1276004db`
 (2026-11-02, "Dreist beta 1" tree). To re-sync: copy that crate again from the newer Dreist commit
 and re-apply Einst's changes, which are all marked `Einst` or listed here:
 
-- `Cargo.toml`: crate `einst-editor`, depends on `einst-formats`; `geist_editor::` → `einst_editor::`
+- `Cargo.toml`: crate `einst-editor`, depends on `einst-formats`; `dreist_editor::` → `einst_editor::`
   in `examples/`.
 - `lib.rs`: `PRODUCT = "Einst"`, `DEFAULT_THEME = "Einst"`, `OPEN_EXTENSIONS`, modules `paths`
   and `v1io` (both Einst's own files).
@@ -59,7 +59,7 @@ and re-apply Einst's changes, which are all marked `Einst` or listed here:
   (`load_part`: engines, pads, patterns, banks), `browser.rs` (kits): read through
   `v1io::read_project` / `read_document`, so Geist v1 files are converted. A converted v1 project
   has no project path (Save asks for a new name, as for Guru presets).
-- Every `geist_formats::paths::skin_dir()` → `crate::paths::skin_dir()` (Einst's factory data).
+- Every `dreist_formats::paths::skin_dir()` → `crate::paths::skin_dir()` (Einst's factory data).
 - `fxchain.rs`: the effect type menu lists v1's types per category (`einst_formats::v1::
   effect_menu`); Dreist's 47-type `category` table is removed.
 - `tests.rs` / `screens_test.rs`: `crate::DEFAULT_THEME`, "Remove all modulation from Einst";
@@ -68,15 +68,15 @@ and re-apply Einst's changes, which are all marked `Einst` or listed here:
 
 ## `einst-engine` and `einst-dsp`: Geist v1's own effects
 
-- `einst-dsp`: v1's mono effect nodes as `geist_dsp::fx::Node`s: `gain::Gain` (VAmpM),
+- `einst-dsp`: v1's mono effect nodes as `dreist_dsp::fx::Node`s: `gain::Gain` (VAmpM),
   `vari_eq::VariEq` (VFilterEQ2) and `envelope_shaper::EnvelopeShaper` (VDSPTransientDesigner;
   Dreist's Geist2 node with Linked held off). The recovered DSP is in
   `docs/re/loading-v1.md`; tests check it against the decompiled formulas.
 - Wiring: Dreist's engine keeps its effect chains private and builds every effect in one place
-  (`geist-engine/src/fx.rs`, `Effect::new` → `geist_dsp::fx::nodes::create`), and Cargo cannot
-  `[patch]` a path dependency. So `einst-engine` is a copy of Dreist's `crates/geist-engine` at
-  the same commit as the editor (`bc729de2…`). Its library keeps the name `geist_engine`, and
-  dependents use `geist-engine = { package = "einst-engine", ... }`, so the copied editor and
+  (`dreist-engine/src/fx.rs`, `Effect::new` → `dreist_dsp::fx::nodes::create`), and Cargo cannot
+  `[patch]` a path dependency. So `einst-engine` is a copy of Dreist's `crates/dreist-engine` at
+  the same commit as the editor (`bc729de2…`). Its library keeps the name `dreist_engine`, and
+  dependents use `dreist-engine = { package = "einst-engine", ... }`, so the copied editor and
   plugin compile unchanged. The only change is in `src/fx.rs` (marked `Einst`): after
   `Effect::new`, `einst_dsp::create(kind)` replaces the node for Gain, Vari-EQ and Envelope
   Shaper, with v1's internal ports set. To re-sync, copy the crate again and re-apply that
@@ -103,16 +103,16 @@ and re-apply Einst's changes, which are all marked `Einst` or listed here:
 ## Known gaps (plugin shell / editor)
 
 - Dreist's UI graphics (skin, fonts, cursors, metronome sounds) still come from
-  `Contents/Resources/Dreist` (`geist_formats::paths::ui_dir`, read inside `geist-gui` and
-  `geist-engine`); the UI font is still "Dreist Sans". Changing those needs Dreist's crates.
+  `Contents/Resources/Dreist` (`dreist_formats::paths::ui_dir`, read inside `dreist-gui` and
+  `dreist-engine`); the UI font is still "Dreist Sans". Changing those needs Dreist's crates.
 - Geist2-only effect types in a Geist2 document still load and play with Dreist's nodes; Einst's
   menu just does not offer them.
 - The browser lists `.geist` and `.geistkit` as Dreist's does; v1 `.geistpad/.geistengine/
   .geistpattern/.geistbank` open through the Open dialog (into engine 0) and drag and drop.
 - No CLAP/VST3 validator is installed (clap-validator, pluginval); downloading one needs the user's
   OK. Checked instead: `tools/plugincheck.py` (CLAP descriptor, create/init/activate; VST3
-  factory), and Dreist's validation harnesses (`geist-dsp` fx_harness / fx_realtime,
-  `geist-engine` harness / realtime) pass when run against its sources with
+  factory), and Dreist's validation harnesses (`dreist-dsp` fx_harness / fx_realtime,
+  `dreist-engine` harness / realtime) pass when run against its sources with
   `--target-dir target/dreist`.
 
 ## Next
@@ -120,7 +120,7 @@ and re-apply Einst's changes, which are all marked `Einst` or listed here:
 1. Confirm the remaining conversion guesses in `docs/re/loading-v1.md` ("Guesses and
    deliberate choices"). Convert v1 MIDI/host bindings once `Binding`'s message objects are
    traced.
-2. Remaining UI gaps above need Dreist's `geist-gui` / `geist-engine` (owner, 2026-11-03: keep
+2. Remaining UI gaps above need Dreist's `dreist-gui` / `dreist-engine` (owner, 2026-11-03: keep
    Dreist untouched).
 3. Effects batch 2+: decompile the "to decompile" rows of `docs/re/effects-v1.md`, starting
    with the clear model differences (Japan Filter, Ring Mod, Tin Can Verb, SSL EQ / Filter,

@@ -1,4 +1,4 @@
-//! Einst: Dreist's port of `VDSP::VStereoMixer` (`geist_dsp::fx::nodes::stereo`,
+//! Einst: Dreist's port of `VDSP::VStereoMixer` (`dreist_dsp::fx::nodes::stereo`,
 //! copied from Dreist at bc729de2) with v1's one difference: the 2^x in
 //! `Voice::ProcessBuffer` is v1's [`fast_exp2`](crate::fast_exp2) (one
 //! inlined instance in v1, the rest of the function's constants and callees
@@ -7,7 +7,7 @@
 //! `VDSP::VStereoMixer` (Stereo Width; `InitializePorts` 0x4e1d70,
 //! `Voice::ProcessBuffer`, `Voice::Reset`).
 
-use geist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
+use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
 pub struct StereoMixer {
     ports: Vec<Port>,

@@ -6,11 +6,11 @@ license.workspace = true
 description = "Readers for Geist v1 (1.1.1.2) files, mapped onto Dreist's Geist2 document model"
 
 [dependencies]
-geist-formats.workspace = true
+dreist-formats.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
-geist-engine.workspace = true
+dreist-engine.workspace = true
 
 [lints]
 workspace = true

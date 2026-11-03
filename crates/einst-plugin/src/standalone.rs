@@ -1,10 +1,10 @@
 //! The standalone app's side of the audio / MIDI settings panels
-//! (`einst_editor::devices`): audio devices through cpal, MIDI ports
+//! (`dreist_editor::devices`): audio devices through cpal, MIDI ports
 //! through midir, and an audio restart that relaunches the app with the
 //! current document (nih-plug opens its devices once, at start-up).
 
 use cpal::traits::{DeviceTrait, HostTrait};
-use einst_editor::devices::{AudioSetup, DeviceHost, MidiSetup};
+use dreist_editor::devices::{AudioSetup, DeviceHost, MidiSetup};
 
 /// Rates offered when a device supports them.
 const RATES: [u32; 6] = [44100, 48000, 88200, 96000, 176400, 192000];
@@ -46,7 +46,7 @@ impl DeviceHost for Host {
         MidiSetup { inputs, outputs }
     }
 
-    fn restart(&self, doc: &geist_formats::Node, samples: Option<&std::path::Path>) {
+    fn restart(&self, doc: &dreist_formats::Node, samples: Option<&std::path::Path>) {
         let session = crate::Session { doc: doc.to_xml(), samples: samples.map(|p| p.to_string_lossy().into_owned()) };
         let file = std::env::temp_dir().join(format!("einst-session-{}.json", std::process::id()));
         let Ok(json) = serde_json::to_string(&session) else { return };

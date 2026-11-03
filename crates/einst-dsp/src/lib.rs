@@ -15,7 +15,7 @@
 //!
 //! v1's `VDSPNodeAdaptor::Process22` (0x4f3840, ev_964c5456) runs a mono
 //! node as two instances, one per channel, so each node here keeps one
-//! state per channel. They implement `geist_dsp::fx::Node`; the engine
+//! state per channel. They implement `dreist_dsp::fx::Node`; the engine
 //! (`einst-engine`'s `fx.rs`) builds them through [`create`] in place of
 //! Dreist's Geist2 nodes.
 
@@ -31,7 +31,7 @@ pub mod stereo;
 pub mod urei1176;
 pub mod vari_eq;
 
-use geist_dsp::fx::Node;
+use dreist_dsp::fx::Node;
 
 /// Effect type indices as Geist2 / Dreist number them (`EFFECT_TYPES`).
 pub const GAIN: usize = 1;

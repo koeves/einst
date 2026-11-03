@@ -12,7 +12,7 @@
 //! `powf(10, g·0.025)` (the bell's in double precision); every sample feeds
 //! the x history an alternating ±1e−8 offset against denormals.
 
-use geist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
+use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
 /// `VFilterEQ2::ConvertMode`: Bell, Low Shelf, High Shelf, LPF, BPF, BPF 0dB, HPF, Notch, Allpass.
 pub const MODES: usize = 9;

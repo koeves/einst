@@ -1,6 +1,6 @@
 //! `VDSP::VCompressorSSLMixbusS` (Bus Compressor, v1 type 7) around
 //! `VDSP::MixbusComp`, compared with Geist2's, which Dreist ports as
-//! `geist_dsp::fx::nodes::bus_comp`.
+//! `dreist_dsp::fx::nodes::bus_comp`.
 //!
 //! v1's `MixbusComp` is Geist2's circuit: the constructor (ev_15cdcb65), the
 //! setters (`setRatio` ev_a170b69d, `setRelease` ev_a8999690,
@@ -21,19 +21,19 @@
 //! [`fast_exp2`](crate::fast_exp2). This node is Dreist's, fed the port
 //! value whose exact 2^x is v1's fast one.
 
-use geist_dsp::fx::nodes::bus_comp::BusComp as Geist2BusComp;
-use geist_dsp::fx::{Ctx, Node, Port};
+use dreist_dsp::fx::nodes::bus_comp::BusComp as V2BusComp;
+use dreist_dsp::fx::{Ctx, Node, Port};
 
 /// The side-chain HP frequency port (log2(Hz) − 1).
 pub const HP_FREQ: usize = 8;
 
 pub struct BusComp {
-    inner: Geist2BusComp,
+    inner: V2BusComp,
 }
 
 impl BusComp {
     pub fn new() -> BusComp {
-        BusComp { inner: Geist2BusComp::new() }
+        BusComp { inner: V2BusComp::new() }
     }
 }
 
