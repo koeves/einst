@@ -43,8 +43,8 @@ Geist2 reads a layer `Ver` as `round(Ver*1000)` (Dreist ledger, `docs/re/formats
 `dreist-re`), so v1.1.1.2 layers land at 3200: Geist2's "below 3300" upgrade
 (`V2C`/`V2P`/`UsesTimestretch`/`TSTracksBPM`/`TSMode`/`Envelope%dParam%d`/`ModRouting%d`)
 applies to them and its "below 3200" cutoff/resonance remap does not. That matches v1's own
-`< 3.2` remap below. [decomp v1; Geist2 thresholds from Dreist's ledger, `Layer::Serialize`
-0x71c10 ev_e9e07b35…, not re-decompiled here]
+`< 3.2` remap below. [decomp v1 and Geist2 `Layer::Serialize` 0x71c10 ev_5075e9a1; see
+"Conversion to Geist2"]
 
 ## File entry points [decomp]
 
@@ -508,6 +508,64 @@ shared `VFilterEQCommon` and `VDSPTransientDesignerConvertParam`) [sym, Dreist `
 So the v1-only classes are mono versions of DSP Dreist already ports; what differs is to be
 checked in the DSP diff (PROGRESS "Next" 3–4).
 
+## Conversion to Geist2 (`einst_formats::geist2`)
+
+`Document::to_geist2` turns a v1 project, kit, pad, engine, pattern or bank into the tree Dreist's
+`geist_formats` and `geist_engine` read. Dreist has no v1 legacy branch of its own, so the
+converter emits what Geist2's own loader ends up with when it reads a v1 file. Geist2 2.1.2.13
+(sha256 `395d2ccf…e46d`) branches checked with REA [decomp]:
+
+- `Geist::SerializeFromData` 0xb9380 (ev_0f43b7e5): below root version 3000 it applies v1's
+  `StateVersion` gate (missing → 2.1, < 2.0 → nothing loaded) and reads the same instance names
+  (`FileManager`, `Scenes`, `Song`, `Engine%d`, `GlobalAux%d`, …). The converter checks the gate,
+  drops `StateVersion` and writes root `version="3000"`.
+- `Layer::Serialize` 0x71c10 (ev_5075e9a1): a missing `Ver` reads as 3300; otherwise
+  `round(Ver·1000)`. v1.1.1.2 layers are 3200. The 11 v1 layer parameters already carry Geist2's
+  stored names (`LayerGain` … `FilterActive`). Below 3300:
+  - `V2C`, `V2P` → Velocity depth `2v − 1` on `Cutoff` / `CoarseTune` (`Cutoff_Velocity`,
+    `CoarseTune_Velocity`), only when present;
+  - `UsesTimestretch`, `TSTracksBPM`, `TSMode` → `TimestretchActive`, `TimestretchTracksBPM`,
+    `TimestretchMode` as 0/1 (`Fast` = 1); `SourceBPM`/`DestinationBPM` are read and discarded;
+  - `Envelope{e}Param{i}` → `AmpEnv*` (e = 0) / `FreeEnv*` (e = 1) in the same order
+    (Attack, Decay, Sustain, Hold, Release, three curves), clamped to 0..1. Below 3000, Hold is
+    set to −1 and the old default decay (A 0, D 0.5, S 1, R 0.001) becomes 0.02;
+  - `ModRouting0/1` (amp envelope) and `ModRouting2/3` (free envelope): if depth ≠ 0.5 and the
+    destination is set, that source's depth `2d − 1` (clamped ±1) goes on `Cutoff`, `Resonance`,
+    `FilterDrive` (v1 "Drive") or `CoarseTune` (v1 "Pitch"); e.g. `Cutoff_AmpEnvelope`.
+  - Below 3200, Geist2's cutoff/resonance remap (`ln(c⁴·400.36 + 0.545) + 2.079)·0.1202`,
+    `r·1.3201 − 0.1111`) is the same formula as v1's own `< 3.2` remap.
+  - `EnvelopeType%d` is not read (v1 forces ADSR anyway). `CutMode`/`PlaybackMode` labels are
+    the same strings in both.
+  The converter writes `version="3300"` and these Geist2 attributes, and drops the v1-only ones.
+- `Step::Serialize` 0x3096d0 (ev_6246f185): no version branch; it reads only Geist2's 93 lane
+  names. v1 lanes with the same names pass through. v1's `Ampenvdepth1/2` and `Freeenvdepth1/2`
+  lanes have no Geist2 name and are dropped (with their track `Rand/Scal/Comp` modifiers).
+- `Track::SerializeFromData` 0x153070 (ev_f1cbe2c5): `Ver` 2.2 (and `TrackVersion`) → `S%d`
+  children, the same as v1. `Ver` 2.1 → an older `Steps` array or `S%d`.
+- Effects and chains need no change: the factory `.fxpreset` files that differ still have the
+  same `Parameter0..5` meanings for the effects compared (Parametric EQ, Delay, Bus Compressor,
+  Distortion: identical values in both installs) [file].
+
+Also dropped: the `Bindings` map (v1's `Binding` message objects are not traced) and every
+`Ver`/`FileMarkerVersion`. Sample paths: `_RELATIVE_x` → `../x` (Dreist resolves relative names
+against `<doc>.samples/` too, so `../` and bare names keep their v1 meaning).
+
+Guesses and deliberate choices (to confirm):
+
+- **Hold on v1 3.x layers.** v1 saves Hold = −1 ("compute from the sample") and its loader calls
+  `ResetHoldTime` for a negative hold. Geist2 clamps the value to 0 on these layers and does not
+  reset it. The converter follows Geist2 as briefed (`AmpEnvHold="0"`). Keeping −1 instead
+  would make Dreist recompute the hold like v1 does.
+- **Output `Buss n` → `Aux n`.** Both are the four global aux buses; Geist2's name for them is
+  taken from Dreist's `Route::from_name`, not from a decompiled v1→Geist2 mapping.
+- **FX-active step lanes.** v1's default for `FXnActive` is 1.0, Geist2's is 0. A v1 step that
+  omits the lane reads Geist2's default, as Geist2 would.
+- **Legacy `Steps` array shape** (Track `Ver` < 2.1): its children are taken as the steps in order.
+- The 11 shared layer parameter names are assumed to mean the same in both versions (same names,
+  same defaults; `FilterType`/`FilterAlgorithm` value ranges are not checked).
+- Root `version="3000"` is what Dreist's empty project uses; Geist2's own saves may write a
+  higher one.
+
 ## Unknown / not done
 
 - The layer virtual at vtable +0x78 used to reset a missing `Layer%d` (assumed reset/clear).
@@ -516,7 +574,10 @@ checked in the DSP diff (PROGRESS "Next" 3–4).
 - `AudioFileManager` delegate at `+0x28` that decides which samples are saved.
 - `Binding`'s `MessageStuffer`/`MessagePopper`/`Type` child objects are not traced, so v1
   bindings are not converted.
-- Geist2's legacy branch was not re-decompiled; thresholds above come from Dreist's ledger.
+- Engine, Pad, StepPattern, EngineState, Scene and Song serializers of Geist2 were decompiled
+  (ev_b1ae35fd Pad, ev_5511ff9a StepPattern, ev_68511a0f EngineState) but only read for the
+  names the converter relies on; Geist2's real `Engine` serializer is behind a vtable thunk
+  (ev_85e43971) and was not followed.
 - No real v1 user files exist to check these against (the factory install has none).
 
 ## Tooling

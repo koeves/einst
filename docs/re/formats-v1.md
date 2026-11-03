@@ -6,12 +6,12 @@ strings as `FixedString`/`VString` children. `geist_formats::Node` parses them u
 
 | Ext | Writer [sym] | Contents | Status |
 |---|---|---|---|
-| `.geist` | `Grid::SaveEntireStateToFile` → `Grid::SaveEntireState` | `StateVersion`, `FileManager`, `MasterChannel`, `Bindings`, `Scenes`, `Song`, `TimeInfo`, `Sampler`, `Metronome`, `SendMIDINotes`, `SendMIDICCs`, `CurrentEngine`, `PreviewVolume`, `PreviewOutput`, `Engine%d`, `GlobalAux%d` | structure only |
-| `.geistkit` | `Grid::SerializeCurrentKit` | `Pad0..Pad15` | structure only |
-| `.geistpad` | `Grid::SerializeCurrentPad` | one `Pad` | structure only |
-| `.geistengine` | `Grid::SerializeCurrentEngine` | one `Engine` | structure only |
-| `.geistpattern` | `Grid::SerializeCurrentPattern` | one `StepPattern` | structure only |
-| `.geistbank` | `Grid::SerializeCurrentPatternBank` | `StepPattern%d` | structure only |
+| `.geist` | `Grid::SaveEntireStateToFile` → `Grid::SaveEntireState` | `StateVersion`, `FileManager`, `MasterChannel`, `Bindings`, `Scenes`, `Song`, `TimeInfo`, `Sampler`, `Metronome`, `SendMIDINotes`, `SendMIDICCs`, `CurrentEngine`, `PreviewVolume`, `PreviewOutput`, `Engine%d`, `GlobalAux%d` | decomp, converted |
+| `.geistkit` | `Grid::SerializeCurrentKit` | `Pad0..Pad15` | decomp, converted |
+| `.geistpad` | `Grid::SerializeCurrentPad` | one `Pad` | decomp, converted |
+| `.geistengine` | `Grid::SerializeCurrentEngine` | one `Engine` | decomp, converted |
+| `.geistpattern` | `Grid::SerializeCurrentPattern` | one `StepPattern` | decomp, converted |
+| `.geistbank` | `Grid::SerializeCurrentPatternBank` | `StepPattern%d` | decomp, converted |
 | `.fxpreset` | | one `Effect` (`EffectVersion="2"`, `Parameter0..5`, `Mix`, `Level`, `IsActive`, `EffectType`) | = Geist2 [file] |
 | `.fxchain` | | `EffectChain` (`FXVer="2"`) of `Effect%d` | = Geist2 [file] |
 | `.patterntemplate` | | `InsertablePattern` (`PatternVersion="2"`, `Element0..N`) | = Geist2 [file] |

@@ -7,6 +7,7 @@
 //! unchanged; what differs is the vocabulary (class and attribute names,
 //! per-object `Ver` floats instead of `version` ints) and the semantics.
 
+pub mod geist2;
 pub mod kind;
 pub mod v1;
 
@@ -20,8 +21,6 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("not a Geist v1 {0} file: {1}")]
     Shape(&'static str, String),
-    #[error("{0}: reading this v1 file type is not implemented yet")]
-    Unsupported(&'static str),
 }
 
 /// Parse any v1 XML file into the generic tree.
