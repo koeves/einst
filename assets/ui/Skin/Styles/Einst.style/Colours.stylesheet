@@ -25,6 +25,7 @@
     <VColour name="PanelMediumAlpha05" colour="PanelMedium" modifier="alpha=0.5" />
     <VColour name="PanelMediumAlpha03" colour="PanelMedium" modifier="alpha=0.3" />
     <VColour name="PanelSparkAlpha05" colour="PanelSpark" modifier="alpha=0.5" />
+    <VColour name="LogoMark" colour="#E8B34A" />
     <VColour name="EditorAltBrightestAlpha05" colour="EditorAltBrightest" modifier="alpha=0.5" />
     <VColour name="EditorDarkestAlpha03" colour="EditorDarkest" modifier="alpha=0.3" />
     <VColour name="EditorAltDarkestAlpha075" colour="EditorAltDarkest" modifier="alpha=0.75" />
