@@ -102,3 +102,26 @@ fn shared_nodes_use_v1s_fast_exp2() {
     node.process(&Ctx::new(44_100.0), [&ones, &ones], [&mut l, &mut r]);
     assert!((l[63] - einst_dsp::gain::Gain::target(1.3)).abs() < 1e-3, "{} vs {}", l[63], einst_dsp::gain::Gain::target(1.3));
 }
+
+/// v1's envelope: a decay ending at zero sustain stops at once (v2 fades
+/// over 32 samples).
+#[test]
+fn envelope_stops_at_zero_sustain() {
+    setup();
+    use dreist_dsp::envelope::{Envelope, EnvelopeParams};
+    let mut e = Envelope::new(44_100.0);
+    let p = EnvelopeParams { attack: 0.0, decay: 0.2, sustain: 0.0, hold: 0.0, release: 0.2, attack_curve: 0.5, decay_curve: 0.6, release_curve: 0.5 };
+    e.initialize(&p, false, 1.0);
+    e.note_on();
+    let mut buf = vec![1.0f32; 8192];
+    let mut ended_at = None;
+    for b in 0..20 {
+        if !e.process(&mut buf) {
+            ended_at = Some(b);
+            break;
+        }
+    }
+    assert!(ended_at.is_some());
+    assert!(buf.iter().rev().take(32).all(|v| *v == 0.0));
+    assert!(dreist_dsp::rules::get().envelope_v1_ends && dreist_dsp::rules::get().loop_v1);
+}
