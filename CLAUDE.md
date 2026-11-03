@@ -1,11 +1,8 @@
 # Einst
 
-Rebuild of the original v1 instrument as a thin app on **dreist-commons** (private
-`koeves/dreist-commons`, pinned by `rev` in `Cargo.toml`; `~/Documents/projects/.cargo/config.toml`
-patches it to the local `../dreist-commons` for development; commit Cargo.lock only as resolved
-against the pin). The override rewrites Cargo.lock, so it is marked `git update-index
---skip-worktree Cargo.lock` locally; to bump the pin, undo that (`--no-skip-worktree`), move the
-override aside, change `rev`, `cargo update -p dreist-formats`, commit, restore both. Einst plugs in through dreist-commons' hooks: `crates/einst`
+Rebuild of the original v1 instrument as a thin app on **dreist-commons** (public
+`koeves/dreist-commons`, a git submodule at `commons`, used by path; change it by committing and
+pushing inside `commons/`, then `git add commons` here). Einst plugs in through dreist-commons' hooks: `crates/einst`
 holds the app profile (`dreist_formats::profile`) and installs v1's effect nodes
 (`dreist_dsp::fx::install_factory`). Shared behaviour belongs in dreist-commons, v1 specifics here.
 

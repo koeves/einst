@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
 members = ["crates/einst-formats", "crates/einst-dsp", "crates/einst", "crates/einst-plugin", "xtask"]
+# The commons submodule is its own workspace; its crates are dependencies here.
+exclude = ["commons"]
 
 [workspace.package]
 edition = "2024"
@@ -22,14 +24,13 @@ type_complexity = "allow"
 manual_range_contains = "allow"
 
 [workspace.dependencies]
-# The shared crates: dreist-commons at a pinned revision. For development
-# against a local checkout, see README (a [patch] in ../.cargo/config.toml).
-dreist-formats = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
-dreist-dsp = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
-dreist-engine = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
-dreist-gui = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
-dreist-editor = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
-dreist-testkit = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
+# The shared crates: the dreist-commons submodule at `commons`.
+dreist-formats = { path = "commons/crates/dreist-formats" }
+dreist-dsp = { path = "commons/crates/dreist-dsp" }
+dreist-engine = { path = "commons/crates/dreist-engine" }
+dreist-gui = { path = "commons/crates/dreist-gui" }
+dreist-editor = { path = "commons/crates/dreist-editor" }
+dreist-testkit = { path = "commons/crates/dreist-testkit" }
 roxmltree = "0.20"
 thiserror = "2"
 
@@ -42,7 +43,7 @@ opt-level = 2
 # dreist-commons' vendored patches: baseview with a re-entrancy guard for
 # modal dialogs, signalsmith-stretch with a fixed phase-randomisation seed.
 [patch."https://github.com/RustAudio/baseview.git"]
-baseview = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
+baseview = { path = "commons/vendor/baseview" }
 
 [patch.crates-io]
-signalsmith-stretch = { git = "https://github.com/koeves/dreist-commons", rev = "449b54a91f8bd6d65b086c35ee26e379b60179a8" }
+signalsmith-stretch = { path = "commons/vendor/signalsmith-stretch" }
