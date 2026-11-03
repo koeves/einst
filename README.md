@@ -5,11 +5,34 @@ It is built on [Dreist](../geist)'s Rust crates, because Geist v1 and Geist2 sha
 93 of v1's 97 DSP classes and all 32 of its effects also exist in Geist2. See
 [`docs/re/v1-vs-geist2.md`](docs/re/v1-vs-geist2.md).
 
-Planned outputs: `Einst.vst3`, `Einst.clap`, `Einst.app`.
+Outputs: `Einst.vst3`, `Einst.clap`, `Einst.app` (Apple Silicon).
 
 | Crate | Role |
 |---|---|
-| `einst-formats` | Geist v1 file reader, mapped onto Dreist's Geist2 document tree |
+| `einst-formats` | Geist v1 file reader and converter onto Dreist's Geist2 document tree |
+| `einst-plugin` | nih-plug VST3 / CLAP plugin and standalone app: a copy of Dreist's `geist-plugin` shell with Einst's names and IDs (CLAP `rs.einst.einst`, VST3 class `EinstRsDrumSmplr`), opening Geist v1 files |
+| `xtask` | nih-plug bundler (`cargo xtask bundle einst-plugin`) |
+
+## Build
+
+Dreist must be checked out next to this repository (`../geist`): Einst builds on its crates by path,
+uses its vendored `baseview` / `signalsmith-stretch` patches, and bundles its resources.
+
+    scripts/build.sh              # release: target/bundled/Einst.{app,vst3,clap}
+    scripts/build.sh --debug
+    scripts/build.sh --install    # also into ~/Library/Audio/Plug-Ins and ~/Applications
+    cargo test --workspace
+    cargo clippy --workspace --all-targets -- -D warnings
+    cargo fmt --all --check
+
+## Opening Geist v1 files
+
+A Geist v1 `.geist`, `.geistkit`, `.geistpad`, `.geistengine`, `.geistpattern` or `.geistbank` is
+converted to Geist2's document (`einst_formats::v1::open_as_project`) when the plugin loads its
+project: the project path saved with the host session, or `EINST_PROJECT=<file>` (e.g.
+`EINST_PROJECT=~/Kit.geistkit open target/bundled/Einst.app`). Single-object files land in
+engine 0. Samples resolve in `<file>.samples/` as in v1. The editor's own Open dialog, browser and
+drag and drop are Dreist's and read Geist2 files only (see `docs/PROGRESS.md`).
 
 Status and next steps: [`docs/PROGRESS.md`](docs/PROGRESS.md).
 

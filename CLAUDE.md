@@ -20,6 +20,9 @@ Decision (user, 2026-11-02): separate Einst app with Dreist's crates as dependen
 ## Build
 
     export PATH=$HOME/.rustup/toolchains/stable-aarch64-apple-darwin/bin:$PATH
-    cargo test
+    cargo test --workspace
+    cargo clippy --workspace --all-targets -- -D warnings
+    cargo fmt --all --check
+    scripts/build.sh          # target/bundled/Einst.{vst3,clap,app}
 
 Dreist must be checked out next to this repo (`../geist`); Einst depends on its crates by path.
