@@ -1,7 +1,9 @@
 # Einst
 
-Rebuild of the original v1 instrument as a thin app on **dreist-commons** (`../dreist-commons`,
-private `koeves/dreist-commons`). Einst plugs in through dreist-commons' hooks: `crates/einst`
+Rebuild of the original v1 instrument as a thin app on **dreist-commons** (private
+`koeves/dreist-commons`, pinned by `rev` in `Cargo.toml`; `~/Documents/projects/.cargo/config.toml`
+patches it to the local `../dreist-commons` for development; commit Cargo.lock only as resolved
+against the pin). Einst plugs in through dreist-commons' hooks: `crates/einst`
 holds the app profile (`dreist_formats::profile`) and installs v1's effect nodes
 (`dreist_dsp::fx::install_factory`). Shared behaviour belongs in dreist-commons, v1 specifics here.
 

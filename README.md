@@ -18,8 +18,13 @@ Outputs: `Einst.vst3`, `Einst.clap`, `Einst.app` (Apple Silicon). Plugin IDs: CL
 
 ## Build
 
-dreist-commons must be checked out next to this repository (`../dreist-commons`; `Cargo.toml`
-points there).
+Dependencies on dreist-commons are pinned to a revision in `Cargo.toml` (`git`, `rev`); the
+private repository is fetched with the git CLI (`.cargo/config.toml`). To develop against a
+local checkout at `../dreist-commons`, add a `[patch."https://github.com/koeves/dreist-commons"]`
+section mapping each `dreist-*` crate to its path in `~/Documents/projects/.cargo/config.toml`
+(one file serves Dreist and Einst; it rewrites `Cargo.lock` locally, so do not commit the lock
+from such a build). To take a new commons revision, bump `rev` in `Cargo.toml` and run
+`cargo update -p dreist-formats`.
 
     scripts/build.sh              # release: target/bundled/Einst.{app,vst3,clap}
     scripts/build.sh --debug
