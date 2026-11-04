@@ -29,6 +29,9 @@
 //!   with a head in the marker strip (a box when locked, else a triangle,
 //!   amber when selected).
 
+/// The zoom scrollbar under the wave (added to v1's layout, the
+/// manual's "Zoom in/out and scrollbar").
+pub(crate) const ZOOM_BAR: &str = "PreviewZoomSlider";
 use std::path::{Path, PathBuf};
 
 use dreist_dsp::slice::{self, SlicePoint, SlicedPattern};
@@ -97,9 +100,11 @@ pub struct Slicer {
     selected: Option<usize>,
     drag: Option<usize>,
     /// Visible frames.
-    view: (u32, u32),
+    pub(crate) view: (u32, u32),
     /// A drag on the wave that zooms / scrolls: (x, y, view at the press).
     view_drag: Option<(f32, f32, (u32, u32))>,
+    /// A drag on the zoom scrollbar: (zone, last x) (`zoomslider::hit`).
+    bar_drag: Option<(u8, f32)>,
     /// The slice whose context menu is open.
     menu: Option<usize>,
     /// The document when the panel opened (Cancel restores it).
@@ -143,6 +148,7 @@ impl Slicer {
             selected: None,
             drag: None,
             view: (0, 0),
+            bar_drag: None,
             view_drag: None,
             menu: None,
             snapshot: None,
@@ -454,6 +460,22 @@ impl Slicer {
         self.slices.iter().enumerate().map(|(i, s)| (i, (self.x_of(s.start, w) - x).abs())).filter(|(_, d)| *d <= 4.0).min_by(|a, b| a.1.total_cmp(&b.1)).map(|(i, _)| i)
     }
 
+    /// The view as fractions of the file (start, size), for the scrollbar.
+    fn view_frac(&self) -> (f32, f32) {
+        let n = self.frames().max(1) as f32;
+        let (a, b) = self.view;
+        (a as f32 / n, (b - a) as f32 / n)
+    }
+
+    fn set_view_frac(&mut self, v: (f32, f32)) {
+        let n = self.frames().max(1) as f64;
+        let (s, z) = crate::zoomslider::clamp(v);
+        let a = (s as f64 * n).round();
+        let len = (z as f64 * n).round().clamp(64f64.min(n), n);
+        let a = a.min(n - len).max(0.0);
+        self.view = (a as u32, (a + len) as u32);
+    }
+
     /// Zoom the view by `factor` about the fraction `centre` of it.
     fn zoom(&mut self, factor: f64, centre: f64) {
         let n = self.frames().max(1) as u64;
@@ -596,6 +618,24 @@ impl Slicer {
                 self.divisions = (self.divisions as i32 + dy.signum() as i32).clamp(1, 256) as u32;
                 self.reslice();
                 self.edited(model, out);
+                true
+            }
+            // The zoom scrollbar: drag the thumb to scroll, an edge to zoom
+            // (as the layer page's wave zoom bar).
+            UiEvent::Mouse { path, overload, kind, x, y } if self.mine(path) && overload == "WaveDisplayZoomSlider" && app.ctrl(path).is_some_and(|c| c.name == ZOOM_BAR) => {
+                let (w, h) = app.ctrl(path).map(|c| (c.rect.w as f32, c.rect.h as f32)).unwrap_or((1.0, 1.0));
+                match kind {
+                    MouseKind::Down => self.bar_drag = crate::zoomslider::hit(self.view_frac(), w, h, *x, *y).map(|m| (m, *x)),
+                    MouseKind::Drag => {
+                        if let Some((mode, last)) = self.bar_drag {
+                            let min = 64.0 / self.frames().max(64) as f32;
+                            self.set_view_frac(crate::zoomslider::drag(self.view_frac(), w, mode, last, *x, min));
+                            self.bar_drag = Some((mode, *x));
+                        }
+                    }
+                    MouseKind::Up => self.bar_drag = None,
+                    _ => {}
+                }
                 true
             }
             UiEvent::Wheel { path, overload, dy } if self.mine(path) && overload == "EditorPreviewWaveEditor" => {
@@ -816,18 +856,18 @@ impl Slicer {
     pub fn draw(&self, model: &Model, r: &Renderer, p: &mut Painter, c: &Ctrl) -> bool {
         let s = r.styles;
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
-        let ink = colour(r, "WaveEditorWaveColour", Colour::rgba(18, 25, 60, 255));
+        let ink = crate::sampler::wave(r, "colLine", Colour::rgba(18, 25, 60, 255));
         let amber = colour(r, "SelectedObjectColour", Colour::rgba(236, 189, 47, 255));
         match c.overload.as_str() {
             // The overlay only holds the panel (no shade); the panel has an
             // LCD background.
             "SlicerOverlay" => true,
             "SlicePanel" => {
-                p.fill_rect(RectF::new(0.0, 0.0, w, h), colour(r, "Lcd", Colour::rgba(210, 217, 227, 255)));
+                p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour("PreviewPanelBackgroundStyle", "colFill", Colour::rgba(210, 217, 227, 255)));
                 true
             }
             "EditorPreviewWaveEditor" => {
-                p.fill_rect(RectF::new(0.0, 0.0, w, h), colour(r, "WaveEditorBackgroundColour", Colour::rgba(178, 170, 158, 255)));
+                p.fill_rect(RectF::new(0.0, 0.0, w, h), crate::sampler::wave(r, "colFill", Colour::rgba(178, 170, 158, 255)));
                 let Some(a) = &self.audio else { return true };
                 let (v0, v1) = self.view;
                 let sr = a.data.sample_rate.max(1.0) as f64;
@@ -841,7 +881,7 @@ impl Slicer {
                 }
                 crate::sampler::draw_wave(p, area, &a.buckets, BUCKET, v0 as f64, v1 as f64, ink, (0.0, w));
                 let line = colour(r, "PreviewEditorSliceMarkerColour", ink);
-                let dim = colour(r, "WaveEditorDisabledWaveColour", ink.with_alpha(0.4));
+                let dim = crate::sampler::wave(r, "colLineDisabled", ink.with_alpha(0.4));
                 for (i, sl) in self.slices.iter().enumerate() {
                     if sl.start < v0 || sl.start >= v1 {
                         continue;
@@ -860,7 +900,11 @@ impl Slicer {
                         p.fill_polygon(&[(hx, hy), (hx + 12.0, hy), (hx + 6.0, hy + 10.0)], head);
                     }
                 }
-                p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), colour(r, "WaveEditorBorderColour", ink), 1.0);
+                p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), crate::sampler::wave(r, "colTimelineMarkers", ink), 1.0);
+                true
+            }
+            "WaveDisplayZoomSlider" if c.name == ZOOM_BAR => {
+                crate::zoomslider::draw(p, s, &c.style, w, h, self.view_frac());
                 true
             }
             "SliceChopStepper" => {
@@ -875,7 +919,7 @@ impl Slicer {
             // The pattern the slicing makes (with Auto load or once
             // extracted), else the current pattern; pad 16 on top.
             "EditorPreviewPanelPatternDisplay" => {
-                p.fill_rect(RectF::new(0.0, 0.0, w, h), colour(r, "Lcd", Colour::rgba(210, 217, 227, 255)));
+                p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour("PreviewPanelBackgroundStyle", "colFill", Colour::rgba(210, 217, 227, 255)));
                 let e = model.engine;
                 let (steps, hits): (u32, Vec<(usize, f32, usize)>) = if self.auto_load || self.extracted {
                     (self.pattern.steps, self.pattern.hits.iter().map(|h| (h.step, h.shift, h.pad)).collect())

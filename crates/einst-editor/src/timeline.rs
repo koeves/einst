@@ -162,22 +162,15 @@ pub fn beat_labels(start_ms: f64, len_ms: f64, tempo: f64) -> (f64, Vec<(i64, St
     (unit, out)
 }
 
-/// Style `style`'s colour `attr` when the theme defines it, else the
-/// palette colour `named`, else `default` (the code-drawn displays under
-/// themes without their content styles).
-pub fn style_or_named(s: &StyleSheet, style: &str, attr: &str, named: &str, default: Colour) -> Colour {
-    if s.raw(style, attr).is_some() { s.colour(style, attr, default) } else { s.colours.get(named).copied().unwrap_or(default) }
-}
-
 /// Draw the timeline and marker strips. `start_s` / `len_s`: the visible
 /// range; `offset_s`: the start marker (label zero); `x_of`: seconds → x;
 /// `wave_h`: height of the waveform area below [`WAVE_TOP`].
 #[allow(clippy::too_many_arguments)]
 pub fn draw(p: &mut Painter, s: &StyleSheet, style: &str, w: f32, wave_h: f32, start_s: f64, len_s: f64, offset_s: f64, beats: bool, tempo: f64, x_of: &dyn Fn(f64) -> f32) {
     let purple = Colour::rgba(128, 0, 128, 255);
-    let back = style_or_named(s, style, "colTimelineBackground", "LcdDim", purple);
+    let back = s.colour(style, "colTimelineBackground", purple);
     p.fill_rect(RectF::new(0.0, 0.0, w, WAVE_TOP), back);
-    let text = style_or_named(s, style, "colTimelineText", "WaveEditorTextColour", Colour::WHITE);
+    let text = s.colour(style, "colTimelineText", Colour::WHITE);
     let font = s.font_attr(style, "fontTimeline");
     let label = |p: &mut Painter, x: f32, t: &str| p.text(RectF::new(x + 2.0, 1.0, 50.0, STRIP), t, text, &font, HAlign::Left, VAlign::Center);
     // The range relative to the start marker.
@@ -193,7 +186,7 @@ pub fn draw(p: &mut Painter, s: &StyleSheet, style: &str, w: f32, wave_h: f32, s
             label(p, x, &time_text(ms));
         }
     } else {
-        let marks = style_or_named(s, style, "colTimelineMarkers", "WaveEditorBorderColour", Colour::WHITE);
+        let marks = s.colour(style, "colTimelineMarkers", Colour::WHITE);
         let (unit, labels) = beat_labels(start_ms, len_ms, tempo);
         for (idx, t, line) in labels {
             let x = x_of(idx as f64 * unit * 0.001 + offset_s);

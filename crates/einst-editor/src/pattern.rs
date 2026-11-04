@@ -43,7 +43,8 @@ const TIMELINE_LABEL_STYLE: &str = "TimelineLabelStyle";
 /// A grid colour by its role (`colFill` beat groups, `colAltFill` shaded
 /// groups, `colSelectedTrack`, `colPosition`, `colGridBar`, `colGridBeat`,
 /// `colStep`, `colOverlay` past a track's length, `colMarker` /
-/// `colMarkerDrag` the length markers and selection, `colText`).
+/// `colMarkerDrag` the length markers, `colSelection` the selected steps,
+/// `colText`).
 fn grid_colour(s: &dreist_gui::style::StyleSheet, role: &str) -> Colour {
     let (style, attr, default) = match role {
         "colFill" => ("GridBackStyle", "colFill", Colour::rgba(222, 229, 237, 255)),
@@ -53,12 +54,13 @@ fn grid_colour(s: &dreist_gui::style::StyleSheet, role: &str) -> Colour {
         "colGridBar" => ("GridBarLineStyle", "colFill", Colour::rgba(76, 83, 111, 255)),
         "colGridBeat" => ("GridLineStyle", "colFill", Colour::rgba(169, 176, 191, 255)),
         "colStep" => ("StepOnStyle", "colFill", Colour::rgba(18, 25, 60, 255)),
-        "colOverlay" => ("GridShadeStyle", "colFill", Colour::rgba(169, 176, 191, 140)),
-        "colMarker" => ("GridBarLineStyle", "colFill", Colour::rgba(40, 40, 40, 255)),
-        "colMarkerDrag" => ("GridPositionStyle", "colFill", Colour::rgba(236, 189, 47, 255)),
+        "colOverlay" => ("GridPastLengthStyle", "colFill", Colour::rgba(169, 176, 191, 140)),
+        "colMarker" => ("PatternTrackMarkerStyle", "colFill", Colour::rgba(40, 40, 40, 255)),
+        "colMarkerDrag" => ("PatternTrackMarkerStyle", "colAltFill", Colour::rgba(236, 189, 47, 255)),
+        "colSelection" => ("StepSelectionStyle", "colFill", Colour::rgba(232, 204, 91, 255)),
         _ => (TIMELINE_LABEL_STYLE, "colText", Colour::rgba(18, 25, 60, 255)),
     };
-    if s.raw(style, attr).is_some() { s.colour(style, attr, default) } else { default }
+    s.colour(style, attr, default)
 }
 
 /// The front panel's swing depth knob (`EngineControls.skin`).
@@ -2218,7 +2220,7 @@ impl PatternPanel {
             p.fill_polygon(&[(mx + 1.0, cy), (mx + MARKER_W * 0.7, cy - half), (mx + MARKER_W * 0.7, cy + half)], col);
         }
         // Selected steps and the rubber band.
-        let sel = grid_colour(s, "colMarkerDrag");
+        let sel = grid_colour(s, "colSelection");
         for &(t, st) in &self.selection {
             if let Some(r) = lay.row(t).filter(|_| lay.step_range().contains(&st)) {
                 let a = lay.step_rect(r, st).inset(1.0);

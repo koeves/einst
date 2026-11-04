@@ -613,21 +613,17 @@ impl FxPanel {
             return false;
         }
         let s = r.styles;
-        let st = "FXLabelButtonStyle";
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
         let iw = (w / SLOTS as f32).floor();
-        let font = s.font(st);
-        let off = s.colour(st, "colFill", dreist_gui::Colour::rgba(200, 205, 215, 255));
-        let on = s.colour(st, "colAltFill", s.colour("SelectedObjectColour", "colFill", dreist_gui::Colour::rgba(236, 189, 47, 255)));
-        let text = s.colour(st, "colText", dreist_gui::Colour::rgba(18, 25, 60, 255));
-        let border = s.colour(st, "colBorder", text);
         let scroll = c.text.split('|').next().and_then(|v| v.parse::<usize>().ok()).unwrap_or(self.scroll);
         for (i, label) in self.labels.borrow().iter().enumerate() {
             let rc = RectF::new(i as f32 * iw + 1.0, 4.0, iw - 2.0, h - 8.0);
-            let lit = (scroll..scroll + VISIBLE_SLOTS).contains(&i);
-            p.fill_rect(rc, if lit { on } else { off });
-            p.stroke_rect(rc, border, 1.0);
-            p.text(RectF::new(rc.x + 2.0, rc.y, rc.w - 4.0, rc.h), label, text, &font, HAlign::Center, VAlign::Center);
+            // `FxSlotItemStyle`, the shown slots `FxSlotItemLitStyle`.
+            let st = if (scroll..scroll + VISIBLE_SLOTS).contains(&i) { "FxSlotItemLitStyle" } else { "FxSlotItemStyle" };
+            let text = s.colour(st, "colText", dreist_gui::Colour::rgba(18, 25, 60, 255));
+            p.fill_rect(rc, s.colour(st, "colFill", dreist_gui::Colour::rgba(200, 205, 215, 255)));
+            p.stroke_rect(rc.inset(0.5), s.colour(st, "colBorder", text), 1.0);
+            p.text(RectF::new(rc.x + 2.0, rc.y, rc.w - 4.0, rc.h), label, text, &s.font(st), HAlign::Center, VAlign::Center);
         }
         true
     }

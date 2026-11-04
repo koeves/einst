@@ -41,6 +41,37 @@ use crate::model::{LAYERS, Model};
 
 pub const HANDLE: f32 = 8.0;
 pub const STYLE: &str = "VSplitStyle";
+/// The velocity ruler over the lanes (v1's marker strip; `LcdRulerStyle`).
+pub const RULER: &str = "VelocityRuler";
+
+/// The velocity ruler: ticks every 16 velocities (colTick), labels 0, 32,
+/// 64, 96, 127 (colText), on colFill, over the lanes' 0..127 scale.
+fn draw_ruler(r: &Renderer, p: &mut Painter, c: &Ctrl) {
+    use dreist_gui::style::{HAlign, VAlign};
+    let s = r.styles;
+    let st = c.style.as_str();
+    let (w, h) = (c.rect.w as f32, c.rect.h as f32);
+    p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour(st, "colFill", Colour::TRANSPARENT));
+    let (tick, text) = (s.colour(st, "colTick", Colour::BLACK), s.colour(st, "colText", Colour::BLACK));
+    let font = s.font(st);
+    let step = w * 0.007874016;
+    for v in (0..=128u32).step_by(16) {
+        let v = v.min(127);
+        let x = ((v as f32 * step).floor() + 0.5).min(w - 0.5);
+        let long = v % 32 == 0 || v == 127;
+        p.line(x, if long { 0.0 } else { h * 0.5 }, x, h, tick, 1.0);
+        if long {
+            let (lx, align) = if v == 0 {
+                (x + 2.0, HAlign::Left)
+            } else if v == 127 {
+                (x - 32.0, HAlign::Right)
+            } else {
+                (x + 2.0, HAlign::Left)
+            };
+            p.text(RectF::new(lx, -1.0, 30.0, h), &v.to_string(), text, &font, align, VAlign::Center);
+        }
+    }
+}
 pub const OVERLOAD: &str = "VelocitySplitEditor";
 const OVERLAPS: [f32; 4] = [0.1, 0.2, 0.25, 0.5];
 
@@ -361,17 +392,22 @@ impl VelSplit {
     }
 
     pub fn draw(&self, model: &Model, r: &Renderer, p: &mut Painter, c: &Ctrl) -> bool {
+        if c.overload == RULER {
+            draw_ruler(r, p, c);
+            return true;
+        }
         if c.overload != OVERLOAD {
             return false;
         }
         let Some(l) = c.attr("layer").and_then(|v| v.parse::<usize>().ok()) else { return false };
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
         let st = &r.styles;
-        let pick = |attr: &str, named: &str, d: Colour| crate::timeline::style_or_named(st, STYLE, attr, named, d);
-        let fill = pick("colFill", "SplitGraphColour", Colour::WHITE);
-        let alt = pick("colAltFill", "SplitMouseColour", Colour::WHITE);
-        let border = pick("colBorder", "SplitLineColour", Colour::rgba(0x5a, 0x5a, 0x5a, 100)).with_alpha(if st.raw(STYLE, "colBorder").is_some() { 1.0 } else { 0.4 });
-        let alt_border = pick("colAltBorder", "SplitMinMaxColour", Colour::rgba(0x5a, 0x5a, 0x5a, 50)).with_alpha(if st.raw(STYLE, "colAltBorder").is_some() { 1.0 } else { 0.2 });
+        // `VSplitStyle`: the split's area, the dragged handle, tick lines
+        // (every eighth colAltBorder), the handles.
+        let fill = st.colour(STYLE, "colFill", Colour::WHITE);
+        let alt = st.colour(STYLE, "colAltFill", Colour::WHITE);
+        let border = st.colour(STYLE, "colBorder", Colour::rgba(0x5a, 0x5a, 0x5a, 40));
+        let alt_border = st.colour(STYLE, "colAltBorder", Colour::rgba(0x5a, 0x5a, 0x5a, 10));
         let step = w * 0.007874016;
         for i in 1..127u32 {
             let x = (i as f32 * step).floor() + 0.5;
@@ -392,7 +428,7 @@ impl VelSplit {
         let mut closed = poly.to_vec();
         closed.push(poly[0]);
         p.polyline(&closed, fill, 1.0);
-        let normal = if st.raw(STYLE, "colAltFill").is_some() { alt.darken(0.4).with_alpha(0.5) } else { pick("colAltFill", "SplitTurnColour", alt) };
+        let normal = st.colour(STYLE, "colHandle", alt);
         let ys = [h - HANDLE, 0.0, 0.0, h - HANDLE];
         for k in 0..4 {
             p.fill_rect(RectF::new(px[k], ys[k], HANDLE, HANDLE), if grabbed == Some(k) { alt } else { normal });
