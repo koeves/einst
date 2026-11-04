@@ -346,3 +346,15 @@ fn v1_effect_types_map_onto_v2() {
         assert_eq!((e.attr("EffectType"), e.attr("Parameter0")), (Some(*name), Some("0.3")), "type {i}");
     }
 }
+
+/// The tracks' lane scale and compression amounts reach the engine's
+/// pattern ([re:51afe0]).
+#[test]
+fn track_scale_and_compression_reach_the_pattern() {
+    let text = project(&engine("Engine0")).replace(r#"VelocityRand="0.6""#, r#"VelocityRand="0.6" PanScal="0.8" FilterCutoffComp="0.3""#);
+    let doc = convert(FileKind::Project, &text);
+    let pat = dreist_engine::pattern::PatternData::from_node(first(first(&doc, "Engine"), "StepPattern"));
+    assert_eq!(pat.tracks[0].scale[1], 0.8);
+    assert_eq!(pat.tracks[0].comp[11], 0.3);
+    assert_eq!(pat.tracks[0].rand[0], 0.6);
+}
