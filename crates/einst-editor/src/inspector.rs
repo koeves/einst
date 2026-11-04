@@ -817,9 +817,13 @@ impl Inspector {
                 self.pad_view = true;
                 true
             }
-            // Trigger strips: play the pad while held.
+            // Trigger strips: play the layer (a layer row) or the pad (the
+            // pad item) while held.
             UiEvent::Pressed { path, name } if name == "Trigger" && (self.row_of(path).is_some() || self.pad_header.as_ref().is_some_and(|h| path.starts_with(h))) => {
-                out.push(Command::PadHit { engine: e, pad: p, velocity: 127 });
+                out.push(match self.row_of(path) {
+                    Some(li) => Command::LayerHit { engine: e, pad: p, layer: li, velocity: 127 },
+                    None => Command::PadHit { engine: e, pad: p, velocity: 127 },
+                });
                 true
             }
             UiEvent::Clicked { path, name, .. } if name == "Trigger" && (self.row_of(path).is_some() || self.pad_header.as_ref().is_some_and(|h| path.starts_with(h))) => {

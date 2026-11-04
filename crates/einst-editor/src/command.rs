@@ -15,6 +15,14 @@ pub enum Command {
         pad: usize,
         velocity: u32,
     },
+    /// One layer of a pad from the layer page's Trigger, velocity 0..127;
+    /// [`Command::PadRelease`] ends it.
+    LayerHit {
+        engine: usize,
+        pad: usize,
+        layer: usize,
+        velocity: u32,
+    },
     /// Pad released (0x3d `e_stopSound`).
     PadRelease {
         engine: usize,
@@ -94,6 +102,7 @@ impl Command {
             Command::Preview(d) => g.start_preview(d.clone()),
             Command::PreviewRegion { data, start, end, looping } => g.start_preview_region(data.clone(), *start, *end, *looping),
             Command::PadHit { engine, pad, velocity } => g.pad_hit(*engine, *pad, *velocity, 0),
+            Command::LayerHit { engine, pad, layer, velocity } => g.layer_hit(*engine, *pad, *layer, *velocity, 0),
             Command::PadRelease { engine, pad } => g.pad_release(*engine, *pad, 0),
             Command::SetPadMode { engine, mode } => g.set_pad_mode(*engine, *mode),
             Command::SelectEngine(e) => g.select_engine(*e),
