@@ -1,6 +1,8 @@
-//! v1's sound rules on a single voice (Einst's rules installed).
+//! v1's sound rules on a single voice (Einst's rules installed): the
+//! mirrored, per-block reverse, the end fade from the sample that reaches
+//! it, one pan stage, and the timestretch ratio cap.
 
-use dreist_dsp::voice::{LAYER_PARAMS, NoteSetup, PlaybackMode, SOURCES, SampleData, Voice};
+use dreist_dsp::voice::{LAYER_PARAMS, NoteSetup, PlaybackMode, SOURCES, SampleData, Voice, lp};
 use std::sync::Arc;
 
 const SR: f32 = 44_100.0;
@@ -113,4 +115,31 @@ fn voice_ignores_the_pan_lane() {
     let (l, r, _) = play((0..n).map(|i| (i as f32 * 0.05).sin()).collect(), s, 2048, 64, |_, _| {});
     assert!(l.iter().any(|x| x.abs() > 0.1));
     assert_eq!(l, r);
+}
+
+/// v1's stretch ratio is at most 4 ([re:d8985e]): an amount for ×7.3
+/// plays as long as one for ×4; tracking, the layer's source BPM over the
+/// host's.
+#[test]
+fn timestretch_ratio_is_capped_at_four() {
+    let n = 8000;
+    let src: Vec<f32> = (0..n).map(|i| (i as f32 * 0.06).sin() * 0.5).collect();
+    let stop = |amount: f32, bpm: Option<(f32, f32)>| {
+        let mut s = setup(n as u32);
+        s.layer[lp::TS_ACTIVE][0] = 1.0;
+        s.layer[lp::TS_AMOUNT][0] = amount;
+        if bpm.is_some() {
+            s.layer[lp::TS_TRACKS_BPM][0] = 1.0;
+        }
+        s.stretch_bpm = bpm;
+        let mut v = Voice::new(SR);
+        v.prepare_timestretch();
+        play(src.clone(), s, 8 * n, 64, |_, _| {}).2.expect("voice ends")
+    };
+    let four = stop(0.5 + 3.0 / 14.0, None);
+    assert_eq!(stop(0.95, None), four);
+    // Tracking at the host's 120 BPM: 240 → ×2, 960 → capped at ×4.
+    let two = stop(0.5, Some((240.0, 120.0)));
+    assert!(four > two * 3 / 2, "{four} vs {two}");
+    assert_eq!(stop(0.5, Some((960.0, 120.0))), four);
 }

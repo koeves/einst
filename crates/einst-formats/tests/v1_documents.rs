@@ -347,6 +347,23 @@ fn v1_effect_types_map_onto_v2() {
     }
 }
 
+/// v1's stretch is source over destination BPM ([re:d8985e]): the
+/// converted layer keeps both (the engine's tracking ratio reads the
+/// source) and carries the ratio as the amount.
+#[test]
+fn stretch_bpm_becomes_the_amount() {
+    let text =
+        layer("Layer0", "3.2", "").replace(r#"SourceBPM="120" DestinationBPM="120""#, r#"SourceBPM="90" DestinationBPM="120""#).replace(r#"UsesTimestretch="false""#, r#"UsesTimestretch="true""#);
+    let doc = convert(FileKind::Pad, &format!("<root>{}</root>", pad("Pad", &text)));
+    let l = first(first(&doc, "Pad"), "Layer");
+    assert_eq!((l.f32("SourceBPM"), l.f32("DestinationBPM")), (Some(90.0), Some(120.0)));
+    let amount = l.f32("TimestretchAmount").unwrap();
+    assert!((dreist_dsp::stretch::amount_factor(amount) - 0.75).abs() < 1e-5, "{amount}");
+    // Equal tempos leave the default amount.
+    let doc = convert(FileKind::Pad, &format!("<root>{}</root>", pad("Pad", &layer("Layer0", "3.2", ""))));
+    assert!(first(first(&doc, "Pad"), "Layer").attr("TimestretchAmount").is_none());
+}
+
 /// The tracks' lane scale and compression amounts reach the engine's
 /// pattern ([re:51afe0]).
 #[test]

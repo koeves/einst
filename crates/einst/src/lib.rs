@@ -42,13 +42,13 @@ pub fn effect_menu(category: usize) -> Vec<usize> {
 /// v1's behaviour where it differs from the reference: the sampler stops a
 /// threshold-started recording after 1 s of silence (`silence > sr`); the envelope's end
 /// rules (ev_dc13a646) and the forward loop without crossfade, wrapping at
-/// the loop end minus 3 frames (ev_29992d9a);
-/// the step lanes at note start with the tracks' scale, compression and
-/// unrounded randomisation ([re:51afe0]);
-/// one pan stage at the layer ([re:f87c3f]); the aux send summing
-/// ([re:99f309]);
-/// the mirrored, per-block reverse ([re:18d53d], [re:fece0b]) and the
-/// end fade from the sample that reaches it ([re:fece0b], [re:093661]).
+/// the loop end minus 3 frames (ev_29992d9a); the step lanes at note start
+/// with the tracks' scale, compression and unrounded randomisation
+/// ([re:51afe0]); one pan stage at the layer ([re:f87c3f]); the
+/// mirrored, per-block reverse ([re:18d53d], [re:fece0b]); the end fade
+/// from the sample that reaches it ([re:fece0b], [re:093661]); the aux
+/// send summing ([re:99f309]); and the timestretch ratio from the layer's
+/// source and destination BPM ([re:d8985e]).
 pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules {
     sampler_auto_stop_seconds: 1.0,
     envelope_v1_ends: true,
@@ -58,7 +58,7 @@ pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules {
     reverse_v1: true,
     end_fade_v1: true,
     sends_v1: true,
-    timestretch_v1: false,
+    timestretch_v1: true,
 };
 
 /// Install Einst's profile, effect nodes, v1's fast 2^x, rules and voice
