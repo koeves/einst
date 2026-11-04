@@ -87,6 +87,25 @@ UNSTYLED = {
     ("CtrlPanel", "EditorPad"): "PadSlotStyle",
 }
 
+# Rects v1's layout got wrong, by (skin, control name) -> x, y, w, h.
+RECT_FIXES = {
+    # "-> Pad" (x 719) and "-> Pads" (x 749) overlapped by 20 px: both 50
+    # wide as the row's other buttons, paired 2 px apart right after
+    # Slice like the row's other pairs, ending at the row's right edge.
+    ("Sampler/SamplerPanel.skin", "SendToPadButton"): [711, 19, 50, 17],
+    ("Sampler/SamplerPanel.skin", "SendAllToPadsButton"): [762, 19, 50, 17],
+}
+
+# Controls added to a skin's top panel: rel -> controls. The slicer's
+# zoom scrollbar (the manual's "Zoom in/out and scrollbar" on the
+# Slicer page): under the wave, left of the zoom buttons.
+EXTRA = {
+    "Preview/PreviewPanel.skin": lambda: [
+        E("CtrlPanel", {"name": "PreviewZoomSlider", "rect": "8, 327, 772, 12", "overloadClass": "WaveDisplayZoomSlider",
+                        "displayName": "Drag to scroll, drag an edge to zoom", "style": "WaveDisplayZoomSliderStyle"}),
+    ],
+}
+
 # Control texts by name: the debug frame-rate label stays empty until code
 # fills it.
 CTRL_TEXT = {"FPSLabel": ""}
@@ -413,6 +432,7 @@ class Converter:
                 cls, parent = "CheckBoxButtonRendererStyle", "CheckBoxStyle"
         attrs = {"name": name, "parentStyle0": parent}
         attrs.update(out)
+        attrs.update(theme.STYLE_OVERRIDES.get(name, {}))
         info = {"ctrl": ctrl, "look": look, "fit": fit, "class": el.tag, "flip": flip}
         if name in self.theme_names:
             self.info[name] = info
@@ -497,7 +517,7 @@ class Converter:
             if k in CTRL_KEEP:
                 attrs[k] = neutral(v)
             elif k == "rect":
-                attrs[k] = parse_rect(v)
+                attrs[k] = list(RECT_FIXES.get((source, el.get("name")), parse_rect(v)))
             elif k not in CTRL_DROPPED:
                 raise SystemExit(f"uigen: {source}: unknown control attribute {k}")
         if v1cls == "Ctrl" and ov in CTRL_OVERLOADS:
@@ -675,6 +695,7 @@ class Converter:
                 if el.tag.endswith("Style") or el.tag in ("VColour", "VFont"):
                     continue
                 ctrls.extend(self.ctrl(el, rel))
+            ctrls[-1].kids.extend(EXTRA.get(rel, list)())
             out = rel.replace("\\", "/")
             for a, b in FOLDERS.items():
                 out = re.sub(rf"^{a}/", f"{b}/", out)

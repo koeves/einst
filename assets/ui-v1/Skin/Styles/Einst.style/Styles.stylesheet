@@ -37,7 +37,7 @@
     <CtrlStyle name="LcdStripSelectedStyle" colBorder="StripSelectedEdge" colFill="StripSelected" parentStyle0="LcdRowEvenStyle" />
     <CtrlStyle name="LcdGlueStyle" colFill="StripHead" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="LcdStripHeadStyle" colBorder="StripHeadEdge" colFill="StripHead" optDrawBorder="true" parentStyle0="BasePanelStyle" realBorderWidth="2" />
-    <CtrlStyle name="LcdRulerStyle" colFill="LcdDim" parentStyle0="BasePanelStyle" realCornerRounding="1" />
+    <CtrlStyle name="LcdRulerStyle" colFill="LcdDim" colText="Ink" colTick="InkMid" font="Sans7Bold" parentStyle0="BasePanelStyle" realCornerRounding="1" />
     <CtrlStyle name="LcdFieldStyle" colBorder="Ink" colFill="LcdLight" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="2" />
     <CtrlStyle name="LcdPlotStyle" colBorder="InkMid" colFill="LcdLight" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="2" />
     <CtrlStyle name="LcdButtonStyle" colAltBorder="Ink" colAltFill="LcdOn" colBorder="LcdEdge" colFill="LcdFace" parentStyle0="BaseButtonStyle" realGradientShade="0.08" />
@@ -111,6 +111,7 @@
     <CtrlStyle name="ReadoutButtonStyle" colAltBorder="Readout" colAltFill="ReadoutDim" colAltText="Readout" colBorder="ReadoutDim" colFill="Transparent" colText="Readout" font="Sans9Bold" parentStyle0="BaseButtonStyle" />
     <CtrlStyle name="ModalButtonStyle" colAltBorder="Ink" colAltFill="ModalOn" colAltText="Ink" colBorder="Ink" colFill="ModalGroup" parentStyle0="BaseButtonStyle" realCornerRounding="3" />
     <CtrlStyle name="ModalFieldStyle" colBorder="Ink" colFill="ModalField" parentStyle0="BaseTextBoxStyle" />
+    <CtrlStyle name="ModalListStyle" colBorder="Ink" colFill="ModalList" colRowAlt="ModalGroup" colText="Ink" font="Sans10" parentStyle0="BaseTableStyle" />
     <CtrlStyle name="ModalProgressStyle" colAltBorder="Ink" colAltFill="InkMid" colBorder="Ink" colFill="ModalField" optDrawBorder="true" parentStyle0="BaseStyle" />
     <CheckBoxButtonRendererStyle name="CheckBoxStyle" colAltBorder="Ink" colAltFill="LcdLight" colBorder="Ink" colFill="LcdLight" colTick="Ink" parentStyle0="BaseStyle" realCornerRounding="2" realTickInset="3" realTickLineWidth="2" />
     <CtrlStyle name="TimelineStyle" colBorder="InkMid" colFill="LcdLight" optDrawBorder="true" parentStyle0="BasePanelStyle" />
@@ -142,9 +143,25 @@
     <CtrlStyle name="BrowserIconSelectedStyle" parentStyle0="BrowserIconStyle" />
     <CtrlStyle name="BrowserSplitStyle" colFill="BrowserSplit" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="BrowserParentStyle" colBorder="InkSoft" colFill="LcdLight" font="Sans10" parentStyle0="BaseButtonStyle" realCornerRounding="0" />
-    <CtrlTableViewStyle name="BrowserListStyle" colBorder="InkSoft" colColumnDivider="InkSoft" colFill="BrowserList" colHeaderDivider="InkMid" colHeaderFill="BrowserHeader" colRow="BrowserList" colRowAlt="BrowserList" colRowDivider="InkSoft" colSelection="BrowserSel" font="Sans10" intHeaderHeight="17" intRowHeight="25" optAltRowColours="true" optColumnDividers="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
+    <CtrlTableViewStyle name="BrowserListStyle" colBorder="InkSoft" colColumnDivider="InkSoft" colFill="BrowserList" colHeaderDivider="InkMid" colHeaderFill="BrowserHeader" colRow="BrowserList" colRowAlt="BrowserList" colRowDivider="InkSoft" colSelectedText="Ink" colSelection="BrowserSel" font="Sans10" intHeaderHeight="17" intRowHeight="25" optAltRowColours="true" optColumnDividers="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
     <CtrlStyle name="BrowserBadgeStyle" colBorder="InkMid" colFill="LcdLight" font="Sans7Bold" parentStyle0="BaseButtonStyle" realCornerRounding="2" />
     <CtrlStyle name="BrowserScrollStyle" colFill="Ink" parentStyle0="BasePanelStyle" realCornerRounding="2" />
+    <CtrlStyle name="WaveDisplayStyle" colAltFill="WaveBack" colAmpEnvelopeBack="EnvAmpBack" colCenterLine="Ink" colEndMarker="WaveMarker" colEnvelopeGrab="Amber" colEnvelopeHandle="LcdLight" colEnvelopeLine="EnvLine" colFill="WaveBack" colFreeEnvelopeBack="EnvFreeBack" colLine="Ink" colLineDisabled="WaveDisabled" colLineLooping="InkMid" colLoopEndMarker="WaveLoopMarker" colLoopStartMarker="WaveLoopMarker" colMarkerHole="Ink" colStartMarker="WaveMarker" colText="LcdLight" colTimelineBackground="LcdDim" colTimelineMarkers="Ink" colTimelineText="Ink" colTitleFill="WaveTitle" font="Sans9Bold" fontTimeline="Sans8" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="WaveDisplayZoomSliderStyle" colAltFill="LcdFace" colBorder="Ink" colFill="InkSoft" colTrack="LcdDim" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="VSplitStyle" colAltBorder="SplitTickBar" colAltFill="AmberSoft" colBorder="SplitTick" colFill="SplitGraph" colHandle="Ink" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SceneTriggerEmptyStyle" colAltBorder="Transparent" colAltFill="Transparent" colBorder="SceneEdge" colFill="LcdLight" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SceneTriggerUsedStyle" colAltFill="SceneUsed" parentStyle0="SceneTriggerEmptyStyle" />
+    <CtrlStyle name="SceneTriggerCuedStyle" colAltBorder="Amber" colAltFill="SceneUsed" parentStyle0="SceneTriggerEmptyStyle" />
+    <CtrlStyle name="SceneTriggerActiveStyle" colAltFill="Amber" parentStyle0="SceneTriggerEmptyStyle" />
+    <CtrlStyle name="FxSlotItemStyle" colBorder="LcdEdge" colFill="LcdFace" colText="Ink" font="Sans9" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="FxSlotItemLitStyle" colBorder="Ink" colFill="AmberSoft" parentStyle0="FxSlotItemStyle" />
+    <CtrlStyle name="SelectionButtonMultiStyle" colFill="RowSelected" parentStyle0="LcdRowSelectedStyle" realCornerRounding="0" />
+    <CtrlStyle name="GridPastLengthStyle" colFill="PastLength" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="PatternTrackMarkerStyle" colAltFill="Amber" colFill="InkMid" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="StepSelectionStyle" colFill="AmberSoft" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongPartRecordingStyle" colBorder="Ink" colFill="RecordingPart" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongPartRetroStyle" colBorder="RetroEdge" colFill="RetroPart" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongLoopStyle" colFill="AmberTint" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="TooltipStyle" colBorder="ToolTipBorderColour" colFill="ToolTipPanelColour" colText="ToolTipTextColour" enumDisabledDrawMode="NormalDrawing" optDrawBorder="true" parentStyle0="BaseStyle" />
     <CtrlOptionMenuStyle name="MenuStyle" colAltFill="Amber" colBorder="Ink" colDivider="InkSoft" colFill="LcdLight" colSubMenuArrow="Ink" colText="Ink" optDrawBorder="true" optDrawShadow="true" parentStyle0="BaseStyle" realCornerRounding="3" />
     <!-- From v1 GlobalStyles.skin -->
@@ -205,8 +222,8 @@
     <CtrlStyle name="StandardLargeLabelCenteredNotificationStyle" colText="Ink" enumTextHorizontalAlign="center" font="Sans27" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="ModalLargeLabelCenteredNotificationStyle" colText="Ink" enumTextHorizontalAlign="center" font="Sans27" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="StandardLargeLabelCenteredNotificationStyleLight" colText="#FFFFFF" enumTextHorizontalAlign="center" font="Sans27" parentStyle0="BaseLabelStyle" />
-    <CtrlTableViewStyle name="GlobalTableStyle" colBorder="Ink" colColumnDivider="Ink" colFill="Transparent" colHeaderDivider="Ink" colHeaderFill="Transparent" colHeaderText="Ink" colRow="169, 176, 191, 80" colRowAlt="199, 206, 217, 40" colSelection="Transparent" colText="Ink" font="Sans10" optAltRowColours="true" optColumnDividers="true" optDrawBorder="true" optHeader="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
-    <CtrlTableViewStyle name="GlobalTableStyleAlwaysVisibleHSlider" colBorder="Ink" colColumnDivider="Ink" colFill="Transparent" colHeaderDivider="Ink" colHeaderFill="Transparent" colHeaderText="Ink" colRow="169, 176, 191, 80" colRowAlt="199, 206, 217, 40" colSelection="197, 151, 34, 120" colText="Ink" font="Sans10" optAltRowColours="true" optColumnDividers="true" optDrawBorder="true" optHeader="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
+    <CtrlTableViewStyle name="GlobalTableStyle" colBorder="Ink" colColumnDivider="Ink" colFill="Transparent" colHeaderDivider="Ink" colHeaderFill="LcdDim" colHeaderText="Ink" colRow="169, 176, 191, 80" colRowAlt="199, 206, 217, 40" colSelection="Transparent" colText="Ink" font="Sans10" optAltRowColours="true" optColumnDividers="true" optDrawBorder="true" optHeader="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
+    <CtrlTableViewStyle name="GlobalTableStyleAlwaysVisibleHSlider" colBorder="Ink" colColumnDivider="Ink" colFill="Transparent" colHeaderDivider="Ink" colHeaderFill="LcdDim" colHeaderText="Ink" colRow="169, 176, 191, 80" colRowAlt="199, 206, 217, 40" colSelection="197, 151, 34, 120" colText="Ink" font="Sans10" optAltRowColours="true" optColumnDividers="true" optDrawBorder="true" optHeader="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
     <CtrlStyle name="VerticalScrollbarStyle" colAltFill="Ink" colBorder="Ink" colFill="LcdLight" colFillHighlight="Ink" optDrawBorder="true" parentStyle0="BaseSliderStyle" />
     <CtrlStyle name="HorizontalScrollbarStyle" colAltFill="Ink" colBorder="Ink" colFill="LcdLight" colFillHighlight="Ink" optDrawBorder="true" parentStyle0="BaseSliderStyle" />
     <CtrlStyle name="StandardScrollViewStyle" colBorder="Transparent" colFill="Transparent" parentStyle0="BasePanelStyle" realCornerRounding="0" />
@@ -413,7 +430,7 @@
     <CtrlStyle name="SelectorStyleEditing" parentStyle0="PatternKeyEditingStyle" />
     <CtrlStyle name="SelectorStyleSelected" parentStyle0="PatternKeySelectedStyle" />
     <!-- From v1 Preview/PreviewPanel.skin -->
-    <CtrlStyle name="PreviewPanelBackgroundStyle" parentStyle0="BasePanelStyle" realCornerRounding="0" />
+    <CtrlStyle name="PreviewPanelBackgroundStyle" colFill="Lcd" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <!-- From v1 RootSkin.skin -->
     <CtrlStyle name="RootPanelStyle" parentStyle0="ChassisStyle" realCornerRounding="0" />
     <CtrlStyle name="RootPanelSmallStyle" parentStyle0="ChassisStyle" realCornerRounding="0" />

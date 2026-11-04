@@ -56,8 +56,8 @@
                 <CtrlButton name="NormalizeButton" rect="513, 19, 50, 17" displayName="Normalize current Take between markers" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" text="Normalize" />
                 <CtrlButton name="SaveButton" rect="582, 19, 75, 17" displayName="Export current Take" id="100028" optIsMomentary="true" overloadClass="FlashingButton" renderer="PopupButtonRenderer" style="LEDLargeMenuButtonStyle" text="Export/Send" />
                 <CtrlButton name="SliceButton" rect="659, 19, 50, 17" displayName="Slice current Take" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" text="Slice" />
-                <CtrlButton name="SendToPadButton" rect="719, 19, 50, 17" displayName="Send current Take to current Pad" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" text="-&gt; Pad" />
-                <CtrlButton name="SendAllToPadsButton" rect="749, 19, 50, 17" displayName="Send all Takes to free Pads" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" text="-&gt; Pads" />
+                <CtrlButton name="SendToPadButton" rect="711, 19, 50, 17" displayName="Send current Take to current Pad" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" text="-&gt; Pad" />
+                <CtrlButton name="SendAllToPadsButton" rect="762, 19, 50, 17" displayName="Send all Takes to free Pads" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" text="-&gt; Pads" />
             </CtrlPanel>
         </CtrlPanel>
         <CtrlPanel name="CtrlPanel" rect="1, 122, 812, 270" id="100008" style="SamplerPanelOuterBackgroundStyle">
