@@ -1,36 +1,37 @@
-//! Sampler panel (`SimpleSamplerPanel.skin`, [re:9fbf48]): content
-//! 0 of the pads `Splitter`, opened to 80 px when the engine's pad mode is
-//! Sampler ([re:f5831b], which also gives the pad
-//! matrix a top spacing of 2).
+//! Sampler page (`Sampler/SamplerPanel.skin`, the LCD's last tab): v1's
+//! take recorder ([re:9fbf48]).
 //!
-//! - [re:e1d697]: TriggerMode items Immediate /
-//!   MIDI / Host / Threshold / Timed MIDI (posts `e_setSamplerStartMode`
-//!   0xf2, lambda [re:2a7fed]); MonoButton menu Stereo / Mono (Left) / Mono
-//!   (Right) → 0xfe (lambdas [re:7e2b16]…); Follow lists the auto modes
-//!   ([re:91218b]).
+//! - Trigger mode (Immediate / MIDI / Host / Threshold, `e_setSamplerStartMode`
+//!   0xf2, [re:e1d697]) with the threshold panel (Start / Stop sliders and the
+//!   input meter between them) shown for Threshold; record mode (Free /
+//!   Timed / Looped, 0xf3 off / stop / retake) with the Beats / Seconds switch
+//!   and the Bars / Beats or Seconds boxes shown for Timed and Looped.
 //! - Control events [re:97cc15]: Arm → 0xec, Rec → 0xef, Thru → 0xff,
-//!   InputGain → 0xf4 (slider × 4), PreviewVolume → 0xe8, thresholds →
-//!   0xf6 / 0xf7 via [re:766df4], sync group →
-//!   0xfa, seconds → 0xf8 (0..3600), bars/beats → 0xf9, source → 0xfd.
-//! - State update [re:c51166]: button states and panel visibility.
+//!   InputGain → 0xf4 (knob × 4), Preview vol → 0xe8, thresholds → 0xf6 /
+//!   0xf7 via [re:766df4], sync group → 0xfa, seconds → 0xf8 (0..3600),
+//!   bars / beats → 0xf9, source → 0xfd, Mono → 0xfe (left channel).
+//! - Finished takes go to the take list (the engine posts the audio); Take
+//!   picks the current one, which the wave area shows with its start / end
+//!   markers. Clear (0xfb) / Clear All (0xfc), Preview / Loop, Crop,
+//!   Normalize, the Export/Send menu, Slice and → Pad / → Pads work on the
+//!   editor's copy of the takes, saved as WAV files where they are used.
 
 use dreist_engine::binding::id;
-use dreist_gui::app::{App, UiEvent};
-use dreist_gui::{Ctrl, Rect, Skin};
+use dreist_gui::app::{App, MouseKind, UiEvent};
+use dreist_gui::paint::{Painter, RectF};
+use dreist_gui::render::Renderer;
+use dreist_gui::style::{HAlign, VAlign};
+use dreist_gui::{Colour, Ctrl, Rect, Skin};
 
+use crate::EditorError;
 use crate::command::{Command, msg};
-use crate::model::Model;
-use crate::{EditorError, err};
+use crate::model::{LAYERS, Model};
 
-pub const TRIGGER_MODES: [&str; 5] = ["Immediate", "MIDI", "Host", "Threshold", "Timed MIDI"];
-pub const CHANNEL_MODES: [&str; 3] = ["Stereo", "Mono (Left)", "Mono (Right)"];
-/// [re:55c82e] names, camel case split.
-pub const AUTO_MODES: [&str; 6] = ["Slice", "Single", "Next Layer", "Next Pad", "Next Layer And Pad", "No Auto Allocation"];
 /// `e_setPreviewVolume`.
 const SET_PREVIEW_VOLUME: u32 = 0xe8;
 /// [re:dab344]: "External" (the host
 /// input, 38), then output locations 1–33 by name (Master, Sub output
-/// 1–32); MITM producers would follow (out of scope).
+/// 1–32); routing plugins would follow (out of scope).
 pub fn source_items() -> Vec<String> {
     std::iter::once("External".to_string()).chain((1..34).map(|i| dreist_engine::engine::Route::from_index(i).name())).collect()
 }
@@ -43,8 +44,6 @@ fn source_of_item(i: usize) -> i32 {
 fn item_of_source(s: i32) -> usize {
     if (1..34).contains(&s) { s as usize } else { 0 }
 }
-/// Splitter position when open (set with the pad mode).
-pub const OPEN_HEIGHT: i32 = 80;
 
 /// [re:c42363].
 pub fn level_to_value(l: f32) -> f32 {
@@ -63,32 +62,183 @@ pub fn value_to_level(v: f32) -> f32 {
     10f32.powf((v * 1.25).ln() * 6.0 / 4.4629)
 }
 
+/// Frames per wave overview bucket.
+const BUCKET: usize = 64;
+
+/// A recorded take (the editor's copy).
+#[derive(Clone, Debug)]
+pub struct Take {
+    pub left: Vec<f32>,
+    pub right: Vec<f32>,
+    pub sample_rate: f32,
+    /// Start / end markers (frames): Crop, Normalize, previews and saves.
+    pub start: u32,
+    pub end: u32,
+    /// "Take n" (numbered in recording order).
+    pub number: usize,
+    /// (min, max) per [`BUCKET`] frames of both channels.
+    buckets: Vec<(f32, f32)>,
+}
+
+impl Take {
+    fn new(left: &[f32], right: &[f32], sample_rate: f32, number: usize) -> Take {
+        let right = if right.len() == left.len() { right.to_vec() } else { left.to_vec() };
+        let mut t = Take { left: left.to_vec(), right, sample_rate: sample_rate.max(1.0), start: 0, end: left.len() as u32, number, buckets: Vec::new() };
+        t.overview();
+        t
+    }
+
+    fn overview(&mut self) {
+        self.buckets = self.left.chunks(BUCKET).zip(self.right.chunks(BUCKET)).map(|(l, r)| crate::model::bucket(l, r)).collect();
+    }
+
+    pub fn frames(&self) -> u32 {
+        self.left.len() as u32
+    }
+
+    pub fn label(&self) -> String {
+        format!("Take {}", self.number)
+    }
+
+    /// The marked region (start < end).
+    fn region(&self) -> (usize, usize) {
+        let n = self.left.len();
+        let a = (self.start as usize).min(n);
+        let b = (self.end as usize).clamp(a, n);
+        if a < b { (a, b) } else { (0, n) }
+    }
+
+    /// Crop to the markers.
+    fn crop(&mut self) {
+        let (a, b) = self.region();
+        self.left = self.left[a..b].to_vec();
+        self.right = self.right[a..b].to_vec();
+        self.start = 0;
+        self.end = self.frames();
+        self.overview();
+    }
+
+    /// The region between the markers to a 0 dB peak.
+    fn normalize(&mut self) {
+        let (a, b) = self.region();
+        let peak = self.left[a..b].iter().chain(&self.right[a..b]).fold(0.0f32, |m, v| m.max(v.abs()));
+        if peak <= 1e-9 {
+            return;
+        }
+        let g = 1.0 / peak;
+        for v in self.left[a..b].iter_mut().chain(self.right[a..b].iter_mut()) {
+            *v *= g;
+        }
+        self.overview();
+    }
+
+    fn data(&self) -> std::sync::Arc<dreist_dsp::voice::SampleData> {
+        std::sync::Arc::new(dreist_dsp::voice::SampleData { left: self.left.clone(), right: Some(self.right.clone()), sample_rate: self.sample_rate })
+    }
+
+    /// Write the take (cropped to the markers when `crop`) as a WAV file;
+    /// peaks above 0 dBFS are scaled to 0.998.
+    pub fn save(&self, path: &std::path::Path, crop: bool) -> std::io::Result<()> {
+        let (a, b) = if crop { self.region() } else { (0, self.left.len()) };
+        let (l, r) = (&self.left[a..b], &self.right[a..b]);
+        let peak = l.iter().chain(r).fold(0.0f32, |m, v| m.max(v.abs()));
+        let g = if peak > 1.0 { 0.998 / peak } else { 1.0 };
+        let (l, r): (Vec<f32>, Vec<f32>) = (l.iter().map(|v| v * g).collect(), r.iter().map(|v| v * g).collect());
+        if let Some(d) = path.parent() {
+            std::fs::create_dir_all(d)?;
+        }
+        dreist_engine::write_wav(path, self.sample_rate.round() as u32, &l, &r)
+    }
+}
+
+/// What the page asks the editor to do (file dialogs, pads, the slicer).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Request {
+    /// Export take...: a file.
+    ExportTake,
+    /// Export all takes...: a folder, "<Name> <Take>.wav" each.
+    ExportAll,
+    /// Send take to current pad (its first layer, the pad's samples cleared).
+    SendToPad,
+    /// Send all takes to empty pads (first layers).
+    SendAllToPads,
+    /// Send all takes to free layers on current pad.
+    SendToFreeLayers,
+    /// Send all takes to free layers on empty pads.
+    SendToEmptyPadLayers,
+    /// Slice: save the take and open it in the slicer.
+    Slice,
+}
+
+/// The Export/Send menu: items and their requests (`None`: the auto-crop
+/// check or a separator).
+fn send_menu(auto_crop: bool) -> Vec<(String, Option<Request>)> {
+    vec![
+        ("Export take...".into(), Some(Request::ExportTake)),
+        ("Export all takes...".into(), Some(Request::ExportAll)),
+        (String::new(), None),
+        ("Send take to current pad".into(), Some(Request::SendToPad)),
+        ("Send all takes to empty pads".into(), Some(Request::SendAllToPads)),
+        ("Send all takes to free layers on current pad...".into(), Some(Request::SendToFreeLayers)),
+        ("Send all takes to free layers on empty pads".into(), Some(Request::SendToEmptyPadLayers)),
+        (String::new(), None),
+        (format!("{}Auto-crop saved samples", if auto_crop { dreist_gui::menu::CHECK } else { "" }), None),
+    ]
+}
+
+/// The open popup.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Menu {
+    Source,
+    Take,
+    Send,
+    Timeline,
+}
+
+/// A press in the wave area being dragged.
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Drag {
+    /// The start (true) or end marker.
+    Marker(bool),
+    /// Zoom (vertical) and scroll (horizontal) from (x, y, view).
+    View(f32, f32, (f32, f32)),
+}
+
+#[derive(Default)]
 pub struct Sampler {
-    /// Path of the `SplitterPanel0` host.
+    /// The page's `SamplerPanel` (the skin's controls).
     host: Option<Vec<usize>>,
-    /// Whether the splitter is open.
-    open: bool,
-    /// Auto-allocation target (engine, pad, layer) ([re:b41333]
-    /// ), set when arming.
-    pub target: Option<(usize, usize, usize)>,
-    /// Takes saved this session (" Take %d ").
+    /// The take display (`WaveArea`).
+    wave: Option<Vec<usize>>,
+    pub takes: Vec<Take>,
+    /// The current take (Take list).
+    pub current: usize,
+    /// Takes recorded this session (numbers).
     taken: usize,
+    /// Record mode: 0 Free, 1 Timed, 2 Looped.
+    pub record_mode: u8,
+    /// Name box: the saved files' name.
+    pub name: String,
+    previewing: bool,
+    loop_preview: bool,
+    /// Export/Send › Auto-crop saved samples.
+    pub auto_crop: bool,
+    /// Visible part of the take (start, length) as fractions.
+    view: (f32, f32),
+    zoom_mode: i64,
+    drag: Option<Drag>,
+    menu: Option<(Menu, Vec<Option<Request>>)>,
+    /// A message for the status line (until the state changes).
+    pub message: Option<String>,
+    /// What the editor should run after the event.
+    pub request: Option<Request>,
+    timeline_beats: bool,
 }
 
-/// What the editor does with a finished take.
-#[derive(Debug, PartialEq)]
-pub enum TakeAction {
-    /// Follow = Slice: open the slicer on the file.
-    Slice(std::path::PathBuf),
-    /// Loaded into a layer (structural rebuild needed).
-    Loaded,
-    /// Saved only (No Auto Allocation).
-    Saved,
-}
-
-/// [re:1a0972] [re:324b22]: takes
-/// go to `<record path>/<date>/` ([re:9c6245] +
-/// "Sampler Captures", unless `SamplerRecordPath` is set).
+/// [re:1a0972] [re:324b22]: takes are
+/// saved to `<record path>/<date>/` ([re:9c6245] +
+/// "Sampler Captures", unless `SamplerRecordPath` is set) when no file
+/// dialog is available.
 pub fn record_dir(opts: &crate::options::Options) -> std::path::PathBuf {
     let custom = opts.string("SamplerRecordPath", "");
     let base = if custom.is_empty() { crate::options::documents_dir().join("Sampler Captures") } else { std::path::PathBuf::from(custom) };
@@ -123,125 +273,186 @@ pub fn free_filename(dir: &std::path::Path, name: &str) -> Option<std::path::Pat
     (2..=9999).map(|n| dir.join(format!("{name} ({n}).wav"))).find(|p| !p.exists())
 }
 
-/// Auto-allocation step after a take
-/// ([re:78dd34]): the layer the take goes to and the next target, or None
-/// when the sampler disarms.
-pub fn allocate(mode: usize, target: (usize, usize, usize), selected_layer: usize, layer_used: &dyn Fn(usize) -> bool) -> ((usize, usize, usize), Option<(usize, usize, usize)>) {
-    let (e, mut pad, mut layer) = target;
-    match mode {
-        // Single: the selected layer of the target pad.
-        1 => layer = selected_layer,
-        // Next Pad: the first free layer of the target pad (else layer 0).
-        3 => layer = (0..8).find(|&l| !layer_used(l)).unwrap_or(0),
-        _ => {}
-    }
-    let at = (e, pad, layer);
-    let next = match mode {
-        2 => (layer + 1 < 8).then(|| (e, pad, layer + 1)),
-        3 => {
-            pad += 1;
-            (pad < 64).then_some((e, pad, layer))
-        }
-        4 => {
-            layer += 1;
-            if layer > 7 {
-                layer = 0;
-                pad += 1;
-            }
-            (pad < 64).then_some((e, pad, layer))
-        }
-        _ => None,
+/// Wave display layout: the time ruler, the marker strip, the wave below.
+pub(crate) const RULER: f32 = crate::timeline::STRIP;
+pub(crate) const WAVE_TOP: f32 = crate::timeline::WAVE_TOP;
+
+/// A theme colour (the v1 `WaveEditor*` / `PreviewEditor*` names).
+pub(crate) fn colour(r: &Renderer, name: &str, default: Colour) -> Colour {
+    r.styles.colours.get(name).copied().unwrap_or(default)
+}
+
+/// The wave displays' ruler and marker strip: time labels (seconds from
+/// the file start, or bars.beats at `tempo`) over the visible `start_s` ..
+/// `start_s + len_s`.
+pub(crate) fn draw_ruler(r: &Renderer, p: &mut Painter, w: f32, start_s: f64, len_s: f64, beats: bool, tempo: f64) {
+    let ink = colour(r, "WaveEditorTextColour", Colour::rgba(18, 25, 60, 255));
+    p.fill_rect(RectF::new(0.0, 0.0, w, WAVE_TOP), colour(r, "LcdLight", Colour::rgba(222, 229, 237, 255)));
+    p.line(0.0, RULER + 0.5, w, RULER + 0.5, ink.with_alpha(0.4), 1.0);
+    p.line(0.0, WAVE_TOP - 0.5, w, WAVE_TOP - 0.5, ink, 1.0);
+    let font = r.styles.font("StandardLabelStyle");
+    let x_of = |t: f64| ((t - start_s) / len_s.max(1e-9) * w as f64) as f32;
+    let marks: Vec<(f64, String)> = if beats {
+        let (unit, labels) = crate::timeline::beat_labels(start_s * 1000.0, len_s * 1000.0, tempo);
+        labels.into_iter().map(|(i, t, _)| (i as f64 * unit * 0.001, t)).collect()
+    } else {
+        crate::timeline::time_labels(start_s * 1000.0, len_s * 1000.0).into_iter().map(|ms| (ms * 0.001, crate::timeline::time_text(ms))).collect()
     };
-    (at, next)
+    for (t, label) in marks {
+        let x = x_of(t).floor();
+        if x < 0.0 || x > w {
+            continue;
+        }
+        p.line(x + 0.5, 0.0, x + 0.5, RULER, ink, 1.0);
+        p.text(RectF::new(x + 2.0, 0.0, 60.0, RULER), &label, ink, &font, HAlign::Left, VAlign::Center);
+    }
+}
+
+/// A waveform from (min, max) buckets of `per` frames over frames `v0..v1`
+/// into `area`, the pixel columns `cols` only.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn draw_wave(p: &mut Painter, area: RectF, buckets: &[(f32, f32)], per: usize, v0: f64, v1: f64, col: Colour, cols: (f32, f32)) {
+    if buckets.is_empty() || v1 <= v0 {
+        return;
+    }
+    let mid = area.y + area.h / 2.0;
+    let fpp = (v1 - v0) / area.w.max(1.0) as f64;
+    for px in cols.0.max(0.0) as usize..cols.1.min(area.w).max(0.0) as usize {
+        let f0 = v0 + px as f64 * fpp;
+        let b0 = (f0 / per as f64).floor().max(0.0) as usize;
+        let b1 = (((f0 + fpp) / per as f64).ceil() as usize).max(b0 + 1).min(buckets.len());
+        if b0 >= buckets.len() {
+            break;
+        }
+        let (lo, hi) = buckets[b0..b1].iter().fold((f32::MAX, f32::MIN), |(l, h), &(a, b)| (l.min(a), h.max(b)));
+        let (y0, y1) = (mid - hi.clamp(-1.0, 1.0) * area.h / 2.0 * 0.95, mid - lo.clamp(-1.0, 1.0) * area.h / 2.0 * 0.95);
+        p.fill_rect(RectF::new(area.x + px as f32, y0, 1.0, (y1 - y0).max(1.0)), col);
+    }
 }
 
 impl Sampler {
-    pub fn build(skin: &mut Skin, root: &mut Ctrl) -> Result<Sampler, EditorError> {
-        let Some(sp_path) = root.path_of("Splitter") else { return Ok(Sampler { host: None, open: false, target: None, taken: 0 }) };
-        let mut sp = &mut *root;
-        for &i in &sp_path {
-            sp = &mut sp.children[i];
+    /// Mount the page skin into `page` (in a `SamplerPanel` the meters
+    /// feed from the sampler input).
+    pub fn build(skin: &mut Skin, root: &mut Ctrl, page: &[usize]) -> Result<Sampler, EditorError> {
+        let mut host = &mut *root;
+        for &i in page {
+            host = &mut host.children[i];
         }
-        let mut host = Ctrl {
+        let mut panel = Ctrl {
             class: "CtrlPanel".into(),
             name: "SamplerPanel".into(),
-            display_name: "SplitterPanel0".into(),
             style: "InvisibleStyle".into(),
-            rect: Rect::new(0, 0, sp.rect.w, OPEN_HEIGHT),
-            visible: false,
+            rect: Rect::new(0, 0, host.rect.w, host.rect.h),
+            visible: true,
             enabled: true,
             ..Ctrl::default()
         };
-        skin.mount(&mut host, "SimpleSamplerPanel.skin").map_err(err)?;
-        // [re:eec7d9] / [re:b2a4bd] behave as stock controls here.
-        fn stock(c: &mut Ctrl) {
-            for k in &mut c.children {
-                if matches!(k.overload.as_str(), "FlashingButton" | "SamplerSlider") {
-                    k.overload.clear();
-                }
-                stock(k);
+        crate::front::mount_into(skin, &mut panel, "Sampler/SamplerPanel.skin")?;
+        crate::front::mount_all(skin, &mut panel)?;
+        if let Some(w) = panel.find_mut("WaveArea") {
+            w.overload = "SamplerWaveArea".into();
+        }
+        for n in ["RecordStatus", "ThresholdVU", "VUMeterLeft", "VUMeterRight"] {
+            if let Some(c) = panel.find_mut(n) {
+                c.passive = true;
             }
         }
-        stock(&mut host);
-        sp.children.push(host);
-        let mut p = sp_path;
-        p.push(sp.children.len() - 1);
-        Ok(Sampler { host: Some(p), open: false, target: None, taken: 0 })
+        host.children.push(panel);
+        let hp = [page, &[host.children.len() - 1]].concat();
+        let wave = root.path_of("WaveArea").filter(|p| p.starts_with(&hp));
+        let o = crate::options::Options::load();
+        Ok(Sampler {
+            host: Some(hp),
+            wave,
+            record_mode: o.int("SamplerLastTimedMode", 0).clamp(0, 2) as u8,
+            name: "Sample".into(),
+            view: (0.0, 1.0),
+            timeline_beats: crate::timeline::beats_mode("Sampler"),
+            ..Sampler::default()
+        })
     }
 
-    /// Open or close the splitter for the pad mode; true when it changed
-    /// (the pad matrix must be laid out again).
+    /// The current take.
+    pub fn take(&self) -> Option<&Take> {
+        self.takes.get(self.current)
+    }
+
+    /// A take finished recording: it joins the take list and becomes the
+    /// current one (the display shows all of it); its index.
+    pub fn add_take(&mut self, left: &[f32], right: &[f32], sr: f32) -> usize {
+        self.taken += 1;
+        self.takes.push(Take::new(left, right, sr, self.taken));
+        self.current = self.takes.len() - 1;
+        self.view = (0.0, 1.0);
+        self.message = None;
+        self.current
+    }
+
+    /// The take's file name: "<Name> <Take>".
+    pub fn file_stem(&self, i: usize) -> String {
+        let name = if self.name.trim().is_empty() { "Sample" } else { self.name.trim() };
+        format!("{name} {}", self.takes.get(i).map(Take::label).unwrap_or_default())
+    }
+
+    fn status(&self, model: &Model) -> String {
+        let s = &model.sampler;
+        match s.state {
+            2 => "Recording".into(),
+            1 => match s.start_mode {
+                1 => "Armed: waiting for MIDI".into(),
+                2 => "Armed: waiting for the host".into(),
+                3 => "Armed: waiting for the threshold".into(),
+                _ => "Armed".into(),
+            },
+            _ => self.message.clone().unwrap_or_else(|| match self.takes.len() {
+                0 => "Idle".into(),
+                1 => "Idle (1 take)".into(),
+                n => format!("Idle ({n} takes)"),
+            }),
+        }
+    }
+
     pub fn sync(&mut self, app: &mut App, model: &Model) -> bool {
         let Some(hp) = self.host.clone() else { return false };
-        let open = model.pad_mode(model.engine) == dreist_engine::live::PadMode::Sampler;
-        let changed = open != self.open;
-        if changed {
-            self.open = open;
-            if let Some(sp) = app.ctrl_mut(&hp[..hp.len() - 1]) {
-                sp.set_attr("intSplitPosition", if open { OPEN_HEIGHT } else { 0 }.to_string());
-                sp.layout_splitter();
-                for c in &mut sp.children {
-                    if c.name == "PadsMatrix" {
-                        c.set_attr("intTopSpacing", if open { "2" } else { "0" }.into());
-                    }
-                }
-            }
-            if let Some(h) = app.ctrl_mut(&hp) {
-                h.visible = open;
-            }
-        }
-        if !open {
-            return changed;
+        if self.current >= self.takes.len() {
+            self.current = self.takes.len().saturating_sub(1);
         }
         let editing = app.is_editing();
         let s = model.sampler.clone();
         let recording = s.state == 2;
-        let Some(h) = app.ctrl_mut(&hp) else { return changed };
+        let has_take = !self.takes.is_empty() && !recording;
+        let status = self.status(model);
+        let take = self.take().map(Take::label).unwrap_or_default();
+        let (mode, previewing, looping, name, zoom) = (self.record_mode, self.previewing, self.loop_preview, self.name.clone(), self.zoom_mode);
+        let (ml, mr) = (level_to_value(s.meters.0), level_to_value(s.meters.1));
+        let Some(h) = app.ctrl_mut(&hp) else { return false };
         h.walk_mut(&mut |c: &mut Ctrl| match c.name.as_str() {
             "ArmButton" => {
                 c.on = s.state >= 1;
-                c.enabled = !recording;
                 c.set_attr("flashing", (s.state == 1).to_string());
             }
-            "RecButton" => {
-                c.on = recording;
-                c.text = if recording { "Stop" } else { "Rec" }.into();
-            }
+            "RecButton" => c.on = recording,
             "SourceList" => {
                 c.enabled = s.state == 0;
                 c.text = source_items()[item_of_source(s.source)].clone();
             }
-            "TriggerMode" => {
-                c.enabled = !recording;
-                c.text = TRIGGER_MODES.get(s.start_mode as usize).copied().unwrap_or("").into();
+            "TriggerModeButtonGroup" => {
+                for (i, b) in c.children.iter_mut().enumerate() {
+                    b.on = i == s.start_mode as usize;
+                    b.enabled = !recording;
+                }
             }
-            "Follow" => c.text = AUTO_MODES[s.auto_mode.min(5)].into(),
+            "TimedModeButtonGroup" => {
+                for (i, b) in c.children.iter_mut().enumerate() {
+                    b.on = i == mode as usize;
+                    b.enabled = !recording;
+                }
+            }
             "ThresholdPanel" => c.visible = s.start_mode == 3,
-            "SyncPanel" => c.visible = matches!(s.start_mode, 2 | 4),
+            "SyncPanel" => c.visible = mode != 0,
             "BeatsPanel" => c.visible = s.beats_mode,
             "SecondsPanel" => c.visible = !s.beats_mode,
             "SyncButtonGroup" => {
-                c.enabled = !recording;
                 for (i, b) in c.children.iter_mut().enumerate() {
                     b.on = (i == 0) == s.beats_mode;
                     b.enabled = !recording;
@@ -259,63 +470,45 @@ impl Sampler {
             }
             "InputGain" => c.value = s.input_gain * 0.25,
             "PreviewVolume" => c.value = s.preview_volume,
-            "MonoButton" => c.text = ["St", "L", "R"][(s.channels as usize).min(2)].into(),
+            "MonoButton" => c.on = s.channels != 0,
             "ThruButton" => c.on = s.thru,
             "StartThresholdSlider" => c.value = level_to_value(s.start_threshold),
             "StopThresholdSlider" => c.value = level_to_value(s.stop_threshold),
+            "VUMeterLeft" => c.value = ml.min(1.0),
+            "VUMeterRight" => c.value = mr.min(1.0),
+            "ThresholdVU" => c.value = ml.max(mr).min(1.0),
+            "NameTextBox" if !editing => c.text = name.clone(),
+            "TakeList" => {
+                c.text = take.clone();
+                c.enabled = has_take;
+            }
+            "ClearAllButton" | "ClearButton" | "CropButton" | "NormalizeButton" | "SaveButton" | "SliceButton" | "SendToPadButton" | "SendAllToPadsButton" => c.enabled = has_take,
+            "PreviewButton" => {
+                c.enabled = has_take;
+                c.on = previewing && has_take;
+            }
+            "PreviewLoopButton" => c.on = looping,
+            "AutoZoomGroup" => {
+                for (i, b) in c.children.iter_mut().enumerate() {
+                    b.on = i as i64 == zoom;
+                }
+            }
+            "RecordStatus" => c.text = status.clone(),
             _ => {}
         });
-        changed
+        false
     }
 
-    /// A finished take ([re:c5233e] →
-    /// sending it to a pad [re:b3b498]): saved as
-    /// "<HH-MM-SS> Take <n>.wav" (peaks above 0 dBFS scaled to 0.998),
-    /// then allocated by the Follow mode.
-    pub fn take_finished(&mut self, model: &mut Model, opts: &crate::options::Options, left: &[f32], right: &[f32], sr: f32, out: &mut Vec<Command>) -> Option<TakeAction> {
-        if left.is_empty() {
-            return None;
-        }
-        let peak = left.iter().chain(right).fold(0.0f32, |m, v| m.max(v.abs()));
-        let g = if peak > 1.0 { 0.998 / peak } else { 1.0 };
-        let (l, r): (Vec<f32>, Vec<f32>) = (left.iter().map(|v| v * g).collect(), right.iter().map(|v| v * g).collect());
-        let dir = record_dir(opts);
-        std::fs::create_dir_all(&dir).ok()?;
-        self.taken += 1;
-        let (_, _, _, h, mi, se) = now_utc();
-        let file = free_filename(&dir, &format!("{h:02}-{mi:02}-{se:02} Take {}", self.taken))?;
-        dreist_engine::write_wav(&file, sr.round() as u32, &l, if r.is_empty() { &l } else { &r }).ok()?;
-        let mode = model.sampler.auto_mode;
-        match mode {
-            0 => {
-                out.push(msg(id::SAMPLER_SET_NOT_ARMED, &[], &[0.0]));
-                Some(TakeAction::Slice(file))
-            }
-            5 => Some(TakeAction::Saved),
-            _ => {
-                let e = model.engine;
-                let target = self.target.unwrap_or((e, model.pad[e], model.layer[e]));
-                let used = |l: usize| model.layer(target.0, target.1, l).valid;
-                let (at, next) = allocate(mode, target, model.layer[target.0], &used);
-                crate::browser::load_sample_into_layer(model, at.0, at.1, at.2, &file);
-                self.target = next;
-                out.push(msg(if next.is_some() { id::SAMPLER_SET_ARMED } else { id::SAMPLER_SET_NOT_ARMED }, &[], &[0.0]));
-                out.push(model.rebuild_command());
-                Some(TakeAction::Loaded)
-            }
-        }
-    }
-
-    /// [re:0fd0d9] (at messaging start):
-    /// the last start mode (default Threshold; 0 also maps to Threshold),
-    /// beats sync, seconds, bars/beats, thresholds, channel mode and thru,
-    /// re-sent to the sampler.
+    /// Start-up messages ([re:0fd0d9], at messaging start): the last
+    /// start mode (default Threshold; 0 also maps to Threshold), record
+    /// mode, beats sync, seconds, bars / beats, thresholds, channel mode and
+    /// thru, re-sent to the sampler.
     pub fn startup_messages(model: &mut Model) -> Vec<Command> {
         let o = crate::options::Options::load();
         let s = &mut model.sampler;
         let start = match o.int("SamplerLastStartMode", 3) {
             0 => 3,
-            n => n.clamp(0, 4),
+            n => n.clamp(0, 3),
         };
         s.start_mode = start as u8;
         s.beats_mode = o.bool("SamplerLastSyncMode", true);
@@ -326,8 +519,10 @@ impl Sampler {
         s.stop_threshold = o.string("SamplerLastStopThreshold", "0.00562").trim().parse().unwrap_or(0.00562);
         s.channels = o.int("SamplerLastMonoMode", 0).clamp(0, 2) as u8;
         s.thru = o.bool("SamplerLastThruMode", false);
+        let timed = o.int("SamplerLastTimedMode", 0).clamp(0, 2);
         vec![
             msg(id::SAMPLER_START_MODE, &[], &[start as f32]),
+            msg(id::SAMPLER_TIMED_MODE, &[], &[timed as f32]),
             msg(id::SAMPLER_BEATS_MODE, &[], &[s.beats_mode as i32 as f32]),
             msg(id::SAMPLER_RECORD_SECS, &[], &[s.secs]),
             msg(id::SAMPLER_BARS_BEATS, &[], &[s.bars as f32, s.beats as f32]),
@@ -339,34 +534,129 @@ impl Sampler {
     }
 
     fn mine(&self, path: &[usize]) -> bool {
-        self.open && self.host.as_ref().is_some_and(|h| path.starts_with(h))
+        self.host.as_ref().is_some_and(|h| path.starts_with(h))
+    }
+
+    fn open(&mut self, app: &mut App, path: &[usize], which: Menu, items: Vec<(String, Option<Request>)>, checked: Option<usize>) {
+        let (labels, acts): (Vec<String>, Vec<Option<Request>>) = items.into_iter().unzip();
+        app.open_menu(path, labels, checked);
+        self.menu = Some((which, acts));
+    }
+
+    /// Preview the current take between its markers.
+    fn preview(&self, out: &mut Vec<Command>) {
+        if let Some(t) = self.take() {
+            let (a, b) = t.region();
+            out.push(Command::PreviewRegion { data: t.data(), start: a as u32, end: b as u32, looping: self.loop_preview });
+        }
+    }
+
+    fn stop_preview(&mut self, out: &mut Vec<Command>) {
+        if std::mem::take(&mut self.previewing) {
+            out.push(msg(id::STOP_PREVIEW, &[], &[]));
+        }
+    }
+
+    /// The wave area's frame at x (`w` wide) in the current view.
+    fn frame_at(&self, x: f32, w: f32) -> u32 {
+        let n = self.take().map(Take::frames).unwrap_or(0) as f32;
+        (((x / w.max(1.0)) * self.view.1 + self.view.0).clamp(0.0, 1.0) * n) as u32
+    }
+
+    fn x_of(&self, f: u32, w: f32) -> f32 {
+        let n = self.take().map(Take::frames).unwrap_or(0).max(1) as f32;
+        ((f as f32 / n) - self.view.0) / self.view.1.max(1e-9) * w
+    }
+
+    fn apply_auto_zoom(&mut self) {
+        let Some(t) = self.take() else { return };
+        if let Some(v) = crate::zoomslider::auto_zoom(self.zoom_mode, t.frames(), t.start, t.end) {
+            self.view = v;
+        }
     }
 
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
+        match ev {
+            UiEvent::Mouse { path, overload, kind, x, y } if overload == "SamplerWaveArea" && self.mine(path) => return self.wave_mouse(app, path, *kind, *x, *y, out),
+            UiEvent::Wheel { path, overload, dy } if overload == "SamplerWaveArea" && self.mine(path) => {
+                let Some(n) = self.take().map(Take::frames) else { return false };
+                let w = app.ctrl(path).map(|c| c.rect.w as f32).unwrap_or(1.0);
+                let mx = (app.mouse_pos().0 - app.origin(path).0 as f32) / w.max(1.0);
+                self.view = crate::zoomslider::zoom_in(self.view, if *dy > 0.0 { 2.0 } else { 0.5 }, mx.clamp(0.0, 1.0), w, n);
+                return true;
+            }
+            UiEvent::MenuSelected { anchor, index, .. } if self.mine(anchor) => {
+                let Some((which, acts)) = self.menu.take() else { return false };
+                let s = &mut model.sampler;
+                match which {
+                    Menu::Source => {
+                        s.source = source_of_item(*index);
+                        out.push(msg(id::SAMPLER_RECORD_SOURCE, &[], &[s.source as f32]));
+                    }
+                    Menu::Take => {
+                        self.stop_preview(out);
+                        self.current = (*index).min(self.takes.len().saturating_sub(1));
+                        self.view = (0.0, 1.0);
+                        self.apply_auto_zoom();
+                    }
+                    Menu::Send => match acts.get(*index).copied().flatten() {
+                        Some(r) => self.request = Some(r),
+                        None if *index + 1 == acts.len() => self.auto_crop = !self.auto_crop,
+                        None => {}
+                    },
+                    Menu::Timeline => {
+                        self.timeline_beats = *index == 1;
+                        crate::timeline::save_mode("Sampler", self.timeline_beats);
+                    }
+                }
+                return true;
+            }
+            _ => {}
+        }
         let s = &mut model.sampler;
         match ev {
             UiEvent::Clicked { path, name, on, .. } if self.mine(path) => {
                 let parent = app.ctrl(&path[..path.len() - 1]).map(|c| c.name.clone()).unwrap_or_default();
-                if parent == "SyncButtonGroup" {
-                    let beats = *path.last().unwrap() == 0;
-                    s.beats_mode = beats;
-                    out.push(msg(id::SAMPLER_BEATS_MODE, &[], &[beats as i32 as f32]));
-                    save_opt("SamplerLastSyncMode", beats);
-                    return true;
+                let i = *path.last().unwrap();
+                match parent.as_str() {
+                    "SyncButtonGroup" => {
+                        let beats = i == 0;
+                        s.beats_mode = beats;
+                        out.push(msg(id::SAMPLER_BEATS_MODE, &[], &[beats as i32 as f32]));
+                        save_opt("SamplerLastSyncMode", beats);
+                        return true;
+                    }
+                    // The start mode resets the engine's timing: the record
+                    // mode follows it.
+                    "TriggerModeButtonGroup" => {
+                        s.start_mode = i.min(3) as u8;
+                        out.push(msg(id::SAMPLER_START_MODE, &[], &[i.min(3) as f32]));
+                        out.push(msg(id::SAMPLER_TIMED_MODE, &[], &[self.record_mode as f32]));
+                        save_opt("SamplerLastStartMode", i.min(3));
+                        return true;
+                    }
+                    "TimedModeButtonGroup" => {
+                        self.record_mode = i.min(2) as u8;
+                        out.push(msg(id::SAMPLER_TIMED_MODE, &[], &[self.record_mode as f32]));
+                        save_opt("SamplerLastTimedMode", self.record_mode);
+                        return true;
+                    }
+                    "AutoZoomGroup" => {
+                        self.zoom_mode = i as i64;
+                        self.apply_auto_zoom();
+                        return true;
+                    }
+                    _ => {}
                 }
                 match name.as_str() {
                     "ArmButton" => {
-                        if s.state == 0 {
-                            let e = model.engine;
-                            self.target = Some((e, model.pad[e], model.layer[e]));
-                        }
+                        self.message = None;
                         out.push(msg(id::SAMPLER_TOGGLE_ARMED, &[], &[0.0]));
                     }
+                    // Rec / Stop: starts an armed Free recording, stops a
+                    // running one.
                     "RecButton" => {
-                        if s.state == 0 || self.target.is_none() {
-                            let e = model.engine;
-                            self.target = Some((e, model.pad[e], model.layer[e]));
-                        }
+                        self.message = None;
                         out.push(msg(id::SAMPLER_TOGGLE_RECORD, &[], &[0.0]));
                     }
                     "ThruButton" => {
@@ -374,37 +664,67 @@ impl Sampler {
                         out.push(msg(id::SAMPLER_THRU, &[], &[*on as i32 as f32]));
                         save_opt("SamplerLastThruMode", *on);
                     }
-                    "MonoButton" => app.open_menu(path, CHANNEL_MODES.iter().map(|x| x.to_string()).collect(), Some(s.channels as usize)),
-                    "TriggerMode" => app.open_menu(path, TRIGGER_MODES.iter().map(|x| x.to_string()).collect(), Some(s.start_mode as usize)),
-                    "SourceList" => app.open_menu(path, source_items(), Some(item_of_source(s.source))),
-                    "Follow" => app.open_menu(path, AUTO_MODES.iter().map(|x| x.to_string()).collect(), None),
-                    _ => return false,
-                }
-                true
-            }
-            UiEvent::MenuSelected { anchor, name, index } if self.mine(anchor) => {
-                match name.as_str() {
+                    // Mono: the left channel only.
                     "MonoButton" => {
-                        s.channels = (*index).min(2) as u8;
+                        s.channels = *on as u8;
                         s.state = 0;
-                        out.push(msg(id::SAMPLER_MONO, &[], &[*index as f32]));
-                        save_opt("SamplerLastMonoMode", (*index).min(2));
-                    }
-                    "TriggerMode" => {
-                        s.start_mode = (*index).min(4) as u8;
-                        out.push(msg(id::SAMPLER_START_MODE, &[], &[*index as f32]));
-                        save_opt("SamplerLastStartMode", (*index).min(4));
+                        out.push(msg(id::SAMPLER_MONO, &[], &[s.channels as f32]));
+                        save_opt("SamplerLastMonoMode", s.channels);
                     }
                     "SourceList" => {
-                        s.source = source_of_item(*index);
-                        out.push(msg(id::SAMPLER_RECORD_SOURCE, &[], &[s.source as f32]));
+                        let cur = item_of_source(s.source);
+                        self.open(app, path, Menu::Source, source_items().into_iter().map(|x| (x, None)).collect(), Some(cur));
                     }
-                    "Follow" => {
-                        if let Some(c) = app.ctrl_mut(anchor) {
-                            c.text = AUTO_MODES[(*index).min(5)].into();
+                    "TakeList" if !self.takes.is_empty() => {
+                        let items = self.takes.iter().map(|t| (t.label(), None)).collect();
+                        self.open(app, path, Menu::Take, items, Some(self.current));
+                    }
+                    "SaveButton" if !self.takes.is_empty() => self.open(app, path, Menu::Send, send_menu(self.auto_crop), None),
+                    "ClearButton" if !self.takes.is_empty() => {
+                        self.stop_preview(out);
+                        out.push(msg(id::SAMPLER_CLEAR_TAKE, &[], &[self.current as f32]));
+                        self.takes.remove(self.current);
+                        self.current = self.current.min(self.takes.len().saturating_sub(1));
+                        self.view = (0.0, 1.0);
+                    }
+                    "ClearAllButton" => {
+                        self.stop_preview(out);
+                        out.push(msg(id::SAMPLER_CLEAR_TAKES, &[], &[]));
+                        self.takes.clear();
+                        self.current = 0;
+                    }
+                    "PreviewButton" => {
+                        if *on && self.take().is_some() {
+                            self.previewing = true;
+                            self.preview(out);
+                        } else {
+                            self.previewing = true;
+                            self.stop_preview(out);
                         }
-                        s.auto_mode = (*index).min(5);
-                        out.push(msg(id::SAMPLER_AUTO_MODE, &[], &[*index as f32]));
+                    }
+                    "PreviewLoopButton" => {
+                        self.loop_preview = *on;
+                        if self.previewing {
+                            out.push(msg(id::SET_PREVIEW_LOOP_MODE, &[], &[*on as i32 as f32]));
+                        }
+                    }
+                    "CropButton" => {
+                        if let Some(t) = self.takes.get_mut(self.current) {
+                            t.crop();
+                            self.view = (0.0, 1.0);
+                        }
+                    }
+                    "NormalizeButton" => {
+                        if let Some(t) = self.takes.get_mut(self.current) {
+                            t.normalize();
+                        }
+                    }
+                    "SliceButton" if !self.takes.is_empty() => self.request = Some(Request::Slice),
+                    "SendToPadButton" if !self.takes.is_empty() => self.request = Some(Request::SendToPad),
+                    "SendAllToPadsButton" if !self.takes.is_empty() => self.request = Some(Request::SendAllToPads),
+                    "ZoomInButton" | "ZoomOutButton" => {
+                        let (Some(n), Some(w)) = (self.take().map(Take::frames), self.wave.as_ref().and_then(|p| app.ctrl(p)).map(|c| c.rect.w as f32)) else { return true };
+                        self.view = crate::zoomslider::zoom_in(self.view, if name == "ZoomInButton" { 2.0 } else { 0.5 }, 0.5, w, n);
                     }
                     _ => return false,
                 }
@@ -422,26 +742,8 @@ impl Sampler {
                         s.preview_volume = 0.793_700_5;
                         out.push(msg(SET_PREVIEW_VOLUME, &[], &[0.793_700_5]));
                     }
-                    "StartThresholdSlider" => {
-                        s.start_threshold = 0.1;
-                        out.push(msg(id::SAMPLER_START_THRESHOLD, &[], &[0.1]));
-                        if 0.1 < s.stop_threshold {
-                            s.stop_threshold = 0.1;
-                            out.push(msg(id::SAMPLER_STOP_THRESHOLD, &[], &[0.1]));
-                        }
-                        save_opt("SamplerLastStartThreshold", s.start_threshold);
-                        save_opt("SamplerLastStopThreshold", s.stop_threshold);
-                    }
-                    "StopThresholdSlider" => {
-                        s.stop_threshold = 0.00562;
-                        out.push(msg(id::SAMPLER_STOP_THRESHOLD, &[], &[0.00562]));
-                        if 0.00562 > s.start_threshold {
-                            s.start_threshold = 0.00562;
-                            out.push(msg(id::SAMPLER_START_THRESHOLD, &[], &[0.00562]));
-                        }
-                        save_opt("SamplerLastStartThreshold", s.start_threshold);
-                        save_opt("SamplerLastStopThreshold", s.stop_threshold);
-                    }
+                    "StartThresholdSlider" => set_thresholds(s, Some(0.1), None, out),
+                    "StopThresholdSlider" => set_thresholds(s, None, Some(0.00562), out),
                     _ => return false,
                 }
                 true
@@ -456,30 +758,8 @@ impl Sampler {
                         s.preview_volume = *value;
                         out.push(msg(SET_PREVIEW_VOLUME, &[], &[*value]));
                     }
-                    // `SetStartThreshold02` [re:a2dcfe]: a start below the stop
-                    // threshold drags the stop threshold down with it.
-                    "StartThresholdSlider" => {
-                        let l = value_to_level(*value);
-                        s.start_threshold = l;
-                        out.push(msg(id::SAMPLER_START_THRESHOLD, &[], &[l]));
-                        if l < s.stop_threshold {
-                            s.stop_threshold = l;
-                            out.push(msg(id::SAMPLER_STOP_THRESHOLD, &[], &[l]));
-                        }
-                        save_opt("SamplerLastStartThreshold", s.start_threshold);
-                        save_opt("SamplerLastStopThreshold", s.stop_threshold);
-                    }
-                    "StopThresholdSlider" => {
-                        let l = value_to_level(*value);
-                        s.stop_threshold = l;
-                        out.push(msg(id::SAMPLER_STOP_THRESHOLD, &[], &[l]));
-                        if l > s.start_threshold {
-                            s.start_threshold = l;
-                            out.push(msg(id::SAMPLER_START_THRESHOLD, &[], &[l]));
-                        }
-                        save_opt("SamplerLastStartThreshold", s.start_threshold);
-                        save_opt("SamplerLastStopThreshold", s.stop_threshold);
-                    }
+                    "StartThresholdSlider" => set_thresholds(s, Some(value_to_level(*value)), None, out),
+                    "StopThresholdSlider" => set_thresholds(s, None, Some(value_to_level(*value)), out),
                     _ => return false,
                 }
                 true
@@ -503,6 +783,7 @@ impl Sampler {
                         save_opt("SamplerLastBars", s.bars);
                         save_opt("SamplerLastBeats", s.beats);
                     }
+                    "NameTextBox" => self.name = text.trim().to_string(),
                     _ => return false,
                 }
                 true
@@ -510,35 +791,255 @@ impl Sampler {
             _ => false,
         }
     }
+
+    /// The wave area: a click on the ruler previews between the markers
+    /// (a right click offers Time / Beats), the markers drag left / right,
+    /// and a drag on the wave zooms (up / down) and scrolls (left / right).
+    fn wave_mouse(&mut self, app: &mut App, path: &[usize], kind: MouseKind, x: f32, y: f32, out: &mut Vec<Command>) -> bool {
+        let Some(w) = app.ctrl(path).map(|c| c.rect.w as f32) else { return false };
+        if kind == MouseKind::RightDown && y < RULER {
+            let items = ["Time", "Beats"].iter().enumerate().map(|(i, t)| (format!("{}{t}", if (i == 1) == self.timeline_beats { dreist_gui::menu::CHECK } else { "" }), None)).collect();
+            self.open(app, path, Menu::Timeline, items, None);
+            return true;
+        }
+        let Some(t) = self.take() else { return false };
+        let (start, end) = (t.start, t.end);
+        match kind {
+            MouseKind::Down if y < RULER => {
+                self.previewing = true;
+                self.preview(out);
+                true
+            }
+            MouseKind::Down => {
+                let near = |f: u32| (self.x_of(f, w) - x).abs();
+                let (ds, de) = (near(start), near(end));
+                self.drag = if y < WAVE_TOP || ds.min(de) < 4.0 { Some(Drag::Marker(ds <= de)) } else { Some(Drag::View(x, y, self.view)) };
+                true
+            }
+            MouseKind::Drag => match self.drag {
+                Some(Drag::Marker(is_start)) => {
+                    let f = self.frame_at(x, w);
+                    if let Some(t) = self.takes.get_mut(self.current) {
+                        if is_start {
+                            t.start = f.min(t.end.saturating_sub(1));
+                        } else {
+                            t.end = f.max(t.start + 1).min(t.frames());
+                        }
+                    }
+                    true
+                }
+                Some(Drag::View(x0, y0, v)) => {
+                    let n = self.take().map(Take::frames).unwrap_or(1);
+                    let factor = (-(y - y0) / 100.0).exp2();
+                    let centre = (x0 / w.max(1.0)).clamp(0.0, 1.0);
+                    let zoomed = crate::zoomslider::zoom_in(v, factor, centre, w, n);
+                    self.view = crate::zoomslider::clamp((zoomed.0 - (x - x0) / w.max(1.0) * zoomed.1, zoomed.1));
+                    true
+                }
+                None => false,
+            },
+            MouseKind::Up => {
+                if matches!(self.drag.take(), Some(Drag::Marker(_))) {
+                    self.apply_auto_zoom();
+                }
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// The take display: ruler and markers, then the current take (or the
+    /// take being recorded) between the start / end markers.
+    pub fn draw(&self, model: &Model, r: &Renderer, p: &mut Painter, c: &Ctrl) -> bool {
+        if c.overload != "SamplerWaveArea" {
+            return false;
+        }
+        let (w, h) = (c.rect.w as f32, c.rect.h as f32);
+        let ink = colour(r, "WaveEditorWaveColour", Colour::rgba(18, 25, 60, 255));
+        let area = RectF::new(0.0, WAVE_TOP, w, h - WAVE_TOP);
+        p.fill_rect(RectF::new(0.0, 0.0, w, h), colour(r, "WaveEditorBackgroundColour", Colour::rgba(178, 170, 158, 255)));
+        let live = model.sampler.state == 2 || self.takes.is_empty();
+        if let (true, Some(sm)) = (live, model.sampling.as_ref()) {
+            // Recording: the whole take so far fills the display.
+            let sr = 44100.0;
+            draw_ruler(r, p, w, 0.0, (sm.frames as f64 / sr).max(1.0), self.timeline_beats, model.tempo());
+            draw_wave(p, area, &sm.buckets, 1, 0.0, sm.buckets.len() as f64, ink, (0.0, w));
+        } else if let Some(t) = self.take() {
+            let n = t.frames().max(1) as f64;
+            let (v0, v1) = (self.view.0 as f64 * n, (self.view.0 + self.view.1) as f64 * n);
+            let sr = t.sample_rate as f64;
+            draw_ruler(r, p, w, v0 / sr, (v1 - v0) / sr, self.timeline_beats, model.tempo());
+            // Outside the markers the wave is dimmed.
+            let (xs, xe) = (self.x_of(t.start, w), self.x_of(t.end, w));
+            let (a, b) = (xs.clamp(0.0, w).floor(), xe.clamp(0.0, w).ceil());
+            let dim = colour(r, "WaveEditorDisabledWaveColour", ink.with_alpha(0.4));
+            draw_wave(p, area, &t.buckets, BUCKET, v0, v1, dim, (0.0, a));
+            draw_wave(p, area, &t.buckets, BUCKET, v0, v1, ink, (a, b));
+            draw_wave(p, area, &t.buckets, BUCKET, v0, v1, dim, (b, w));
+            for (x, name, start) in [(xs, "WaveEditorStartMarkerColour", true), (xe, "WaveEditorEndMarkerColour", false)] {
+                if !(-6.0..=w + 6.0).contains(&x) {
+                    continue;
+                }
+                let col = colour(r, name, Colour::rgba(250, 121, 25, 255));
+                let x = x.floor() + 0.5;
+                p.line(x, RULER, x, h, col, 1.0);
+                let tri = if start { [(x, RULER + 1.0), (x + 9.0, RULER + 1.0), (x, WAVE_TOP - 2.0)] } else { [(x - 9.0, RULER + 1.0), (x, RULER + 1.0), (x, WAVE_TOP - 2.0)] };
+                p.fill_polygon(&tri, col);
+            }
+        } else {
+            draw_ruler(r, p, w, 0.0, 1.0, self.timeline_beats, model.tempo());
+        }
+        p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), colour(r, "WaveEditorBorderColour", ink), 1.0);
+        true
+    }
+}
+
+/// `SetStartThreshold02` [re:a2dcfe]: a start below the stop threshold
+/// drags the stop threshold down with it, a stop above the start drags the
+/// start up.
+fn set_thresholds(s: &mut crate::model::SamplerView, start: Option<f32>, stop: Option<f32>, out: &mut Vec<Command>) {
+    if let Some(l) = start {
+        s.start_threshold = l;
+        out.push(msg(id::SAMPLER_START_THRESHOLD, &[], &[l]));
+        if l < s.stop_threshold {
+            s.stop_threshold = l;
+            out.push(msg(id::SAMPLER_STOP_THRESHOLD, &[], &[l]));
+        }
+    }
+    if let Some(l) = stop {
+        s.stop_threshold = l;
+        out.push(msg(id::SAMPLER_STOP_THRESHOLD, &[], &[l]));
+        if l > s.start_threshold {
+            s.start_threshold = l;
+            out.push(msg(id::SAMPLER_START_THRESHOLD, &[], &[l]));
+        }
+    }
+    save_opt("SamplerLastStartThreshold", s.start_threshold);
+    save_opt("SamplerLastStopThreshold", s.stop_threshold);
 }
 
 /// Saves the sampler's `SamplerLast*` keys.
 fn save_opt(key: &str, v: impl ToString) {
     let mut o = crate::options::Options::load();
     o.set(key, v);
-    o.save();
+    if !cfg!(test) {
+        o.save();
+    }
+}
+
+/// Whether a pad holds no sample (and is not locked).
+fn empty_pad(model: &Model, e: usize, p: usize) -> bool {
+    !model.pad_node(e, p).is_some_and(|n| n.locked()) && (0..LAYERS).all(|l| !model.layer(e, p, l).valid)
+}
+
+/// A layer that can take a sample: none loaded, not locked.
+fn free_layer(model: &Model, e: usize, p: usize, l: usize) -> bool {
+    !model.layer(e, p, l).valid && !model.layer_node(e, p, l).is_some_and(|n| n.locked())
+}
+
+impl crate::Editor {
+    /// A file for take `i`: the save dialog, or (without one) a free name
+    /// in the record folder.
+    fn sampler_file(&mut self, i: usize) -> Option<std::path::PathBuf> {
+        let stem = self.sampler.file_stem(i);
+        if self.dialogs.is_some() {
+            return self.dialog(crate::Dialog::SaveSample(format!("{stem}.wav"))).map(|p| if p.extension().is_none() { p.with_extension("wav") } else { p });
+        }
+        let dir = record_dir(&self.modals.options);
+        free_filename(&dir, &stem)
+    }
+
+    /// A folder for all the takes: the folder dialog, or the record folder.
+    fn sampler_folder(&mut self) -> Option<std::path::PathBuf> {
+        if self.dialogs.is_some() { self.dialog(crate::Dialog::ExportFolder) } else { Some(record_dir(&self.modals.options)) }
+    }
+
+    /// Save takes `which` into `dir` ("<Name> <Take>.wav"); the files.
+    fn save_takes(&mut self, dir: &std::path::Path, which: &[usize]) -> Vec<std::path::PathBuf> {
+        let crop = self.sampler.auto_crop;
+        which
+            .iter()
+            .filter_map(|&i| {
+                let f = free_filename(dir, &self.sampler.file_stem(i))?;
+                self.sampler.takes.get(i)?.save(&f, crop).ok()?;
+                Some(f)
+            })
+            .collect()
+    }
+
+    /// Run the sampler page's request; whether the editor changed.
+    pub(crate) fn run_sampler_request(&mut self, r: Request) -> bool {
+        let e = self.model.engine;
+        let (first, count) = self.model.visible_pads();
+        let all: Vec<usize> = (0..self.sampler.takes.len()).collect();
+        let cur = self.sampler.current;
+        let crop = self.sampler.auto_crop;
+        let mut loaded = false;
+        match r {
+            Request::ExportTake | Request::Slice | Request::SendToPad => {
+                let Some(f) = self.sampler_file(cur) else { return false };
+                if self.sampler.take().is_none_or(|t| t.save(&f, crop).is_err()) {
+                    self.sampler.message = Some(format!("Could not save {}", f.display()));
+                    return true;
+                }
+                match r {
+                    Request::Slice => {
+                        self.open_slicer(&f);
+                    }
+                    Request::SendToPad => {
+                        // The pad's samples go; the take is its first layer.
+                        let p = self.model.pad[e];
+                        for l in 0..LAYERS {
+                            if self.model.layer(e, p, l).valid && !self.model.layer_node(e, p, l).is_some_and(|n| n.locked()) {
+                                let layer = self.model.layer_mut(e, p, l);
+                                layer.attrs.retain(|(k, _)| k != "AudioFileName");
+                                layer.children.retain(|c| c.class != "AudioFileMarkers");
+                            }
+                        }
+                        loaded = crate::browser::load_sample_into_layer(&mut self.model, e, p, 0, &f);
+                    }
+                    _ => self.sampler.message = Some(format!("Saved {}", f.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())),
+                }
+            }
+            Request::ExportAll => {
+                let Some(dir) = self.sampler_folder() else { return false };
+                let n = self.save_takes(&dir, &all).len();
+                self.sampler.message = Some(format!("Saved {n} takes"));
+            }
+            Request::SendAllToPads => {
+                let empty: Vec<usize> = (first..first + count).filter(|&p| empty_pad(&self.model, e, p)).collect();
+                if empty.len() < all.len() {
+                    self.sampler.message = Some("Not enough empty pads: free up more pads or clear takes".into());
+                    return true;
+                }
+                let Some(dir) = self.sampler_folder() else { return false };
+                for (f, p) in self.save_takes(&dir, &all).into_iter().zip(empty) {
+                    loaded |= crate::browser::load_sample_into_layer(&mut self.model, e, p, 0, &f);
+                }
+            }
+            Request::SendToFreeLayers | Request::SendToEmptyPadLayers => {
+                let slots: Vec<(usize, usize)> = if r == Request::SendToFreeLayers {
+                    let p = self.model.pad[e];
+                    (0..LAYERS).filter(|&l| free_layer(&self.model, e, p, l)).map(|l| (p, l)).collect()
+                } else {
+                    (first..first + count).filter(|&p| empty_pad(&self.model, e, p)).flat_map(|p| (0..LAYERS).map(move |l| (p, l))).collect()
+                };
+                let Some(dir) = self.sampler_folder() else { return false };
+                for (f, (p, l)) in self.save_takes(&dir, &all).into_iter().zip(slots) {
+                    loaded |= crate::browser::load_sample_into_layer(&mut self.model, e, p, l, &f);
+                }
+            }
+        }
+        if loaded {
+            self.outbox.push(self.model.rebuild_command());
+        }
+        true
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn allocation_follows_the_mode() {
-        crate::app::test_setup();
-        let none = |_| false;
-        // Next Layer walks the layers, then disarms.
-        assert_eq!(allocate(2, (0, 3, 6), 0, &none), ((0, 3, 6), Some((0, 3, 7))));
-        assert_eq!(allocate(2, (0, 3, 7), 0, &none), ((0, 3, 7), None));
-        // Next Pad takes the first free layer and moves on a pad.
-        let used = |l| l < 2;
-        assert_eq!(allocate(3, (0, 5, 0), 0, &used), ((0, 5, 2), Some((0, 6, 2))));
-        assert_eq!(allocate(3, (0, 63, 0), 0, &none).1, None);
-        // Next Layer And Pad wraps layers into pads.
-        assert_eq!(allocate(4, (1, 2, 7), 0, &none), ((1, 2, 7), Some((1, 3, 0))));
-        // Single uses the selected layer and disarms.
-        assert_eq!(allocate(1, (0, 4, 0), 5, &none), ((0, 4, 5), None));
-    }
 
     #[test]
     fn free_filenames_count_up() {
@@ -561,5 +1062,18 @@ mod tests {
         assert_eq!(level_to_value(0.0), 0.0);
         // 0 dBFS sits at 0.8 of the travel.
         assert!((level_to_value(1.0) - 0.8).abs() < 1e-6);
+    }
+
+    #[test]
+    fn takes_crop_and_normalize_between_markers() {
+        crate::app::test_setup();
+        let l: Vec<f32> = (0..1000).map(|i| if i < 500 { 0.1 } else { 0.5 }).collect();
+        let mut t = Take::new(&l, &l, 44100.0, 1);
+        t.start = 100;
+        t.end = 400;
+        t.normalize();
+        assert!((t.left[200] - 1.0).abs() < 1e-6 && (t.left[600] - 0.5).abs() < 1e-6, "only the marked region");
+        t.crop();
+        assert_eq!((t.frames(), t.start, t.end), (300, 0, 300));
     }
 }

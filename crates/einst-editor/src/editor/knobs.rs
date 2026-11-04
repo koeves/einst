@@ -65,12 +65,12 @@ impl Editor {
             UiEvent::RightClicked { path, name } => {
                 let Some(c) = self.app.ctrl(path) else { return false };
                 let class = c.class.clone();
-                if !matches!(class.as_str(), "CtrlKnob" | "CtrlTransmodKnob" | "CtrlSlider" | "CtrlTransmodSlider") {
+                if !matches!(class.as_str(), "CtrlKnob" | "CtrlTransmodKnob" | "CtrlSlider" | "CtrlTransmodSlider" | "CtrlPanSlider") {
                     return false;
                 }
                 // The graph controls' menu is on Variance and Rand only;
                 // swing and v2a have their own menus (pattern.rs, velsplit.rs).
-                if matches!(name.as_str(), "ScaleKnob" | "CompKnob" | "EngineSwingDepthKnob" | "v2a") {
+                if matches!(name.as_str(), "ScaleKnob" | "CompKnob" | "EngineSwingDepthKnob" | "v2a" | "V2A") {
                     return false;
                 }
                 let header_gain = name == header::MASTER_GAIN;
@@ -85,11 +85,11 @@ impl Editor {
                 // [re:38b63d]: the coarse tune knob (param 5) adds "Tune
                 // loop to tempo", the pre-delay knob (param 7) the
                 // "Set pre delay in msec" check.
-                if self.inspector.reset_value(path, name).is_some() && class == "CtrlTransmodKnob" {
-                    if name == "CoarseTune" {
+                if self.inspector.reset_value(path, name).is_some() && matches!(class.as_str(), "CtrlTransmodKnob" | "CtrlKnob") {
+                    if matches!(name.as_str(), "CoarseTune" | "TuneKnob") {
                         items.push((String::new(), KnobAction::None));
                         items.push(("Tune loop to tempo".into(), KnobAction::TuneToTempo));
-                    } else if name == "PreDelayTime" {
+                    } else if matches!(name.as_str(), "PreDelayTime" | "PreDelayKnob") {
                         let on = options::Options::load().bool("PreDelayInMsec", true);
                         items.push((String::new(), KnobAction::None));
                         items.push((format!("{}Set pre delay in msec", if on { dreist_gui::menu::CHECK } else { "" }), KnobAction::PreDelayMsec));
@@ -216,7 +216,7 @@ impl Editor {
     pub(crate) fn double_click_reset(&mut self, ev: &UiEvent) -> bool {
         let UiEvent::DoubleClicked { path, name } = ev else { return false };
         let Some(c) = self.app.ctrl(path) else { return false };
-        if !matches!(c.class.as_str(), "CtrlKnob" | "CtrlTransmodKnob" | "CtrlSlider" | "CtrlTransmodSlider") || name == header::MASTER_GAIN {
+        if !matches!(c.class.as_str(), "CtrlKnob" | "CtrlTransmodKnob" | "CtrlSlider" | "CtrlTransmodSlider" | "CtrlPanSlider") || name == header::MASTER_GAIN {
             return false;
         }
         let id = c.id;

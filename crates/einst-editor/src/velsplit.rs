@@ -1,23 +1,20 @@
-//! Pad options panel ([re:3af242], [re:96dbe2]),
-//! shown in place of the layer panel by the inspector's "Pad options..."
-//! button ([re:281f54] [re:6b84c1] slides it over the layer
-//! panel: in from the right edge in 350 ms, out in 250 ms, exponential
-//! curve, the button disabled meanwhile).
+//! The pad view of the Pad / Layers page (`PadControls.skin`, manual
+//! §5:2): layer play mode, Vel-Amp and the velocity split lanes.
 //!
 //! - `SelModeCombo`: the five [re:9500d6] modes →
 //!   `e_setPadLayerMode` 0x51 [e, p] [mode].
-//! - `v2a` knob: `e_setPadParameter` 0x4e [e, p] [v, 2 (V2A), 0].
-//! - `LinkButton1..64`: `e_setPadLinkage` 0x53 [e, p] [pad, on] ([re:61efc2]).
-//! - "Auto" (`Insert`, enabled in velocity-split mode only, update
+//! - `V2A` knob: `e_setPadParameter` 0x4e [e, p] [v, 2 (V2A), 0].
+//! - "Auto" (enabled in velocity-split mode only, update
 //!   [re:ae10bc]): "Auto split velocity graphs" → 0x57, "Auto overlap velocity
 //!   graphs 10/20/25/50%" → 0x58 [e, p] [0.1 ...] ([re:4d9d0b] and its
 //!   lambdas [re:284606].., undo "Engine %d Pad %d auto velocity split" /
 //!   "... auto velocity overlap N%").
-//! - Eight [re:1582ce]s (style `VSplitStyle`) stacked in
-//!   `LayoutBox`, one per layer, enabled when the layer has audio, is not
-//!   locked and the pad is in velocity-split mode. Releasing a drag posts
-//!   min 0x7e, min turnover 0x7f, max turnover 0x81, max 0x80 [e, p, l]
-//!   ([re:57f001], undo "Engine %d Pad %d velocity split" from a second callback).
+//! - Eight [re:1582ce]s (`Split0..7`), one per layer, shown in
+//!   velocity-split mode (the manual: "only visible when the Layer mode is
+//!   set to Velocity split"), enabled when the layer has audio and is not
+//!   locked. Releasing a drag posts min 0x7e, min turnover 0x7f, max
+//!   turnover 0x81, max 0x80 [e, p, l] ([re:57f001], undo "Engine %d Pad
+//!   %d velocity split" from a second callback).
 //!
 //! [re:1582ce] ([re:f2232e]..): velocity v sits at x = v·(w−8)/127
 //! ([re:245576]; back with +0.5 truncation,
@@ -37,16 +34,15 @@ use dreist_engine::velsplit::Split;
 use dreist_gui::app::{App, MouseKind, UiEvent};
 use dreist_gui::paint::{Painter, RectF};
 use dreist_gui::render::Renderer;
-use dreist_gui::{Colour, Ctrl, Rect};
+use dreist_gui::{Colour, Ctrl};
 
 use crate::command::{Command, msg};
 use crate::model::{LAYERS, Model};
 
 pub const HANDLE: f32 = 8.0;
-const STYLE: &str = "VSplitStyle";
-const OVERLOAD: &str = "VelocitySplitEditor";
+pub const STYLE: &str = "VSplitStyle";
+pub const OVERLOAD: &str = "VelocitySplitEditor";
 const OVERLAPS: [f32; 4] = [0.1, 0.2, 0.25, 0.5];
-const LINKS: usize = 64;
 
 /// Split → handle x positions.
 pub fn to_px(s: Split, w: f32) -> [f32; 4] {
@@ -169,18 +165,11 @@ const V2A_EDIT: &str = "V2AValueEdit";
 
 #[derive(Default)]
 pub struct VelSplit {
+    /// The pad view (`PadControls`).
     panel: Option<Vec<usize>>,
-    layer_panel: Option<Vec<usize>>,
-    show: bool,
-    /// The panel is sliding in or out: sync leaves visibility alone.
-    sliding: bool,
     drag: Option<Drag>,
     menu: Option<Menu>,
 }
-
-/// Slide animation tags.
-const SLIDE_IN: u32 = 0x5e1;
-const SLIDE_OUT: u32 = 0x5e0;
 
 fn layer_split(model: &Model, e: usize, p: usize, l: usize) -> Split {
     model.layer_node(e, p, l).map(dreist_engine::engine::doc::layer_split).unwrap_or(dreist_engine::velsplit::DEFAULT)
@@ -192,31 +181,14 @@ pub fn layer_mode(model: &Model, e: usize, p: usize) -> usize {
     dreist_dsp::voices::LAYER_MODE_NAMES.iter().position(|m| *m == name).unwrap_or(0)
 }
 
+fn is_v2a(name: &str) -> bool {
+    matches!(name, "V2A" | "v2a")
+}
+
 impl VelSplit {
-    /// Mount the panel skin and add the eight editors (hidden until shown).
-    pub fn build(skin: &mut dreist_gui::Skin, root: &mut Ctrl) -> Result<VelSplit, crate::EditorError> {
-        let Some(host) = root.find_mut("VelocitySplitPanel") else { return Ok(VelSplit::default()) };
-        if host.children.is_empty() {
-            skin.mount(host, "VelocitySplitPanel.skin").map_err(crate::err)?;
-        }
-        host.visible = false;
-        if let Some(b) = host.find_mut("LayoutBox") {
-            for l in 0..LAYERS {
-                b.children.push(Ctrl {
-                    class: "CtrlPanel".into(),
-                    name: format!("VSplit{l}"),
-                    overload: OVERLOAD.into(),
-                    display_name: format!("Layer {}", l + 1),
-                    style: STYLE.into(),
-                    visible: true,
-                    enabled: true,
-                    zorder: 1,
-                    attrs: [("layer".to_string(), l.to_string())].into_iter().collect(),
-                    ..Ctrl::default()
-                });
-            }
-        }
-        Ok(VelSplit { panel: root.path_of("VelocitySplitPanel"), layer_panel: root.path_of("LayerPanel"), ..VelSplit::default() })
+    /// The pad view's controls (its `Split0..7` lanes tagged by the page).
+    pub fn build(panel: Option<Vec<usize>>) -> VelSplit {
+        VelSplit { panel, ..VelSplit::default() }
     }
 
     pub fn sync(&mut self, app: &mut App, model: &Model) {
@@ -226,53 +198,36 @@ impl VelSplit {
         let mode = layer_mode(model, e, p);
         let pad = model.pad_node(e, p);
         let v2a = pad.and_then(|n| n.f32(dreist_formats::PadParam::V2A.name())).unwrap_or(dreist_formats::PadParam::V2A.default_value());
-        let links: Vec<bool> = (0..LINKS).map(|j| pad.and_then(|n| n.bool(&format!("Link{j}"))).unwrap_or(false)).collect();
         let pad_locked = pad.is_some_and(|n| n.locked());
         let enabled: Vec<bool> = (0..LAYERS)
             .map(|l| {
                 let f = model.layer(e, p, l);
-                mode == 1 && f.valid && !model.layer_node(e, p, l).is_some_and(|n| n.locked())
+                f.valid && !pad_locked && !model.layer_node(e, p, l).is_some_and(|n| n.locked())
             })
             .collect();
-        if let Some(lp) = self.layer_panel.as_ref().filter(|_| !self.sliding) {
-            if let Some(c) = app.ctrl_mut(lp) {
-                c.visible = !self.show;
-            }
-        }
-        let show = self.show || self.sliding;
-        if let Some(sb) = app.root.find_mut("ShowSplits") {
-            sb.on = show;
-        }
+        let split = mode == 1;
         let Some(panel) = app.ctrl_mut(&pp) else { return };
-        panel.visible = show;
         let label = format!("Engine {} Pad {} velocity split", e + 1, p + 1);
         panel.walk_mut(&mut |c: &mut Ctrl| match c.name.as_str() {
             "SelModeCombo" => c.text = dreist_dsp::voices::LAYER_MODE_NAMES[mode].to_string(),
-            "v2a" => c.value = v2a,
-            "Insert" => c.enabled = mode == 1 && !pad_locked,
-            "LayoutBox" => {
-                // [re:7789ea]: rows stacked with 1 px spacing.
-                let n = LAYERS as i32;
-                let h = ((c.rect.h - 1 - (n - 1)) / n).max(1);
-                let w = c.rect.w;
-                for (i, r) in c.children.iter_mut().enumerate() {
-                    r.rect = Rect::new(0, 1 + i as i32 * (h + 1), w, h);
-                    r.enabled = enabled[i];
-                    r.display_name = label.clone();
-                }
-            }
-            n => {
-                if let Some(j) = n.strip_prefix("LinkButton").and_then(|v| v.parse::<usize>().ok()) {
-                    c.on = links.get(j.wrapping_sub(1)).copied().unwrap_or(false);
+            n if is_v2a(n) => c.value = v2a,
+            "Auto" | "Insert" => c.enabled = split && !pad_locked,
+            // The velocity ruler over the lanes.
+            "CtrlImageView" => c.visible = split,
+            _ => {
+                if let Some(l) = c.attr("layer").and_then(|v| v.parse::<usize>().ok()).filter(|_| c.overload == OVERLOAD) {
+                    c.visible = split;
+                    c.enabled = split && enabled[l.min(LAYERS - 1)];
+                    c.display_name = label.clone();
                 }
             }
         });
     }
 
-    /// [re:fe83c5] [re:29de0f]: a double click on v2a resets it
+    /// [re:fe83c5] [re:29de0f]: a double click on Vel-Amp resets it
     /// ([re:d6dc6f]).
     pub fn reset_value(&self, path: &[usize], name: &str) -> Option<f32> {
-        (name == "v2a" && self.panel.as_ref().is_some_and(|pp| path.starts_with(pp))).then(|| dreist_formats::PadParam::V2A.default_value())
+        (is_v2a(name) && self.panel.as_ref().is_some_and(|pp| path.starts_with(pp))).then(|| dreist_formats::PadParam::V2A.default_value())
     }
 
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
@@ -281,79 +236,23 @@ impl VelSplit {
         let ep = [e as i32, p as i32];
         let in_panel = |path: &[usize]| self.panel.as_ref().is_some_and(|pp| path.starts_with(pp));
         match ev {
-            // [re:281f54] [re:6b84c1]: on, the panel starts at
-            // the layer panel's right edge and slides over it (350 ms,
-            // exponential), then the layer panel hides; off, the layer
-            // panel shows and the panel slides back out (250 ms) and hides.
-            // The button is disabled while sliding.
-            UiEvent::Clicked { path, name, on, .. } if name == "ShowSplits" => {
-                self.drag = None;
-                let (Some(pp), Some(lp)) = (self.panel.clone(), self.layer_panel.clone()) else {
-                    self.show = *on;
-                    return true;
-                };
-                let Some(lr) = app.ctrl(&lp).map(|c| c.rect) else { return true };
-                let mut right = lr;
-                right.x = lr.x + lr.w;
-                if *on && !app.ctrl(&pp).is_some_and(|c| c.visible) {
-                    if let Some(c) = app.ctrl_mut(&pp) {
-                        c.visible = true;
-                        c.enabled = true;
-                    }
-                    app.animate_rect(&pp, right, lr, 350.0, dreist_gui::collapse::exponential, SLIDE_IN);
-                } else if !*on {
-                    if let Some(c) = app.ctrl_mut(&lp) {
-                        c.visible = true;
-                    }
-                    let from = app.ctrl(&pp).map(|c| c.rect).unwrap_or(lr);
-                    app.animate_rect(&pp, from, right, 250.0, dreist_gui::collapse::exponential, SLIDE_OUT);
-                } else {
-                    return true;
-                }
-                if let Some(b) = app.ctrl_mut(path) {
-                    b.enabled = false;
-                }
-                self.show = *on;
-                self.sliding = true;
-                true
-            }
-            UiEvent::Animated { path, tag } if self.panel.as_deref() == Some(path.as_slice()) && matches!(*tag, SLIDE_IN | SLIDE_OUT) => {
-                self.sliding = false;
-                if let Some(b) = app.root.find_mut("ShowSplits") {
-                    b.enabled = true;
-                }
-                if *tag == SLIDE_IN {
-                    if let Some(c) = self.layer_panel.as_ref().and_then(|lp| app.ctrl_mut(lp)) {
-                        c.visible = false;
-                    }
-                } else if let Some(c) = app.ctrl_mut(path) {
-                    c.visible = false;
-                    c.enabled = false;
-                }
-                true
-            }
             UiEvent::Clicked { path, name, .. } if in_panel(path) && name == "SelModeCombo" => {
                 let items = dreist_dsp::voices::LAYER_MODE_NAMES.iter().map(|s| s.to_string()).collect();
                 app.open_menu(path, items, Some(layer_mode(model, e, p)));
                 self.menu = Some(Menu::Mode);
                 true
             }
-            UiEvent::Clicked { path, name, .. } if in_panel(path) && name == "Insert" => {
+            UiEvent::Clicked { path, name, .. } if in_panel(path) && matches!(name.as_str(), "Auto" | "Insert") => {
                 let mut items = vec!["Auto split velocity graphs".to_string()];
                 items.extend(OVERLAPS.iter().map(|f| format!("Auto overlap velocity graphs {}%", (f * 100.0).round())));
                 app.open_menu(path, items, None);
                 self.menu = Some(Menu::Auto);
                 true
             }
-            UiEvent::Clicked { path, name, on, .. } if in_panel(path) && name.starts_with("LinkButton") => {
-                let Some(j) = name.strip_prefix("LinkButton").and_then(|v| v.parse::<usize>().ok()).filter(|j| (1..=LINKS).contains(j)) else { return false };
-                out.push(msg(id::SET_PAD_LINKAGE, &ep, &[(j - 1) as f32, *on as i32 as f32]));
-                true
-            }
             // [re:411697]: right-click → Reset (0x4e with
             // [re:e79ca7]) / Edit
             // ([re:c8b896]: type the value in its units).
-            UiEvent::RightClicked { path, name } if in_panel(path) && name == "v2a" => {
+            UiEvent::RightClicked { path, name } if in_panel(path) && is_v2a(name) => {
                 app.open_menu(path, vec!["Reset".into(), "Edit".into()], None);
                 self.menu = Some(Menu::V2a);
                 true
@@ -370,7 +269,7 @@ impl VelSplit {
                 }
                 true
             }
-            UiEvent::ValueChanged { path, name, value, .. } if in_panel(path) && name == "v2a" => {
+            UiEvent::ValueChanged { path, name, value, .. } if in_panel(path) && is_v2a(name) => {
                 out.push(msg(id::SET_PAD_PARAMETER, &ep, &[*value, dreist_formats::PadParam::V2A as u8 as f32, 0.0]));
                 true
             }
@@ -468,10 +367,11 @@ impl VelSplit {
         let Some(l) = c.attr("layer").and_then(|v| v.parse::<usize>().ok()) else { return false };
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
         let st = &r.styles;
-        let fill = st.colour(STYLE, "colFill", Colour::WHITE);
-        let alt = st.colour(STYLE, "colAltFill", Colour::WHITE);
-        let border = st.colour(STYLE, "colBorder", Colour::rgba(0x5a, 0x5a, 0x5a, 100));
-        let alt_border = st.colour(STYLE, "colAltBorder", Colour::rgba(0x5a, 0x5a, 0x5a, 50));
+        let pick = |attr: &str, named: &str, d: Colour| crate::timeline::style_or_named(st, STYLE, attr, named, d);
+        let fill = pick("colFill", "SplitGraphColour", Colour::WHITE);
+        let alt = pick("colAltFill", "SplitMouseColour", Colour::WHITE);
+        let border = pick("colBorder", "SplitLineColour", Colour::rgba(0x5a, 0x5a, 0x5a, 100)).with_alpha(if st.raw(STYLE, "colBorder").is_some() { 1.0 } else { 0.4 });
+        let alt_border = pick("colAltBorder", "SplitMinMaxColour", Colour::rgba(0x5a, 0x5a, 0x5a, 50)).with_alpha(if st.raw(STYLE, "colAltBorder").is_some() { 1.0 } else { 0.2 });
         let step = w * 0.007874016;
         for i in 1..127u32 {
             let x = (i as f32 * step).floor() + 0.5;
@@ -492,7 +392,7 @@ impl VelSplit {
         let mut closed = poly.to_vec();
         closed.push(poly[0]);
         p.polyline(&closed, fill, 1.0);
-        let normal = alt.darken(0.4).with_alpha(0.5);
+        let normal = if st.raw(STYLE, "colAltFill").is_some() { alt.darken(0.4).with_alpha(0.5) } else { pick("colAltFill", "SplitTurnColour", alt) };
         let ys = [h - HANDLE, 0.0, 0.0, h - HANDLE];
         for k in 0..4 {
             p.fill_rect(RectF::new(px[k], ys[k], HANDLE, HANDLE), if grabbed == Some(k) { alt } else { normal });

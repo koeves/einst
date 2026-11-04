@@ -1,25 +1,23 @@
-//! Effect chain panel (`EffectChain.skin`, [re:e04aee]):
-//! one [re:052ee5] per effect slot (header = effect type in upper
-//! case, `SetupPanel` with input trim / mix / output) holding the effect's
-//! own skin (`Effects/FX/<name>.skin`, table in [re:46bffe]
-//! [re:a200d6]), plus `EmptyEffect.skin` to add one.
+//! Effect chain panel (v1 `EffectChain.skin`, [re:e04aee]): six fixed
+//! slots (`EffectPanel.skin`: type and preset menus, active, mix, output
+//! level) of which four show, scrolled by the slot bar, each holding its
+//! effect's own skin (`Effects/<name>.skin`).
 //!
 //! [re:0e72ae] binds `Control<n>` to effect
 //! parameter n−1 (up to 12); changes post `e_setFXParameter` 0x59 with index
 //! [engine, pad, layer, slot] and values [parameter, source, value]
-//! ([re:b5d4be]). Trim/mix/output post
-//! 0x5e/0x5c/0x5d with values [0, value, source].
+//! ([re:b5d4be]). Mix/output post 0x5c/0x5d with values [0, value, source].
+//! A split fader sets the two parameters of the caption panels above (high)
+//! and below (low) it.
 //!
-//! [re:ea87a2] (EffectTypeCombo): Save
+//! The slot's type menu: Remove effect, then one submenu per category
+//! ([re:cf5f13], [re:63da62] table [re:b06dc6]); an empty slot's offers the
+//! category submenus ([re:57c692]). The preset menu ([re:ea87a2]): Save
 //! preset, Save as default, Revert to default, the type's presets (user
-//! folder first, then system `Effects/<Type>/*.fxpreset`), Remove effect,
-//! then one submenu per category ([re:cf5f13],
-//! [re:63da62] table [re:b06dc6]). The empty slot's
-//! AddButton offers the category submenus ([re:57c692]). Choosing
+//! folder first, then system `Effects/<Type>/*.fxpreset`). Choosing a type
 //! posts `e_setEffect` (100) [engine, pad, layer] with the slot and a new
-//! `Effect` loaded from the type's `Default.fxpreset`
-//! ([re:769021]); the port edits the document
-//! and rebuilds. Submenus open as a second menu.
+//! `Effect` loaded from the type's `Default.fxpreset` ([re:769021]); the port
+//! edits the document and rebuilds. Submenus open as a second menu.
 
 use dreist_engine::binding::id;
 use dreist_formats::Node;
@@ -229,55 +227,67 @@ pub fn save_preset_file(path: &std::path::Path, node: &Node) -> std::io::Result<
     dreist_formats::file::write_atomic(path, root.to_xml())
 }
 
-/// Effect type index → skin ([re:46bffe]; the dedicated
-/// classes load VariEQ/ChanComp/BusComp/Limiter themselves; the model
-/// filters share ModelFilter).
+/// Effect type index → its v1 skin (`Effects/<name>.skin`): the model
+/// filters have one each; the types v1 lacks have none (an empty panel).
 fn skin_for(kind: usize) -> Option<&'static str> {
     Some(match kind {
-        1 => "Gain.skin",
-        2 => "StereoWidth.skin",
-        3 => "ParaEQ.skin",
-        4 => "DJEQ.skin",
-        5 => "VariEQ.skin",
-        6 => "HILO.skin",
-        7 => "Enhancer.skin",
-        8 => "ChanComp.skin",
-        9 => "BusComp.skin",
-        10 => "VCAComp.skin",
-        11 => "NoiseGate.skin",
-        12 => "EnvShaper.skin",
-        13 => "DrumDynamics.skin",
-        14 => "Limiter.skin",
-        15 => "Delay.skin",
-        16 => "Flanger.skin",
-        17 => "Chorus.skin",
-        18 => "Phaser.skin",
-        19 => "Distortion.skin",
-        20 => "SingleMault.skin",
-        21 => "Mault.skin",
-        22 => "Maul.skin",
-        23 => "Crusher.skin",
-        24 => "RingSting.skin",
-        25 => "Shifter.skin",
-        26 => "Amber.skin",
-        27 => "PhaseMod.skin",
-        28 => "Filter.skin",
-        29 => "ModFilter.skin",
-        30 => "Comb.skin",
-        31..=36 => "ModelFilter.skin",
-        37 => "GuruFilter.skin",
-        38 => "Freezer.skin",
-        39 => "BreverbHall.skin",
-        40 => "BreverbPlate.skin",
-        41 => "BreverbRoom.skin",
-        42 => "BreverbInverse.skin",
-        43 => "TinCan.skin",
-        44 => "Reverb.skin",
-        45 => "Bloom.skin",
-        46 => "DirtyDac.skin",
-        47 => "AnalogRingMod.skin",
+        1 => "Gain",
+        2 => "StereoWidth",
+        3 => "ParaEQ",
+        4 => "DJEQ",
+        5 => "VariEQ",
+        8 => "ChanComp",
+        9 => "BusComp",
+        11 => "NoiseGate",
+        12 => "EnvShaper",
+        15 => "Delay",
+        16 => "Flanger",
+        17 => "Chorus",
+        18 => "Phaser",
+        19 => "Distortion",
+        23 => "Crusher",
+        24 => "RingSting",
+        25 => "Shifter",
+        28 => "Filter",
+        29 => "ModFilter",
+        30 => "Comb",
+        31 => "Filter303",
+        32 => "Filter106",
+        33 => "FilterLadder",
+        34 => "Filter101",
+        35 => "FilterProdigy",
+        36 => "FilterMS20",
+        38 => "Freezer",
+        39 => "BreverbHall",
+        40 => "BreverbPlate",
+        41 => "BreverbRoom",
+        42 => "BreverbInverse",
+        43 => "TinCan",
         _ => return None,
     })
+}
+
+/// Effect slots per chain and how many the scroll view shows.
+pub const SLOTS: usize = 6;
+pub const VISIBLE_SLOTS: usize = 4;
+
+/// The slot controls an empty slot hides.
+const SLOT_CONTROLS: [&str; 8] = ["MixKnob", "ActiveButton", "Label1", "Label2", "LastPresetButton", "NextPresetButton", "PresetCombo", "OutputKnob"];
+
+/// Bind an effect skin's split faders (`SplitFader`, two parameters): the
+/// `Control<n>` caption panel above is the high handle, the one below the
+/// low handle.
+fn bind_split_faders(c: &mut Ctrl) {
+    let panels: Vec<(i32, usize)> = c.children.iter().filter(|k| k.class == "CtrlPanel").filter_map(|k| Some((k.rect.y, k.name.strip_prefix("Control")?.parse::<usize>().ok()?))).collect();
+    for k in c.children.iter_mut().filter(|k| k.overload == "SplitFader") {
+        let (y0, y1) = (k.rect.y, k.rect.bottom());
+        let above = panels.iter().filter(|(y, _)| *y < y0).max_by_key(|(y, _)| *y).map(|p| p.1);
+        let below = panels.iter().filter(|(y, _)| *y >= y1).min_by_key(|(y, _)| *y).map(|p| p.1);
+        if let (Some(hi), Some(lo)) = (above, below) {
+            k.set_attr("paramHigh", hi.to_string());
+            k.set_attr("paramLow", lo.to_string());
+        }
+    }
 }
 
 /// Which chain the panel shows: engine, pad or layer of the selection.
@@ -300,17 +310,6 @@ impl Target {
             Target::Layer(e, p, l) => [e as i32, p as i32, l as i32],
             Target::Aux(a) => [-4, a as i32, -1],
             Target::Master => [-3, -1, -1],
-        }
-    }
-
-    /// [re:2a670a]: the IdentifierLabel text.
-    pub fn identity(self) -> String {
-        match self {
-            Target::Layer(e, p, l) => format!("E {}\nP {}\nL {}", e + 1, p + 1, l + 1),
-            Target::Pad(e, p) => format!("E {}\nP {}", e + 1, p + 1),
-            Target::Engine(e) => format!("E {}", e + 1),
-            Target::Aux(a) => format!("A {}", a + 1),
-            Target::Master => "Mst".into(),
         }
     }
 
@@ -357,15 +356,29 @@ pub(crate) fn effects(model: &Model, t: Target) -> Vec<(usize, usize, Node)> {
     v
 }
 
+/// The v1 chain panel (`EffectChain.skin` in the mixer's `FXPanel`): the
+/// header (chain Active, Mix, preset menu and prev / next), the slot bar
+/// (`ScrollBar`, one item per slot, the shown ones lit) and the scroll view
+/// holding the six slots (`EffectChainFX.skin`, `EffectPanel.skin` each),
+/// four at a time.
 pub struct FxPanel {
     host: Vec<usize>,
-    chain_tpl: Option<Ctrl>,
-    panel_tpl: Option<Ctrl>,
-    empty_tpl: Option<Ctrl>,
+    /// The six slot panels.
+    slots: Vec<Vec<usize>>,
+    /// The row of slots inside the scroll view.
+    row: Option<Vec<usize>>,
+    /// The slot bar.
+    bar: Option<Vec<usize>>,
+    /// Slot width (the row scrolls by whole slots).
+    slot_w: i32,
+    /// The first shown slot (0..=SLOTS − VISIBLE_SLOTS).
+    pub(crate) scroll: usize,
+    /// The slot bar's item labels (effect names).
+    labels: std::cell::RefCell<Vec<String>>,
     fx_skins: Vec<(usize, Ctrl)>,
-    /// What is built: target and (slot, type) list.
-    built: Option<(Target, Vec<(usize, usize)>)>,
-    /// Open menu: the slot it acts on (None = add) and its item actions.
+    /// What is built: target and the type in each slot.
+    built: Option<(Target, Vec<usize>)>,
+    /// Open menu: the slot it acts on (None = the chain) and its item actions.
     menu: Option<(Option<usize>, Vec<Action>)>,
     resources: std::path::PathBuf,
     /// A save the editor should run (file dialog + write).
@@ -376,75 +389,100 @@ pub struct FxPanel {
 }
 
 impl FxPanel {
-    pub fn new(skin: &mut Skin, host: Vec<usize>) -> FxPanel {
-        let load = |skin: &mut Skin, name: &str| -> Option<Ctrl> {
-            let rel = skin.find(name)?;
-            skin.load_skin(&rel).ok()?.children.into_iter().next()
-        };
+    /// Fill the mixer's chain panel at `host` (its `EffectChain.skin`
+    /// already mounted) with the six slots.
+    pub fn build(skin: &mut Skin, root: &mut Ctrl, host: Vec<usize>) -> Result<FxPanel, crate::EditorError> {
         let mut fx_skins = Vec::new();
         for k in 1..EFFECT_TYPES.len() {
-            if let Some(c) = skin_for(k).and_then(|s| load(skin, s)) {
+            if let Some(mut c) = skin_for(k).and_then(|s| crate::front::load(skin, &format!("Effects/{s}.skin")).ok()) {
+                bind_split_faders(&mut c);
                 fx_skins.push((k, c));
             }
         }
-        FxPanel {
+        let mut h = &mut *root;
+        for &i in &host {
+            h = &mut h.children[i];
+        }
+        let mut slots = Vec::new();
+        let mut row = None;
+        let mut bar = None;
+        let mut slot_w = 199;
+        if let Some(sv) = h.path_of("ScrollView") {
+            let mut row_c = crate::front::load(skin, "Effects/EffectChainFX.skin")?;
+            crate::front::mount_all(skin, &mut row_c)?;
+            for (i, s) in row_c.children.iter_mut().enumerate() {
+                s.set_attr("fxSlot", i.to_string());
+                s.set_attr("fxKind", "0".into());
+                slot_w = s.rect.w;
+                slots.push([host.as_slice(), &sv, &[0, i]].concat());
+            }
+            let mut v = &mut *h;
+            for &i in &sv {
+                v = &mut v.children[i];
+            }
+            v.children.clear();
+            v.children.push(row_c);
+            row = Some([host.as_slice(), &sv, &[0]].concat());
+        }
+        if let Some(b) = h.path_of("ScrollBar") {
+            let mut c = &mut *h;
+            for &i in &b {
+                c = &mut c.children[i];
+            }
+            // Code-drawn and hit as a custom control.
+            c.class = "CtrlPanel".into();
+            c.set_attr("fxHost", format!("{host:?}"));
+            bar = Some([host.as_slice(), &b].concat());
+        }
+        Ok(FxPanel {
             host,
-            chain_tpl: load(skin, "EffectChain.skin"),
-            panel_tpl: load(skin, "EffectPanel.skin"),
-            empty_tpl: load(skin, "EmptyEffect.skin"),
+            slots,
+            row,
+            bar,
+            slot_w,
+            scroll: 0,
+            labels: Default::default(),
             fx_skins,
             built: None,
             menu: None,
             resources: dreist_formats::paths::skin_dir(),
             save_request: None,
             chain_presets: Default::default(),
-        }
+        })
     }
 
-    fn rebuild(&mut self, app: &mut App, t: Target, fx: &[(usize, usize, Node)]) {
-        let sig: Vec<(usize, usize)> = fx.iter().map(|(s, k, _)| (*s, *k)).collect();
-        if self.built.as_ref() == Some(&(t, sig.clone())) {
+    /// Put each slot's effect skin in and show / hide the slot controls.
+    fn rebuild(&mut self, app: &mut App, t: Target, kinds: &[usize]) {
+        if self.built.as_ref().is_some_and(|(bt, bk)| *bt == t && bk == kinds) {
             return;
         }
-        self.built = Some((t, sig));
-        let Some(host) = app.ctrl_mut(&self.host) else { return };
-        host.children.clear();
-        let Some(mut chain) = self.chain_tpl.clone() else { return };
-        chain.set_rect(Rect::new(0, 0, host.rect.w, host.rect.h));
-        if let Some(sc) = chain.find_mut("FXScroller") {
-            let h = sc.rect.h;
-            let mut x = 0;
-            // [re:6929fb] re-stacks its container when a panel folds.
-            sc.set_attr("stackAxis", "h".into());
-            for (slot, kind, node) in fx {
-                let Some(mut panel) = self.panel_tpl.clone() else { continue };
-                panel.display_name = dreist_formats::params::effect_label(*kind).to_uppercase();
-                panel.set_attr("fxSlot", slot.to_string());
-                panel.set_attr("fxKind", kind.to_string());
-                let w = panel.rect.w;
-                panel.set_rect(Rect::new(x, 0, w, h));
-                // Effect `IsFolded` → the panel starts iconic.
-                if node.bool("IsFolded").unwrap_or(false) {
-                    dreist_gui::collapse::set_iconic(&mut panel, true);
-                    fold_controls(&mut panel, false);
+        let old = self.built.take().map(|(_, k)| k);
+        self.built = Some((t, kinds.to_vec()));
+        for (i, path) in self.slots.iter().enumerate() {
+            let kind = kinds.get(i).copied().unwrap_or(0);
+            if old.as_ref().and_then(|o| o.get(i)) == Some(&kind) {
+                continue;
+            }
+            let tpl = self.fx_skins.iter().find(|(k, _)| *k == kind).map(|(_, c)| c.clone());
+            let Some(slot) = app.ctrl_mut(path) else { continue };
+            slot.set_attr("fxKind", kind.to_string());
+            slot.style = if kind == 0 { "EffectPanelBackgroundNoFX" } else { "EffectPanelBackground" }.into();
+            if let Some(setup) = slot.find_mut("SetupPanel") {
+                for k in setup.children.iter_mut() {
+                    if SLOT_CONTROLS.contains(&k.name.as_str()) {
+                        k.visible = kind != 0;
+                        k.enabled = kind != 0;
+                    }
                 }
-                let w = panel.rect.w;
-                if let (Some(inner), Some((_, fxc))) = (panel.find_mut("EffectPanel"), self.fx_skins.iter().find(|(k, _)| k == kind)) {
-                    let mut c = fxc.clone();
-                    let (iw, ih) = (inner.rect.w, inner.rect.h);
-                    c.set_rect(Rect::new(0, 0, iw, ih));
+            }
+            if let Some(inner) = slot.find_mut("EffectPanel") {
+                inner.children.clear();
+                if let Some(mut c) = tpl {
+                    c.set_rect(Rect::new(0, 0, inner.rect.w, inner.rect.h));
                     inner.children.push(c);
                 }
-                x += w;
-                sc.children.push(panel);
-            }
-            if let Some(mut empty) = self.empty_tpl.clone() {
-                let w = empty.rect.w;
-                empty.set_rect(Rect::new(x, 0, w, h));
-                sc.children.push(empty);
             }
         }
-        host.children.push(chain);
     }
 
     /// How many chain presets exist (folders rescanned at most every two
@@ -467,13 +505,36 @@ impl FxPanel {
 
     pub fn sync(&mut self, app: &mut App, model: &Model, t: Target) {
         let fx = effects(model, t);
-        self.rebuild(app, t, &fx);
-        // Chain header: Active / Mix, and the next / previous buttons
-        // [re:100883] — prev / next enabled with two or more presets while the
-        // chain is active.
+        let mut kinds = vec![0; SLOTS];
+        for (s, k, _) in &fx {
+            if let Some(v) = kinds.get_mut(*s) {
+                *v = *k;
+            }
+        }
+        self.rebuild(app, t, &kinds);
+        *self.labels.borrow_mut() = kinds.iter().map(|&k| if k == 0 { "No Effect".to_string() } else { dreist_formats::params::effect_label(k).to_string() }).collect();
+        self.scroll = self.scroll.min(SLOTS - VISIBLE_SLOTS);
+        let x = -(self.scroll as i32) * self.slot_w;
+        if let Some(r) = self.row.as_ref().and_then(|p| app.ctrl_mut(p)) {
+            if r.rect.x != x {
+                let nr = Rect::new(x, r.rect.y, r.rect.w, r.rect.h);
+                r.set_rect(nr);
+            }
+        }
+        if let Some(b) = self.bar.as_ref().and_then(|p| app.ctrl_mut(p)) {
+            // The bar repaints when the labels or the scroll change.
+            let sig = format!("{}|{}", self.scroll, self.labels.borrow().join("|"));
+            if b.text != sig {
+                b.text = sig;
+            }
+        }
+        // Chain header: Active / Mix, the preset name and the next /
+        // previous buttons [re:100883] — prev / next enabled with two or
+        // more presets while the chain is active.
         let chain = chain_node(model, t);
         let chain_active = chain.as_ref().and_then(|c| c.attr("IsActive")).map(str::trim) != Some("false");
         let chain_mix = chain.as_ref().and_then(|c| c.f32("ChainMix")).unwrap_or(1.0).clamp(0.0, 1.0);
+        let chain_label = chain.as_ref().and_then(chain_name).and_then(|n| std::path::Path::new(&n).file_stem().map(|s| s.to_string_lossy().into_owned())).unwrap_or_else(|| "Default".into());
         let stepping = chain_active && self.chain_preset_count() >= 2;
         let Some(host) = app.ctrl_mut(&self.host) else { return };
         fn header(c: &mut Ctrl, f: &mut dyn FnMut(&mut Ctrl)) {
@@ -485,27 +546,37 @@ impl FxPanel {
                 header(k, f);
             }
         }
-        let identity = t.identity();
         header(host, &mut |k: &mut Ctrl| match k.name.as_str() {
-            "IdentifierLabel" => {
-                k.text = identity.clone();
-                k.passive = true;
-            }
             "ActiveButton" => k.on = chain_active,
             "MixKnob" => k.value = chain_mix,
+            "PresetCombo" => k.text = chain_label.clone(),
             "PresetPrev" | "PresetNext" => k.enabled = stepping,
             _ => {}
         });
         host.walk_mut(&mut |c: &mut Ctrl| {
             let (Some(slot), Some(kind)) = (c.attr("fxSlot").and_then(|v| v.parse::<usize>().ok()), c.attr("fxKind").and_then(|v| v.parse::<usize>().ok())) else { return };
-            let Some((_, _, node)) = fx.iter().find(|(s, _, _)| *s == slot) else { return };
+            let Some((_, _, node)) = fx.iter().find(|(s, _, _)| *s == slot) else {
+                if let Some(k) = c.find_mut("EffectTypeCombo") {
+                    k.text = "No Effect".into();
+                }
+                return;
+            };
             let names = effect_param_names(kind);
+            let key_of = |n: usize| -> Option<String> { names.get(n.wrapping_sub(1)).map(|pn| pn.chars().filter(|ch| !ch.is_whitespace()).collect()) };
             let get = |k: &str, d: f32| node.f32(k).unwrap_or(d).clamp(0.0, 1.0);
             let active = node.attr("IsActive").map(str::trim) != Some("false");
+            let preset = node.children.iter().find(|c| c.name.as_deref() == Some("PresetName")).and_then(|c| c.attr("string")).map(str::to_string).unwrap_or_else(|| "Default".into());
             c.walk_mut(&mut |k: &mut Ctrl| {
+                if k.overload == "SplitFader" {
+                    for (attr, key) in [("valueLow", "paramLow"), ("valueHigh", "paramHigh")] {
+                        if let Some(p) = k.attr(key).and_then(|v| v.parse::<usize>().ok()).and_then(key_of) {
+                            k.set_attr(attr, get(&p, 0.5).to_string());
+                        }
+                    }
+                    return;
+                }
                 if let Some(n) = k.name.strip_prefix("Control").and_then(|n| n.parse::<usize>().ok()) {
-                    if let Some(pn) = names.get(n.wrapping_sub(1)) {
-                        let key: String = pn.chars().filter(|ch| !ch.is_whitespace()).collect();
+                    if let Some(key) = key_of(n) {
                         let v = get(&key, 0.5);
                         if k.class == "CtrlPopupButton" {
                             // The popup item round(v·(n − 1)).
@@ -515,14 +586,15 @@ impl FxPanel {
                             }
                         } else if k.class == "CtrlButton" {
                             k.on = v >= 0.5;
-                        } else {
+                        } else if k.class != "CtrlPanel" {
                             k.value = v;
                         }
                     }
                     return;
                 }
                 match k.name.as_str() {
-                    "TrimKnob" => k.value = get("Trim", 1.0),
+                    "EffectTypeCombo" => k.text = dreist_formats::params::effect_label(kind).to_string(),
+                    "PresetCombo" => k.text = preset.clone(),
                     "MixKnob" => k.value = get("Mix", 1.0),
                     "OutputKnob" => k.value = get("Level", 1.0),
                     "ActiveButton" => k.on = active,
@@ -530,6 +602,44 @@ impl FxPanel {
                 }
             });
         });
+    }
+
+    /// The slot bar ([re:faf56f] `EditorEffectPanelScrollbar`): one item
+    /// per slot with its effect's name, the shown slots lit.
+    pub fn draw(&self, r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) -> bool {
+        use dreist_gui::paint::RectF;
+        use dreist_gui::style::{HAlign, VAlign};
+        if c.overload != "EditorEffectPanelScrollbar" || c.attr("fxHost") != Some(&format!("{:?}", self.host)) {
+            return false;
+        }
+        let s = r.styles;
+        let st = "FXLabelButtonStyle";
+        let (w, h) = (c.rect.w as f32, c.rect.h as f32);
+        let iw = (w / SLOTS as f32).floor();
+        let font = s.font(st);
+        let off = s.colour(st, "colFill", dreist_gui::Colour::rgba(200, 205, 215, 255));
+        let on = s.colour(st, "colAltFill", s.colour("SelectedObjectColour", "colFill", dreist_gui::Colour::rgba(236, 189, 47, 255)));
+        let text = s.colour(st, "colText", dreist_gui::Colour::rgba(18, 25, 60, 255));
+        let border = s.colour(st, "colBorder", text);
+        let scroll = c.text.split('|').next().and_then(|v| v.parse::<usize>().ok()).unwrap_or(self.scroll);
+        for (i, label) in self.labels.borrow().iter().enumerate() {
+            let rc = RectF::new(i as f32 * iw + 1.0, 4.0, iw - 2.0, h - 8.0);
+            let lit = (scroll..scroll + VISIBLE_SLOTS).contains(&i);
+            p.fill_rect(rc, if lit { on } else { off });
+            p.stroke_rect(rc, border, 1.0);
+            p.text(RectF::new(rc.x + 2.0, rc.y, rc.w - 4.0, rc.h), label, text, &font, HAlign::Center, VAlign::Center);
+        }
+        true
+    }
+
+    /// Show slot `i` (scrolling as little as possible).
+    fn reveal(&mut self, i: usize) {
+        if i < self.scroll {
+            self.scroll = i;
+        } else if i >= self.scroll + VISIBLE_SLOTS {
+            self.scroll = i + 1 - VISIBLE_SLOTS;
+        }
+        self.scroll = self.scroll.min(SLOTS - VISIBLE_SLOTS);
     }
 
     /// The (slot, kind) of the effect panel containing `path`.
@@ -699,7 +809,8 @@ impl FxPanel {
         CATEGORIES.iter().enumerate().map(|(i, c)| (format!("{c} ▸"), Action::Category(i))).collect()
     }
 
-    /// The type menu for an existing effect.
+    /// The slot's preset menu ([re:ea87a2]): Save preset, Save as default,
+    /// Revert to default, the type's presets.
     fn type_menu(&self, kind: usize, current: Option<&str>) -> Vec<(String, Action)> {
         let mut v = vec![
             ("Save preset".to_string(), Action::SavePreset),
@@ -713,12 +824,6 @@ impl FxPanel {
             let mark = if current == Some(name.as_str()) { "✓ " } else { "" };
             v.push((format!("{mark}{name}"), Action::Preset(p.clone())));
         }
-        if !ps.is_empty() {
-            v.push((String::new(), Action::None));
-        }
-        v.push(("Remove effect".into(), Action::Remove));
-        v.push((String::new(), Action::None));
-        v.extend(Self::categories());
         v
     }
 
@@ -857,16 +962,37 @@ impl FxPanel {
             // Paste ([re:a86ca5]; not over
             // its controls); on an empty slot's Add button: Paste
             // ([re:57c692] [re:4bab0b]).
-            UiEvent::RightClicked { path, name } if path.starts_with(&self.host) => {
+            // The row scrolls by slots: the wheel over it, a press or drag
+            // on the slot bar.
+            UiEvent::Wheel { path, dy, .. } if path.starts_with(&self.host) => {
+                self.scroll = if *dy > 0.0 { self.scroll.saturating_sub(1) } else { (self.scroll + 1).min(SLOTS - VISIBLE_SLOTS) };
+                return true;
+            }
+            UiEvent::Mouse { path, kind, x, .. } if self.bar.as_ref() == Some(path) && matches!(kind, dreist_gui::app::MouseKind::Down | dreist_gui::app::MouseKind::Drag) => {
+                let w = app.ctrl(path).map(|c| c.rect.w as f32).unwrap_or(1.0).max(1.0);
+                let i = ((x / w * SLOTS as f32).floor().max(0.0) as usize).min(SLOTS - 1);
+                self.reveal(i);
+                return true;
+            }
+            // Right press on an effect panel's background: Cut / Copy /
+            // Paste ([re:a86ca5]; not over its controls); on an empty slot:
+            // Paste ([re:57c692] [re:4bab0b]).
+            UiEvent::RightClicked { path, .. } | UiEvent::Mouse { path, kind: dreist_gui::app::MouseKind::RightDown, .. } if path.starts_with(&self.host) => {
                 let Some(c) = app.ctrl(path) else { return false };
                 let paste = dreist_gui::menu::item("Paste", effect_clipboard().is_some());
-                if name == "AddButton" && c.class == "CtrlButton" {
-                    self.open_menu(app, path, None, vec![(paste, Action::EffectPaste)]);
-                    return true;
-                }
-                let interactive = matches!(c.class.as_str(), "CtrlButton" | "CtrlKnob" | "CtrlPopupButton" | "CtrlTransmodKnob" | "CtrlPolyPlot");
-                let Some((slot, _)) = self.slot_of(app, path).filter(|_| !interactive) else { return false };
-                self.open_menu(app, path, Some(slot), vec![("Cut".into(), Action::EffectCut), ("Copy".into(), Action::EffectCopy), (paste, Action::EffectPaste)]);
+                let interactive = matches!(c.class.as_str(), "CtrlButton" | "CtrlKnob" | "CtrlPopupButton" | "CtrlTransmodKnob" | "CtrlPolyPlot" | "CtrlSlider" | "CtrlRangeSlider");
+                let Some((slot, kind)) = self.slot_of(app, path).filter(|_| !interactive) else { return false };
+                let items = if kind == 0 { vec![(paste, Action::EffectPaste)] } else { vec![("Cut".into(), Action::EffectCut), ("Copy".into(), Action::EffectCopy), (paste, Action::EffectPaste)] };
+                self.open_menu(app, path, Some(slot), items);
+                return true;
+            }
+            // A split fader moved one of its two parameters.
+            UiEvent::ValueChanged { path, value, .. } if path.starts_with(&self.host) && app.ctrl(path).is_some_and(|c| c.overload == "SplitFader") => {
+                let Some((slot, _)) = self.slot_of(app, path) else { return false };
+                let c = app.ctrl(path).unwrap();
+                let key = if c.attr("dragPart") == Some("low") { "paramLow" } else { "paramHigh" };
+                let Some(n) = c.attr(key).and_then(|v| v.parse::<usize>().ok()) else { return true };
+                out.push(msg(id::SET_FX_PARAMETER, &[e, p, l, slot as i32], &[(n - 1) as f32, 0.0, *value]));
                 return true;
             }
             // Option parameters ([re:0e72ae]:
@@ -881,7 +1007,7 @@ impl FxPanel {
                 return true;
             }
             // Chain preset menu and stepping ([re:e04aee]).
-            UiEvent::Clicked { path, name, .. } if path.starts_with(&self.host) && matches!(name.as_str(), "PresetCombo" | "PresetPrev" | "PresetNext") => {
+            UiEvent::Clicked { path, name, .. } if path.starts_with(&self.host) && matches!(name.as_str(), "PresetCombo" | "PresetPrev" | "PresetNext") && self.slot_of(app, path).is_none() => {
                 let current = chain_current(model, t);
                 if name == "PresetCombo" {
                     let items = self.chain_menu(current.as_deref());
@@ -901,14 +1027,18 @@ impl FxPanel {
                 self.apply(model, t, None, &Action::ChainLoad(ps[next].clone()), out);
                 return true;
             }
-            UiEvent::Clicked { path, name, .. } if path.starts_with(&self.host) && name == "AddButton" => {
-                self.open_menu(app, path, None, Self::categories());
-                return true;
-            }
-            UiEvent::Clicked { path, name, .. } if matches!(name.as_str(), "EffectTypeCombo" | "LastPresetButton" | "NextPresetButton") => {
+            UiEvent::Clicked { path, name, .. } if path.starts_with(&self.host) && matches!(name.as_str(), "EffectTypeCombo" | "PresetCombo" | "LastPresetButton" | "NextPresetButton") => {
                 let Some((slot, kind)) = self.slot_of(app, path) else { return false };
                 match name.as_str() {
+                    // An empty slot's type menu: the category submenus; a
+                    // filled one's adds Remove effect.
+                    "EffectTypeCombo" if kind == 0 => self.open_menu(app, path, Some(slot), Self::categories()),
                     "EffectTypeCombo" => {
+                        let mut items = vec![("Remove effect".to_string(), Action::Remove), (String::new(), Action::None)];
+                        items.extend(Self::categories());
+                        self.open_menu(app, path, Some(slot), items);
+                    }
+                    "PresetCombo" => {
                         let current = effects(model, t)
                             .into_iter()
                             .find(|(s, _, _)| *s == slot)

@@ -55,6 +55,8 @@ pub struct Model {
     /// actions apply to all layers / all pads.
     pub all_layers: bool,
     pub all_pads: bool,
+    /// The selector's Row link: edits apply to the pads of the row.
+    pub all_rows: bool,
     /// Engine multi-selection (`e_setEngineSelections` 0x43, the original
     /// [re:1b20b6]; not saved — loading selects only `CurrentEngine`).
     pub engine_sel: u8,
@@ -287,6 +289,7 @@ impl Model {
             follow_playback: crate::options::Options::load().bool("PatternEditorFollow", false),
             all_layers: false,
             all_pads: false,
+            all_rows: false,
             engine_sel: 0,
             pattern_view: Default::default(),
             sampling: None,

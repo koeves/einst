@@ -27,7 +27,8 @@ impl Editor {
                 self.show_file_menu(path, items);
                 false
             }
-            UiEvent::Clicked { path, name, .. } if name == "SaveButton" => {
+            // (The sampler page has a SaveButton of its own.)
+            UiEvent::Clicked { path, name, .. } if name == "SaveButton" && front::path_in(&self.app.root, "UtilityControls", "SaveButton").as_ref() == Some(path) => {
                 let items = vec![
                     ("Save Preset".to_string(), FileAction::SavePreset { as_new: false }),
                     ("Save Preset As...".into(), FileAction::SavePreset { as_new: true }),

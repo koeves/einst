@@ -16,8 +16,6 @@ mod editbind;
 mod editor;
 pub mod filefind;
 mod front;
-// Kept for the v1 mixer and scene pages, which do not use it yet.
-#[allow(dead_code)]
 mod fxchain;
 mod fxtext;
 mod guru;
@@ -28,8 +26,6 @@ mod metadata;
 mod meters;
 mod midiconsole;
 mod midimap;
-// Kept for the v1 mixer and scene pages, which do not use it yet.
-#[allow(dead_code)]
 mod mixer;
 mod modal;
 pub mod model;
@@ -43,8 +39,6 @@ mod popups;
 pub mod project;
 mod retro;
 mod sampler;
-// Kept for the v1 mixer and scene pages, which do not use it yet.
-#[allow(dead_code)]
 mod scenes;
 mod search;
 mod slicer;
@@ -250,26 +244,35 @@ impl Editor {
         let mut root = front::root(&mut skin)?;
         let header = header::Header::build(&root);
         let pads = pads::Pads::build(&mut root, &model)?;
-        let sampler = sampler::Sampler::build(&mut skin, &mut root)?;
         let editor_tabs = tabs::Tabs::new(&root, "MainTabs", "MainTabButtons");
         let utility_tabs = tabs::Tabs::new(&root, "BrowserTabs", "BrowserTabButtons");
         let mut pattern = None;
         let mut song = None;
+        let mut mixers = Vec::new();
+        let mut inspector = None;
+        let mut scenes = None;
+        let mut sampler = sampler::Sampler::default();
         if let Some(t) = &editor_tabs {
             for id in 0..front::PAGES.len() {
                 let page = t.add_page(&mut root, id);
+                if let Some(k) = [mixer::Kind::Layer, mixer::Kind::Pad, mixer::Kind::Engine, mixer::Kind::Global].into_iter().find(|k| k.page() == id) {
+                    mixers.push(mixer::Mixer::build(&mut skin, &mut root, &page, k)?);
+                    continue;
+                }
                 match id {
                     front::PATTERN_PAGE => pattern = Some(pattern::PatternPanel::build(&mut skin, &mut root, &page)?),
                     front::SONG_PAGE => song = Some(song::SongPanel::build(&mut skin, &mut root, &page)?),
-                    _ => front::static_page(&mut skin, &mut root, &page, id)?,
+                    front::SCENE_PAGE => scenes = Some(scenes::Scenes::build(&mut skin, &mut root, &page)?),
+                    front::PADS_PAGE => inspector = Some(inspector::Inspector::build(&mut skin, &mut root, Some(&page))?),
+                    front::SAMPLER_PAGE => sampler = sampler::Sampler::build(&mut skin, &mut root, &page)?,
+                    _ => front::mount_page(&mut skin, &mut root, &page, id)?,
                 }
             }
         }
-        // Not on the v1 layout yet: the pad / layer editor, the mixers and
-        // the scene page (their pages show their layout only).
-        let inspector = inspector::Inspector::build(&mut skin, &mut root)?;
-        let mixers = Vec::new();
-        let scenes = None;
+        let inspector = match inspector {
+            Some(i) => i,
+            None => inspector::Inspector::build(&mut skin, &mut root, None)?,
+        };
         let mut browser = None;
         let mut midimap = None;
         if let Some(t) = &utility_tabs {
@@ -430,7 +433,7 @@ impl Editor {
         Some(self.pads.matrix().to_vec())
     }
 
-    /// Per-frame animations (scene activity labels).
+    /// Per-frame animations.
     pub fn animate(&mut self) {
         for ev in self.app.animate() {
             self.handle(&ev);
@@ -449,19 +452,27 @@ impl Editor {
         if self.modals.tick(&mut self.app) {
             self.app.dirty = true;
         }
-        if self.scenes.as_mut().is_some_and(|sc| sc.animate()) {
-            if let Some(sc) = &mut self.scenes {
-                sc.sync(&mut self.app, &self.model);
-            }
-            self.app.dirty = true;
-        }
     }
 
     /// Open the slicer on an audio file ([re:b73f33]).
     pub fn open_slicer(&mut self, file: &std::path::Path) -> bool {
-        let ok = self.slicer.start(&self.model, file);
+        let ok = self.open_slicer_from_browser(file);
         self.sync();
         ok
+    }
+
+    /// Start slicing `file`; with the browser's Auto load on, the slices
+    /// and the pattern go to the engine at once (and follow every edit).
+    pub(crate) fn open_slicer_from_browser(&mut self, file: &std::path::Path) -> bool {
+        let auto = self.browser.as_ref().is_some_and(|b| b.auto_load());
+        if !self.slicer.start(&self.model, file) {
+            return false;
+        }
+        self.slicer.auto_load = auto;
+        if auto {
+            self.slicer.extract(&mut self.model, slicer::Extract::Both, &mut self.outbox);
+        }
+        true
     }
 
     /// Replace the document (project loaded or reset).

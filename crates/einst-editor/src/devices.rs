@@ -178,6 +178,11 @@ impl Devices {
 
     /// Open a panel (the standalone's Audio / MIDI settings menu items).
     pub fn show(&mut self, p: Panel) {
+        // A skin set without the panel (the v1 set has no audio / MIDI
+        // settings skins yet): nothing opens.
+        if self.overlay(p).is_none() {
+            return;
+        }
         self.settings = Settings::load(&Options::load());
         self.opened_with = self.settings.clone();
         self.open = Some(p);
@@ -190,6 +195,11 @@ impl Devices {
         let input = if self.settings.input == NO_INPUT { "" } else { &self.settings.input };
         self.audio = h.audio(&self.settings.output, input);
         self.midi = h.midi();
+    }
+
+    /// Whether the skin set has panel `p`.
+    pub fn available(&self, p: Panel) -> bool {
+        self.overlay(p).is_some()
     }
 
     fn overlay(&self, p: Panel) -> Option<&Vec<usize>> {

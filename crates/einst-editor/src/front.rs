@@ -62,6 +62,13 @@ pub const PAGES: [(&str, &str); 9] = [
 /// Page ids (`MainTabs`).
 pub const PATTERN_PAGE: usize = 0;
 pub const SONG_PAGE: usize = 2;
+pub const SCENE_PAGE: usize = 1;
+pub const PADS_PAGE: usize = 3;
+pub const LAYER_MIXER_PAGE: usize = 4;
+pub const PAD_MIXER_PAGE: usize = 5;
+pub const ENGINE_MIXER_PAGE: usize = 6;
+pub const GLOBAL_MIXER_PAGE: usize = 7;
+pub const SAMPLER_PAGE: usize = 8;
 
 /// Browser column pages (`BrowserTabs`).
 pub const BROWSER_PAGE: usize = 0;
@@ -185,24 +192,14 @@ pub(crate) fn root(skin: &mut Skin) -> Result<Ctrl, EditorError> {
     Ok(root)
 }
 
-/// Mount LCD page `id`'s skin (with its sub-skins) into `page`, for the
-/// pages whose panels are not ported yet: they show their layout only.
-pub(crate) fn static_page(skin: &mut Skin, root: &mut Ctrl, page: &[usize], id: usize) -> Result<(), EditorError> {
+/// Mount LCD page `id`'s skin with its sub-skins into `page`.
+pub(crate) fn mount_page(skin: &mut Skin, root: &mut Ctrl, page: &[usize], id: usize) -> Result<(), EditorError> {
     let mut host = &mut *root;
     for &i in page {
         host = &mut host.children[i];
     }
     mount_into(skin, host, PAGES[id].1)?;
-    mount_all(skin, host)?;
-    // Nothing on a layout-only page acts yet.
-    fn inert(c: &mut Ctrl) {
-        for k in &mut c.children {
-            k.enabled = false;
-            inert(k);
-        }
-    }
-    inert(host);
-    Ok(())
+    mount_all(skin, host)
 }
 
 /// The front-panel controls no other panel owns.

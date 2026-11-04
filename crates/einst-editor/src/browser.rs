@@ -705,6 +705,11 @@ fn build_column(skin: &mut Skin, host: &mut Ctrl) -> Result<(), EditorError> {
 }
 
 impl Browser {
+    /// The footer's Auto load is on.
+    pub fn auto_load(&self) -> bool {
+        self.auto_load
+    }
+
     pub fn build(skin: &mut Skin, root: &mut Ctrl, page: &[usize]) -> Result<Browser, EditorError> {
         let mut host = &mut *root;
         for &i in page {

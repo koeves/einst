@@ -25,6 +25,8 @@ pub(crate) enum Request {
     ExportAudio,
     /// Open a project or Guru preset.
     OpenProject(PathBuf),
+    /// The sampler page's export / send / slice.
+    Sampler(sampler::Request),
 }
 
 impl Editor {
@@ -59,6 +61,9 @@ impl Editor {
         }
         if std::mem::take(&mut self.modals.export_requested) {
             out.push(Request::ExportAudio);
+        }
+        if let Some(r) = self.sampler.request.take() {
+            out.push(Request::Sampler(r));
         }
         // Project loads come through the outbox (the editor opens them).
         let mut i = from;
@@ -182,6 +187,7 @@ impl Editor {
                 true
             }
             Request::OpenProject(path) => self.open_project(&path),
+            Request::Sampler(r) => self.run_sampler_request(r),
         }
     }
 

@@ -1,6 +1,6 @@
 //! Pixel regression: fingerprints of the editor rendered in fixed states
-//! (every LCD page, the mapping column, a pad mode, the dialogs, the main
-//! menu) so refactors are checked pixel for pixel
+//! (every LCD page, the mapping column, a pad mode, the dialogs, the
+//! slicer, the main menu) so refactors are checked pixel for pixel
 //! (`tests/golden/screens.txt`; `UPDATE_GOLDEN=1` rewrites it). Skipped
 //! without the factory content. Apps run [`check_screens`] with their own
 //! profile installed.
@@ -79,6 +79,13 @@ pub fn check_screens(name: &str) {
         std::thread::sleep(std::time::Duration::from_millis(600));
         ed.animate();
         golden.check(&format!("modal-{modal}"), shot(&mut ed), &[]);
+    }
+    // The slicer over the LCD (slid in) on a factory hit.
+    let mut ed = editor().unwrap();
+    if ed.open_slicer(&dreist_formats::legacy::demo("Hits/Cymbals/CY Cym Ar82 01 C2A St GB.wav")) {
+        std::thread::sleep(std::time::Duration::from_millis(400));
+        ed.animate();
+        golden.check("slicer", shot(&mut ed), &[]);
     }
     let mut ed = editor().unwrap();
     click(&mut ed, "UtilityControls/GridButton", dreist_gui::app::MouseButton::Left);

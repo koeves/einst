@@ -1,58 +1,166 @@
-//! Pad inspector ([re:8a338a]): pad header ([re:a94707]),
-//! layer list ([re:ecfa09] rows in `LayerTable`) and the layer
-//! panel ([re:c9e31a] with the wave display and `LayerParams.skin`).
+//! The Pad / Layers page (`Pad Editor/LayerEditor.skin`): the pad / layer
+//! selector on the left (the pad item `PadSelectionButton.skin` and eight
+//! layer rows `SelectionButton.skin`), and the editor on the right — the
+//! pad view (`PadControls.skin`: pan, gain, sends, output, Vel-Amp, layer
+//! play mode and the velocity split lanes) when the pad item is selected,
+//! the layer view (`PadEditorWavePanel.skin`: setup, timestretch and
+//! envelope panels, the wave display with both envelopes, the zoom bar)
+//! when a layer is (manual §5:1–5:9).
 //!
-//! - [re:f38cd2]: vertical gradient
-//!   colFill → colAltFill (at the middle) → colFill.
-//! - [re:d2ec05]: centre line at α0.5, then per
-//!   pixel column the min/max envelope in `colLine`.
-//! - [re:335a01]: start/end markers as 2 px lines
-//!   in colStartMarker/colEndMarker with a round handle (black centre).
-//! - [re:e0ce2b]: body in colFill,
-//!   header strip in colAltFill with the display name in colText.
-//!
-//! Knobs/sliders in `LayerParams` are named after the layer parameters
-//! (`Cutoff`, `Resonance` and `PreDelayTime` alias `FilterCutoff`,
-//! `FilterResonance`, `PreDelay`) and post `e_setLayerParameter` 0x66.
+//! - The wave display draws the waveform with its markers ([re:335a01]:
+//!   start/end 2 px lines with a round handle), the timeline and the Amp /
+//!   Free envelopes over it ([re:c29608]).
+//! - Layer controls post `e_setLayerParameter` 0x66 [param, value, source];
+//!   Vel-Pitch / Vel-Cutoff are the Velocity depths of CoarseTune / Cutoff
+//!   and the envelope destination depths the Amp / Free envelope depths of
+//!   Cutoff, Resonance, Drive or Pitch (knob 0.5 = none, depth 2v − 1, as
+//!   the v1 document conversion maps them).
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use dreist_engine::binding::id;
-use dreist_formats::LayerParam;
-use dreist_gui::app::{App, UiEvent};
+use dreist_formats::{LayerParam, PadParam, TransmodSource};
+use dreist_gui::app::{App, MouseKind, UiEvent};
 use dreist_gui::paint::{Painter, RectF};
 use dreist_gui::render::Renderer;
 use dreist_gui::{Colour, Ctrl, Rect, Skin};
 
+use crate::EditorError;
 use crate::command::{Command, msg};
 use crate::model::{LAYERS, Model};
-use crate::{EditorError, err};
 
 const WAVE_STYLE: &str = "WaveDisplayStyle";
 
-/// The layer settings behind the LayerParams toggles: Reverse
-/// `IsReversed`, Phase `PhasePosition` < 0, Env Mode `EnvTracksPitch`,
-/// LayerMode `SynthesisMode` = VintageSampler.
+/// A wave display colour: the style's attribute when the theme defines
+/// it, else the palette colour `named`.
+fn wave_colour(s: &dreist_gui::style::StyleSheet, attr: &str, named: &str, default: Colour) -> Colour {
+    crate::timeline::style_or_named(s, WAVE_STYLE, attr, named, default)
+}
+
+/// The layer toggles posted as their own messages: Reverse
+/// `IsReversed`, Phase `PhasePosition` < 0, envelopes track length
+/// `EnvTracksPitch`.
 pub fn layer_toggle_state(node: Option<&dreist_formats::Node>, name: &str) -> Option<bool> {
     let truthy = |k: &str| node.is_some_and(|n| n.truthy(k));
     Some(match name {
-        "Reverse" => truthy("IsReversed"),
-        "Phase" => node.and_then(|n| n.f32("PhasePosition")).is_some_and(|v| v < 0.0),
-        "EnvMode" => truthy("EnvTracksPitch"),
+        "RevButton" | "Reverse" => truthy("IsReversed"),
+        "PhaseButton" | "Phase" => node.and_then(|n| n.f32("PhasePosition")).is_some_and(|v| v < 0.0),
+        "TrackPitchButton" | "EnvMode" => truthy("EnvTracksPitch"),
         "LayerMode" => node.and_then(|n| n.attr("SynthesisMode")).is_some_and(|v| v.trim() == "VintageSampler"),
         _ => return None,
     })
 }
 
+/// The message a layer toggle posts.
+fn toggle_message(name: &str) -> Option<u32> {
+    Some(match name {
+        "RevButton" | "Reverse" => id::SET_LAYER_REVERSE_STATUS,
+        "PhaseButton" | "Phase" => id::SET_LAYER_PHASE_POSITION,
+        "TrackPitchButton" | "EnvMode" => id::SET_LAYER_ENVELOPE_TRACKING,
+        "LayerMode" => id::SET_LAYER_SYNTHESIS_MODE,
+        _ => return None,
+    })
+}
+
+/// The layer parameter a layer view control sets directly.
 pub fn param_for_control(name: &str) -> Option<LayerParam> {
     let n = match name {
-        "Cutoff" => "FilterCutoff",
-        "Resonance" => "FilterResonance",
-        "PreDelayTime" => "PreDelay",
+        "PanKnob" => "Pan",
+        "GainKnob" => "Gain",
+        "TuneKnob" => "CoarseTune",
+        "FineKnob" => "FineTune",
+        "PreDelayKnob" | "PreDelayTime" => "PreDelay",
+        "CutoffKnob" | "Cutoff" => "FilterCutoff",
+        "ResKnob" | "Resonance" => "FilterResonance",
+        "DriveKnob" => "FilterDrive",
+        "AmountKnob" => "TimestretchAmount",
+        "FilterActiveButton" => "FilterActive",
+        "TSActiveButton" => "TimestretchActive",
+        "TrackBPMButton" => "TimestretchTracksBPM",
         n => n,
     };
     LayerParam::from_name(n)
+}
+
+/// Bipolar depth knobs: Vel-Pitch / Vel-Cutoff (the Velocity depth of a
+/// parameter; knob 0.5 = none).
+fn velocity_control(name: &str) -> Option<LayerParam> {
+    match name {
+        "V2P" => Some(LayerParam::CoarseTune),
+        "V2C" => Some(LayerParam::FilterCutoff),
+        _ => None,
+    }
+}
+
+/// Envelope destinations (manual §5:8): any of Cutoff, Resonance, Drive
+/// and Pitch, two per envelope.
+const ENV_DESTS: [(&str, LayerParam); 4] = [("Cutoff", LayerParam::FilterCutoff), ("Resonance", LayerParam::FilterResonance), ("Drive", LayerParam::FilterDrive), ("Pitch", LayerParam::CoarseTune)];
+const NO_DEST: &str = "No destination";
+
+/// `AmpEnvDest1Combo` → (amp, slot 0); `FreeEnvDepth2Knob` → (free, slot 1).
+fn env_slot(name: &str, kind: &str) -> Option<(bool, usize)> {
+    let (amp, rest) = if let Some(r) = name.strip_prefix("AmpEnv") { (true, r) } else { (false, name.strip_prefix("FreeEnv")?) };
+    let n = rest.strip_prefix(kind)?.strip_suffix(if kind == "Dest" { "Combo" } else { "Knob" })?.parse::<usize>().ok()?;
+    (1..=2).contains(&n).then_some((amp, n - 1))
+}
+
+fn env_source(amp: bool) -> TransmodSource {
+    if amp { TransmodSource::AmpEnvelope } else { TransmodSource::FreeEnvelope }
+}
+
+/// A depth (−1..1) of `src` on `param` as a centred knob value.
+fn depth_knob(node: Option<&dreist_formats::Node>, param: LayerParam, src: TransmodSource) -> f32 {
+    let d = src.attr(param.name()).and_then(|a| node.and_then(|n| n.f32(&a))).unwrap_or(0.0);
+    ((d + 1.0) / 2.0).clamp(0.0, 1.0)
+}
+
+/// Layer filter models (`round(FilterAlgorithm · 3)`) and their type counts.
+const FILTER_ALGORITHMS: [&str; 4] = ["Ladder", "State variable", "Diode", "Comb"];
+const TS_MODES: [&str; 2] = ["Default", "Fast"];
+
+/// The filter type names of a filter model.
+fn filter_types(algorithm: usize) -> Vec<String> {
+    match algorithm {
+        0 => dreist_dsp::sh101::SH101_MODES.iter().map(|s| s.to_string()).collect(),
+        // [re:6f3ef7]: low / high / band pass, notch and peak, 2 and 4 pole.
+        1 => ["LPF", "HPF", "BPF", "Notch", "Peak"].iter().flat_map(|t| [format!("{t} 2 pole"), format!("{t} 4 pole")]).collect(),
+        2 => dreist_dsp::ms20::MS20_MODES.iter().map(|s| s.to_string()).collect(),
+        _ => (1..=dreist_dsp::convert::FILTER_TYPE_COUNTS[3] as usize + 1).map(|k| format!("Type {k}")).collect(),
+    }
+}
+
+/// The output item index of a stored `OutputLocation` (unknown → Parent).
+fn output_index(name: &str) -> usize {
+    let num = |p: &str| name.strip_prefix(p).and_then(|n| n.trim().parse::<usize>().ok());
+    match name {
+        "Master" => 1,
+        _ => match (num("Sub output "), num("Aux ")) {
+            (Some(k @ 1..=32), _) => k + 1,
+            (_, Some(k @ 1..=4)) => k + 33,
+            _ => 0,
+        },
+    }
+}
+
+/// Index of a layer's stored mode (display name, or enum name) in `labels` / `names`.
+fn mode_index(node: Option<&dreist_formats::Node>, key: &str, labels: &[&str], names: &[&str], default: usize) -> usize {
+    let v = node.and_then(|n| n.attr(key)).map(str::trim);
+    v.and_then(|v| labels.iter().position(|x| *x == v).or_else(|| names.iter().position(|x| *x == v))).unwrap_or(default)
+}
+
+/// An open popup of the page.
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Menu {
+    LayerOutput,
+    PadOutput,
+    Choke,
+    PlayMode,
+    FilterType,
+    FilterAlgorithm,
+    StretchMode,
+    EnvDest(bool, usize),
 }
 
 /// Min/max per bucket of a sample's left channel.
@@ -127,20 +235,27 @@ pub fn snap_zero(zeros: &[u32], f: u32, range: u32) -> u32 {
         _ => f,
     }
 }
-
 pub struct Inspector {
-    /// The [re:d46410] panel (the zoom bar's controls are searched under it).
+    /// The page (the zoom bar's controls are searched under it).
     host: Option<Vec<usize>>,
+    /// The layer view (`LayerControls`) and the pad view (`PadControls`).
     params: Option<Vec<usize>>,
-    table: Option<Vec<usize>>,
+    pad_controls: Option<Vec<usize>>,
+    /// The eight layer rows and the pad item of the selector.
+    rows: Vec<Vec<usize>>,
     pad_header: Option<Vec<usize>>,
+    /// The connectors from the selected item to the editor.
+    pad_glue: Option<Vec<usize>>,
+    layer_glue: Option<Vec<usize>>,
+    /// The pad item is selected: the pad view shows (else the layer view).
+    pub(crate) pad_view: bool,
     peaks: RefCell<PeaksCache>,
     /// Marker drag: object 1 start, 2 end, 3 loop start, 4 loop end
     /// (the dragged object), and the markers when it started.
     drag: Option<(u8, WaveMarkers)>,
     /// Visible part of the file (start, length) as fractions.
     pub(crate) view: (f32, f32),
-    /// Pad options panel ([re:fe83c5]).
+    /// The pad view's play mode, Vel-Amp and velocity split lanes.
     vsplit: crate::velsplit::VelSplit,
     /// Zoom slider drag (mode, last x).
     zoom_drag: Option<(u8, f32)>,
@@ -156,8 +271,14 @@ pub struct Inspector {
     timeline_beats: bool,
     /// The timeline's Time / Beats menu is open on this control.
     timeline_menu: Option<Vec<usize>>,
+    /// The open combo menu.
+    menu: Option<Menu>,
+    /// Envelope destinations picked per (engine, pad, layer, amp); the
+    /// document keeps the depths only.
+    env_dests: HashMap<(usize, usize, usize, bool), [usize; 2]>,
+    /// A typed destination tempo per layer (else the song tempo).
+    dest_bpm: HashMap<(usize, usize, usize), f64>,
 }
-
 const PEAK_BUCKETS: usize = 2048;
 
 /// Visit the controls tagged `layerZoom` (the layer wave display's zoom bar).
@@ -186,96 +307,109 @@ fn load_peaks(path: &std::path::Path) -> Option<Peaks> {
     let zeros = data.left.windows(2).enumerate().filter(|(_, w)| (w[0] <= 0.0) != (w[1] <= 0.0)).map(|(i, _)| i as u32 + 1).collect();
     Some(Peaks { buckets, frames: n, zeros, rate: data.sample_rate.max(1.0) })
 }
+/// The path of `name` below `base`.
+fn path_under(root: &Ctrl, base: &[usize], name: &str) -> Option<Vec<usize>> {
+    let mut c = root;
+    for &i in base {
+        c = c.children.get(i)?;
+    }
+    Some([base, &c.path_of(name)?].concat())
+}
+
+fn ctrl_at<'a>(root: &'a mut Ctrl, path: &[usize]) -> &'a mut Ctrl {
+    let mut c = root;
+    for &i in path {
+        c = &mut c.children[i];
+    }
+    c
+}
 
 impl Inspector {
-    pub fn build(skin: &mut Skin, root: &mut Ctrl) -> Result<Inspector, EditorError> {
-        let Some(host) = root.find_mut("PadInspector") else {
-            return Ok(Inspector {
-                host: None,
-                params: None,
-                table: None,
-                pad_header: None,
-                peaks: RefCell::default(),
-                drag: None,
-                view: (0.0, 1.0),
-                vsplit: Default::default(),
-                zoom_drag: None,
-                zoom_mode: 0,
-                zoom_key: None,
-                env_visible: (true, true),
-                env_drag: None,
-                timeline_beats: crate::timeline::beats_mode("PadEdit"),
-                timeline_menu: None,
-            });
-        };
-        skin.mount(host, "PadInspector.skin").map_err(err)?;
-        if let Some(lp) = host.find_mut("LayerPanel") {
-            if lp.children.is_empty() {
-                skin.mount(lp, "LayerPanel.skin").map_err(err)?;
-            }
-        }
-        if let Some(sc) = host.find_mut("ParamScroller") {
-            let rel = skin.find("LayerParams.skin").unwrap_or_else(|| "Pad Editor/LayerParams.skin".into());
-            let p = skin.load_skin(&rel).map_err(err)?;
-            for mut c in p.children {
-                let h = sc.rect.h.min(c.rect.h).max(c.rect.h.min(sc.rect.h));
-                let w = c.rect.w;
-                c.set_rect(Rect::new(0, 0, w, h));
-                sc.children.push(c);
-            }
-        }
-        // The layer wave display's zoom bar (tagged so the slicer's
-        // identically named controls are left alone).
-        for n in ["WaveZoomSlider", "ZoomInButton", "ZoomOutButton", "AutoZoomGroup", "ShowAmpEnvButton", "ShowFreeEnvButton"] {
-            if let Some(c) = host.find_mut(n) {
-                c.set_attr("layerZoom", "true".into());
-            }
-        }
-        if let Some(ps) = host.find_mut("PadSelButton") {
-            skin.mount(ps, "PadSelectionButton.skin").map_err(err)?;
-        }
-        if let Some(t) = host.find_mut("LayerTable") {
-            let rel = skin.find("LayerSelectionButton.skin").unwrap_or_else(|| "Pad Editor/LayerSelectionButton.skin".into());
-            if let Some(row) = skin.load_skin(&rel).ok().and_then(|r| r.children.into_iter().next()) {
-                let w = t.rect.w;
-                for l in 0..LAYERS {
-                    let mut r = row.clone();
-                    r.overload = "LayerRow".into();
-                    r.set_attr("layer", l.to_string());
-                    r.set_rect(Rect::new(0, l as i32 * (row.rect.h + 1), w, row.rect.h));
-                    if let Some(n) = r.find_mut("SampleName") {
-                        n.passive = true;
-                    }
-                    t.children.push(r);
-                }
-            }
-        }
-        let vsplit = crate::velsplit::VelSplit::build(skin, root)?;
-        Ok(Inspector {
-            host: root.path_of("PadInspector"),
-            params: root.path_of("LayerParams"),
-            table: root.path_of("LayerTable"),
-            pad_header: root.path_of("PadSelButton"),
+    /// Mount the Pad / Layers page into `page` (none: an editor without
+    /// the page).
+    pub fn build(skin: &mut Skin, root: &mut Ctrl, page: Option<&[usize]>) -> Result<Inspector, EditorError> {
+        let o = crate::options::Options::load();
+        let mut ins = Inspector {
+            host: None,
+            params: None,
+            pad_controls: None,
+            rows: Vec::new(),
+            pad_header: None,
+            pad_glue: None,
+            layer_glue: None,
+            pad_view: false,
             peaks: RefCell::default(),
             drag: None,
             view: (0.0, 1.0),
-            vsplit,
+            vsplit: Default::default(),
             zoom_drag: None,
-            zoom_mode: crate::options::Options::load().int("WaveDisplayZoomMode", 0),
+            zoom_mode: o.int("WaveDisplayZoomMode", 0),
             zoom_key: None,
-            env_visible: {
-                let o = crate::options::Options::load();
-                (o.bool("AmpEnvVisible", true), o.bool("FreeEnvVisible", true))
-            },
+            env_visible: (o.bool("AmpEnvVisible", true), o.bool("FreeEnvVisible", true)),
             env_drag: None,
             timeline_beats: crate::timeline::beats_mode("PadEdit"),
             timeline_menu: None,
-        })
+            menu: None,
+            env_dests: HashMap::new(),
+            dest_bpm: HashMap::new(),
+        };
+        let Some(page) = page else { return Ok(ins) };
+        crate::front::mount_page(skin, root, page, crate::front::PADS_PAGE)?;
+        let host = ctrl_at(root, page);
+        // The layer rows: code-built, tagged with their layer.
+        for l in 0..LAYERS {
+            if let Some(r) = host.find_mut(&format!("LayerSelectionButton{l}")) {
+                r.overload = "LayerRow".into();
+                r.set_attr("layer", l.to_string());
+            }
+        }
+        if let Some(pc) = host.find_mut("PadControls") {
+            for l in 0..LAYERS {
+                if let Some(s) = pc.find_mut(&format!("Split{l}")) {
+                    s.overload = crate::velsplit::OVERLOAD.into();
+                    s.style = crate::velsplit::STYLE.into();
+                    s.set_attr("layer", l.to_string());
+                }
+            }
+        }
+        if let Some(lc) = host.find_mut("LayerControls") {
+            // The layer wave display's zoom bar and envelope checks (tagged
+            // so the slicer's identically named controls are left alone).
+            for n in ["WaveZoomSlider", "ZoomInButton", "ZoomOutButton", "AutoZoomGroup", "AmpButton", "FreeButton"] {
+                if let Some(c) = lc.find_mut(n) {
+                    c.set_attr("layerZoom", "true".into());
+                }
+            }
+            // The envelope panel's learn boxes are learn targets only.
+            if let Some(env) = lc.find_mut("EnvPanel") {
+                env.walk_mut(&mut |c: &mut Ctrl| {
+                    if c.class == "CtrlTextBox" && c.name.ends_with("LL") {
+                        c.visible = false;
+                        c.enabled = false;
+                    }
+                });
+            }
+        }
+        for n in ["PadGlue", "LayerGlue"] {
+            if let Some(c) = host.find_mut(n) {
+                c.passive = true;
+            }
+        }
+        ins.host = Some(page.to_vec());
+        ins.params = path_under(root, page, "LayerControls");
+        ins.pad_controls = path_under(root, page, "PadControls");
+        ins.pad_header = path_under(root, page, "PadSelection");
+        ins.pad_glue = path_under(root, page, "PadGlue");
+        ins.layer_glue = path_under(root, page, "LayerGlue");
+        ins.rows = (0..LAYERS).filter_map(|l| path_under(root, page, &format!("LayerSelectionButton{l}"))).collect();
+        ins.vsplit = crate::velsplit::VelSplit::build(ins.pad_controls.clone());
+        Ok(ins)
     }
 
-    /// Cursor for the pointer over the layer wave display (a marker:
-    /// [re:840c1e] → left / right when
-    /// one is under it) or its zoom slider.
+    /// The layer of the selector row at or above `path`.
+    fn row_of(&self, path: &[usize]) -> Option<usize> {
+        self.rows.iter().position(|r| path.starts_with(r))
+    }
     pub fn hover_cursor(&self, app: &App, model: &Model, path: &[usize], overload: &str, x: f32, y: f32) -> Option<dreist_gui::cursor::Cursor> {
         use dreist_gui::cursor::Cursor;
         let (w, h) = app.ctrl(path).map(|c| (c.rect.w as f32, c.rect.h as f32))?;
@@ -401,6 +535,35 @@ impl Inspector {
             _ => None,
         }
     }
+    /// The envelope's two destinations (0 none, 1.. an [`ENV_DESTS`]
+    /// entry): the picked ones, else the parameters it modulates, then the
+    /// defaults (the Free envelope's Cutoff and Pitch).
+    fn env_dests(&self, model: &Model, e: usize, p: usize, l: usize, amp: bool) -> [usize; 2] {
+        if let Some(d) = self.env_dests.get(&(e, p, l, amp)) {
+            return *d;
+        }
+        let node = model.layer_node(e, p, l);
+        let src = env_source(amp);
+        let mut used: Vec<usize> =
+            ENV_DESTS.iter().enumerate().filter(|(_, (_, par))| src.attr(par.name()).and_then(|a| node.and_then(|n| n.f32(&a))).is_some_and(|d| d.abs() > 1e-6)).map(|(i, _)| i + 1).collect();
+        used.truncate(2);
+        let defaults: [usize; 2] = if amp { [0, 0] } else { [1, 4] };
+        for d in defaults {
+            if used.len() < 2 && (d == 0 || !used.contains(&d)) {
+                used.push(d);
+            }
+        }
+        [used[0], used[1]]
+    }
+
+    /// The source / destination tempo of the layer's timestretch: the
+    /// destination typed (else the song tempo), the source from the
+    /// stretch amount (length %, `Curve::Stretch`).
+    fn stretch_bpm(&self, model: &Model, e: usize, p: usize, l: usize) -> (f64, f64) {
+        let dest = self.dest_bpm.get(&(e, p, l)).copied().unwrap_or_else(|| model.tempo());
+        let pct = LayerParam::TimestretchAmount.curve().to_units(model.layer_param(e, p, l, LayerParam::TimestretchAmount)) as f64;
+        (dest * pct / 100.0, dest)
+    }
 
     pub fn sync(&mut self, app: &mut App, model: &Model) {
         self.vsplit.sync(app, model);
@@ -423,8 +586,8 @@ impl Inspector {
         if let Some(host) = self.host.as_ref().and_then(|h| app.ctrl_mut(h)) {
             let w = find_tagged(host, "WaveZoomSlider").map(|c| c.rect.w as f32);
             walk_tagged(host, &mut |c: &mut Ctrl| match c.name.as_str() {
-                "ShowAmpEnvButton" => c.on = env.0,
-                "ShowFreeEnvButton" => c.on = env.1,
+                "AmpButton" => c.on = env.0,
+                "FreeButton" => c.on = env.1,
                 "AutoZoomGroup" => {
                     for (i, b) in c.children.iter_mut().enumerate() {
                         b.on = i as i64 == mode;
@@ -441,91 +604,444 @@ impl Inspector {
         let e = model.engine;
         let p = model.pad[e];
         let l = model.layer[e];
-        if let Some(pp) = &self.params {
-            if let Some(c) = app.ctrl_mut(pp) {
-                let source = model.source;
-                let src = dreist_formats::TransmodSource::ALL.get(source).copied().unwrap_or(dreist_formats::TransmodSource::ActualParameter);
-                let node = model.layer_node(e, p, l);
-                fn walk(c: &mut Ctrl, f: &dyn Fn(&mut Ctrl)) {
-                    for k in &mut c.children {
-                        f(k);
-                        walk(k, f);
-                    }
+        let pad_view = self.pad_view;
+        // The editor shown and the connector to the selected item.
+        for (path, show) in [(&self.pad_controls, pad_view), (&self.params, !pad_view), (&self.pad_glue, pad_view), (&self.layer_glue, !pad_view)] {
+            if let Some(c) = path.as_ref().and_then(|p| app.ctrl_mut(p)) {
+                c.visible = show;
+                c.enabled = show;
+            }
+        }
+        if let (Some(g), Some(r)) = (self.layer_glue.as_ref(), self.rows.get(l)) {
+            let y = r.last().and_then(|_| app.ctrl(r)).map(|c| c.rect.y + 2);
+            if let (Some(y), Some(c)) = (y, app.ctrl_mut(g)) {
+                if c.rect.y != y {
+                    c.set_rect(Rect::new(c.rect.x, y, c.rect.w, c.rect.h));
                 }
-                walk(c, &|k: &mut Ctrl| {
-                    // [re:ca7824] toggles
-                    // (states from the layer settings).
-                    if k.class == "CtrlButton" {
-                        if let Some(on) = layer_toggle_state(node, &k.name) {
-                            k.on = on;
-                            return;
-                        }
+            }
+        }
+        // Layer rows.
+        let (_, lmask) = crate::multipad::layer_selection(model, e, p);
+        for (li, rp) in self.rows.iter().enumerate() {
+            let f = model.layer(e, p, li);
+            // An empty layer reads "Empty" (manual §5:1 figures).
+            let name = if f.valid { model.layer_name(e, p, li).unwrap_or_default() } else { "Empty".to_string() };
+            let selected = !pad_view && (li == l || lmask & (1u8 << li.min(7)) != 0);
+            let locked = model.layer_node(e, p, li).is_some_and(|n| n.locked());
+            let Some(r) = app.ctrl_mut(rp) else { continue };
+            r.style = if selected {
+                "SelectionButtonPrimaryStyle"
+            } else if li % 2 == 0 {
+                "SelectionButtonEvenStyle"
+            } else {
+                "SelectionButtonOddStyle"
+            }
+            .into();
+            r.set_attr("selected", selected.to_string());
+            for c in &mut r.children {
+                match c.name.as_str() {
+                    // The name edits once the row is selected; until then a
+                    // click selects it.
+                    "SampleName" => {
+                        c.text = name.clone();
+                        c.passive = !(selected && li == l);
                     }
-                    let Some(par) = param_for_control(&k.name) else { return };
-                    let base = model.layer_param(e, p, l, par);
-                    match k.class.as_str() {
-                        "CtrlTransmodKnob" | "CtrlTransmodSlider" => {
-                            let depth = src.attr(par.name()).and_then(|a| node.and_then(|n| n.f32(&a))).unwrap_or(0.0);
-                            if k.class == "CtrlTransmodKnob" {
-                                crate::model::bind_knob(k, source, base, depth);
-                            } else {
-                                k.value = base;
-                            }
-                        }
-                        "CtrlKnob" | "CtrlSlider" => k.value = base,
-                        "CtrlButton" => k.on = base >= 0.5,
-                        _ => {}
-                    }
-                });
+                    "Mute" => c.on = f.mute,
+                    "Solo" => c.on = f.solo,
+                    "Lock" => c.on = locked,
+                    _ => {}
+                }
             }
         }
         if let Some(hp) = &self.pad_header {
             let name = model.pad_name(e, p).unwrap_or_else(|| format!("Pad {}", p + 1));
             let (m, s) = (model.pad_mute(e, p), model.pad_solo(e, p));
+            let locked = crate::padmenu::pad_locked(model, e, p);
             if let Some(h) = app.ctrl_mut(hp) {
-                for c in h.children.iter_mut().flat_map(|c| c.children.iter_mut()) {
+                h.style = if pad_view { "PadSelectionButtonPrimaryStyle" } else { "PadSelectionButtonNotSelectedStyle" }.into();
+                for c in &mut h.children {
                     match c.name.as_str() {
-                        "PadName" => c.text = name.clone(),
+                        "PadLabel" => {
+                            c.text = name.clone();
+                            c.passive = !pad_view;
+                        }
                         "Mute" => c.on = m,
                         "Solo" => c.on = s,
+                        "Lock" => c.on = locked,
                         "AllPads" => c.on = model.all_pads,
                         "AllLayers" => c.on = model.all_layers,
+                        "AllGroups" => c.on = model.all_rows,
                         _ => {}
                     }
                 }
             }
         }
-        if let Some(tp) = &self.table {
-            let (_, lmask) = crate::multipad::layer_selection(model, e, p);
-            let _ = l;
-            let rows: Vec<(String, bool, bool)> = (0..LAYERS)
-                .map(|li| {
-                    let f = model.layer(e, p, li);
-                    (if f.valid { model.layer_name(e, p, li).unwrap_or_default() } else { String::new() }, f.mute, f.solo)
-                })
-                .collect();
-            if let Some(t) = app.ctrl_mut(tp) {
-                for r in &mut t.children {
-                    let Some(li) = r.attr("layer").and_then(|v| v.parse::<usize>().ok()) else { continue };
-                    let (name, m, s) = &rows[li.min(LAYERS - 1)];
-                    r.set_attr("selected", (lmask & (1u8 << li.min(7)) != 0).to_string());
-                    for c in &mut r.children {
-                        match c.name.as_str() {
-                            "SampleName" => c.text = if name.is_empty() { c.attr("placeholder").unwrap_or("").to_string() } else { name.clone() },
-                            "Mute" => c.on = *m,
-                            "Solo" => c.on = *s,
+        // The layer view's controls.
+        let node = model.layer_node(e, p, l);
+        let dests = [self.env_dests(model, e, p, l, true), self.env_dests(model, e, p, l, false)];
+        let (src_bpm, dest_bpm) = self.stretch_bpm(model, e, p, l);
+        let algorithm = ((model.layer_param(e, p, l, LayerParam::FilterAlgorithm) * 3.0).round() as usize).min(3);
+        // The timestretch controls are inactive (tempos "N/A") while it is
+        // off (manual §5:4 figure).
+        let stretch = model.layer_param(e, p, l, LayerParam::TimestretchActive) >= 0.5;
+        if let Some(c) = self.params.as_ref().and_then(|pp| app.ctrl_mut(pp)) {
+            c.walk_mut(&mut |k: &mut Ctrl| {
+                let name = k.name.as_str();
+                if matches!(name, "AmountKnob" | "TSModeCombo" | "SourceBPMBox" | "DestBPMBox" | "FindBPMButton" | "TrackBPMButton") {
+                    k.enabled = stretch;
+                }
+                if k.class == "CtrlButton" {
+                    if let Some(on) = layer_toggle_state(node, name) {
+                        k.on = on;
+                        return;
+                    }
+                }
+                if let Some(par) = velocity_control(name) {
+                    k.value = depth_knob(node, par, TransmodSource::Velocity);
+                    return;
+                }
+                if let Some(a) = name.strip_prefix("Send").and_then(|n| n.strip_suffix("Knob")).and_then(|n| n.parse::<usize>().ok()) {
+                    k.value = node.and_then(|n| n.f32(&dreist_formats::params::aux_send_name(a.saturating_sub(1)))).unwrap_or(0.0).clamp(0.0, 1.0);
+                    return;
+                }
+                if let Some((amp, slot)) = env_slot(name, "Dest") {
+                    let d = dests[!amp as usize][slot];
+                    k.text = if d == 0 { NO_DEST.to_string() } else { ENV_DESTS[d - 1].0.to_string() };
+                    return;
+                }
+                if let Some((amp, slot)) = env_slot(name, "Depth") {
+                    let d = dests[!amp as usize][slot];
+                    k.value = if d == 0 { 0.5 } else { depth_knob(node, ENV_DESTS[d - 1].1, env_source(amp)) };
+                    k.enabled = d != 0;
+                    return;
+                }
+                match name {
+                    "OutputCombo" => k.text = crate::mixer::output_items()[output_index(node.and_then(|n| n.attr("OutputLocation")).unwrap_or("Parent"))].clone(),
+                    "CutModeCombo" => {
+                        use dreist_dsp::voices::{CUT_MODE_LABELS, CUT_MODE_NAMES};
+                        k.text = CUT_MODE_LABELS[mode_index(node, "CutMode", &CUT_MODE_LABELS, &CUT_MODE_NAMES, 1)].to_string();
+                    }
+                    "PlayModeCombo" => {
+                        use dreist_dsp::voice::{PLAYBACK_MODE_LABELS, PLAYBACK_MODE_NAMES};
+                        k.text = PLAYBACK_MODE_LABELS[mode_index(node, "PlaybackMode", &PLAYBACK_MODE_LABELS, &PLAYBACK_MODE_NAMES, 0)].to_string();
+                    }
+                    "FilterAlgoButton" => k.text = FILTER_ALGORITHMS[algorithm].to_string(),
+                    "FilterModeKnob" => {
+                        let types = filter_types(algorithm);
+                        let n = (types.len() - 1).max(1) as f32;
+                        let i = ((model.layer_param(e, p, l, LayerParam::FilterType) * n).round() as usize).min(types.len() - 1);
+                        k.text = types[i].clone();
+                    }
+                    "TSModeCombo" => k.text = TS_MODES[(model.layer_param(e, p, l, LayerParam::TimestretchMode) >= 0.5) as usize].to_string(),
+                    "SourceBPMBox" | "DestBPMBox" if !stretch => k.text = "N/A".into(),
+                    "SourceBPMBox" => k.text = format!("{src_bpm:.2}"),
+                    "DestBPMBox" => k.text = format!("{dest_bpm:.2}"),
+                    _ => {
+                        let Some(par) = param_for_control(name) else { return };
+                        let base = model.layer_param(e, p, l, par);
+                        match k.class.as_str() {
+                            "CtrlKnob" | "CtrlSlider" | "CtrlPanSlider" => k.value = base,
+                            "CtrlButton" => k.on = base >= 0.5,
                             _ => {}
                         }
                     }
                 }
-            }
+            });
+        }
+        // The pad view's mix controls.
+        let pad = model.pad_node(e, p);
+        let pget = |k: &str, d: f32| pad.and_then(|n| n.f32(k)).unwrap_or(d).clamp(0.0, 1.0);
+        let (gain, pan) = (pget(PadParam::Gain.name(), PadParam::Gain.default_value()), pget(PadParam::Pan.name(), 0.5));
+        let sends: Vec<f32> = (0..4).map(|k| pget(&dreist_formats::params::aux_send_name(k), 0.0)).collect();
+        let output = crate::mixer::output_items()[output_index(pad.and_then(|n| n.attr("OutputLocation")).unwrap_or("Parent"))].clone();
+        if let Some(c) = self.pad_controls.as_ref().and_then(|pp| app.ctrl_mut(pp)) {
+            c.walk_mut(&mut |k: &mut Ctrl| match k.name.as_str() {
+                "Pan" => k.value = pan,
+                "Gain" => k.value = gain,
+                "Output" => k.text = output.clone(),
+                n => {
+                    if let Some(a) = n.strip_prefix("Send").and_then(|n| n.parse::<usize>().ok()).filter(|a| (1..=4).contains(a)) {
+                        k.value = sends[a - 1];
+                    }
+                }
+            });
         }
     }
 
+    /// The page's own controls: selector rows and pad item, the pad
+    /// view's mix controls and the layer view's.
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
         if self.vsplit.handle(app, model, ev, out) {
             return true;
         }
+        if self.handle_controls(app, model, ev, out) {
+            return true;
+        }
+        self.handle_wave(app, model, ev, out)
+    }
+
+    fn in_params(&self, path: &[usize]) -> bool {
+        self.params.as_ref().is_some_and(|pp| path.starts_with(pp))
+    }
+
+    fn in_pad_controls(&self, path: &[usize]) -> bool {
+        self.pad_controls.as_ref().is_some_and(|pp| path.starts_with(pp))
+    }
+
+    fn open(&mut self, app: &mut App, path: &[usize], items: Vec<String>, checked: Option<usize>, menu: Menu) {
+        app.open_menu(path, items, checked);
+        self.menu = Some(menu);
+    }
+
+    fn handle_controls(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
+        let e = model.engine;
+        let p = model.pad[e];
+        let l = model.layer[e];
+        let idx = [e as i32, p as i32, l as i32];
+        let ep = [e as i32, p as i32];
+        match ev {
+            // The selector: a press on a layer row selects the layer
+            // (cmd toggles, shift extends) and shows the layer view; on the
+            // pad item the pad view.
+            UiEvent::Mouse { path, overload, kind: MouseKind::Down, .. } if overload == "LayerRow" => {
+                let Some(li) = self.row_of(path) else { return false };
+                let (cmd, shift) = (app.mods.cmd, app.mods.shift);
+                out.push(crate::multipad::select_layer(model, e, li, cmd, shift));
+                self.pad_view = false;
+                true
+            }
+            UiEvent::Mouse { path, overload, kind: MouseKind::Down, .. } if overload == "PadSelectionButton" && self.pad_header.as_ref().is_some_and(|h| path.starts_with(h)) => {
+                self.pad_view = true;
+                true
+            }
+            // Trigger strips: play the pad while held.
+            UiEvent::Pressed { path, name } if name == "Trigger" && (self.row_of(path).is_some() || self.pad_header.as_ref().is_some_and(|h| path.starts_with(h))) => {
+                out.push(Command::PadHit { engine: e, pad: p, velocity: 127 });
+                true
+            }
+            UiEvent::Clicked { path, name, .. } if name == "Trigger" && (self.row_of(path).is_some() || self.pad_header.as_ref().is_some_and(|h| path.starts_with(h))) => {
+                out.push(Command::PadRelease { engine: e, pad: p });
+                true
+            }
+            UiEvent::Clicked { path, name, on, .. } if self.row_of(path).is_some() => {
+                let li = self.row_of(path).unwrap_or(0);
+                let v = *on as i32 as f32;
+                match name.as_str() {
+                    "Mute" => out.push(msg(id::SET_LAYER_MUTE, &[e as i32, p as i32, li as i32], &[v])),
+                    "Solo" => out.push(msg(id::SET_LAYER_SOLO, &[e as i32, p as i32, li as i32], &[v])),
+                    // Clear: the sample and every setting (unless locked).
+                    "Clear" => {
+                        if crate::padmenu::layer_locked(model, e, p, li) {
+                            return true;
+                        }
+                        *model.layer_mut(e, p, li) = dreist_formats::Node::new("Layer", Some(&format!("Layer{li}")));
+                        out.push(model.rebuild_command());
+                    }
+                    "Lock" => crate::padmenu::set_lock(model.layer_mut(e, p, li), *on),
+                    _ => return false,
+                }
+                true
+            }
+            UiEvent::Clicked { path, name, on, .. } if self.pad_header.as_ref().is_some_and(|h| path.starts_with(h)) => {
+                let v = *on as i32 as f32;
+                match name.as_str() {
+                    // [re:281f54]: `e_setModifiers` 0x26 [all layers,
+                    // all pads, row].
+                    "AllLayers" | "AllPads" | "AllGroups" => {
+                        match name.as_str() {
+                            "AllLayers" => model.all_layers = *on,
+                            "AllPads" => model.all_pads = *on,
+                            _ => model.all_rows = *on,
+                        }
+                        out.push(msg(id::SET_MODIFIERS, &[], &[model.all_layers as i32 as f32, model.all_pads as i32 as f32, model.all_rows as i32 as f32]));
+                    }
+                    "Mute" => out.push(msg(id::MUTE_PAD, &ep, &[v])),
+                    "Solo" => out.push(msg(id::SOLO_PAD, &ep, &[v])),
+                    "Clear" => {
+                        if crate::padmenu::pad_locked(model, e, p) {
+                            return true;
+                        }
+                        *model.pad_mut(e, p) = dreist_formats::Node::new("Pad", Some(&format!("Pad{p}")));
+                        out.push(model.rebuild_command());
+                    }
+                    "Lock" => crate::padmenu::set_lock(model.pad_mut(e, p), *on),
+                    _ => return false,
+                }
+                true
+            }
+            // Timestretch tempos: the source over the destination sets the
+            // stretch (length %); a typed destination is kept for the layer.
+            UiEvent::TextCommitted { path, name, text } if self.in_params(path) && matches!(name.as_str(), "SourceBPMBox" | "DestBPMBox") => {
+                let Some(v) = crate::conv::number(text.trim()).filter(|v| *v > 0.0).map(|v| (v as f64).clamp(20.0, 999.0)) else { return true };
+                let (src, mut dest) = self.stretch_bpm(model, e, p, l);
+                let src = if name == "SourceBPMBox" {
+                    v
+                } else {
+                    dest = v;
+                    self.dest_bpm.insert((e, p, l), v);
+                    src
+                };
+                let amount = LayerParam::TimestretchAmount.curve().from_units((100.0 * src / dest) as f32).clamp(0.0, 1.0);
+                out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[LayerParam::TimestretchAmount as u8 as f32, amount, 0.0]));
+                true
+            }
+            // Find source tempo: the sample's length as 1, 2, 4 … bars of
+            // 4/4 in 80..160 BPM.
+            UiEvent::Clicked { path, name, .. } if self.in_params(path) && name == "FindBPMButton" => {
+                let Some((frames, sr)) = model.layer_sample(e, p, l).and_then(|f| dreist_engine::audio::info(&f)) else { return true };
+                let m = wave_markers(model, e, p, l, frames as u32);
+                let secs = (m.end.saturating_sub(m.start)) as f64 / sr.max(1.0) as f64;
+                if secs <= 0.0 {
+                    return true;
+                }
+                let mut beats = 4.0;
+                let mut bpm = beats * 60.0 / secs;
+                while bpm < 80.0 && beats < 1024.0 {
+                    beats *= 2.0;
+                    bpm = beats * 60.0 / secs;
+                }
+                while bpm >= 160.0 && beats > 1.0 {
+                    beats /= 2.0;
+                    bpm = beats * 60.0 / secs;
+                }
+                let (_, dest) = self.stretch_bpm(model, e, p, l);
+                let amount = LayerParam::TimestretchAmount.curve().from_units((100.0 * bpm / dest) as f32).clamp(0.0, 1.0);
+                out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[LayerParam::TimestretchAmount as u8 as f32, amount, 0.0]));
+                true
+            }
+            // Combo menus.
+            UiEvent::Clicked { path, name, .. } if self.in_params(path) && app.ctrl(path).is_some_and(|c| c.class == "CtrlPopupButton") => {
+                let node = model.layer_node(e, p, l);
+                let algorithm = ((model.layer_param(e, p, l, LayerParam::FilterAlgorithm) * 3.0).round() as usize).min(3);
+                let owned = |v: &[&str]| v.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+                match name.as_str() {
+                    "OutputCombo" => {
+                        let i = output_index(node.and_then(|n| n.attr("OutputLocation")).unwrap_or("Parent"));
+                        self.open(app, path, crate::mixer::output_items(), Some(i), Menu::LayerOutput);
+                    }
+                    "CutModeCombo" => {
+                        use dreist_dsp::voices::{CUT_MODE_LABELS, CUT_MODE_NAMES};
+                        let i = mode_index(node, "CutMode", &CUT_MODE_LABELS, &CUT_MODE_NAMES, 1);
+                        self.open(app, path, owned(&CUT_MODE_LABELS), Some(i), Menu::Choke);
+                    }
+                    "PlayModeCombo" => {
+                        use dreist_dsp::voice::{PLAYBACK_MODE_LABELS, PLAYBACK_MODE_NAMES};
+                        let i = mode_index(node, "PlaybackMode", &PLAYBACK_MODE_LABELS, &PLAYBACK_MODE_NAMES, 0);
+                        self.open(app, path, owned(&PLAYBACK_MODE_LABELS), Some(i), Menu::PlayMode);
+                    }
+                    "FilterAlgoButton" => self.open(app, path, owned(&FILTER_ALGORITHMS), Some(algorithm), Menu::FilterAlgorithm),
+                    "FilterModeKnob" => {
+                        let types = filter_types(algorithm);
+                        let n = (types.len() - 1).max(1) as f32;
+                        let i = ((model.layer_param(e, p, l, LayerParam::FilterType) * n).round() as usize).min(types.len() - 1);
+                        self.open(app, path, types, Some(i), Menu::FilterType);
+                    }
+                    "TSModeCombo" => {
+                        let i = (model.layer_param(e, p, l, LayerParam::TimestretchMode) >= 0.5) as usize;
+                        self.open(app, path, owned(&TS_MODES), Some(i), Menu::StretchMode);
+                    }
+                    n => {
+                        let Some((amp, slot)) = env_slot(n, "Dest") else { return false };
+                        let cur = self.env_dests(model, e, p, l, amp)[slot];
+                        let items = std::iter::once(NO_DEST).chain(ENV_DESTS.iter().map(|(t, _)| *t)).map(str::to_string).collect();
+                        self.open(app, path, items, Some(cur), Menu::EnvDest(amp, slot));
+                    }
+                }
+                true
+            }
+            UiEvent::Clicked { path, name, .. } if self.in_pad_controls(path) && name == "Output" => {
+                let i = output_index(model.pad_node(e, p).and_then(|n| n.attr("OutputLocation")).unwrap_or("Parent"));
+                self.open(app, path, crate::mixer::output_items(), Some(i), Menu::PadOutput);
+                true
+            }
+            UiEvent::MenuSelected { index, .. } if self.menu.is_some() => {
+                let Some(menu) = self.menu.take() else { return false };
+                let i = *index;
+                let param = |par: LayerParam, v: f32| msg(id::SET_LAYER_PARAMETER, &idx, &[par as u8 as f32, v, 0.0]);
+                match menu {
+                    Menu::LayerOutput => out.push(msg(id::SET_LAYER_OUTPUT, &idx, &[i.min(37) as f32])),
+                    Menu::PadOutput => out.push(msg(id::SET_PAD_OUTPUT, &ep, &[i.min(37) as f32])),
+                    Menu::Choke => out.push(msg(id::SET_LAYER_CUT_MODE, &idx, &[i as f32])),
+                    Menu::PlayMode => out.push(msg(id::SET_LAYER_PLAY_MODE, &idx, &[i as f32])),
+                    Menu::FilterAlgorithm => out.push(param(LayerParam::FilterAlgorithm, i.min(3) as f32 / 3.0)),
+                    Menu::FilterType => {
+                        let algorithm = ((model.layer_param(e, p, l, LayerParam::FilterAlgorithm) * 3.0).round() as usize).min(3);
+                        let n = (filter_types(algorithm).len() - 1).max(1) as f32;
+                        out.push(param(LayerParam::FilterType, (i as f32 / n).min(1.0)));
+                    }
+                    Menu::StretchMode => out.push(param(LayerParam::TimestretchMode, (i == 1) as i32 as f32)),
+                    // A new destination takes the slot's depth with it.
+                    Menu::EnvDest(amp, slot) => {
+                        let mut dests = self.env_dests(model, e, p, l, amp);
+                        let old = dests[slot];
+                        let new = i.min(ENV_DESTS.len());
+                        if old == new {
+                            return true;
+                        }
+                        let src = env_source(amp) as u8 as f32;
+                        if old != 0 {
+                            let node = model.layer_node(e, p, l);
+                            let d = depth_knob(node, ENV_DESTS[old - 1].1, env_source(amp)) * 2.0 - 1.0;
+                            out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[ENV_DESTS[old - 1].1 as u8 as f32, 0.0, src]));
+                            if new != 0 && d.abs() > 1e-6 {
+                                out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[ENV_DESTS[new - 1].1 as u8 as f32, d, src]));
+                            }
+                        }
+                        dests[slot] = new;
+                        self.env_dests.insert((e, p, l, amp), dests);
+                    }
+                }
+                true
+            }
+            UiEvent::ValueChanged { path, name, value, .. } if self.in_pad_controls(path) => {
+                let v = *value;
+                let cmd = match name.as_str() {
+                    "Pan" => msg(id::SET_PAD_PARAMETER, &ep, &[v, PadParam::Pan as u8 as f32, 0.0]),
+                    "Gain" => msg(id::SET_PAD_PARAMETER, &ep, &[v, PadParam::Gain as u8 as f32, 0.0]),
+                    n => {
+                        let Some(a) = n.strip_prefix("Send").and_then(|n| n.parse::<usize>().ok()).filter(|a| (1..=4).contains(a)) else { return false };
+                        msg(id::SET_PAD_SEND_LEVEL, &ep, &[(a - 1) as f32, v, 0.0])
+                    }
+                };
+                out.push(cmd);
+                true
+            }
+            UiEvent::ValueChanged { path, name, value, .. } if self.in_params(path) => {
+                let v = *value;
+                if let Some(par) = velocity_control(name) {
+                    out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[par as u8 as f32, v * 2.0 - 1.0, TransmodSource::Velocity as u8 as f32]));
+                    return true;
+                }
+                if let Some(a) = name.strip_prefix("Send").and_then(|n| n.strip_suffix("Knob")).and_then(|n| n.parse::<usize>().ok()).filter(|a| (1..=4).contains(a)) {
+                    out.push(msg(id::SET_LAYER_SEND_DEPTH, &idx, &[(a - 1) as f32, v, 0.0]));
+                    return true;
+                }
+                if let Some((amp, slot)) = env_slot(name, "Depth") {
+                    let d = self.env_dests(model, e, p, l, amp)[slot];
+                    if d != 0 {
+                        out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[ENV_DESTS[d - 1].1 as u8 as f32, v * 2.0 - 1.0, env_source(amp) as u8 as f32]));
+                    }
+                    return true;
+                }
+                let Some(par) = param_for_control(name) else { return false };
+                out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[par as u8 as f32, v, 0.0]));
+                true
+            }
+            UiEvent::Clicked { path, name, on, .. } if self.in_params(path) => {
+                if let Some(kind) = toggle_message(name) {
+                    out.push(msg(kind, &idx, &[*on as i32 as f32]));
+                    return true;
+                }
+                let Some(par) = param_for_control(name) else { return false };
+                out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[par as u8 as f32, if *on { 1.0 } else { 0.0 }, 0.0]));
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// The wave display, its zoom bar and the envelope checks.
+    fn handle_wave(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
         let e = model.engine;
         let p = model.pad[e];
         let l = model.layer[e];
@@ -661,9 +1177,9 @@ impl Inspector {
             }
             // A / F: [re:682bc8] reads `AmpEnvVisible` /
             // `FreeEnvVisible` (default on).
-            UiEvent::Clicked { path, name, on, .. } if (name == "ShowAmpEnvButton" || name == "ShowFreeEnvButton") && app.ctrl(path).is_some_and(|c| c.attr("layerZoom").is_some()) => {
-                let key = if name == "ShowAmpEnvButton" { "AmpEnvVisible" } else { "FreeEnvVisible" };
-                if name == "ShowAmpEnvButton" {
+            UiEvent::Clicked { path, name, on, .. } if (name == "AmpButton" || name == "FreeButton") && app.ctrl(path).is_some_and(|c| c.attr("layerZoom").is_some()) => {
+                let key = if name == "AmpButton" { "AmpEnvVisible" } else { "FreeEnvVisible" };
+                if name == "AmpButton" {
                     self.env_visible.0 = *on
                 } else {
                     self.env_visible.1 = *on
@@ -711,88 +1227,10 @@ impl Inspector {
                 self.view = crate::zoomslider::clamp((self.view.0 + if *dy > 0.0 { 5.0 } else { -5.0 } / tw.max(1.0), self.view.1));
                 true
             }
-            UiEvent::ValueChanged { path, name, value, .. } => {
-                let Some(pp) = &self.params else { return false };
-                if !path.starts_with(pp) {
-                    return false;
-                }
-                let Some(par) = param_for_control(name) else { return false };
-                let is_tm = app.ctrl(path).is_some_and(|c| c.class == "CtrlTransmodKnob");
-                let (src, v) = crate::model::knob_edit(app.ctrl(path), if is_tm { model.source } else { 0 }, *value);
-                out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[par as u8 as f32, v, src as f32]));
-                true
-            }
-            UiEvent::Mouse { path, overload, kind: dreist_gui::app::MouseKind::Down, .. } if overload == "LayerRow" => {
-                let Some(li) = app.ctrl(path).and_then(|r| r.attr("layer")).and_then(|v| v.parse::<usize>().ok()) else { return false };
-                let (cmd, shift) = (app.mods.cmd, app.mods.shift);
-                out.push(crate::multipad::select_layer(model, e, li, cmd, shift));
-                true
-            }
-            UiEvent::Clicked { path, name, on, .. } => {
-                if let Some(tp) = &self.table {
-                    if path.starts_with(tp) && path.len() > tp.len() + 1 {
-                        let Some(li) = app.ctrl(&path[..tp.len() + 1]).and_then(|r| r.attr("layer")).and_then(|v| v.parse::<i32>().ok()) else { return false };
-                        let kind = match name.as_str() {
-                            "Mute" => id::SET_LAYER_MUTE,
-                            "Solo" => id::SET_LAYER_SOLO,
-                            _ => return false,
-                        };
-                        out.push(msg(kind, &[e as i32, p as i32, li], &[*on as i32 as f32]));
-                        return true;
-                    }
-                }
-                if let Some(hp) = &self.pad_header {
-                    if path.starts_with(hp) && matches!(name.as_str(), "AllPads" | "AllLayers") {
-                        // [re:281f54]: `e_setModifiers`
-                        // 0x26 [all layers, all pads, false].
-                        if name == "AllPads" {
-                            model.all_pads = *on;
-                        } else {
-                            model.all_layers = *on;
-                        }
-                        out.push(msg(id::SET_MODIFIERS, &[], &[model.all_layers as i32 as f32, model.all_pads as i32 as f32, 0.0]));
-                        return true;
-                    }
-                    if path.starts_with(hp) {
-                        let kind = match name.as_str() {
-                            "Mute" => id::MUTE_PAD,
-                            "Solo" => id::SOLO_PAD,
-                            _ => return false,
-                        };
-                        out.push(msg(kind, &[e as i32, p as i32], &[*on as i32 as f32]));
-                        return true;
-                    }
-                }
-                if let Some(pp) = &self.params {
-                    if path.starts_with(pp) {
-                        // Reverse 0x6e, Phase 0x6f, Env Mode 0x70 (bool) and
-                        // Vintage / LayerMode 0x6b (the state as an int).
-                        let kind = match name.as_str() {
-                            "Reverse" => Some(id::SET_LAYER_REVERSE_STATUS),
-                            "Phase" => Some(id::SET_LAYER_PHASE_POSITION),
-                            "EnvMode" => Some(id::SET_LAYER_ENVELOPE_TRACKING),
-                            "LayerMode" => Some(id::SET_LAYER_SYNTHESIS_MODE),
-                            _ => None,
-                        };
-                        if let Some(kind) = kind {
-                            out.push(msg(kind, &idx, &[*on as i32 as f32]));
-                            return true;
-                        }
-                        if let Some(par) = param_for_control(name) {
-                            out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[par as u8 as f32, if *on { 1.0 } else { 0.0 }, 0.0]));
-                            return true;
-                        }
-                    }
-                }
-                false
-            }
             _ => false,
         }
     }
 
-    /// The transmod sources (bit per source 1..=28) modulating the layer
-    /// parameter of the knob at `path` (the parameter's modulation bit
-    /// field), None off the layer knobs.
     pub fn modulation_mask(&self, app: &App, model: &Model, path: &[usize]) -> Option<u32> {
         if !self.params.as_ref().is_some_and(|pp| path.starts_with(pp)) {
             // [re:fe83c5]: v2a ([re:fadd5a]).
@@ -826,12 +1264,27 @@ impl Inspector {
         self.vsplit.reset_value(path, name).is_some()
     }
 
-    /// The conversion of a layer knob's typed edit.
+    /// The conversion of a layer / pad view knob's typed edit.
     pub fn edit_curve(&self, path: &[usize], name: &str) -> Option<dreist_formats::params::Curve> {
-        if self.params.as_ref().is_some_and(|pp| path.starts_with(pp)) {
+        use dreist_formats::params::Curve;
+        if self.in_params(path) {
+            if velocity_control(name).is_some() || env_slot(name, "Depth").is_some() {
+                return Some(Curve::Linear(-100.0, 100.0));
+            }
+            if name.starts_with("Send") {
+                return Some(Curve::Decibels);
+            }
             return param_for_control(name).map(|p| p.curve());
         }
-        self.vsplit.reset_value(path, name).map(|_| dreist_formats::PadParam::V2A.curve())
+        if self.in_pad_controls(path) {
+            match name {
+                "Pan" => return Some(PadParam::Pan.curve()),
+                "Gain" => return Some(PadParam::Gain.curve()),
+                n if n.starts_with("Send") => return Some(Curve::Decibels),
+                _ => {}
+            }
+        }
+        self.vsplit.reset_value(path, name).map(|_| PadParam::V2A.curve())
     }
 
     /// [re:efb170] "Remove all modulation from this control"
@@ -848,12 +1301,26 @@ impl Inspector {
     }
 
     /// A knob double click's reset value ([re:ed3c05]
-    /// [re:f0ac00]: [re:6b28ff], the base
-    /// value whatever transmod source is shown; the velocity split's v2a).
+    /// [re:f0ac00]: [re:6b28ff], the parameter's default; depths to
+    /// none, sends to 0; the pad view's gain / pan / sends and Vel-Amp).
     pub fn reset_value(&self, path: &[usize], name: &str) -> Option<f32> {
-        if self.params.as_ref().is_some_and(|pp| path.starts_with(pp)) {
+        if self.in_params(path) {
+            if velocity_control(name).is_some() || env_slot(name, "Depth").is_some() {
+                return Some(0.5);
+            }
+            if name.starts_with("Send") && name.ends_with("Knob") {
+                return Some(0.0);
+            }
             // Hold's −1 ("off") is 0 on the knob.
-            return param_for_control(name).map(|p| p.default_value().max(0.0));
+            return param_for_control(name).filter(|_| !name.ends_with("Button")).map(|p| p.default_value().max(0.0));
+        }
+        if self.in_pad_controls(path) {
+            match name {
+                "Pan" => return Some(0.5),
+                "Gain" => return Some(PadParam::Gain.default_value()),
+                n if n.starts_with("Send") && n[4..].parse::<usize>().is_ok() => return Some(0.0),
+                _ => {}
+            }
         }
         self.vsplit.reset_value(path, name)
     }
@@ -871,13 +1338,6 @@ impl Inspector {
                 crate::zoomslider::draw(p, r.styles, "WaveDisplayZoomSliderStyle", c.rect.w as f32, c.rect.h as f32, self.view);
                 true
             }
-            "LayerRow" => {
-                if c.attr("selected") == Some("true") {
-                    let col = r.styles.colour("InspectorTableStyle", "colRowSelection", Colour::WHITE);
-                    p.fill_rect(RectF::new(0.0, 0.0, c.rect.w as f32, c.rect.h as f32), col);
-                }
-                true
-            }
             _ => false,
         }
     }
@@ -886,8 +1346,8 @@ impl Inspector {
         let s = r.styles;
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
         let purple = Colour::rgba(128, 0, 128, 255);
-        let top = s.colour(WAVE_STYLE, "colFill", purple);
-        let mid = s.colour(WAVE_STYLE, "colAltFill", purple);
+        let top = wave_colour(s, "colFill", "WaveEditorBackgroundColour", purple);
+        let mid = wave_colour(s, "colAltFill", "WaveEditorBackgroundColour", purple);
         // Vertical gradient top → middle → bottom, drawn as bands.
         let bands = (h as usize).max(1);
         for i in 0..bands {
@@ -906,17 +1366,17 @@ impl Inspector {
         // 15..30, the waveform below.
         let (wy, full_h) = (crate::timeline::WAVE_TOP, h);
         let h = (full_h - wy).max(1.0);
-        let centre = s.colour(WAVE_STYLE, "colCenterLine", purple);
+        let centre = wave_colour(s, "colCenterLine", "WaveEditorWaveColour", purple);
         p.line(0.0, wy + (h / 2.0).floor() + 0.5, w, wy + (h / 2.0).floor() + 0.5, centre.with_alpha(0.5), 1.0);
         let Some(path) = model.layer_sample(e, pad, l) else {
-            p.fill_rect(RectF::new(0.0, 0.0, w, wy), s.colour(WAVE_STYLE, "colTimelineBackground", purple));
+            p.fill_rect(RectF::new(0.0, 0.0, w, wy), wave_colour(s, "colTimelineBackground", "LcdDim", purple));
             return;
         };
         let mut cache = self.peaks.borrow_mut();
         let Some(pk) = cache.get(&path) else { return };
-        let line = s.colour(WAVE_STYLE, "colLine", purple);
-        let disabled = s.colour(WAVE_STYLE, "colLineDisabled", line);
-        let looping_col = s.colour(WAVE_STYLE, "colLineLooping", line);
+        let line = wave_colour(s, "colLine", "WaveEditorWaveColour", purple);
+        let disabled = wave_colour(s, "colLineDisabled", "WaveEditorDisabledWaveColour", line);
+        let looping_col = wave_colour(s, "colLineLooping", "WaveEditorLoopWaveColour", line);
         let m = wave_markers(model, e, pad, l, pk.frames as u32);
         let n = pk.buckets.len();
         let cols = w as usize;
@@ -963,11 +1423,11 @@ impl Inspector {
             p.fill_ellipse(RectF::new(x - d / 2.0, top, d, d), col);
             p.fill_ellipse(RectF::new(x - d / 2.0 + 2.0, top + 2.0, d - 4.0, d - 4.0), Colour::BLACK);
         };
-        marker(p, m.start, s.colour(WAVE_STYLE, "colStartMarker", purple));
-        marker(p, m.end.min(pk.frames as u32 - 1), s.colour(WAVE_STYLE, "colEndMarker", purple));
+        marker(p, m.start, wave_colour(s, "colStartMarker", "WaveEditorStartMarkerColour", purple));
+        marker(p, m.end.min(pk.frames as u32 - 1), wave_colour(s, "colEndMarker", "WaveEditorEndMarkerColour", purple));
         if m.looping {
-            marker(p, m.loop_start, s.colour(WAVE_STYLE, "colLoopStartMarker", purple));
-            marker(p, m.loop_end.min(pk.frames as u32 - 1), s.colour(WAVE_STYLE, "colLoopEndMarker", purple));
+            marker(p, m.loop_start, wave_colour(s, "colLoopStartMarker", "WaveEditorLoopStartMarkerColour", purple));
+            marker(p, m.loop_end.min(pk.frames as u32 - 1), wave_colour(s, "colLoopEndMarker", "WaveEditorLoopEndMarkerColour", purple));
         }
         // [re:c29608]: Amp (top half when both
         // show) and Free envelopes over the waveform.
@@ -993,15 +1453,21 @@ impl Inspector {
                 let line_pts = poly.clone();
                 poly.push((poly.last().unwrap().0, y + ah));
                 poly.insert(0, (poly[0].0, y + ah));
-                p.fill_polygon(&poly, s.colour(WAVE_STYLE, "colEnvelopeBack", Colour::rgba(255, 192, 203, 255)).with_alpha(0.2));
-                p.polyline(&line_pts, s.colour(WAVE_STYLE, "colEnvelopeLine", Colour::rgba(255, 192, 203, 255)), 1.0);
+                let pink = Colour::rgba(255, 192, 203, 255);
+                let back = if s.raw(WAVE_STYLE, "colEnvelopeBack").is_some() {
+                    s.colour(WAVE_STYLE, "colEnvelopeBack", pink).with_alpha(0.2)
+                } else {
+                    s.colours.get(if is_amp { "AmpEnvelopeBackColour" } else { "FreeEnvelopeBackColour" }).copied().unwrap_or(pink.with_alpha(0.2))
+                };
+                p.fill_polygon(&poly, back);
+                p.polyline(&line_pts, wave_colour(s, "colEnvelopeLine", if is_amp { "AmpEnvelopeLineColour" } else { "FreeEnvelopeLineColour" }, pink), 1.0);
                 let geo = EnvGeo { w, y0: wy, h, v0, vl, frames, rate: pk.rate, start: m.start, end: m.end };
                 let grabbed = self.env_drag.filter(|d| d.0 == is_amp).map(|d| d.1);
                 let handles = if mode == "OneShotLengthBound" { Vec::new() } else { env_handles(model, e, pad, l, is_amp, &mode, &geo, y, ah) };
                 for (k, r) in handles {
                     p.fill_rect(r, Colour::WHITE);
                     let inner = RectF::new(r.x + 2.0, r.y + 2.0, r.w - 4.0, r.h - 4.0);
-                    let col = if grabbed == Some(k) { s.colour(WAVE_STYLE, "colEnvelopeGrab", Colour::BLACK) } else { Colour::BLACK };
+                    let col = if grabbed == Some(k) { wave_colour(s, "colEnvelopeGrab", "SelectedObjectColour", Colour::BLACK) } else { Colour::BLACK };
                     p.fill_rect(inner, col);
                 }
                 // Title box: "AMP ENVELOPE" / "FREE ENVELOPE", centred 10 px down.
@@ -1232,7 +1698,7 @@ fn envelope_points(model: &Model, e: usize, p: usize, l: usize, amp: bool, mode:
 fn draw_sampling(sm: &crate::model::Sampling, r: &Renderer, p: &mut Painter, w: f32, h: f32) {
     let s = r.styles;
     let purple = Colour::rgba(128, 0, 128, 255);
-    let line = s.colour(WAVE_STYLE, "colLine", purple);
+    let line = wave_colour(s, "colLine", "WaveEditorWaveColour", purple);
     let n = sm.buckets.len();
     if n == 0 {
         return;
@@ -1247,7 +1713,7 @@ fn draw_sampling(sm: &crate::model::Sampling, r: &Renderer, p: &mut Painter, w: 
         p.fill_rect(RectF::new(x as f32, y0, 1.0, (y1 - y0).max(1.0)), line);
     }
     for (x, col) in [(0.0, "colStartMarker"), (w - 1.0, "colEndMarker")] {
-        p.fill_rect(RectF::new((x - 1.0f32).max(0.0), 0.0, 2.0, h), s.colour(WAVE_STYLE, col, purple));
+        p.fill_rect(RectF::new((x - 1.0f32).max(0.0), 0.0, 2.0, h), wave_colour(s, col, if col == "colStartMarker" { "WaveEditorStartMarkerColour" } else { "WaveEditorEndMarkerColour" }, purple));
     }
 }
 

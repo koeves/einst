@@ -144,10 +144,17 @@ impl Editor {
 
     pub(crate) fn pad_menu(&mut self, ev: &UiEvent) -> bool {
         match ev {
-            UiEvent::RightClicked { path, .. } if self.mixers.iter().any(|m| m.pad_strip_at(&self.app, path).is_some()) => {
+            UiEvent::RightClicked { path, .. } | UiEvent::Mouse { path, kind: dreist_gui::app::MouseKind::RightDown, .. } if self.mixers.iter().any(|m| m.pad_strip_at(&self.app, path).is_some()) => {
                 let Some(k) = self.mixers.iter().find_map(|m| m.pad_strip_at(&self.app, path)) else { return false };
                 let path = path.clone();
                 self.padmenu.open(&mut self.app, &path, &self.model, &self.clipboard, k);
+                true
+            }
+            // The Pad / Layers selector's pad item: the pad menu.
+            UiEvent::Mouse { path, overload, kind: dreist_gui::app::MouseKind::RightDown, .. } if overload == "PadSelectionButton" => {
+                let path = path.clone();
+                let p = self.model.pad[self.model.engine];
+                self.padmenu.open(&mut self.app, &path, &self.model, &self.clipboard, p);
                 true
             }
             UiEvent::Mouse { path, overload, kind: dreist_gui::app::MouseKind::RightDown, .. } if overload == "LayerRow" => {

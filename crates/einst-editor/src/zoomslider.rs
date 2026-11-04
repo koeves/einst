@@ -106,7 +106,7 @@ pub fn auto_zoom(mode: i64, frames: u32, start: u32, end: u32) -> Option<(f32, f
 /// edge lines, white 10 px discs with black 6 px centres.
 pub fn draw(p: &mut Painter, s: &StyleSheet, style: &str, w: f32, h: f32, view: (f32, f32)) {
     let (tx, tw) = thumb(view, w);
-    p.fill_rect(RectF::new(tx, 0.0, tw, h), s.colour(style, "colFill", Colour::rgba(255, 192, 203, 255)));
+    p.fill_rect(RectF::new(tx, 0.0, tw, h), crate::timeline::style_or_named(s, style, "colFill", "InkSoft", Colour::rgba(255, 192, 203, 255)));
     for ex in [tx, tx + tw] {
         p.fill_rect(RectF::new(ex - 1.0, 0.0, 2.0, h), Colour::WHITE);
     }

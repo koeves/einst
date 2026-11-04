@@ -39,6 +39,23 @@ const SONG_TAB: usize = 2;
 const PART_STYLE: &str = "SongPartBodyStyle";
 const PART_SELECTED_STYLE: &str = "SongPartSelectedBodyStyle";
 
+/// The song page's tools, in the toolbar's order.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum SongTool {
+    /// Left adds parts of the draw pattern (and moves parts).
+    Draw,
+    /// Left deletes parts.
+    Erase,
+    /// Left selects, moves and resizes parts (no new parts).
+    Select,
+    /// Draw and select together.
+    Multi,
+}
+
+const SONG_TOOLS: [SongTool; 4] = [SongTool::Draw, SongTool::Erase, SongTool::Select, SongTool::Multi];
+/// The pattern popup's name on the page.
+const POPUP: &str = "SongPatternPopup";
+
 /// [re:207106] (left-button operation per tool [re:588ddb]).
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum OpKind {
@@ -94,8 +111,13 @@ pub struct SongPanel {
     erase: bool,
     /// Last clicked part (the part buttons' part).
     anchor: Option<(usize, i64)>,
-    /// The pattern popup is open (for the selection).
-    pattern_menu: bool,
+    /// The pattern popup is open: for the selection (false) or the draw
+    /// tool's pattern (true).
+    pattern_menu: Option<bool>,
+    /// The pattern popup (`SongPatternPopupPanel.skin`: 24 keys).
+    popup_tpl: Option<Ctrl>,
+    /// The left-button tool (the toolbar's tool group, manual §11:3).
+    pub(crate) tool: SongTool,
     /// First visible quarter note.
     scroll: f32,
     /// Selected parts (track, start in 1/960 QN).
@@ -210,6 +232,11 @@ impl SongPanel {
                 hp.children.push(h);
             }
         }
+        let popup_tpl = crate::front::load(skin, "Song/SongPatternPopupPanel.skin").ok().map(|mut c| {
+            c.name = POPUP.into();
+            c.zorder = 2000;
+            c
+        });
         Ok(SongPanel {
             page: page.to_vec(),
             named: Default::default(),
@@ -217,7 +244,9 @@ impl SongPanel {
             insert_pattern: 0,
             erase: false,
             anchor: None,
-            pattern_menu: false,
+            pattern_menu: None,
+            popup_tpl,
+            tool: SongTool::Multi,
             scroll: 0.0,
             selected: BTreeSet::new(),
             op: None,
@@ -378,23 +407,58 @@ impl SongPanel {
         Self::commit(&before, &song, out);
     }
 
-    /// `ShowPatternPopup(false, ...)` [re:ae8c40]: the 24 patterns of the
-    /// track, the selection's common pattern checked (the original shows a
-    /// grid of pattern keys, state 2 = common, 1 = not empty).
-    fn open_pattern_menu(&mut self, app: &mut App, model: &Model, anchor: &[usize]) {
+    /// `ShowPatternPopup(draw, ...)` [re:ae8c40]: the 24 pattern keys of
+    /// the track (v1's popup panel) under `anchor`, the selection's common
+    /// pattern (or the draw pattern) lit.
+    fn open_pattern_menu(&mut self, app: &mut App, model: &Model, anchor: &[usize], draw: bool) {
         let song = song_of(model);
         let sel = selected_parts(&song, &self.selected);
-        let Some(&(t, _)) = sel.first() else { return };
-        let common = sel.first().map(|(_, p)| p.pattern).filter(|c| sel.iter().all(|(_, p)| p.pattern == *c));
-        let items = (0..24)
-            .map(|n| {
-                let name = model.pattern_name(t, n);
-                let used = if model.pattern_used(t, n) { "● " } else { "" };
-                if name.is_empty() { format!("{used}Pattern {}", n + 1) } else { format!("{used}{}: {name}", n + 1) }
-            })
-            .collect();
-        app.open_menu(anchor, items, common);
-        self.pattern_menu = true;
+        let (track, current) = if draw {
+            (model.engine, Some(self.insert_pattern))
+        } else {
+            let Some(&(t, _)) = sel.first() else { return };
+            (t, sel.first().map(|(_, p)| p.pattern).filter(|c| sel.iter().all(|(_, p)| p.pattern == *c)))
+        };
+        let Some(mut popup) = self.popup_tpl.clone() else { return };
+        // Under the anchor, inside the page.
+        let (ax, ay) = app.origin(anchor);
+        let (px, py) = app.origin(&self.page);
+        let ah = app.ctrl(anchor).map(|c| c.rect.h).unwrap_or(17);
+        let Some(page) = app.ctrl_mut(&self.page) else { return };
+        let (w, h) = (popup.rect.w, popup.rect.h);
+        let x = (ax - px).clamp(0, (page.rect.w - w).max(0));
+        let y = if ay - py + ah + h <= page.rect.h { ay - py + ah } else { (ay - py - h).max(0) };
+        popup.set_rect(Rect::new(x, y, w, h));
+        for k in popup.children.iter_mut() {
+            let Some(n) = k.name.strip_prefix("Key").and_then(|n| n.parse::<usize>().ok()) else { continue };
+            k.on = current == Some(n);
+            k.text = (n + 1).to_string();
+            k.display_name = {
+                let name = model.pattern_name(track, n);
+                if name.is_empty() { format!("Pattern {}", n + 1) } else { format!("{}: {name}", n + 1) }
+            };
+            k.set_attr("patternUsed", model.pattern_used(track, n).to_string());
+        }
+        page.children.retain(|c| c.name != POPUP);
+        page.children.push(popup);
+        self.pattern_menu = Some(draw);
+        app.dirty = true;
+    }
+
+    /// The open pattern popup's path.
+    fn popup_path(&self, app: &App) -> Option<Vec<usize>> {
+        let page = app.ctrl(&self.page)?;
+        let i = page.children.iter().position(|c| c.name == POPUP)?;
+        Some([self.page.clone(), vec![i]].concat())
+    }
+
+    /// Close the pattern popup.
+    fn close_popup(&mut self, app: &mut App) {
+        self.pattern_menu = None;
+        if let Some(page) = app.ctrl_mut(&self.page) {
+            page.children.retain(|c| c.name != POPUP);
+        }
+        app.dirty = true;
     }
 
     /// Part buttons [re:90f6ff]: the three part buttons inside the anchor
@@ -499,6 +563,7 @@ impl SongPanel {
         let song = song_of(model);
         let ip = self.insert_pattern;
         let erase = self.erase;
+        let tool = self.tool;
         let name = {
             let n = model.pattern_name(model.engine, ip);
             if n.is_empty() { format!("Pattern {}", ip + 1) } else { n }
@@ -512,6 +577,11 @@ impl SongPanel {
         for n in ["PatternRenameTextBox", "ShuffleButton"] {
             if let Some(b) = page.find_mut(n) {
                 b.visible = false;
+            }
+        }
+        if let Some(g) = page.find_mut("ToolButtonGroup") {
+            for (b, t) in g.children.iter_mut().zip(SONG_TOOLS) {
+                b.on = t == tool;
             }
         }
         let follow = model.follow_playback;
@@ -613,6 +683,16 @@ impl SongPanel {
     }
 
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
+        // A press outside the open pattern popup closes it.
+        if self.pattern_menu.is_some() {
+            let outside = match ev {
+                UiEvent::Clicked { path, .. } | UiEvent::Mouse { path, kind: MouseKind::Down | MouseKind::RightDown, .. } => !self.popup_path(app).is_some_and(|p| path.starts_with(&p)),
+                _ => false,
+            };
+            if outside {
+                self.close_popup(app);
+            }
+        }
         match ev {
             UiEvent::Mouse { path, overload, kind, x, y } if overload == "SongBody" => {
                 let Some(c) = app.ctrl(path) else { return false };
@@ -704,8 +784,18 @@ impl SongPanel {
                         let start_op = |me: &mut Self, kind: OpKind| {
                             me.op = Some(Op { kind, qn0: qn, x0: *x, y0: *y, snapshot: song.clone(), saved: me.selected.clone() });
                         };
-                        // Shift / cmd: rubber band (op 3 / op 2).
-                        if mods.shift || mods.cmd {
+                        // The erase tool deletes the part under the pointer.
+                        if self.tool == SongTool::Erase {
+                            if let Some(p) = &hit {
+                                self.selected.clear();
+                                self.selected.insert((track, key(p.start)));
+                                self.menu_action(app, model, MenuAction::Delete, qn, out);
+                            }
+                            return true;
+                        }
+                        // Shift / cmd: rubber band (op 3 / op 2); the select
+                        // tool's press on empty space too.
+                        if mods.shift || mods.cmd || (self.tool == SongTool::Select && hit.is_none()) {
                             if !mods.shift {
                                 self.selected.clear();
                             }
@@ -763,10 +853,18 @@ impl SongPanel {
                 out.push(msg(id::SONG_SET_ERASE_STATE, &[model.engine as i32], &[1.0]));
                 true
             }
-            // A pattern picked from the popup → pattern IDs set.
-            UiEvent::MenuSelected { index, .. } if self.pattern_menu => {
-                self.pattern_menu = false;
-                self.change_patterns(model, None, Some((*index).min(23)), out);
+            // A pattern picked from the popup → pattern IDs set (or the
+            // draw tool's pattern).
+            UiEvent::Clicked { path, name, .. } if self.pattern_menu.is_some() && self.popup_path(app).is_some_and(|p| path.starts_with(&p)) => {
+                let draw = self.pattern_menu == Some(true);
+                if let Some(n) = name.strip_prefix("Key").and_then(|n| n.parse::<usize>().ok()).filter(|n| *n < 24) {
+                    if draw {
+                        self.insert_pattern = n;
+                    } else {
+                        self.change_patterns(model, None, Some(n), out);
+                    }
+                }
+                self.close_popup(app);
                 true
             }
             UiEvent::MenuSelected { index, .. } if self.menu.is_some() => {
@@ -798,6 +896,10 @@ impl SongPanel {
                 self.scroll = value * (total - visible).max(0.0);
                 true
             }
+            UiEvent::Clicked { path, .. } if path.len() > 1 && path.starts_with(&self.page) && app.ctrl(&path[..path.len() - 1]).is_some_and(|g| g.name == "ToolButtonGroup") => {
+                self.tool = SONG_TOOLS[path[path.len() - 1].min(3)];
+                true
+            }
             UiEvent::Clicked { path, name, .. } if path.starts_with(&self.page) => {
                 match name.as_str() {
                     // Control event [re:e3a0fd] → pattern IDs by delta.
@@ -816,7 +918,9 @@ impl SongPanel {
                         }
                         model.follow_playback = on;
                     }
-                    "SelectPatternButton" => self.open_pattern_menu(app, model, path),
+                    "SelectPatternButton" => self.open_pattern_menu(app, model, path, false),
+                    // The draw tool's pattern.
+                    "SetDrawPatternButton" => self.open_pattern_menu(app, model, path, true),
                     // Part buttons: select the anchor part, then as above.
                     "PartNextPatternButton" | "PartPrevPatternButton" | "PartSelectPatternButton" => {
                         if let Some(a) = self.anchor {
@@ -828,7 +932,7 @@ impl SongPanel {
                         match name.as_str() {
                             "PartNextPatternButton" => self.change_patterns(model, Some(1), None, out),
                             "PartPrevPatternButton" => self.change_patterns(model, Some(-1), None, out),
-                            _ => self.open_pattern_menu(app, model, path),
+                            _ => self.open_pattern_menu(app, model, path, false),
                         }
                     }
                     // Momentary: the release ends the live erase.

@@ -235,6 +235,13 @@ impl PatMenu {
                     _ => false,
                 }
             }
+            // The pattern toolbar's Insert menu (manual §9:3): the
+            // selected pad's track from the pattern's start.
+            UiEvent::Clicked { path, name, .. } if name == "InsertButton" && app.root.path_of("ToolBar").is_some_and(|t| path.starts_with(&t)) => {
+                let t = model.pad[model.engine];
+                let path = path.clone();
+                self.apply(app, &path, model, clip, t, Action::InsertMenu, out)
+            }
             UiEvent::MenuSelected { anchor, index, .. } if self.open.as_ref().is_some_and(|o| o.2 == *anchor) => {
                 let (n, actions, anchor) = self.open.take().unwrap();
                 let a = actions.get(*index).copied().unwrap_or(Action::None);
