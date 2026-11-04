@@ -5,7 +5,9 @@ The layout comes from v1's own skin XML (assets/v1/Resources, read-only),
 converted to the syntax dreist-gui reads (convert.py); every bitmap those
 skins name is replaced by vector styling (looks.py) on the `Einst` theme
 (theme.py: v1's palette, Liberation Sans for Arial). No v1 image is read
-or copied. Einst's own assets that the set still needs (fonts, cursors,
+or copied. Skins v1 never had (the standalone's device dialogs, effect
+panels for the newer effect types) are authored in v1's style
+(authored.py). Einst's own assets that the set still needs (fonts, cursors,
 metronome sounds, app icon) are copied from assets/ui, which the current
 editor keeps using and this script never writes.
 
@@ -21,6 +23,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import authored  # noqa: E402
 import convert  # noqa: E402
 import theme  # noqa: E402
 
@@ -112,6 +115,10 @@ def outputs():
     conv = convert.Converter()
     conv.run()
     files = {f"Skin/{rel}": data for rel, data in conv.skins.items()}
+    for rel, (elements, header) in authored.skins().items():
+        if f"Skin/{rel}" in files:
+            raise SystemExit(f"uigen: authored {rel} would replace a v1 skin")
+        files[f"Skin/{rel}"] = convert.document(elements, header)
     files.update(stylesheet(conv))
     files["Skin/project.gltinfo"] = gltinfo()
     check_names(files)
