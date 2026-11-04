@@ -1105,6 +1105,7 @@ dependencies = [
 name = "einst-plugin"
 version = "0.1.0"
 dependencies = [
+ "clap-sys",
  "cpal",
  "dreist-dsp",
  "dreist-engine",
