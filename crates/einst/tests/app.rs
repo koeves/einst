@@ -6,6 +6,15 @@ use dreist_dsp::fx::{Ctx, Effect};
 use dreist_formats::profile::{self, DocKind};
 
 fn setup() {
+    // The screens read the settings folder (shortlists, favourites): keep
+    // them off the user's own.
+    static SETTINGS: std::sync::Once = std::sync::Once::new();
+    SETTINGS.call_once(|| {
+        let dir = std::env::temp_dir().join(format!("einst-app-test-{}", std::process::id()));
+        // SAFETY: every test calls `setup` first, so no thread reads the
+        // environment until this has run.
+        unsafe { std::env::set_var(einst_editor::app::SETTINGS_ENV, dir) };
+    });
     einst::install();
 }
 
