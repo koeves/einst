@@ -12,11 +12,13 @@ struct Drawer<'a> {
     inspector: &'a inspector::Inspector,
     midimap: Option<&'a midimap::MidiMap>,
     slicer: &'a slicer::Slicer,
+    sampler: &'a sampler::Sampler,
     filefind: &'a filefind::FileFind,
     devices: &'a devices::Devices,
     transmod: &'a transmod::Transmod,
     midiconsole: &'a midiconsole::MidiConsole,
     scenes: Option<&'a scenes::Scenes>,
+    mixers: &'a [mixer::Mixer],
     modals: &'a modal::Modals,
     learn: &'a learn::Learn,
 }
@@ -28,14 +30,17 @@ impl dreist_gui::render::CustomDraw for Drawer<'_> {
             || self.song.is_some_and(|s| s.draw(self.model, r, p, c))
             || self.browser.is_some_and(|b| b.draw(r, p, c))
             || self.midimap.is_some_and(|m| m.draw(self.model, r, p, c))
-            || self.slicer.draw(r, p, c)
+            || self.slicer.draw(self.model, r, p, c)
+            || self.sampler.draw(self.model, r, p, c)
             || self.filefind.draw(r, p, c)
             || self.devices.draw(r, p, c)
             || self.transmod.draw(self.model, r, p, c)
             || self.scenes.is_some_and(|sc| sc.draw(self.model, r, p, c))
+            || self.mixers.iter().any(|m| m.draw(r, p, c))
             || self.midiconsole.draw(r, p, c)
             || self.modals.draw(r, p, c)
             || (c.overload == "LearnOverlay" && draw_learn(self.learn, r, p))
+            || mixer::draw_short_label(r, p, c)
     }
 
     fn draw_over(&self, r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) {
@@ -120,7 +125,7 @@ impl Editor {
                 }
             }
             "PatternNameBox" => self.model.set_pattern_name(e, cur, t),
-            "PadName" => self.model.set_pad_name(e, self.model.pad[e], t),
+            "PadName" | "PadLabel" => self.model.set_pad_name(e, self.model.pad[e], t),
             "SampleName" => {
                 let layer = (0..=path.len()).rev().find_map(|n| self.app.ctrl(&path[..n])?.attr("layer")?.parse::<usize>().ok());
                 if let Some(l) = layer {
@@ -269,7 +274,7 @@ impl Editor {
             changed |= self.tools_help_menu(ev);
             changed |= self.text_commit(ev);
             if let Some(f) = self.browser.as_mut().and_then(|b| b.slice_request.take()) {
-                changed |= self.slicer.start(&self.model, &f);
+                changed |= self.open_slicer_from_browser(&f);
             }
             if let Some((name, fav)) = self.browser.as_mut().and_then(|b| b.export_request.take()) {
                 if let Some(dir) = self.dialog(Dialog::ExportFolder) {
@@ -380,11 +385,13 @@ impl Editor {
             inspector: &self.inspector,
             midimap: self.midimap.as_ref(),
             slicer: &self.slicer,
+            sampler: &self.sampler,
             filefind: &self.filefind,
             devices: &self.devices,
             transmod: &self.transmod,
             midiconsole: &self.midiconsole,
             scenes: self.scenes.as_ref(),
+            mixers: &self.mixers,
             modals: &self.modals,
             learn: &self.learn,
         };

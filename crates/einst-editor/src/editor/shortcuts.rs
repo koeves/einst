@@ -5,9 +5,9 @@ use crate::*;
 /// Menu bar tags beyond the accelerator ids.
 const MENU_ABOUT: isize = 1000;
 
-const MENU_AUDIO: isize = 1001;
+pub(crate) const MENU_AUDIO: isize = 1001;
 
-const MENU_MIDI: isize = 1002;
+pub(crate) const MENU_MIDI: isize = 1002;
 
 impl Editor {
     /// [re:907a56] (see `accel`): run the key's

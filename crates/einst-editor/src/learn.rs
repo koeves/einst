@@ -77,7 +77,10 @@ pub fn learnable(c: &Ctrl) -> bool {
     // Plus the value boxes / popups with an editor binding (pattern length,
     // step length).
     let editor = matches!(c.class.as_str(), "CtrlTextBox" | "CtrlPopupButton") && crate::editbind::TABLE.iter().any(|b| b.control == c.name);
-    (matches!(c.class.as_str(), "CtrlKnob" | "CtrlTransmodKnob" | "CtrlSlider" | "CtrlTransmodSlider" | "CtrlButton" | "CtrlTempoBox") || editor) && c.enabled && c.visible && !c.passive
+    (matches!(c.class.as_str(), "CtrlKnob" | "CtrlTransmodKnob" | "CtrlSlider" | "CtrlTransmodSlider" | "CtrlPanSlider" | "CtrlButton" | "CtrlTempoBox") || editor)
+        && c.enabled
+        && c.visible
+        && !c.passive
 }
 
 impl Learn {

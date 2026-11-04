@@ -207,6 +207,8 @@ impl Pads {
             class: "CtrlLabel".into(),
             name: "NameLabel".into(),
             style: "PadNameStyle".into(),
+            // Long names are cut to the pad's face with an ellipsis.
+            overload: "AutoShorteningLabel".into(),
             rect: Rect::new(face.x, face.y + 10, face.w, 18),
             zorder: 1,
             visible: true,

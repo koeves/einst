@@ -116,28 +116,17 @@ impl Editor {
         }
     }
 
-    /// A sampler take finished: save it and allocate it by the Follow
-    /// mode (Slice opens the slicer).
-    pub fn sampler_take(&mut self, left: &[f32], right: &[f32], sr: f32) -> Option<sampler::TakeAction> {
-        let mut out = Vec::new();
-        // Take stop [re:e602d2]: the display keeps the finished take.
-        let sel = (self.model.engine, self.model.pad[self.model.engine], self.model.layer[self.model.engine]);
-        let buckets =
-            left.chunks(model::LIVE_BUCKET).enumerate().map(|(i, l)| model::bucket(l, right.get(i * model::LIVE_BUCKET..(i * model::LIVE_BUCKET + l.len()).min(right.len())).unwrap_or(&[]))).collect();
-        self.model.sampling = Some(model::Sampling { buckets, frames: left.len(), selection: sel });
-        let r = self.sampler.take_finished(&mut self.model, &self.modals.options, left, right, sr, &mut out);
-        // Auto allocation loads the take into a layer, whose view
-        // ([re:a29974]) leaves sampling mode.
-        if matches!(r, Some(sampler::TakeAction::Loaded)) {
-            self.model.sampling = None;
+    /// A sampler take finished: it joins the sampler page's take list
+    /// and becomes the current take; its index.
+    pub fn sampler_take(&mut self, left: &[f32], right: &[f32], sr: f32) -> Option<usize> {
+        if left.is_empty() {
+            return None;
         }
-        self.outbox.extend(out);
-        if let Some(sampler::TakeAction::Slice(f)) = &r {
-            let f = f.clone();
-            self.open_slicer(&f);
-        }
+        // Take stop [re:e602d2]: the display shows the finished take.
+        let i = self.sampler.add_take(left, right, sr);
+        self.model.sampling = None;
         self.sync();
-        r
+        Some(i)
     }
 
     /// Live take display from the audio thread ([re:94c103] /
@@ -158,14 +147,17 @@ impl Editor {
         self.app.dirty = true;
     }
 
-    /// Scene notifications from the engine (activity animations).
+    /// Scene notifications from the engine (cued / active slots).
     pub fn scene_events(&mut self, events: &[dreist_engine::scene::SceneEvent]) {
+        if events.is_empty() {
+            return;
+        }
         if let Some(sc) = &mut self.scenes {
             for e in events {
                 sc.event(*e);
             }
         }
-        self.animate();
+        self.sync();
     }
 
     /// Pattern retro input from the engine.

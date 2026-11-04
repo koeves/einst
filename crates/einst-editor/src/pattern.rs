@@ -123,6 +123,9 @@ pub struct PatternPanel {
     clipboard: Vec<(usize, usize, dreist_engine::pattern::StepData)>,
     /// Graph Options menu open (false = top level, true = Insert submenu).
     graph_menu: Option<bool>,
+    /// The editing tool (the tools panel, manual §9:4): pen, erase,
+    /// select or multi.
+    pub(crate) tool: Tool,
     /// Copied lane values (graph menu Copy).
     lane_clip: Vec<f32>,
     /// Toolbar Options menu open: the actions of its items, or the Drag
@@ -258,6 +261,21 @@ const GRAPH_MENU: [&str; 13] = [
     "Reset to default values", "", "Cut", "Copy", "Paste", "", "Clear automation track", "Clear all automation tracks", "Clear all pattern automation tracks", "Invert automation values",
     "Reverse automation values", "", "Insert ▸",
 ];
+
+/// The pattern editing tools, in the tools panel's order.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Tool {
+    /// Left adds events and drags their velocity; right deletes.
+    Pen,
+    /// Left deletes.
+    Erase,
+    /// Left selects (a click or a box).
+    Select,
+    /// Pen and erase on the two buttons.
+    Multi,
+}
+
+const TOOLS: [Tool; 4] = [Tool::Pen, Tool::Erase, Tool::Select, Tool::Multi];
 
 #[derive(Clone, Copy, Debug, Default)]
 struct GraphDrag {
@@ -450,8 +468,11 @@ fn lane_label(lane: usize) -> String {
 /// Grid geometry for the visible tracks.
 #[derive(Clone, Debug)]
 pub struct GridLayout {
-    /// First visible track (absolute pad index).
-    pub first_track: usize,
+    /// The track of the top visible row (absolute pad index): v1 lists the
+    /// highest pad at the top, pad 1 at the bottom.
+    pub top_track: usize,
+    /// Rows scrolled off the top.
+    pub first_row: usize,
     /// Visible track rows.
     pub tracks: usize,
     /// Tracks in the bank (16 or 64).
@@ -482,7 +503,7 @@ impl GridLayout {
         let visible_steps = ((w as f32 / step_w).floor() as usize).clamp(1, steps);
         let first_step = view.h_scroll.min(steps - visible_steps);
         let track_y = (0..rows_fit).map(|r| r as f32 * row_h).collect();
-        GridLayout { first_track: first + first_row, tracks: rows_fit, total_tracks: count, row_h, step_w, steps, first_step, visible_steps, track_y, graphs: Vec::new() }
+        GridLayout { top_track: first + count - 1 - first_row, first_row, tracks: rows_fit, total_tracks: count, row_h, step_w, steps, first_step, visible_steps, track_y, graphs: Vec::new() }
     }
 
     /// MultiTrack layout (track dimensions [re:b32367]): each opened
@@ -495,7 +516,7 @@ impl GridLayout {
         let graph_h = (lay.row_h * 2.0).max(75.0).floor();
         let first_row = view.v_scroll.min(count.saturating_sub(1));
         let (mut y, mut track_y, mut graphs) = (0.0f32, Vec::new(), Vec::new());
-        for t in first + first_row..first + count {
+        for t in (first..first + count - first_row).rev() {
             if y >= h as f32 && !track_y.is_empty() {
                 break;
             }
@@ -506,11 +527,28 @@ impl GridLayout {
                 y += graph_h;
             }
         }
-        lay.first_track = first + first_row;
+        lay.top_track = first + count - 1 - first_row;
+        lay.first_row = first_row;
         lay.tracks = track_y.len().max(1);
         lay.track_y = if track_y.is_empty() { vec![0.0] } else { track_y };
         lay.graphs = graphs;
         lay
+    }
+
+    /// The track shown on visible row `row`.
+    pub fn track(&self, row: usize) -> usize {
+        self.top_track.saturating_sub(row)
+    }
+
+    /// The visible row showing `track`.
+    pub fn row(&self, track: usize) -> Option<usize> {
+        let r = self.top_track.checked_sub(track)?;
+        (r < self.tracks).then_some(r)
+    }
+
+    /// The row of `track`, clamped to the visible rows.
+    fn row_clamped(&self, track: usize) -> usize {
+        self.top_track.saturating_sub(track).min(self.tracks.saturating_sub(1))
     }
 
     /// Top of visible track row `row`.
@@ -542,7 +580,7 @@ impl GridLayout {
         }
         let row = self.track_y.iter().position(|&ty| y >= ty && y < ty + self.row_h)?;
         let step = self.first_step + (x / self.step_w) as usize;
-        (row < self.tracks && step < self.steps).then_some((self.first_track + row, step))
+        (row < self.tracks && step < self.steps).then_some((self.track(row), step))
     }
 }
 
@@ -721,6 +759,7 @@ impl PatternPanel {
             band: None,
             clipboard: Vec::new(),
             graph_menu: None,
+            tool: Tool::Multi,
             lane_clip: Vec::new(),
             toolbar_menu: None,
             resources: dreist_formats::paths::skin_dir(),
@@ -858,13 +897,13 @@ impl PatternPanel {
         }
         let Some(row) = (0..lay.tracks).find(|&r| {
             let ry = lay.row_y(r);
-            let len = pat.tracks.get(lay.first_track + r).map(|t| t.length as usize).filter(|l| *l > 0).unwrap_or(pat.steps as usize);
+            let len = pat.tracks.get(lay.track(r)).map(|t| t.length as usize).filter(|l| *l > 0).unwrap_or(pat.steps as usize);
             let mx = Self::marker_x(lay, len, w);
             x >= mx && x < mx + MARKER_W && y >= ry && y < ry + lay.row_h.min(MARKER_H)
         }) else {
             return false;
         };
-        let track = lay.first_track + row;
+        let track = lay.track(row);
         if kind == MouseKind::RightDown {
             send(track, pat.steps as usize, out);
         } else {
@@ -965,6 +1004,13 @@ impl PatternPanel {
         set(app, "DragEditButton", &|c| c.text = drag.clone());
         let follow = model.follow_playback;
         set(app, "Follow", &|c| c.on = follow);
+        // The tools panel.
+        let tool = self.tool as usize;
+        if let Some(g) = self.named.path_in(app, &self.page, "ToolsPanel").and_then(|p| app.ctrl_mut(&p)).and_then(|c| c.find_mut("ButtonGroup")) {
+            for (i, b) in g.children.iter_mut().enumerate() {
+                b.on = i == tool;
+            }
+        }
         // Engine controls: tempo modifier and swing depth.
         let en = model.engine_node(e);
         let num = en.and_then(|n| n.u32("TempoNumerator")).unwrap_or(1).clamp(1, 16);
@@ -990,7 +1036,7 @@ impl PatternPanel {
         let lay = self.layout_of(model, &pat, g.rect.w, g.rect.h);
         // Scroll bars: visible fraction and position.
         let vfrac = lay.tracks as f32 / lay.total_tracks as f32;
-        let vpos = if lay.total_tracks > lay.tracks { (lay.first_track - model.visible_pads().0) as f32 / (lay.total_tracks - lay.tracks) as f32 } else { 0.0 };
+        let vpos = if lay.total_tracks > lay.tracks { lay.first_row as f32 / (lay.total_tracks - lay.tracks) as f32 } else { 0.0 };
         let hfrac = lay.visible_steps as f32 / lay.steps as f32;
         let hpos = if lay.steps > lay.visible_steps { lay.first_step as f32 / (lay.steps - lay.visible_steps) as f32 } else { 0.0 };
         set(app, "VScrollBar", &|c| {
@@ -1005,14 +1051,14 @@ impl PatternPanel {
             self.grid_w.set(g.rect.w);
         }
         let selected = model.pad[e];
-        let names: Vec<String> = (0..lay.tracks).map(|r| model.pad_name(e, lay.first_track + r).unwrap_or_else(|| format!("Pad {}", lay.first_track + r + 1))).collect();
-        let gains: Vec<f32> = (0..lay.tracks).map(|r| model.pad_gain(e, lay.first_track + r)).collect();
+        let names: Vec<String> = (0..lay.tracks).map(|r| model.pad_name(e, lay.track(r)).unwrap_or_else(|| format!("Pad {}", lay.track(r) + 1))).collect();
+        let gains: Vec<f32> = (0..lay.tracks).map(|r| model.pad_gain(e, lay.track(r))).collect();
         let multi = self.multi;
         set(app, "MultiButton", &|c| c.on = multi);
         set(app, "SingleButton", &|c| c.on = !multi);
         self.apply_view(app);
         let sig = format!("{:?}{:?}{}", lay.track_y, lay.graphs, lay.row_h);
-        let open: Vec<bool> = (0..lay.tracks).map(|r| self.auto_open.contains(&(e, lay.first_track + r))).collect();
+        let open: Vec<bool> = (0..lay.tracks).map(|r| self.auto_open.contains(&(e, lay.track(r)))).collect();
         let (Some(rp), Some(t)) = (self.rows.clone(), self.row_template.clone()) else { return };
         let auto_t = self.auto_template.clone();
         let Some(rows) = app.ctrl_mut(&rp) else { return };
@@ -1051,7 +1097,7 @@ impl PatternPanel {
                 continue;
             }
             let Some(r) = row.attr("trackRow").and_then(|v| v.parse::<usize>().ok()) else { continue };
-            let track = lay.first_track + r;
+            let track = lay.track(r);
             let is_open = open.get(r).copied().unwrap_or(false);
             if let Some(b) = row.find_mut("AutomateButton") {
                 b.on = is_open;
@@ -1165,6 +1211,32 @@ impl PatternPanel {
                 self.graph_menu = Some(false);
                 self.graph_target = None;
                 app.open_menu(path, GRAPH_MENU.iter().map(|s| s.to_string()).collect(), None);
+                true
+            }
+            // The tools panel's buttons.
+            UiEvent::Clicked { path, .. }
+                if path.len() > 1
+                    && self.named.path_in(app, &self.page, "ToolsPanel").is_some_and(|t| path.starts_with(&t))
+                    && app.ctrl(&path[..path.len() - 1]).is_some_and(|g| g.name == "ButtonGroup") =>
+            {
+                self.tool = TOOLS[path[path.len() - 1].min(3)];
+                true
+            }
+            // ÷2 / ×2 (manual §9:5): the whole lane stretched (its first
+            // half over the pattern) or compressed (to half, repeated).
+            UiEvent::Clicked { path, name, .. }
+                if (name == "Div2Button" || name == "x2Button") && (app.root.path_of("SingleAutoControl").is_some_and(|p| path.starts_with(&p)) || self.auto_slot_of(app, path).is_some()) =>
+            {
+                let (track, lane) = (model.pad[e], model.pattern_view[e].lane);
+                let cur = model.current_pattern(e);
+                let pat = model.pattern(e, cur);
+                let n = pat.steps as usize;
+                let Some(t) = pat.tracks.get(track) else { return false };
+                let vals: Vec<f32> = t.steps.iter().take(n).map(|s| s.lanes.get(lane).copied().unwrap_or(0.0)).collect();
+                for st in 0..vals.len() {
+                    let v = if name == "Div2Button" { vals[st / 2] } else { vals[(st * 2) % vals.len()] };
+                    out.push(msg(id::SET_STEP_GRAPH_STATE, &[e as i32, track as i32, -1, cur as i32, track as i32, st as i32], &[lane as f32, v.clamp(0.0, 1.0), 0.0]));
+                }
                 true
             }
             // Tempo modifier (`e_setEngineTempoNum` 0x93 / `Denom` 0x94, 1..16).
@@ -1357,7 +1429,7 @@ impl PatternPanel {
                 v.v_scroll = (v.v_scroll as i32 - dy.signum() as i32).max(0) as usize;
                 // Clamp through the layout.
                 if let Some(lay) = self.layout(app, model) {
-                    model.pattern_view[e].v_scroll = lay.first_track - model.visible_pads().0;
+                    model.pattern_view[e].v_scroll = lay.first_row;
                 }
                 true
             }
@@ -1373,6 +1445,13 @@ impl PatternPanel {
             }
             UiEvent::Mouse { path, overload, kind, x, y } if overload == "PatternGrid" => {
                 let Some(lay) = self.layout(app, model) else { return false };
+                // The erase tool's left button deletes; the select tool's
+                // left button selects as shift does with the others.
+                let kind = &match (self.tool, kind) {
+                    (Tool::Erase, MouseKind::Down) => MouseKind::RightDown,
+                    (_, k) => *k,
+                };
+                let select = self.tool == Tool::Select;
                 if self.track_marker(app, model, &lay, *kind, *x, *y, out) {
                     return true;
                 }
@@ -1395,7 +1474,7 @@ impl PatternPanel {
                     return false;
                 };
                 // Shift-drag: rubber-band selection of steps that are on.
-                if *kind == MouseKind::Down && app.mods.shift {
+                if *kind == MouseKind::Down && (app.mods.shift || select) {
                     if !app.mods.cmd {
                         self.selection.clear();
                     }
@@ -1867,7 +1946,7 @@ impl PatternPanel {
             let rp = self.rows.clone()?;
             let r = app.ctrl(path.get(..rp.len() + 1)?)?.attr("trackRow")?.parse::<usize>().ok()?;
             let lay = self.layout(app, model)?;
-            let t = lay.first_track + r;
+            let t = lay.track(r);
             if !self.auto_open.remove(&(e, t)) {
                 self.auto_open.insert((e, t));
                 self.auto_lanes.entry((e, t)).or_insert_with(|| vec![0]);
@@ -2080,15 +2159,15 @@ impl PatternPanel {
         }
         // Selected track row.
         let sel = model.pad[e];
-        if sel >= lay.first_track && sel < lay.first_track + lay.tracks {
-            let y = lay.row_y(sel - lay.first_track);
+        if let Some(r) = lay.row(sel) {
+            let y = lay.row_y(r);
             p.fill_rect(RectF::new(0.0, y, w, lay.row_h), grid_colour(s, "colSelectedTrack"));
         }
         // Playback position (per-track step when tracks wrap).
         if let Some(pos) = model.steps[e] {
             let col = grid_colour(s, "colPosition");
             for row in 0..lay.tracks {
-                let tl = pat.tracks.get(lay.first_track + row).map(|t| t.length.max(1)).unwrap_or(pat.steps) as usize;
+                let tl = pat.tracks.get(lay.track(row)).map(|t| t.length.max(1)).unwrap_or(pat.steps) as usize;
                 let st = pos as usize % tl.max(1);
                 if lay.step_range().contains(&st) {
                     p.fill_rect(RectF::new(lay.step_x(st), lay.row_y(row), lay.step_w - 1.0, lay.row_h), col);
@@ -2099,7 +2178,7 @@ impl PatternPanel {
         let step_col = grid_colour(s, "colStep");
         let overlay = grid_colour(s, "colOverlay");
         for row in 0..lay.tracks {
-            let Some(t) = pat.tracks.get(lay.first_track + row) else { continue };
+            let Some(t) = pat.tracks.get(lay.track(row)) else { continue };
             for (st, step) in t.steps.iter().enumerate().take(lay.steps) {
                 if !step.on || !lay.step_range().contains(&st) {
                     continue;
@@ -2130,7 +2209,7 @@ impl PatternPanel {
             // [re:e606aa]): a left-pointing triangle, tip at x + 1, half
             // height 0.4·min(h, 12), `PatternTrackMarkerStyle` colFill
             // (colAltFill while dragged).
-            let drag = self.marker_drag.filter(|(tr, _, all)| *all || *tr == lay.first_track + row);
+            let drag = self.marker_drag.filter(|(tr, _, all)| *all || *tr == lay.track(row));
             let len = if t.length > 0 { t.length as usize } else { lay.steps };
             let mx = drag.map(|(_, x, _)| x.min(c.rect.w as f32 - MARKER_W)).unwrap_or_else(|| Self::marker_x(&lay, len, c.rect.w as f32));
             let mh = lay.row_h.min(MARKER_H);
@@ -2141,14 +2220,14 @@ impl PatternPanel {
         // Selected steps and the rubber band.
         let sel = grid_colour(s, "colMarkerDrag");
         for &(t, st) in &self.selection {
-            if t >= lay.first_track && t < lay.first_track + lay.tracks && lay.step_range().contains(&st) {
-                let a = lay.step_rect(t - lay.first_track, st).inset(1.0);
+            if let Some(r) = lay.row(t).filter(|_| lay.step_range().contains(&st)) {
+                let a = lay.step_rect(r, st).inset(1.0);
                 p.stroke_rect(a, sel, 2.0);
             }
         }
         if let Some(((t0, s0), (t1, s1))) = self.band {
-            let r0 = lay.row_y(t0.min(t1).saturating_sub(lay.first_track));
-            let r1 = lay.row_y(t0.max(t1).saturating_sub(lay.first_track)) + lay.row_h;
+            let r0 = lay.row_y(lay.row_clamped(t0.max(t1)));
+            let r1 = lay.row_y(lay.row_clamped(t0.min(t1))) + lay.row_h;
             let x0 = lay.step_x(s0.min(s1));
             let x1 = lay.step_x(s0.max(s1) + 1);
             p.fill_rect(RectF::new(x0, r0, x1 - x0, r1 - r0), sel.with_alpha(0.15));
@@ -2381,7 +2460,7 @@ impl StepCtx<'_> {
     /// (lane 4: the upper half of the row is 1, else 0) for steps a..=b.
     fn set_velocity_no_fade(&self, out: &mut Vec<Command>, track: usize, y: f32, b: &mut Brush, a: usize, z: usize, v: f32) -> f32 {
         let v = if self.drag_lane == 4 {
-            let top = self.lay.track_y.get(track.saturating_sub(self.lay.first_track)).copied().unwrap_or(0.0);
+            let top = self.lay.track_y.get(self.lay.row_clamped(track)).copied().unwrap_or(0.0);
             if y - top < self.lay.row_h / 2.0 { 1.0 } else { 0.0 }
         } else {
             v + (y - b.last_y) * -0.005
@@ -2403,7 +2482,7 @@ impl StepCtx<'_> {
         if !fade || hi == lo {
             return self.set_velocity_no_fade(out, track, y, b, lo, hi, v);
         }
-        let top = self.lay.track_y.get(track.saturating_sub(self.lay.first_track)).copied().unwrap_or(0.0);
+        let top = self.lay.track_y.get(self.lay.row_clamped(track)).copied().unwrap_or(0.0);
         let (sx, rh) = (self.lay.step_x(step), self.lay.row_h);
         let span = (hi - lo) as f32;
         let six = (rh * 6.0).round().max(1.0);
@@ -2443,7 +2522,12 @@ pub fn set_shading_mode(name: &str) {
 /// cycle table; `None` (−1, no alternation) for Off and coarse
 /// resolutions.
 pub fn shading_group(resolution: usize) -> Option<usize> {
-    let g = match SHADING_MODE.load(std::sync::atomic::Ordering::Relaxed) {
+    shading_group_in(SHADING_MODE.load(std::sync::atomic::Ordering::Relaxed), resolution)
+}
+
+/// [`shading_group`] for shading mode `mode` (the index into `SHADING`).
+fn shading_group_in(mode: u8, resolution: usize) -> Option<usize> {
+    let g = match mode {
         0 => 4,
         1 => dreist_engine::pattern::resolution_beats(resolution),
         2 => dreist_engine::pattern::resolution_cycles(resolution),
@@ -2535,15 +2619,15 @@ mod shading_tests {
     #[test]
     fn shading_modes() {
         crate::app::test_setup();
-        set_shading_mode("Adaptive");
-        assert_eq!(shading_group(10), Some(8), "1/32: 8 steps a beat");
-        assert_eq!(shading_group(2), None, "1/2 is coarser than a beat");
-        set_shading_mode("Cyclic");
-        assert_eq!(shading_group(8), Some(16));
-        set_shading_mode("Off");
-        assert!(!shaded(8, 5));
-        set_shading_mode("Fixed");
-        assert_eq!(shading_group(10), Some(4));
+        // The pure form: the global mode is shared with the renderer in
+        // parallel tests (screen fingerprints), so it is not changed here.
+        let (fixed, adaptive, cyclic, off) = (0, 1, 2, 3);
+        assert_eq!(shading_group_in(adaptive, 10), Some(8), "1/32: 8 steps a beat");
+        assert_eq!(shading_group_in(adaptive, 2), None, "1/2 is coarser than a beat");
+        assert_eq!(shading_group_in(cyclic, 8), Some(16));
+        assert_eq!(shading_group_in(off, 8), None);
+        assert_eq!(shading_group_in(fixed, 10), Some(4));
+        assert_eq!(crate::modal::SHADING.iter().position(|s| *s == "Cyclic"), Some(2));
         assert!(shaded(8, 4) && !shaded(8, 3) && !shaded(8, 8));
     }
 }

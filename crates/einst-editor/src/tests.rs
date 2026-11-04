@@ -57,7 +57,9 @@ fn grid_multi_tool_draws_erases_and_chains() {
     let e = ed.model.engine;
     let pat = ed.model.current_pattern(e);
     let lay = ed.pattern.as_ref().unwrap().layout(&ed.app, &ed.model).unwrap();
-    let at = |step: usize, row: usize| (gx as f32 + lay.step_x(step) + lay.step_w / 2.0, gy as f32 + lay.row_y(row) + lay.row_h / 2.0);
+    // v1 lists pad 16 at the top: track t is on row `lay.row(t)`.
+    let row_of = |t: usize| lay.row(t).expect("track on view");
+    let at = |step: usize, track: usize| (gx as f32 + lay.step_x(step) + lay.step_w / 2.0, gy as f32 + lay.row_y(row_of(track)) + lay.row_h / 2.0);
     let send = |ed: &mut Editor, evs: Vec<UiEvent>| {
         for ev in evs {
             ed.handle(&ev);
@@ -66,8 +68,8 @@ fn grid_multi_tool_draws_erases_and_chains() {
     // Clear track 0, then a left click turns step 0 on; another left
     // click leaves it on (no toggle); a right click turns it off.
     for st in 0..16 {
-        ed.handle(&UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind: dreist_gui::app::MouseKind::RightDown, x: lay.step_x(st) + 1.0, y: lay.row_y(0) + 1.0 });
-        ed.handle(&UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind: dreist_gui::app::MouseKind::Up, x: lay.step_x(st) + 1.0, y: lay.row_y(0) + 1.0 });
+        ed.handle(&UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind: dreist_gui::app::MouseKind::RightDown, x: lay.step_x(st) + 1.0, y: lay.row_y(row_of(0)) + 1.0 });
+        ed.handle(&UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind: dreist_gui::app::MouseKind::Up, x: lay.step_x(st) + 1.0, y: lay.row_y(row_of(0)) + 1.0 });
     }
     let on = |ed: &Editor, k: usize| ed.model.pattern(e, pat).tracks[0].steps[k].on;
     assert!(!on(&ed, 0));
@@ -133,7 +135,7 @@ fn grid_multi_tool_draws_erases_and_chains() {
     assert!((2..=5).all(|k| t.steps[k].on), "{:?}", (0..8).map(|k| t.steps[k].on).collect::<Vec<_>>());
     assert!(!t.steps[2].tied() && (3..=5).all(|k| t.steps[k].tied()));
     // The hover cursor over the chain's end.
-    let c = ed.pattern.as_ref().unwrap().hover_cursor(&ed.app, &ed.model, &gp, "PatternGrid", lay.step_x(5) + 2.0, lay.row_y(0) + 2.0);
+    let c = ed.pattern.as_ref().unwrap().hover_cursor(&ed.app, &ed.model, &gp, "PatternGrid", lay.step_x(5) + 2.0, lay.row_y(row_of(0)) + 2.0);
     assert_eq!(c, Some(dreist_gui::cursor::Cursor::image("ResizeRightThin")));
 }
 
@@ -240,11 +242,9 @@ fn sampler_source_list_offers_external_and_the_outputs() {
     crate::app::test_setup();
     use dreist_engine::binding::id;
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
-    let e = ed.model.engine;
-    ed.model.engine_mut(e).set("EnginePadMode", "Sampler");
+    ed.model.editor_tab = crate::front::SAMPLER_PAGE;
     ed.sync();
-    let Some(host) = ed.app.root.path_of("SamplerPanel") else { return };
-    let Some(sl) = ed.app.ctrl(&host).and_then(|c| c.path_of("SourceList")).map(|q| [host.clone(), q].concat()) else { return };
+    let sl = sampler_path(&ed, "SourceList");
     // A new document records the master (the constructor's default).
     assert_eq!(ed.app.ctrl(&sl).unwrap().text, "Master");
     ed.handle(&UiEvent::Clicked { path: sl.clone(), name: "SourceList".into(), id: 0, on: false });
@@ -468,40 +468,48 @@ fn graph_rec_knob_writes_the_current_step() {
 }
 
 #[test]
-#[ignore = "the v1 scene page is layout-only (M3b)"]
 fn scene_copy_paste_and_activity() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
-    ed.model.editor_tab = 1;
+    ed.model.editor_tab = front::SCENE_PAGE;
     ed.sync();
     let used = |ed: &Editor, n: usize| {
         dreist_engine::scene::SceneManager::from_node(ed.model.doc.children.iter().find(|c| c.class == "SceneManager").unwrap_or(&dreist_formats::Node::new("SceneManager", None))).scenes[n].used
     };
-    // Snapshot scene 0, copy it, paste into scene 2.
-    let snap = ed.app.root.path_of("SnapshotButton").unwrap();
+    let m = ed.app.root.path_of("ScenesPanel").unwrap();
+    let cell = |ed: &Editor, k: usize| [m.clone(), ed.app.ctrl(&m).unwrap().path_of(&format!("Scene{k}")).unwrap()].concat();
+    // Snapshot scene 0 (its slot's button), copy it, paste into scene 2.
+    let snap = [cell(&ed, 0), ed.app.ctrl(&cell(&ed, 0)).unwrap().path_of("SnapshotButton").unwrap()].concat();
     ed.handle(&UiEvent::Clicked { path: snap, name: "SnapshotButton".into(), id: 0, on: false });
     assert!(used(&ed, 0));
-    let m = ed.app.root.path_of("ScenesPanel").unwrap();
-    let cell = |k: usize| [m.clone(), vec![k]].concat();
-    let ev = |kind, k| UiEvent::Mouse { path: cell(k), overload: "EditorScene".into(), kind, x: 5.0, y: 5.0 };
-    ed.handle(&ev(dreist_gui::app::MouseKind::RightDown, 0));
-    ed.handle(&UiEvent::MenuSelected { anchor: cell(0), name: String::new(), index: 1 });
-    ed.handle(&ev(dreist_gui::app::MouseKind::RightDown, 2));
-    ed.handle(&UiEvent::MenuSelected { anchor: cell(2), name: String::new(), index: 2 });
+    let ev = |ed: &Editor, kind, k| UiEvent::Mouse { path: cell(ed, k), overload: "EditorScene".into(), kind, x: 5.0, y: 5.0 };
+    ed.handle(&ev(&ed, dreist_gui::app::MouseKind::RightDown, 0));
+    ed.handle(&UiEvent::MenuSelected { anchor: cell(&ed, 0), name: String::new(), index: 1 });
+    ed.handle(&ev(&ed, dreist_gui::app::MouseKind::RightDown, 2));
+    ed.handle(&UiEvent::MenuSelected { anchor: cell(&ed, 2), name: String::new(), index: 2 });
     assert!(used(&ed, 2));
     // Cut clears the source.
-    ed.handle(&ev(dreist_gui::app::MouseKind::RightDown, 0));
-    ed.handle(&UiEvent::MenuSelected { anchor: cell(0), name: String::new(), index: 0 });
+    ed.handle(&ev(&ed, dreist_gui::app::MouseKind::RightDown, 0));
+    ed.handle(&UiEvent::MenuSelected { anchor: cell(&ed, 0), name: String::new(), index: 0 });
     assert!(!used(&ed, 0));
-    // An activation shows the activity label.
+    // The trigger area shows the slot's state: used, cued, playing.
+    let state = |ed: &Editor, k: usize| ed.app.ctrl(&cell(ed, k)).unwrap().find("TriggerImageView").unwrap().attr("sceneState").unwrap().to_string();
+    assert_eq!(state(&ed, 2), "used");
+    assert_eq!(state(&ed, 1), "empty");
+    ed.scene_events(&[dreist_engine::scene::SceneEvent::Cued(1)]);
+    assert_eq!(state(&ed, 1), "cued");
     ed.scene_events(&[dreist_engine::scene::SceneEvent::Activated(1)]);
-    ed.sync();
-    let label = ed.app.ctrl(&cell(1)).unwrap().find("ActivityLabel").unwrap();
-    assert_eq!(label.text, "\u{25b6}");
+    assert_eq!(state(&ed, 1), "active");
+    // A press triggers, the release lets go.
+    ed.take_commands();
+    ed.handle(&ev(&ed, dreist_gui::app::MouseKind::Down, 3));
+    ed.handle(&ev(&ed, dreist_gui::app::MouseKind::Up, 3));
+    let m: Vec<_> = ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m) } else { None }).collect();
+    assert!(m.iter().any(|m| m.kind == dreist_engine::binding::id::SCENE_TRIGGER && m.value[..2] == [3.0, 1.0]));
+    assert!(m.iter().any(|m| m.kind == dreist_engine::binding::id::SCENE_TRIGGER && m.value[..2] == [3.0, 0.0]));
 }
 
 #[test]
-#[ignore = "the v1 mixer pages are layout-only (M3b)"]
 fn aux_pre_post_button_sets_pre_fade() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
@@ -518,90 +526,76 @@ fn aux_pre_post_button_sets_pre_fade() {
             path.pop();
         }
     }
+    ed.model.editor_tab = front::GLOBAL_MIXER_PAGE;
+    ed.sync();
     let mut found = Vec::new();
-    for tab in 0..8 {
-        ed.model.editor_tab = tab;
-        ed.sync();
-        all(&ed.app.root, &mut Vec::new(), &mut found);
-        if !found.is_empty() {
-            break;
-        }
-    }
-    let Some(b) = found.first().cloned() else { panic!("an aux strip with PrePostButton") };
-    ed.handle(&UiEvent::Clicked { path: b.clone(), name: "PrePostButton".into(), id: 0, on: true });
+    all(&ed.app.root, &mut Vec::new(), &mut found);
+    let Some(g) = found.first().cloned() else { panic!("an aux strip with PrePostButton") };
+    // The Pre / Post radio pair.
+    let (pre_b, post_b) = ([g.clone(), vec![0]].concat(), [g.clone(), vec![1]].concat());
+    assert_eq!(ed.app.ctrl(&pre_b).unwrap().name, "PreButton");
+    ed.handle(&UiEvent::Clicked { path: pre_b.clone(), name: "PreButton".into(), id: 0, on: true });
     let pre = ed.model.doc.children.iter().filter(|c| c.class == "GlobalAux").any(|c| c.attr("IsPreFade") == Some("true"));
     assert!(pre, "a GlobalAux marked pre-fade");
     ed.sync();
-    assert!(ed.app.ctrl(&b).unwrap().on);
+    assert!(ed.app.ctrl(&pre_b).unwrap().on);
+    assert!(!ed.app.ctrl(&post_b).unwrap().on);
+    ed.handle(&UiEvent::Clicked { path: post_b.clone(), name: "PostButton".into(), id: 0, on: true });
+    ed.sync();
+    assert!(ed.app.ctrl(&post_b).unwrap().on);
 }
 
 #[test]
-#[ignore = "the v1 mixer pages are layout-only (M3b)"]
-fn mixer_strip_selection_show_fx_and_compact_effects_mode() {
+fn mixer_strip_press_selects_the_channel_and_shows_its_chain() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
-    ed.model.editor_tab = 5;
-    ed.sync();
-    fn find_all(c: &Ctrl, path: &mut Vec<usize>, f: &dyn Fn(&Ctrl) -> bool, out: &mut Vec<Vec<usize>>) {
-        if !c.visible {
-            return;
-        }
-        if f(c) {
-            out.push(path.clone());
-        }
-        for (i, k) in c.children.iter().enumerate() {
-            path.push(i);
-            find_all(k, path, f, out);
-            path.pop();
-        }
-    }
-    let find = |ed: &Editor, f: &dyn Fn(&Ctrl) -> bool| {
-        let mut v = Vec::new();
-        find_all(&ed.app.root, &mut Vec::new(), f, &mut v);
-        v
+    let strip = |ed: &Editor, kind: mixer::Kind, ch: &str| {
+        let m = ed.mixers.iter().find(|m| m.kind == kind).unwrap();
+        let page = ed.app.ctrl(&m.page).unwrap();
+        let i = page.children.iter().position(|c| c.overload == "MixerStrip" && c.attr("channel") == Some(ch)).unwrap_or_else(|| panic!("{ch} strip"));
+        [m.page.clone(), vec![i]].concat()
     };
-    let label = |ed: &Editor| find(ed, &|c| c.name == "IdentifierLabel").first().and_then(|p| ed.app.ctrl(p)).map(|c| c.text.clone());
-    let page = ed.mixers.iter().find(|m| m.kind == mixer::Kind::Global).map(|m| m.page.clone()).unwrap();
-    let panel = [page.clone(), vec![0]].concat();
-    let r = ed.app.ctrl(&panel).unwrap().rect;
-    // Tall: the chain on its own 200 px row.
-    ed.app.ctrl_mut(&panel).unwrap().set_rect(dreist_gui::Rect::new(r.x, r.y, r.w, 420));
+    let press = |ed: &mut Editor, p: &[usize]| ed.handle(&UiEvent::Mouse { path: p.to_vec(), overload: "MixerStrip".into(), kind: dreist_gui::app::MouseKind::Down, x: 5.0, y: 5.0 });
+    let target = |ed: &Editor, kind: mixer::Kind| ed.mixers.iter().find(|m| m.kind == kind).unwrap().fx_target(&ed.model);
+    // Global mixer: aux 1 shows its chain until another bus is picked.
+    ed.model.editor_tab = front::GLOBAL_MIXER_PAGE;
     ed.sync();
-    assert_eq!(label(&ed).as_deref(), Some("E 1"));
-    // A press on aux 2's strip shows its chain and highlights its title.
-    let aux = find(&ed, &|c| c.overload == "MixerStrip" && c.attr("channel") == Some("Aux(1)"));
-    let aux = aux.first().cloned().expect("aux strip");
-    ed.handle(&UiEvent::Mouse { path: aux.clone(), overload: "MixerStrip".into(), kind: dreist_gui::app::MouseKind::Down, x: 5.0, y: 5.0 });
-    assert_eq!(label(&ed).as_deref(), Some("A 2"));
-    let title = ed.app.ctrl(&aux).and_then(|c| c.find("NameLabel")).map(|c| c.style.clone());
-    assert_eq!(title.as_deref(), Some("MixerChannelEditTitleSelectedStyle"));
-    // Show FX › M: the master chain.
-    let v = find(&ed, &|c| c.name == "EffectViewGroup");
-    let v = v.first().cloned();
-    // Tall layout: the popup is hidden and Effects disabled.
-    assert!(v.is_none(), "Show FX hidden when the chain has its own row");
-    // Compact: Effects shows the chain beside the mode buttons.
-    ed.app.ctrl_mut(&panel).unwrap().set_rect(dreist_gui::Rect::new(r.x, r.y, r.w, 300));
+    assert_eq!(target(&ed, mixer::Kind::Global), fxchain::Target::Aux(0));
+    let aux = strip(&ed, mixer::Kind::Global, "Aux(1)");
+    press(&mut ed, &aux);
+    assert_eq!(target(&ed, mixer::Kind::Global), fxchain::Target::Aux(1));
+    assert_eq!(ed.app.ctrl(&aux).unwrap().style, "AuxChannelBackgroundSelected");
+    // The glue moves over the selected strip.
+    let glue = ed.app.ctrl(&ed.mixers.iter().find(|m| m.kind == mixer::Kind::Global).unwrap().page).unwrap().find("LargeGlue").unwrap().clone();
+    assert!(glue.visible);
+    assert_eq!(glue.rect.x, ed.app.ctrl(&aux).unwrap().rect.x);
+    let master = strip(&ed, mixer::Kind::Global, "Master");
+    press(&mut ed, &master);
+    assert_eq!(target(&ed, mixer::Kind::Global), fxchain::Target::Master);
+    assert_eq!(ed.app.ctrl(&master).unwrap().style, "MasterChannelBackgroundSelected");
+    assert_eq!(ed.app.ctrl(&aux).unwrap().style, "AuxChannelBackgroundEven");
+    // Engine mixer: a press on engine 3 selects engine 3.
+    ed.model.editor_tab = front::ENGINE_MIXER_PAGE;
     ed.sync();
-    let effects = find(&ed, &|c| c.text == "Effects" && c.class == "CtrlButton");
-    let effects = effects.first().cloned().expect("Effects button");
-    assert!(ed.app.ctrl(&effects).unwrap().enabled);
-    ed.handle(&UiEvent::Clicked { path: effects, name: String::new(), id: 0, on: true });
-    ed.sync();
-    let v = find(&ed, &|c| c.name == "EffectViewGroup").first().cloned().expect("Show FX shown in Effects mode");
-    assert!(find(&ed, &|c| c.name == "ChannelScroller").is_empty(), "strips hidden");
-    ed.handle(&UiEvent::Clicked { path: v.clone(), name: "EffectViewGroup".into(), id: 0, on: false });
-    assert_eq!(ed.app.menu.as_ref().map(|m| m.items.len()), Some(13));
-    ed.app.menu = None;
-    ed.handle(&UiEvent::MenuSelected { anchor: v.clone(), name: "EffectViewGroup".into(), index: 12 });
-    assert_eq!(label(&ed).as_deref(), Some("Mst"));
-    assert_eq!(ed.app.ctrl(&v).unwrap().text, "M");
-    // E3 selects engine 3.
-    ed.handle(&UiEvent::Clicked { path: v.clone(), name: "EffectViewGroup".into(), id: 0, on: false });
-    ed.app.menu = None;
-    ed.handle(&UiEvent::MenuSelected { anchor: v, name: "EffectViewGroup".into(), index: 2 });
+    let e3 = strip(&ed, mixer::Kind::Engine, "Engine(2)");
+    press(&mut ed, &e3);
     assert_eq!(ed.model.engine, 2);
-    assert_eq!(label(&ed).as_deref(), Some("E 3"));
+    assert_eq!(target(&ed, mixer::Kind::Engine), fxchain::Target::Engine(2));
+    assert_eq!(ed.app.ctrl(&e3).unwrap().style, "EngineChannelBackgroundSelected");
+    // Layer mixer: a press on layer 4 makes it the current layer.
+    ed.model.editor_tab = front::LAYER_MIXER_PAGE;
+    ed.sync();
+    let l4 = strip(&ed, mixer::Kind::Layer, "Layer(3)");
+    press(&mut ed, &l4);
+    assert_eq!(ed.model.layer[2], 3);
+    assert_eq!(target(&ed, mixer::Kind::Layer), fxchain::Target::Layer(2, ed.model.pad[2], 3));
+    // Pad mixer: a press on pad 5 selects it.
+    ed.model.editor_tab = front::PAD_MIXER_PAGE;
+    ed.sync();
+    let p5 = strip(&ed, mixer::Kind::Pad, "Pad(4)");
+    press(&mut ed, &p5);
+    assert_eq!(ed.model.pad[2], 4);
+    assert_eq!(ed.app.ctrl(&p5).unwrap().style, "PadChannelBackgroundSelected");
 }
 
 #[test]
@@ -630,11 +624,10 @@ fn pattern_key_drag_out_writes_a_midi_file() {
 }
 
 #[test]
-#[ignore = "the v1 mixer pages are layout-only (M3b)"]
 fn mixer_output_menu_routes_the_channel() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
-    ed.model.editor_tab = 5;
+    ed.model.editor_tab = front::PAD_MIXER_PAGE;
     ed.sync();
     // First visible OutputCombo with a strip channel.
     fn all(c: &Ctrl, path: &mut Vec<usize>, out: &mut Vec<Vec<usize>>) {
@@ -665,11 +658,10 @@ fn mixer_output_menu_routes_the_channel() {
 }
 
 #[test]
-#[ignore = "the v1 mixer pages are layout-only (M3b)"]
 fn mixer_pad_strip_right_click_opens_the_pad_menu() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
-    ed.model.editor_tab = 5;
+    ed.model.editor_tab = front::PAD_MIXER_PAGE;
     ed.sync();
     fn all(c: &Ctrl, path: &mut Vec<usize>, out: &mut Vec<Vec<usize>>) {
         if c.name == "OutputCombo" && c.visible {
@@ -815,12 +807,13 @@ fn multitrack_automation_lanes() {
     let first = ed.model.visible_pads().0;
     let lay = ed.pattern.as_ref().unwrap().layout_for(&ed.model, ed.app.ctrl(&grid).unwrap().rect.w, ed.app.ctrl(&grid).unwrap().rect.h);
     let g = lay.graphs[0];
-    assert_eq!((g.track, g.lane), (first, 0));
+    // Row 0 is the top one: the last pad.
+    assert_eq!((g.track, g.lane), (first + 15, 0));
     let _ = (gx, gy);
     ed.handle(&UiEvent::Mouse { path: grid.clone(), overload: "PatternGrid".into(), kind: dreist_gui::app::MouseKind::Down, x: 2.0, y: g.y + g.h * 0.75 });
     ed.handle(&UiEvent::Mouse { path: grid, overload: "PatternGrid".into(), kind: dreist_gui::app::MouseKind::Up, x: 2.0, y: g.y + g.h * 0.75 });
     let pat = ed.model.pattern(e, ed.model.current_pattern(e));
-    let v = pat.tracks[first].steps[lay.first_step].lanes[0];
+    let v = pat.tracks[g.track].steps[lay.first_step].lanes[0];
     assert!((v - 0.25).abs() < 0.02, "velocity drawn {v}");
     if let Ok(out) = std::env::var("DREIST_MULTITRACK_SHOT") {
         ed.render(1.0).save_png(out).unwrap();
@@ -1023,7 +1016,7 @@ fn pattern_track_level_knob_sets_the_pad_gain() {
     let Ok(proj) = dreist_formats::Project::load(&p) else { return };
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(proj.raw)) else { return };
     let rows = ed.app.root.path_of("ControlsScrollView").unwrap();
-    // The third track row's knob.
+    // The third track row's knob (pad 14: v1 lists pad 16 at the top).
     let mut found = Vec::new();
     fn walk(c: &dreist_gui::Ctrl, p: &mut Vec<usize>, out: &mut Vec<Vec<usize>>) {
         if c.name == "LevelSlider" {
@@ -1041,12 +1034,11 @@ fn pattern_track_level_knob_sets_the_pad_gain() {
     ed.handle(&UiEvent::ValueChanged { path: knob, name: "LevelSlider".into(), id: 0, value: 0.4 });
     let e = ed.model.engine;
     let cmds = ed.take_commands();
-    assert!(cmds.iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SET_PAD_PARAMETER && m.index[..2] == [e as i32, 2] && m.value[0] == 0.4)), "{cmds:?}");
-    assert!((ed.model.pad_gain(e, 2) - 0.4).abs() < 1e-6);
+    assert!(cmds.iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SET_PAD_PARAMETER && m.index[..2] == [e as i32, 13] && m.value[0] == 0.4)), "{cmds:?}");
+    assert!((ed.model.pad_gain(e, 13) - 0.4).abs() < 1e-6);
 }
 
 #[test]
-#[ignore = "the v1 pad / layers page is layout-only (M3b)"]
 fn knob_double_click_resets() {
     crate::app::test_setup();
     use dreist_engine::binding::id;
@@ -1056,53 +1048,62 @@ fn knob_double_click_resets() {
         ed.handle(&UiEvent::DoubleClicked { path, name: name.into() });
         ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m) } else { None }).collect::<Vec<_>>()
     };
-    // Layer cutoff → 1.0 (base value even with a transmod source shown).
+    // The layer view's cutoff → 1.0 (the base value).
+    ed.model.editor_tab = crate::front::PADS_PAGE;
     ed.model.source = 3;
-    let cutoff = ed.app.root.path_of("Cutoff").unwrap();
-    let m = dbl(&mut ed, cutoff, "Cutoff");
+    ed.sync();
+    let cutoff = ed.app.root.path_of("CutoffKnob").unwrap();
+    let m = dbl(&mut ed, cutoff, "CutoffKnob");
     let cut = dreist_formats::LayerParam::FilterCutoff as u8 as f32;
     assert!(m.iter().any(|m| m.kind == id::SET_LAYER_PARAMETER && m.value[..3] == [cut, 1.0, 0.0]), "{m:?}");
     assert_eq!(ed.model.source, 3);
-    // A mixer strip's pan → 0.5.
-    ed.model.editor_tab = 4;
-    ed.sync();
-    let pan = ed.app.root.path_of("PanKnob").unwrap();
-    let m = dbl(&mut ed, pan, "PanKnob");
-    assert!(m.iter().any(|m| m.value[0] == 0.5 || (m.kind == id::SET_LAYER_PARAMETER && m.value[1] == 0.5)), "{m:?}");
+    // Vel-Pitch → no velocity depth.
+    let v2p = ed.app.root.path_of("V2P").unwrap();
+    let m = dbl(&mut ed, v2p, "V2P");
+    let tune = dreist_formats::LayerParam::CoarseTune as u8 as f32;
+    assert!(m.iter().any(|m| m.kind == id::SET_LAYER_PARAMETER && m.value[..3] == [tune, 0.0, dreist_formats::TransmodSource::Velocity as u8 as f32]), "{m:?}");
+    // A mixer strip's pan → 0.5 (once the mixer pages are wired).
+    if !ed.mixers.is_empty() {
+        ed.model.editor_tab = 4;
+        ed.sync();
+        let page = ed.mixers[0].page.clone();
+        let base = ed.app.ctrl(&page).unwrap().clone();
+        if let Some(pan) = base.path_of("PanKnob").map(|p| [page.clone(), p].concat()) {
+            let m = dbl(&mut ed, pan, "PanKnob");
+            assert!(m.iter().any(|m| m.value[0] == 0.5 || (m.kind == id::SET_LAYER_PARAMETER && m.value[1] == 0.5)), "{m:?}");
+        }
+    }
     // Off: a typed edit instead.
     let mut o = options::Options::load();
     o.set("DoubleClickResets", false);
     o.save();
-    let cutoff = ed.app.root.path_of("Cutoff").unwrap();
-    assert!(dbl(&mut ed, cutoff, "Cutoff").is_empty());
+    let cutoff = ed.app.root.path_of("CutoffKnob").unwrap();
+    assert!(dbl(&mut ed, cutoff, "CutoffKnob").is_empty());
     assert!(ed.app.root.path_of(KNOB_EDIT).is_some());
+    o.set("DoubleClickResets", true);
+    o.save();
 }
 
 #[test]
-#[ignore = "the v1 pad / layers page is layout-only (M3b)"]
 fn knob_right_click_menu() {
     crate::app::test_setup();
     use dreist_engine::binding::id;
     let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
-    let cutoff = ed.app.root.path_of("Cutoff").unwrap();
+    let cutoff = ed.app.root.path_of("CutoffKnob").unwrap();
     let open = |ed: &mut Editor| {
-        ed.handle(&UiEvent::RightClicked { path: cutoff.clone(), name: "Cutoff".into() });
+        ed.handle(&UiEvent::RightClicked { path: cutoff.clone(), name: "CutoffKnob".into() });
         ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap_or_default()
     };
     let pick = |ed: &mut Editor, index: usize| {
         ed.take_commands();
-        ed.handle(&UiEvent::MenuSelected { anchor: cutoff.clone(), name: "Cutoff".into(), index });
+        ed.handle(&UiEvent::MenuSelected { anchor: cutoff.clone(), name: "CutoffKnob".into(), index });
         ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m) } else { None }).collect::<Vec<_>>()
     };
-    assert_eq!(open(&mut ed), ["Reset", "Edit", "", "Remove all modulation from this control"]);
+    // v1's layer knobs have no modulation sources of their own to remove.
+    assert_eq!(open(&mut ed), ["Reset", "Edit"]);
     let cut = dreist_formats::LayerParam::FilterCutoff as u8 as f32;
     let m = pick(&mut ed, 0);
     assert!(m.iter().any(|m| m.kind == id::SET_LAYER_PARAMETER && m.value[..3] == [cut, 1.0, 0.0]));
-    let m = {
-        open(&mut ed);
-        pick(&mut ed, 3)
-    };
-    assert_eq!(m.iter().filter(|m| m.kind == id::SET_LAYER_PARAMETER && m.value[1] == 0.0).count(), 28);
     // Edit: typed in Hz.
     open(&mut ed);
     pick(&mut ed, 1);
@@ -1114,15 +1115,18 @@ fn knob_right_click_menu() {
     let m: Vec<_> = ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m) } else { None }).collect();
     assert!(m.iter().any(|m| m.kind == id::SET_LAYER_PARAMETER && m.value[0] == cut && (m.value[1] - v).abs() < 1e-5), "{m:?}");
     assert!(ed.app.root.path_of(KNOB_EDIT).is_none());
+    // The tune knob adds "Tune loop to tempo".
+    let tune = ed.app.root.path_of("TuneKnob").unwrap();
+    ed.handle(&UiEvent::RightClicked { path: tune, name: "TuneKnob".into() });
+    assert!(ed.app.menu.as_ref().unwrap().items.iter().any(|i| i == "Tune loop to tempo"));
 }
 
 #[test]
-#[ignore = "the v1 mixer pages are layout-only (M3b)"]
 fn output_selector_route_all_menu() {
     crate::app::test_setup();
     use dreist_engine::binding::id;
     let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
-    ed.model.editor_tab = 4;
+    ed.model.editor_tab = front::PAD_MIXER_PAGE;
     ed.sync();
     // The first visible OutputCombo of the pad mixer.
     fn find(c: &dreist_gui::Ctrl, path: &mut Vec<usize>) -> bool {
@@ -1191,7 +1195,6 @@ fn engine_selector_menu() {
 }
 
 #[test]
-#[ignore = "the v1 mixer pages are layout-only (M3b)"]
 fn effect_panel_cut_copy_paste() {
     crate::app::test_setup();
     let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
@@ -1208,16 +1211,10 @@ fn effect_panel_cut_copy_paste() {
         }
         false
     }
-    for tab in [3, 4, 5] {
+    // Every mixer page shows the selected channel's chain on top.
+    for tab in [front::LAYER_MIXER_PAGE, front::PAD_MIXER_PAGE, front::ENGINE_MIXER_PAGE, front::GLOBAL_MIXER_PAGE] {
         ed.model.editor_tab = tab;
         ed.sync();
-        // The mixer's Effects mode shows the selected strip's chain.
-        let mut mg = Vec::new();
-        if find(&ed.app.root, &mut mg, &|k| k.name == "ModeGroup") {
-            mg.push(ed.app.ctrl(&mg).unwrap().children.len() - 1);
-            ed.handle(&UiEvent::Clicked { path: mg, name: "x".into(), id: 0, on: true });
-            ed.sync();
-        }
         let mut panel = Vec::new();
         if !find(&ed.app.root, &mut panel, &|k| k.attr("fxSlot").is_some() && k.attr("fxKind").is_some_and(|v| v != "0")) {
             continue;
@@ -1246,7 +1243,7 @@ fn track_length_marker_drag_and_reset() {
     let w = ed.app.ctrl(&grid).unwrap().rect.w as f32;
     let lay = ed.pattern.as_ref().unwrap().layout(&ed.app, &ed.model).unwrap();
     let e = ed.model.engine;
-    let first = lay.first_track;
+    let first = lay.track(0);
     let mouse = |ed: &mut Editor, kind: MouseKind, x: f32, y: f32| ed.handle(&UiEvent::Mouse { path: grid.clone(), overload: "PatternGrid".into(), kind, x, y });
     ed.take_commands();
     // The full-length marker sits at the right edge.
@@ -1413,28 +1410,144 @@ fn pattern_toolbar_duplicate_quantize_remix_copy() {
     assert_eq!(ed.pattern.as_ref().unwrap().multi, multi);
 }
 
+/// The path of `name` on the sampler page.
+fn sampler_path(ed: &Editor, name: &str) -> Vec<usize> {
+    let host = ed.app.root.path_of("SamplerPanel").expect("sampler page");
+    [host.clone(), ed.app.ctrl(&host).unwrap().path_of(name).unwrap_or_else(|| panic!("no {name}"))].concat()
+}
+
+fn messages(ed: &mut Editor) -> Vec<dreist_engine::binding::Message> {
+    ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m) } else { None }).collect()
+}
+
 #[test]
-fn sampler_take_is_saved_and_loaded_into_the_next_layer() {
+fn sampler_takes_join_the_take_list_and_go_to_pads() {
     crate::app::test_setup();
-    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
-    let dir = std::env::temp_dir().join(format!("dreist-takes-{}", std::process::id()));
-    ed.modals.options.set("SamplerRecordPath", dir.to_string_lossy());
-    ed.model.sampler.auto_mode = 2;
-    ed.model.samples = Some(dir.clone());
-    ed.sampler.target = Some((0, 9, 3));
+    use dreist_engine::binding::id;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let tmp = std::env::temp_dir().join(format!("dreist-takes-{}", std::process::id()));
+    ed.modals.options.set("SamplerRecordPath", tmp.to_string_lossy());
+    ed.model.samples = Some(tmp.clone());
+    ed.model.editor_tab = crate::front::SAMPLER_PAGE;
+    ed.sync();
+    let text = |ed: &Editor, n: &str| ed.app.ctrl(&sampler_path(ed, n)).unwrap().text.clone();
+    assert_eq!(text(&ed, "RecordStatus"), "Idle");
+    assert!(!ed.app.ctrl(&sampler_path(&ed, "SendToPadButton")).unwrap().enabled, "nothing to send");
     let tone: Vec<f32> = (0..4410).map(|i| (i as f32 * 0.05).sin() * 2.0).collect();
-    let r = ed.sampler_take(&tone, &tone, 44100.0);
-    assert_eq!(r, Some(sampler::TakeAction::Loaded));
-    let file = ed.model.layer_sample(0, 9, 3).expect("layer 3 of pad 10 holds the take");
-    assert!(file.starts_with(&dir) && file.exists());
+    assert_eq!(ed.sampler_take(&tone, &tone, 44100.0), Some(0));
+    assert_eq!(ed.sampler_take(&tone[..2000], &tone[..2000], 44100.0), Some(1));
+    assert_eq!((text(&ed, "TakeList").as_str(), text(&ed, "RecordStatus").as_str()), ("Take 2", "Idle (2 takes)"));
+    // Take picks the current take.
+    let tl = sampler_path(&ed, "TakeList");
+    ed.handle(&UiEvent::Clicked { path: tl.clone(), name: "TakeList".into(), id: 0, on: false });
+    assert_eq!(ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap(), ["Take 1", "Take 2"]);
+    ed.app.menu = None;
+    ed.handle(&UiEvent::MenuSelected { anchor: tl, name: "TakeList".into(), index: 0 });
+    assert_eq!(ed.sampler.current, 0);
+    // → Pad: the take (saved as "<Name> <Take>.wav", peaks below 0 dBFS)
+    // is the current pad's first layer.
+    ed.take_commands();
+    let send = sampler_path(&ed, "SendToPadButton");
+    ed.handle(&UiEvent::Clicked { path: send, name: "SendToPadButton".into(), id: 0, on: false });
+    let p = ed.model.pad[0];
+    let file = ed.model.layer_sample(0, p, 0).expect("the take on the pad");
+    assert!(file.starts_with(&tmp) && file.exists() && file.file_name().unwrap().to_string_lossy().starts_with("Sample Take 1"), "{file:?}");
     let d = dreist_engine::audio::SampleCache::default().get(&file).expect("readable wav");
     let peak = d.left.iter().fold(0.0f32, |m, v| m.max(v.abs()));
-    assert!(peak <= 0.999 && peak > 0.9, "normalised: {peak}");
-    assert_eq!(ed.sampler.target, Some((0, 9, 4)));
-    let cmds = ed.take_commands();
-    assert!(cmds.iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SAMPLER_SET_ARMED)));
-    assert!(cmds.iter().any(|c| matches!(c, Command::Rebuild { .. })));
-    let _ = std::fs::remove_dir_all(&dir);
+    assert!(peak <= 0.999 && peak > 0.9, "scaled: {peak}");
+    assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Rebuild { .. })));
+    // → Pads: every take to the first layer of an empty pad.
+    let all = sampler_path(&ed, "SendAllToPadsButton");
+    ed.handle(&UiEvent::Clicked { path: all, name: "SendAllToPadsButton".into(), id: 0, on: false });
+    let loaded = (0..16).filter(|&k| ed.model.layer_sample(0, k, 0).is_some()).count();
+    assert_eq!(loaded, 3);
+    // Clear drops the current take, Clear All the rest.
+    let clear = sampler_path(&ed, "ClearButton");
+    ed.handle(&UiEvent::Clicked { path: clear, name: "ClearButton".into(), id: 0, on: false });
+    assert_eq!(ed.sampler.takes.len(), 1);
+    assert!(messages(&mut ed).iter().any(|m| m.kind == id::SAMPLER_CLEAR_TAKE && m.value[0] == 0.0));
+    let clear = sampler_path(&ed, "ClearAllButton");
+    ed.handle(&UiEvent::Clicked { path: clear, name: "ClearAllButton".into(), id: 0, on: false });
+    assert!(ed.sampler.takes.is_empty());
+    assert!(messages(&mut ed).iter().any(|m| m.kind == id::SAMPLER_CLEAR_TAKES));
+    let _ = std::fs::remove_dir_all(&tmp);
+}
+
+#[test]
+fn sampler_page_modes_arm_record_and_preview() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = crate::front::SAMPLER_PAGE;
+    ed.sync();
+    ed.take_commands();
+    let click = |ed: &mut Editor, path: Vec<usize>, on: bool| ed.handle(&UiEvent::Clicked { path, name: "x".into(), id: 0, on });
+    let child = |ed: &Editor, g: &str, i: usize| [sampler_path(ed, g), vec![i]].concat();
+    let visible = |ed: &Editor, n: &str| ed.app.ctrl(&sampler_path(ed, n)).unwrap().visible;
+    // Arm and Rec / Stop.
+    let arm = sampler_path(&ed, "ArmButton");
+    ed.handle(&UiEvent::Clicked { path: arm, name: "ArmButton".into(), id: 0, on: true });
+    let rec = sampler_path(&ed, "RecButton");
+    ed.handle(&UiEvent::Clicked { path: rec, name: "RecButton".into(), id: 0, on: true });
+    let kinds: Vec<u32> = messages(&mut ed).iter().map(|m| m.kind).collect();
+    assert_eq!(kinds, [id::SAMPLER_TOGGLE_ARMED, id::SAMPLER_TOGGLE_RECORD]);
+    // Trigger mode: MIDI hides the threshold controls, Threshold shows them;
+    // the record mode follows each start mode.
+    let c = child(&ed, "TriggerModeButtonGroup", 1);
+    click(&mut ed, c, true);
+    let m = messages(&mut ed);
+    assert_eq!((m[0].kind, m[0].value[0], m[1].kind), (id::SAMPLER_START_MODE, 1.0, id::SAMPLER_TIMED_MODE));
+    assert!(!visible(&ed, "ThresholdPanel"));
+    let c = child(&ed, "TriggerModeButtonGroup", 3);
+    click(&mut ed, c, true);
+    assert!(visible(&ed, "ThresholdPanel"));
+    assert!(ed.app.ctrl(&child(&ed, "TriggerModeButtonGroup", 3)).unwrap().on);
+    // Record mode: Looped (retake) shows the length; Free hides it.
+    ed.take_commands();
+    let c = child(&ed, "TimedModeButtonGroup", 2);
+    click(&mut ed, c, true);
+    let m = messages(&mut ed);
+    assert_eq!((m[0].kind, m[0].value[0]), (id::SAMPLER_TIMED_MODE, 2.0));
+    assert!(visible(&ed, "SyncPanel"));
+    let c = child(&ed, "SyncButtonGroup", 1);
+    click(&mut ed, c, true);
+    assert!(visible(&ed, "SecondsPanel") && !visible(&ed, "BeatsPanel"));
+    let c = child(&ed, "TimedModeButtonGroup", 0);
+    click(&mut ed, c, true);
+    assert!(!visible(&ed, "SyncPanel"));
+    // Mono records the left channel.
+    ed.take_commands();
+    let mono = sampler_path(&ed, "MonoButton");
+    ed.handle(&UiEvent::Clicked { path: mono, name: "MonoButton".into(), id: 0, on: true });
+    assert!(messages(&mut ed).iter().any(|m| m.kind == id::SAMPLER_MONO && m.value[0] == 1.0));
+    // Preview plays the take between its markers; Crop keeps that part.
+    let tone: Vec<f32> = (0..1000).map(|i| (i as f32 * 0.05).sin() * 0.5).collect();
+    ed.sampler_take(&tone, &tone, 44100.0);
+    ed.sampler.takes[0].start = 100;
+    ed.sampler.takes[0].end = 600;
+    let pv = sampler_path(&ed, "PreviewButton");
+    ed.handle(&UiEvent::Clicked { path: pv.clone(), name: "PreviewButton".into(), id: 0, on: true });
+    assert!(ed.take_commands().iter().any(|c| matches!(c, Command::PreviewRegion { start: 100, end: 600, looping: false, .. })));
+    ed.handle(&UiEvent::Clicked { path: pv, name: "PreviewButton".into(), id: 0, on: false });
+    assert!(messages(&mut ed).iter().any(|m| m.kind == id::STOP_PREVIEW));
+    let crop = sampler_path(&ed, "CropButton");
+    ed.handle(&UiEvent::Clicked { path: crop, name: "CropButton".into(), id: 0, on: false });
+    assert_eq!(ed.sampler.takes[0].frames(), 500);
+    if let Ok(f) = std::env::var("DREIST_SAMPLER_SHOT") {
+        ed.sampler_take(&[tone.clone(), tone.clone(), tone.clone()].concat(), &[], 44100.0);
+        ed.sampler.takes[1].start = 500;
+        ed.sampler.takes[1].end = 2500;
+        ed.sync();
+        ed.render(1.0).save_png(f).unwrap();
+    }
+    // The Export/Send menu.
+    let sb = sampler_path(&ed, "SaveButton");
+    ed.handle(&UiEvent::Clicked { path: sb.clone(), name: "SaveButton".into(), id: 0, on: false });
+    let items = ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap();
+    assert_eq!((items[0].as_str(), items[3].as_str(), items.len()), ("Export take...", "Send take to current pad", 9));
+    ed.app.menu = None;
+    ed.handle(&UiEvent::MenuSelected { anchor: sb, name: "SaveButton".into(), index: 8 });
+    assert!(ed.sampler.auto_crop);
 }
 
 #[test]
@@ -1454,13 +1567,14 @@ fn engine_step_writes_reach_the_document() {
 }
 
 #[test]
-#[ignore = "the v1 pad / layers page is layout-only (M3b)"]
 fn v2a_knob_reset_and_edit() {
     crate::app::test_setup();
     let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
-    let show = ed.app.root.path_of("ShowSplits").unwrap();
-    ed.handle(&UiEvent::Clicked { path: show, name: "ShowSplits".into(), id: 0, on: true });
-    let knob = ed.app.root.path_of("v2a").unwrap();
+    // The pad view (the pad item of the selector).
+    ed.model.editor_tab = crate::front::PADS_PAGE;
+    ed.inspector.pad_view = true;
+    ed.sync();
+    let knob = ed.app.root.path_of("V2A").unwrap();
     let v2a = |cmds: &[Command]| {
         cmds.iter().find_map(|c| match c {
             Command::Message(m) if m.kind == dreist_engine::binding::id::SET_PAD_PARAMETER && m.value[1] == 2.0 => Some(m.value[0]),
@@ -1468,13 +1582,13 @@ fn v2a_knob_reset_and_edit() {
         })
     };
     ed.take_commands();
-    ed.handle(&UiEvent::RightClicked { path: knob.clone(), name: "v2a".into() });
+    ed.handle(&UiEvent::RightClicked { path: knob.clone(), name: "V2A".into() });
     assert_eq!(ed.app.menu.as_ref().unwrap().items, vec!["Reset".to_string(), "Edit".to_string()]);
-    ed.handle(&UiEvent::MenuSelected { anchor: knob.clone(), name: "v2a".into(), index: 0 });
+    ed.handle(&UiEvent::MenuSelected { anchor: knob.clone(), name: "V2A".into(), index: 0 });
     assert_eq!(v2a(&ed.take_commands()), Some(1.0));
     ed.app.menu = None;
-    ed.handle(&UiEvent::RightClicked { path: knob.clone(), name: "v2a".into() });
-    ed.handle(&UiEvent::MenuSelected { anchor: knob.clone(), name: "v2a".into(), index: 1 });
+    ed.handle(&UiEvent::RightClicked { path: knob.clone(), name: "V2A".into() });
+    ed.handle(&UiEvent::MenuSelected { anchor: knob.clone(), name: "V2A".into(), index: 1 });
     assert!(ed.app.is_editing());
     for _ in 0..5 {
         ed.app.key_named("Backspace");
@@ -1634,7 +1748,6 @@ fn engine_selector_level_overlay() {
 }
 
 #[test]
-#[ignore = "the v1 pad / layers page is layout-only (M3b)"]
 fn layer_wave_zoom_bar() {
     crate::app::test_setup();
     let p = demo("Presets/Hollow.geist");
@@ -1710,7 +1823,6 @@ fn pad_menu_multi_selection() {
 }
 
 #[test]
-#[ignore = "the v1 pad / layers page is layout-only (M3b)"]
 fn layer_row_menu() {
     crate::app::test_setup();
     let p = demo("Presets/Hollow.geist");
@@ -2207,11 +2319,10 @@ fn midi_learn_of_a_graph_lane() {
 }
 
 #[test]
-#[ignore = "the v1 mixer pages are layout-only (M3b)"]
 fn fx_chain_preset_menu_loads_and_steps() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
-    ed.model.editor_tab = 5;
+    ed.model.editor_tab = front::GLOBAL_MIXER_PAGE;
     ed.sync();
     fn all(c: &Ctrl, name: &str, path: &mut Vec<usize>, out: &mut Vec<Vec<usize>>) {
         if c.name == name && c.visible {
@@ -2264,24 +2375,48 @@ fn fx_chain_preset_menu_loads_and_steps() {
 }
 
 #[test]
-#[ignore = "the v1 slicer page is not built yet (M3b)"]
-fn slicer_slides_over_the_main_panel() {
+fn slicer_slides_over_the_lcd() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
     let f = dreist_formats::legacy::demo("Hits/Cymbals/CY Cym Ar82 01 C2A St GB.wav");
     if !ed.open_slicer(&f) {
         return;
     }
+    // The preview panel covers the LCD's page area.
     let ov = ed.app.root.path_of("SlicerOverlay").unwrap();
-    let main = ed.app.root.path_of("MainPanel").unwrap();
-    assert_eq!(ed.app.ctrl(&ov).unwrap().rect.w, ed.app.ctrl(&main).unwrap().rect.w);
+    let main = ed.app.root.path_of("MainTabs").unwrap();
+    let (mx, my) = ed.app.origin(&main);
+    let m = ed.app.ctrl(&main).unwrap().rect;
+    assert_eq!(ed.app.ctrl(&ov).unwrap().rect, dreist_gui::Rect::new(mx, my, m.w, m.h));
     std::thread::sleep(std::time::Duration::from_millis(370));
     ed.animate();
     let panel = [ov.clone(), vec![0]].concat();
     assert_eq!(ed.app.ctrl(&panel).unwrap().rect.y, 0);
+    assert!(ed.app.ctrl(&panel).unwrap().find("WaveDisplay").is_some_and(|w| w.overload == "EditorPreviewWaveEditor"));
     if let Ok(f) = std::env::var("DREIST_SHOT") {
         ed.render(1.0).save_png(f).unwrap();
     }
+    // The other pages are off while slicing.
+    let tabs = |ed: &Editor| ed.app.root.find("MainTabButtons").unwrap().children.iter().all(|b| b.enabled);
+    assert!(!tabs(&ed));
+    let at = |ed: &Editor, n: &str| [panel.clone(), ed.app.ctrl(&panel).unwrap().path_of(n).unwrap()].concat();
+    // Divide: the division count replaces the sensitivity.
+    let group = [at(&ed, "SliceModeButtonGroup"), vec![1]].concat();
+    ed.handle(&UiEvent::Clicked { path: group, name: "CtrlButton".into(), id: 0, on: true });
+    assert_eq!(ed.slicer.mode, 1);
+    assert_eq!(ed.slicer.slices.len(), 16);
+    let shown = |ed: &Editor, n: &str| ed.app.ctrl(&panel).unwrap().find(n).unwrap().visible;
+    assert!(shown(&ed, "ChopDivisionBox") && !shown(&ed, "SensitivitySlider"));
+    ed.handle(&UiEvent::TextCommitted { path: at(&ed, "ChopDivisionBox"), name: "ChopDivisionBox".into(), text: "8".into() });
+    assert_eq!(ed.slicer.slices.len(), 8);
+    // Without Auto load the Extract buttons send the slices to the pads.
+    assert!(shown(&ed, "AudioButton"));
+    ed.handle(&UiEvent::Clicked { path: at(&ed, "AudioButton"), name: "AudioButton".into(), id: 0, on: false });
+    assert!(ed.model.layer(0, 1, 0).valid && !ed.model.layer(0, 8, 0).valid, "slices 1-8 on pads 1-8");
+    // Cancel restores the document and the page tabs.
+    ed.handle(&UiEvent::Clicked { path: at(&ed, "CancelButton"), name: "CancelButton".into(), id: 0, on: false });
+    assert!(!ed.slicer.open && !ed.model.layer(0, 1, 0).valid);
+    assert!(tabs(&ed));
 }
 
 #[test]
@@ -2376,124 +2511,106 @@ fn marker_buttons_only_in_learn_mode() {
 }
 
 #[test]
-#[ignore = "the v1 mixer pages are layout-only (M3b)"]
-fn effect_panels_fold_on_header_double_click() {
+fn effect_chain_shows_four_of_six_slots_and_scrolls() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
-    ed.model.editor_tab = 5;
+    ed.model.editor_tab = front::GLOBAL_MIXER_PAGE;
     ed.sync();
-    let res = dreist_formats::paths::skin_dir();
-    if fxchain::chain_presets(&res).is_empty() {
-        return;
-    }
-    fn shown(c: &Ctrl, name: &str, path: &mut Vec<usize>) -> Option<Vec<usize>> {
-        if !c.visible {
-            return None;
-        }
-        if c.name == name {
-            return Some(path.clone());
-        }
-        for (i, k) in c.children.iter().enumerate() {
-            path.push(i);
-            if let Some(p) = shown(k, name, path) {
-                return Some(p);
-            }
-            path.pop();
-        }
-        None
-    }
-    let Some(next) = shown(&ed.app.root, "PresetNext", &mut Vec::new()) else { return };
-    ed.handle(&UiEvent::Clicked { path: next.clone(), name: "PresetNext".into(), id: 0, on: false });
+    let page = ed.mixers.iter().find(|m| m.kind == mixer::Kind::Global).unwrap().page.clone();
+    let row = [page.clone(), ed.app.ctrl(&page).unwrap().path_of("ChainPanelScroll").expect("slot row")].concat();
+    let view = row[..row.len() - 1].to_vec();
+    let slots = ed.app.ctrl(&row).unwrap().children.len();
+    assert_eq!(slots, fxchain::SLOTS);
+    let slot_w = ed.app.ctrl(&row).unwrap().children[0].rect.w;
+    assert_eq!(ed.app.ctrl(&view).unwrap().rect.w / slot_w, fxchain::VISIBLE_SLOTS as i32);
+    assert!(ed.app.ctrl(&row).unwrap().children.iter().all(|s| s.find("EffectTypeCombo").is_some_and(|c| c.text == "No Effect")));
+    // The wheel scrolls by a slot; the slot bar reveals the slot pressed.
+    let slot0 = [row.clone(), vec![0]].concat();
+    ed.handle(&UiEvent::Wheel { path: slot0, overload: "EditorEffectPanel".into(), dy: -1.0 });
+    assert_eq!(ed.app.ctrl(&row).unwrap().rect.x, -slot_w);
+    let bar = [page.clone(), ed.app.ctrl(&page).unwrap().path_of("ScrollBar").expect("slot bar")].concat();
+    let w = ed.app.ctrl(&bar).unwrap().rect.w as f32;
+    ed.handle(&UiEvent::Mouse { path: bar.clone(), overload: "EditorEffectPanelScrollbar".into(), kind: dreist_gui::app::MouseKind::Down, x: w - 2.0, y: 5.0 });
+    assert_eq!(ed.app.ctrl(&row).unwrap().rect.x, -2 * slot_w, "slots 3–6 shown");
+    ed.handle(&UiEvent::Mouse { path: bar, overload: "EditorEffectPanelScrollbar".into(), kind: dreist_gui::app::MouseKind::Down, x: 2.0, y: 5.0 });
+    assert_eq!(ed.app.ctrl(&row).unwrap().rect.x, 0);
+    // An empty slot's type menu offers the categories; a pick fills that slot.
+    let combo = [row.clone(), vec![5], ed.app.ctrl(&[row.clone(), vec![5]].concat()).unwrap().path_of("EffectTypeCombo").unwrap()].concat();
+    ed.handle(&UiEvent::Clicked { path: combo.clone(), name: "EffectTypeCombo".into(), id: 0, on: false });
+    let items = ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap_or_default();
+    assert_eq!(items.len(), fxchain::CATEGORIES.len(), "{items:?}");
+    ed.app.menu = None;
+    ed.handle(&UiEvent::MenuSelected { anchor: combo.clone(), name: "EffectTypeCombo".into(), index: 4 });
+    ed.app.menu = None;
+    ed.handle(&UiEvent::MenuSelected { anchor: combo.clone(), name: "EffectTypeCombo".into(), index: 0 });
+    let fx = fxchain::effects(&ed.model, fxchain::Target::Aux(0));
+    assert_eq!(fx.iter().map(|(s, _, _)| *s).collect::<Vec<_>>(), vec![5], "the effect lands in slot 6");
     ed.sync();
-    fn panels(c: &Ctrl, path: &mut Vec<usize>, out: &mut Vec<Vec<usize>>) {
-        if c.attr("fxSlot").is_some() {
-            out.push(path.clone());
-            return;
-        }
-        for (i, k) in c.children.iter().enumerate() {
-            path.push(i);
-            panels(k, path, out);
-            path.pop();
-        }
-    }
-    let mut ps = Vec::new();
-    panels(&ed.app.root, &mut Vec::new(), &mut ps);
-    // The chain on the shown page.
-    let visible = |ed: &Editor, p: &[usize]| (1..=p.len()).all(|n| ed.app.ctrl(&p[..n]).is_some_and(|c| c.visible));
-    ps.retain(|p| visible(&ed, p));
-    assert!(ps.len() >= 2, "a chain preset with two effects");
-    let (p0, p1) = (ps[0].clone(), ps[1].clone());
-    let w0 = ed.app.ctrl(&p0).unwrap().rect.w;
-    let x1 = ed.app.ctrl(&p1).unwrap().rect.x;
-    let active = |ed: &Editor| ed.app.ctrl(&p0).unwrap().find("ActiveButton").map(|c| c.visible);
-    assert_eq!(active(&ed), Some(true));
-    // Double click in the header (clear of its buttons).
-    let (ox, oy) = ed.app.origin(&p0);
-    ed.app.mouse_move(ox as f32 + 100.0, oy as f32 + 5.0);
-    for _ in 0..2 {
-        for e in ed.app.mouse_down(dreist_gui::app::MouseButton::Left) {
-            ed.handle(&e);
-        }
-        ed.app.mouse_up(dreist_gui::app::MouseButton::Left);
-    }
-    // Collapse start hides the controls at once.
-    assert_eq!(active(&ed), Some(false));
-    std::thread::sleep(std::time::Duration::from_millis(400));
-    ed.animate();
-    let c = ed.app.ctrl(&p0).unwrap();
-    assert_eq!(c.rect.w, 20);
-    assert!(dreist_gui::collapse::is_iconic(c));
-    assert_eq!(ed.app.ctrl(&p1).unwrap().rect.x, x1 - w0 + 20, "siblings re-stack");
-    for e in ed.app.fold(&p0, false) {
-        ed.handle(&e);
-    }
-    std::thread::sleep(std::time::Duration::from_millis(400));
-    ed.animate();
-    assert_eq!(ed.app.ctrl(&p0).unwrap().rect.w, w0);
-    assert_eq!(ed.app.ctrl(&p1).unwrap().rect.x, x1);
-    assert_eq!(active(&ed), Some(true), "expand end shows them");
+    let kind = fx[0].1;
+    assert_eq!(ed.app.ctrl(&combo).unwrap().text, dreist_formats::params::effect_label(kind));
+    assert_eq!(ed.app.ctrl(&[row, vec![5]].concat()).unwrap().attr("fxKind"), Some(kind.to_string().as_str()));
 }
 
+/// v1's 64 scene slots: 16 on view, scrolled by page / row (and the view
+/// control), the slots showing their scenes' key names; Clear All clears
+/// all 64; Snapshot next takes the next free slot and scrolls to it.
 #[test]
-#[ignore = "the v1 scene page is layout-only (M3b)"]
-fn scene_panel_pattern_selectors() {
+fn scene_page_scrolls_through_64_slots() {
     crate::app::test_setup();
-    let p = demo("Presets/Hollow.geist");
-    let Ok(proj) = dreist_formats::Project::load(&p) else { return };
-    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(proj.raw)) else { return };
-    let Some(sc) = ed.app.root.path_of("ScenePanel").or_else(|| ed.app.root.path_of("SnapshotToNextButton").map(|p| p[..p.len() - 1].to_vec())) else { return };
-    // The Selectors under the scene page (not the pattern panel's).
-    fn all(c: &Ctrl, name: &str, path: &mut Vec<usize>, out: &mut Vec<Vec<usize>>) {
-        if c.name == name {
-            out.push(path.clone());
-        }
-        for (i, k) in c.children.iter().enumerate() {
-            path.push(i);
-            all(k, name, path, out);
-            path.pop();
-        }
+    use dreist_engine::binding::id;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = front::SCENE_PAGE;
+    ed.sync();
+    let m = ed.app.root.path_of("ScenesPanel").unwrap();
+    let slot = |ed: &Editor, k: usize| ed.app.ctrl(&m).unwrap().find(&format!("Scene{k}")).unwrap().clone();
+    let key = |ed: &Editor, k: usize| slot(ed, k).find("SelectButton").unwrap().text.clone();
+    assert_eq!(ed.app.ctrl(&m).unwrap().children.iter().filter(|c| c.overload == "EditorScene").count(), 16);
+    // Scene0 is bottom left, Scene15 top right.
+    assert!(slot(&ed, 0).rect.y > slot(&ed, 12).rect.y && slot(&ed, 0).rect.x < slot(&ed, 3).rect.x);
+    assert_eq!((key(&ed, 0), key(&ed, 15)), ("C-2".to_string(), "D#-1".to_string()));
+    let click = |ed: &mut Editor, name: &str| {
+        let p = ed.app.root.path_of(name).unwrap();
+        ed.handle(&UiEvent::Clicked { path: p, name: name.into(), id: 0, on: false });
+    };
+    let base = |ed: &Editor| ed.scenes.as_ref().unwrap().base();
+    let enabled = |ed: &Editor, n: &str| ed.app.root.find(n).unwrap().enabled;
+    assert!(!enabled(&ed, "PageDownButton") && enabled(&ed, "PageUpButton"));
+    click(&mut ed, "RowUpButton");
+    assert_eq!(base(&ed), 1);
+    assert_eq!(key(&ed, 0), "E-2");
+    click(&mut ed, "PageUpButton");
+    click(&mut ed, "PageUpButton");
+    click(&mut ed, "PageUpButton");
+    assert_eq!(base(&ed), 12, "clamped at the last page");
+    assert_eq!((key(&ed, 0), key(&ed, 15)), ("C2".to_string(), "D#3".to_string()));
+    assert!(!enabled(&ed, "PageUpButton") && enabled(&ed, "RowDownButton"));
+    // The slots act on their shown scenes.
+    let s15 = slot(&ed, 15);
+    assert_eq!(s15.attr("scene"), Some("63"));
+    // The view control: a press on its bottom shows the first rows.
+    let v = ed.app.root.path_of("ViewSlider").unwrap();
+    let h = ed.app.ctrl(&v).unwrap().rect.h as f32;
+    ed.handle(&UiEvent::Mouse { path: v.clone(), overload: "SceneViewSlider".into(), kind: dreist_gui::app::MouseKind::Down, x: 10.0, y: h - 4.0 });
+    ed.handle(&UiEvent::Mouse { path: v, overload: "SceneViewSlider".into(), kind: dreist_gui::app::MouseKind::Up, x: 10.0, y: h - 4.0 });
+    assert_eq!(base(&ed), 0);
+    ed.take_commands();
+    click(&mut ed, "ClearAllButton");
+    let cleared = ed.take_commands().iter().filter(|c| matches!(c, Command::Message(m) if m.kind == id::SCENE_CLEAR)).count();
+    assert_eq!(cleared, 64);
+    // Snapshot next: the next free slot, revealed.
+    let mgr = ed.model.doc.child_mut_or_insert("SceneManager", "Scenes");
+    for n in 0..20 {
+        mgr.child_mut_or_insert("Scene", &format!("Scene{n}")).set("used", "true");
     }
-    let mut sels = Vec::new();
-    all(&ed.app.root, "Selectors", &mut Vec::new(), &mut sels);
-    let _ = sc;
-    let scene_sel = sels
-        .iter()
-        .find(|s| {
-            ed.app.ctrl(s).is_some_and(|c| c.find("Key5").is_some())
-                && (1..s.len()).any(|n| ed.app.ctrl(&s[..n]).is_some_and(|c| c.find("SnapshotToNextButton").is_some() && c.find("GraphCombo").is_none()))
-        })
-        .cloned();
-    let ss = scene_sel.expect("scene panel selectors");
-    let key = [ss.clone(), (ed.app.ctrl(&ss).unwrap()).path_of("Key5").unwrap()].concat();
-    ed.handle(&UiEvent::Clicked { path: key.clone(), name: "Key5".into(), id: 0, on: true });
-    let e = ed.model.engine;
-    assert_eq!(ed.model.current_pattern(e), 5);
-    assert!(ed.app.ctrl(&key).unwrap().on);
-    let cmds = ed.take_commands();
-    assert!(cmds.iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SELECT_PATTERN && m.index[3] == 5)));
-    if let Ok(out) = std::env::var("DREIST_SELECTOR_SHOT") {
-        ed.sync();
-        ed.render(1.0).save_png(out).unwrap();
+    click(&mut ed, "SnapshotToNextButton");
+    assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == id::SCENE_SNAPSHOT && m.value[0] == 20.0)));
+    assert_eq!(base(&ed), 2, "scene 21 scrolled into view");
+    // The name box names the selected scene; the slot shows it.
+    let nb = ed.app.root.path_of("NameTextBox").unwrap();
+    ed.handle(&UiEvent::TextCommitted { path: nb, name: "NameTextBox".into(), text: "Drop".into() });
+    assert_eq!(ed.model.scene_name(20), "Drop");
+    if let Ok(f) = std::env::var("DREIST_SCENE_SHOT") {
+        ed.render(1.0).save_png(f).unwrap();
     }
 }
 
@@ -2532,8 +2649,14 @@ fn song_pattern_buttons_change_the_selection() {
     assert_eq!(song(&ed).tracks[0][0].pattern, 0, "clamped at 0");
     let sel = ed.app.root.path_of("SelectPatternButton").unwrap();
     ed.handle(&UiEvent::Clicked { path: sel.clone(), name: "SelectPatternButton".into(), id: 0, on: false });
-    ed.handle(&UiEvent::MenuSelected { anchor: sel, name: "SelectPatternButton".into(), index: 5 });
-    ed.app.menu = None;
+    // v1's popup: 24 pattern keys, the part's pattern lit.
+    let popup = ed.app.root.path_of("SongPatternPopup").expect("pattern popup");
+    let key = |ed: &Editor, n: usize| [popup.clone(), ed.app.ctrl(&popup).unwrap().path_of(&format!("Key{n}")).unwrap()].concat();
+    assert_eq!(ed.app.ctrl(&popup).unwrap().children.iter().filter(|c| c.name.starts_with("Key")).count(), 24);
+    assert!(ed.app.ctrl(&key(&ed, 0)).unwrap().on);
+    let k5 = key(&ed, 5);
+    ed.handle(&UiEvent::Clicked { path: k5, name: "Key5".into(), id: 0, on: true });
+    assert!(ed.app.root.path_of("SongPatternPopup").is_none(), "a pick closes the popup");
     assert_eq!(song(&ed).tracks[0][0].pattern, 5);
     // Click the part: its part buttons appear inside it.
     click(&mut ed, bx as f32 + 5.0, by as f32 + 30.0);
@@ -2913,12 +3036,11 @@ fn rex_loops_slice_with_their_own_points_and_load_truncated_on_pads() {
 }
 
 #[test]
-#[ignore = "the v1 pad / layers page is layout-only (M3b)"]
 fn layer_toggles_reach_the_document() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
-    for (name, attr, want) in [("Phase", "PhasePosition", "-1"), ("Reverse", "IsReversed", "true"), ("EnvMode", "EnvTracksPitch", "true"), ("LayerMode", "SynthesisMode", "VintageSampler")] {
-        let Some(b) = ed.app.root.path_of(name) else { continue };
+    for (name, attr, want) in [("PhaseButton", "PhasePosition", "-1"), ("RevButton", "IsReversed", "true"), ("TrackPitchButton", "EnvTracksPitch", "true")] {
+        let b = ed.app.root.path_of(name).unwrap_or_else(|| panic!("{name}"));
         ed.handle(&UiEvent::Clicked { path: b.clone(), name: name.into(), id: 0, on: true });
         assert_eq!(ed.model.layer_node(0, 0, 0).and_then(|n| n.attr(attr)), Some(want), "{name}");
         assert!(ed.app.ctrl(&b).unwrap().on, "{name}");
@@ -3241,4 +3363,366 @@ fn typed_non_numbers_are_ignored() {
     ed.handle(&UiEvent::TextCommitted { path: p.clone(), name: "BPMTextBox".into(), text: " 97.5 ".into() });
     assert_eq!(ed.model.tempo(), 97.5);
     assert_eq!(crate::conv::number("1e99"), None, "overflows to infinity");
+}
+
+/// The engine mixer's strips (`Channel0..7`) and their controls.
+fn engine_strips(ed: &Editor) -> Vec<Vec<usize>> {
+    let m = ed.mixers.iter().find(|m| m.kind == mixer::Kind::Engine).expect("engine mixer");
+    let page = ed.app.ctrl(&m.page).unwrap();
+    page.children.iter().enumerate().filter(|(_, c)| c.overload == "MixerStrip").map(|(i, _)| [m.page.clone(), vec![i]].concat()).collect()
+}
+
+fn strip_control(ed: &Editor, strip: &[usize], name: &str) -> Vec<usize> {
+    [strip.to_vec(), ed.app.ctrl(strip).unwrap().path_of(name).unwrap_or_else(|| panic!("{name}"))].concat()
+}
+
+#[test]
+fn engine_mixer_has_eight_strips_with_mix_send_and_setup_views() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = front::ENGINE_MIXER_PAGE;
+    ed.sync();
+    let strips = engine_strips(&ed);
+    assert_eq!(strips.len(), 8);
+    for (k, s) in strips.iter().enumerate() {
+        assert_eq!(ed.app.ctrl(s).unwrap().attr("channel"), Some(format!("Engine({k})").as_str()));
+        assert_eq!(ed.app.ctrl(&strip_control(&ed, s, "NameLabel")).unwrap().text, ed.model.engine_name(k));
+    }
+    let shown = |ed: &Editor, name: &str| ed.app.ctrl(&strip_control(ed, &engine_strips(ed)[0], name)).unwrap().visible;
+    let view = |ed: &mut Editor, button: usize| {
+        let m = ed.mixers.iter().find(|m| m.kind == mixer::Kind::Engine).unwrap().page.clone();
+        let g = [m.clone(), ed.app.ctrl(&m).unwrap().path_of("ModeGroup").unwrap()].concat();
+        let b = [g, vec![button]].concat();
+        let name = ed.app.ctrl(&b).unwrap().name.clone();
+        ed.handle(&UiEvent::Clicked { path: b.clone(), name, id: 0, on: true });
+        assert!(ed.app.ctrl(&b).unwrap().on);
+    };
+    // MIX: pan, fader, meters, output.
+    for n in ["PanKnob", "GainSlider", "VUMeterLeft", "OutputCombo", "MuteButton"] {
+        assert!(shown(&ed, n), "{n} in MIX");
+    }
+    assert!(!shown(&ed, "SendKnob0") && !shown(&ed, "EnginePitchKnob"));
+    // SEND: the four sends.
+    view(&mut ed, 1);
+    assert!(shown(&ed, "SendKnob3") && shown(&ed, "SendLabel3") && !shown(&ed, "GainSlider") && !shown(&ed, "PanKnob"));
+    // SETUP: pitch, swing template and depth, tempo modifier.
+    view(&mut ed, 2);
+    for n in ["EnginePitchKnob", "SwingKnob", "EngineSwingTemplateCombo", "EngineNumBox", "EngineDenomBox"] {
+        assert!(shown(&ed, n), "{n} in SETUP");
+    }
+    assert!(!shown(&ed, "OutputCombo") && !shown(&ed, "SendKnob0") && !shown(&ed, "GainSlider"));
+    assert!(shown(&ed, "MuteButton"), "M / S in every view");
+    if let Ok(f) = std::env::var("DREIST_MIXER_SHOT") {
+        ed.render(1.0).save_png(f).unwrap();
+    }
+}
+
+#[test]
+fn engine_strip_controls_post_engine_messages() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = front::ENGINE_MIXER_PAGE;
+    ed.sync();
+    let s = engine_strips(&ed)[3].clone();
+    let msgs = |ed: &mut Editor, ev: UiEvent| {
+        ed.take_commands();
+        ed.handle(&ev);
+        ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m) } else { None }).collect::<Vec<_>>()
+    };
+    let value = |ed: &Editor, name: &str, v: f32| UiEvent::ValueChanged { path: strip_control(ed, &s, name), name: name.into(), id: 0, value: v };
+    let ev = value(&ed, "GainSlider", 0.3);
+    let m = msgs(&mut ed, ev);
+    assert!(m.iter().any(|m| m.kind == id::SET_ENGINE_PARAMETER && m.index[0] == 3 && m.value[..2] == [0.3, dreist_formats::EngineParam::Gain as u8 as f32]), "{m:?}");
+    let ev = value(&ed, "PanKnob", 0.25);
+    let m = msgs(&mut ed, ev);
+    assert!(m.iter().any(|m| m.kind == id::SET_ENGINE_PARAMETER && m.value[..2] == [0.25, dreist_formats::EngineParam::Pan as u8 as f32]), "{m:?}");
+    let ev = value(&ed, "EnginePitchKnob", 0.75);
+    let m = msgs(&mut ed, ev);
+    assert!(m.iter().any(|m| m.kind == id::SET_ENGINE_PARAMETER && m.value[..2] == [0.75, dreist_formats::EngineParam::Pitch as u8 as f32]), "{m:?}");
+    let ev = value(&ed, "SwingKnob", 0.4);
+    let m = msgs(&mut ed, ev);
+    assert!(m.iter().any(|m| m.kind == id::SET_ENGINE_SWING_TEMPLATE_DEPTH && m.index[0] == 3 && m.value[0] == 0.4), "{m:?}");
+    let ev = value(&ed, "SendKnob2", 0.5);
+    let m = msgs(&mut ed, ev);
+    assert!(m.iter().any(|m| m.kind == id::SET_ENGINE_SEND_LEVEL && m.value[..2] == [2.0, 0.5]), "{m:?}");
+    let mute = strip_control(&ed, &s, "MuteButton");
+    let m = msgs(&mut ed, UiEvent::Clicked { path: mute, name: "MuteButton".into(), id: 0, on: true });
+    assert!(m.iter().any(|m| m.kind == id::MUTE_ENGINE && m.index[0] == 3 && m.value[0] == 1.0), "{m:?}");
+    let num = strip_control(&ed, &s, "EngineNumBox");
+    let m = msgs(&mut ed, UiEvent::TextCommitted { path: num, name: "EngineNumBox".into(), text: "3".into() });
+    assert!(m.iter().any(|m| m.kind == id::SET_ENGINE_TEMPO_NUM && m.value[0] == 3.0), "{m:?}");
+    let den = strip_control(&ed, &s, "EngineDenomBox");
+    let m = msgs(&mut ed, UiEvent::TextCommitted { path: den, name: "EngineDenomBox".into(), text: "40".into() });
+    assert!(m.iter().any(|m| m.kind == id::SET_ENGINE_TEMPO_DENOM && m.value[0] == 16.0), "clamped to 16: {m:?}");
+    ed.sync();
+    assert_eq!(ed.model.engine_node(3).and_then(|n| n.u32("TempoNumerator")), Some(3));
+    assert_eq!(ed.app.ctrl(&strip_control(&ed, &s, "EngineNumBox")).unwrap().text, "3");
+    assert!(ed.app.ctrl(&strip_control(&ed, &s, "MuteButton")).unwrap().on);
+}
+
+/// The Pad / Layers selector: the pad item shows the pad view, a layer
+/// row selects that layer and shows the layer view; rows show their
+/// layer's name ("Empty" without a sample).
+#[test]
+fn pad_layers_selector_switches_views() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = crate::front::PADS_PAGE;
+    ed.sync();
+    let shown = |ed: &Editor, n: &str| ed.app.root.find(n).is_some_and(|c| c.visible);
+    assert!(shown(&ed, "LayerControls") && !shown(&ed, "PadControls"));
+    let pad = ed.app.root.path_of("PadSelection").unwrap();
+    ed.handle(&UiEvent::Mouse { path: pad, overload: "PadSelectionButton".into(), kind: dreist_gui::app::MouseKind::Down, x: 5.0, y: 5.0 });
+    assert!(shown(&ed, "PadControls") && !shown(&ed, "LayerControls"));
+    assert_eq!(ed.app.root.find("PadSelection").unwrap().style, "PadSelectionButtonPrimaryStyle");
+    let row = ed.app.root.path_of("LayerSelectionButton2").unwrap();
+    ed.handle(&UiEvent::Mouse { path: row.clone(), overload: "LayerRow".into(), kind: dreist_gui::app::MouseKind::Down, x: 5.0, y: 5.0 });
+    let e = ed.model.engine;
+    assert_eq!(ed.model.layer[e], 2);
+    assert!(shown(&ed, "LayerControls") && !shown(&ed, "PadControls"));
+    let r = ed.app.ctrl(&row).unwrap();
+    assert_eq!(r.style, "SelectionButtonPrimaryStyle");
+    assert_eq!(r.find("SampleName").unwrap().text, "Empty");
+    // The connector sits beside the selected row.
+    let glue = ed.app.root.find("LayerGlue").unwrap();
+    assert_eq!(glue.rect.y, r.rect.y + 2);
+    // Pad item: Row link → `e_setModifiers` [layers, pads, row].
+    let rowlink = ed.app.root.path_of("AllGroups").unwrap();
+    ed.take_commands();
+    ed.handle(&UiEvent::Clicked { path: rowlink, name: "AllGroups".into(), id: 0, on: true });
+    assert!(ed.model.all_rows);
+    assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SET_MODIFIERS && m.value[2] == 1.0)));
+}
+
+/// The pad view's velocity split lanes: shown in velocity-split mode, a
+/// drag of a layer's range posts its four split velocities.
+#[test]
+fn velocity_split_lane_edit() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = crate::front::PADS_PAGE;
+    ed.inspector.pad_view = true;
+    ed.sync();
+    let lane = ed.app.root.path_of("Split0").unwrap();
+    assert!(!ed.app.ctrl(&lane).unwrap().visible, "hidden outside velocity-split mode");
+    ed.model.pad_mut(0, 0).set("PadMode", "Velocity split");
+    ed.model.layer_mut(0, 0, 0).set("AudioFileName", "x.wav");
+    ed.sync();
+    let c = ed.app.ctrl(&lane).unwrap();
+    assert!(c.visible && c.enabled);
+    let mouse = |kind, x| UiEvent::Mouse { path: lane.clone(), overload: crate::velsplit::OVERLOAD.into(), kind, x, y: 20.0 };
+    ed.take_commands();
+    // Whole range: no handle under the press (mid lane), dragged left.
+    ed.handle(&mouse(dreist_gui::app::MouseKind::Down, 250.0));
+    ed.handle(&mouse(dreist_gui::app::MouseKind::Drag, 200.0));
+    ed.handle(&mouse(dreist_gui::app::MouseKind::Up, 200.0));
+    let kinds: Vec<u32> = ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m.kind) } else { None }).collect();
+    for k in [id::SET_LAYER_VELOCITY_SPLIT_MIN, id::SET_LAYER_VELOCITY_SPLIT_MIN_TURNOVER, id::SET_LAYER_VELOCITY_SPLIT_MAX_TURNOVER, id::SET_LAYER_VELOCITY_SPLIT_MAX] {
+        assert!(kinds.contains(&k), "{kinds:?}");
+    }
+}
+
+/// The layer view's setup and envelope controls post layer parameters:
+/// knobs their value, Vel-Pitch the Velocity depth (2v − 1), an envelope
+/// destination's depth that envelope's depth, and a new destination takes
+/// the depth along.
+#[test]
+fn layer_view_controls_post_layer_parameters() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    use dreist_formats::{LayerParam, TransmodSource};
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = crate::front::PADS_PAGE;
+    ed.sync();
+    let msgs = |ed: &mut Editor| ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m) } else { None }).collect::<Vec<_>>();
+    let turn = |ed: &mut Editor, name: &str, v: f32| {
+        let p = ed.app.root.path_of(name).unwrap_or_else(|| panic!("{name}"));
+        ed.take_commands();
+        ed.handle(&UiEvent::ValueChanged { path: p, name: name.into(), id: 0, value: v });
+    };
+    let has = |m: &[dreist_engine::binding::Message], par: LayerParam, v: f32, src: TransmodSource| {
+        m.iter().any(|m| m.kind == id::SET_LAYER_PARAMETER && m.value[0] == par as u8 as f32 && (m.value[1] - v).abs() < 1e-5 && m.value[2] == src as u8 as f32)
+    };
+    turn(&mut ed, "CutoffKnob", 0.3);
+    assert!(has(&msgs(&mut ed), LayerParam::FilterCutoff, 0.3, TransmodSource::ActualParameter));
+    turn(&mut ed, "V2P", 0.75);
+    assert!(has(&msgs(&mut ed), LayerParam::CoarseTune, 0.5, TransmodSource::Velocity));
+    assert!((ed.app.root.find("V2P").unwrap().value - 0.75).abs() < 1e-5, "the knob shows the depth");
+    // The Free envelope's first destination is Cutoff by default.
+    assert_eq!(ed.app.root.find("FreeEnvDest1Combo").unwrap().text, "Cutoff");
+    turn(&mut ed, "FreeEnvDepth1Knob", 1.0);
+    assert!(has(&msgs(&mut ed), LayerParam::FilterCutoff, 1.0, TransmodSource::FreeEnvelope));
+    // Cutoff → Resonance moves the depth.
+    let combo = ed.app.root.path_of("FreeEnvDest1Combo").unwrap();
+    ed.handle(&UiEvent::Clicked { path: combo.clone(), name: "FreeEnvDest1Combo".into(), id: 0, on: false });
+    assert_eq!(ed.app.menu.as_ref().unwrap().items[2], "Resonance");
+    ed.take_commands();
+    ed.handle(&UiEvent::MenuSelected { anchor: combo, name: "FreeEnvDest1Combo".into(), index: 2 });
+    let m = msgs(&mut ed);
+    assert!(has(&m, LayerParam::FilterCutoff, 0.0, TransmodSource::FreeEnvelope) && has(&m, LayerParam::FilterResonance, 1.0, TransmodSource::FreeEnvelope), "{m:?}");
+    assert_eq!(ed.app.root.find("FreeEnvDest1Combo").unwrap().text, "Resonance");
+    // Layer sends: `e_setLayerSendDepth` [aux, value].
+    turn(&mut ed, "Send2Knob", 0.4);
+    assert!(msgs(&mut ed).iter().any(|m| m.kind == id::SET_LAYER_SEND_DEPTH && m.value[0] == 1.0 && (m.value[1] - 0.4).abs() < 1e-5));
+}
+
+/// The song toolbar's tools: draw adds parts of the draw pattern (picked
+/// in the popup beside the tool), select only selects (a press on empty
+/// space starts a box), erase deletes the part under the pointer.
+#[test]
+fn song_tools_and_draw_pattern_popup() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = front::SONG_PAGE;
+    ed.sync();
+    song_mode_on(&mut ed);
+    let body = ed.app.root.path_of("SongBody").unwrap();
+    let (bx, by) = ed.app.origin(&body);
+    let click = |ed: &mut Editor, x: f32, y: f32| {
+        for ev in ed.app.mouse_move(x, y) {
+            ed.handle(&ev);
+        }
+        for ev in ed.app.mouse_down(dreist_gui::app::MouseButton::Left) {
+            ed.handle(&ev);
+        }
+        for ev in ed.app.mouse_up(dreist_gui::app::MouseButton::Left) {
+            ed.handle(&ev);
+        }
+    };
+    let song = |ed: &Editor| ed.model.doc.children.iter().find(|c| c.class == "SongSequencer").map(dreist_engine::song::Song::from_node).unwrap();
+    let group = ed.app.root.path_of("ToolButtonGroup").unwrap();
+    let tool = |ed: &mut Editor, i: usize| {
+        let b = [group.clone(), vec![i]].concat();
+        ed.handle(&UiEvent::Clicked { path: b.clone(), name: "CtrlButton".into(), id: 0, on: true });
+        assert!(ed.app.ctrl(&b).unwrap().on);
+    };
+    // Select: no new part on empty space.
+    tool(&mut ed, 2);
+    click(&mut ed, bx as f32 + 5.0, by as f32 + 30.0);
+    assert!(song(&ed).tracks[0].is_empty());
+    // Draw with pattern 4 (the popup beside the draw tool).
+    tool(&mut ed, 0);
+    let pen = ed.app.root.path_of("SetDrawPatternButton").unwrap();
+    ed.handle(&UiEvent::Clicked { path: pen, name: "SetDrawPatternButton".into(), id: 0, on: false });
+    let popup = ed.app.root.path_of("SongPatternPopup").expect("pattern popup");
+    let k3 = [popup.clone(), ed.app.ctrl(&popup).unwrap().path_of("Key3").unwrap()].concat();
+    ed.handle(&UiEvent::Clicked { path: k3, name: "Key3".into(), id: 0, on: true });
+    click(&mut ed, bx as f32 + 5.0, by as f32 + 30.0);
+    assert_eq!(song(&ed).tracks[0].len(), 1);
+    assert_eq!(song(&ed).tracks[0][0].pattern, 3);
+    // Erase: the part goes.
+    tool(&mut ed, 1);
+    click(&mut ed, bx as f32 + 5.0, by as f32 + 30.0);
+    assert!(song(&ed).tracks[0].is_empty());
+}
+
+/// The pattern tools panel: the erase tool deletes with the left button,
+/// the select tool selects instead of drawing, pen / multi draw.
+#[test]
+fn pattern_tools_panel_switches_the_left_button() {
+    crate::app::test_setup();
+    use dreist_gui::app::MouseKind;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.sync();
+    let grid = ed.app.root.path_of("PatternGrid").unwrap();
+    let lay = ed.pattern.as_ref().unwrap().layout(&ed.app, &ed.model).unwrap();
+    let e = ed.model.engine;
+    let tools = ed.app.root.path_of("ToolsPanel").unwrap();
+    let group = [tools.clone(), ed.app.ctrl(&tools).unwrap().path_of("ButtonGroup").unwrap()].concat();
+    let tool = |ed: &mut Editor, i: usize| {
+        let b = [group.clone(), vec![i]].concat();
+        let name = ed.app.ctrl(&b).unwrap().name.clone();
+        ed.handle(&UiEvent::Clicked { path: b.clone(), name, id: 0, on: true });
+        assert!(ed.app.ctrl(&b).unwrap().on);
+    };
+    let r = lay.row(0).unwrap();
+    let press = |ed: &mut Editor, step: usize| {
+        let (x, y) = (lay.step_x(step) + 2.0, lay.row_y(r) + 2.0);
+        ed.handle(&UiEvent::Mouse { path: grid.clone(), overload: "PatternGrid".into(), kind: MouseKind::Down, x, y });
+        ed.handle(&UiEvent::Mouse { path: grid.clone(), overload: "PatternGrid".into(), kind: MouseKind::Up, x, y });
+    };
+    let on = |ed: &Editor, k: usize| ed.model.pattern(e, ed.model.current_pattern(e)).tracks[0].steps[k].on;
+    tool(&mut ed, 0);
+    press(&mut ed, 2);
+    assert!(on(&ed, 2), "pen draws");
+    tool(&mut ed, 2);
+    press(&mut ed, 5);
+    assert!(!on(&ed, 5), "select does not draw");
+    press(&mut ed, 2);
+    assert!(on(&ed, 2) && ed.pattern.as_ref().unwrap().selection.contains(&(0, 2)), "select selects the event");
+    tool(&mut ed, 1);
+    press(&mut ed, 2);
+    assert!(!on(&ed, 2), "erase deletes");
+    tool(&mut ed, 3);
+    press(&mut ed, 7);
+    assert!(on(&ed, 7), "multi draws");
+}
+
+/// The graph lane's ÷2 / ×2 (manual §9:5) and the toolbar's Insert menu.
+#[test]
+fn graph_halve_double_and_toolbar_insert() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.sync();
+    let e = ed.model.engine;
+    let cur = ed.model.current_pattern(e);
+    let n = ed.model.pattern(e, cur).steps as usize;
+    let track = ed.model.pad[e];
+    // A ramp on the shown lane.
+    let lane = ed.model.pattern_view[e].lane;
+    for st in 0..n {
+        let m = dreist_engine::binding::Message::new(id::SET_STEP_GRAPH_STATE, &[e as i32, track as i32, -1, cur as i32, track as i32, st as i32], &[lane as f32, st as f32 / n as f32, 0.0]);
+        ed.model.apply(&Command::Message(m));
+    }
+    let values = |ed: &mut Editor, name: &str| -> Vec<f32> {
+        let p = ed.app.root.path_of("SingleAutoControl").and_then(|s| ed.app.ctrl(&s).unwrap().path_of(name).map(|k| [s, k].concat()));
+        let Some(p) = p else { return Vec::new() };
+        ed.take_commands();
+        ed.handle(&UiEvent::Clicked { path: p, name: name.into(), id: 0, on: false });
+        ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { (m.kind == id::SET_STEP_GRAPH_STATE).then_some(m.value[1]) } else { None }).collect()
+    };
+    let half = values(&mut ed, "Div2Button");
+    if !half.is_empty() {
+        assert_eq!(half.len(), n);
+        assert!((half[3] - 1.0 / n as f32).abs() < 1e-5, "÷2 stretches the first half: {half:?}");
+        let double = values(&mut ed, "x2Button");
+        // On the stretched lane: every second value, twice over.
+        assert!((double[1] - half[2]).abs() < 1e-5 && (double[n / 2 + 1] - half[2]).abs() < 1e-5, "×2 compresses and repeats: {double:?}");
+    }
+    // Toolbar Insert: the pattern templates menu for the selected pad.
+    let tb = ed.app.root.path_of("ToolBar").unwrap();
+    let ins = [tb.clone(), ed.app.ctrl(&tb).unwrap().path_of("InsertButton").unwrap()].concat();
+    ed.handle(&UiEvent::Clicked { path: ins.clone(), name: "InsertButton".into(), id: 0, on: false });
+    if crate::patmenu::pattern_templates(&dreist_formats::paths::skin_dir()).is_empty() {
+        return;
+    }
+    assert!(ed.app.menu.is_some(), "Insert opens the templates");
+    ed.take_commands();
+    ed.handle(&UiEvent::MenuSelected { anchor: ins, name: "InsertButton".into(), index: 0 });
+    let steps = ed.take_commands().iter().filter(|c| matches!(c, Command::Message(m) if (m.kind == id::SET_STEP_ON || m.kind == id::SET_STEP_OFF) && m.index[1] == track as i32)).count();
+    assert!(steps >= n, "the track filled from step 1");
+}
+
+/// The standalone's audio / MIDI settings panels need their skins; a skin
+/// set without them opens nothing and leaves the editor usable.
+#[test]
+fn device_panels_without_their_skins_open_nothing() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    for p in [devices::Panel::Audio, devices::Panel::Midi] {
+        if ed.devices.available(p) {
+            continue;
+        }
+        ed.menu_command(if p == devices::Panel::Audio { crate::editor::shortcuts::MENU_AUDIO } else { crate::editor::shortcuts::MENU_MIDI });
+        ed.show_modal(if p == devices::Panel::Audio { "audio" } else { "midi" });
+        // The page tabs still answer.
+        let g = ed.app.root.path_of("MainTabButtons").unwrap();
+        let b = [g, vec![front::SONG_PAGE]].concat();
+        ed.handle(&UiEvent::Clicked { path: b, name: String::new(), id: 0, on: true });
+        assert_eq!(ed.model.editor_tab, front::SONG_PAGE);
+        ed.model.editor_tab = 0;
+    }
 }
