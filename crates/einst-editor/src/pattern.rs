@@ -123,6 +123,9 @@ pub struct PatternPanel {
     band: Option<((usize, usize), (usize, usize))>,
     /// Copied steps relative to the top-left of the copied selection.
     clipboard: Vec<(usize, usize, dreist_engine::pattern::StepData)>,
+    /// A pen-tool right click on a track: its menu, for the editor to open
+    /// (the menu's owner): (track, grid path).
+    pub(crate) track_menu: Option<(usize, Vec<usize>)>,
     /// Graph Options menu open (false = top level, true = Insert submenu).
     graph_menu: Option<bool>,
     /// The editing tool (the tools panel, manual §9:4): pen, erase,
@@ -267,7 +270,8 @@ const GRAPH_MENU: [&str; 13] = [
 /// The pattern editing tools, in the tools panel's order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Tool {
-    /// Left adds events and drags their velocity; right deletes.
+    /// Left adds events and drags their velocity; right opens the
+    /// track's menu (as the track name area's right click).
     Pen,
     /// Left deletes.
     Erase,
@@ -760,6 +764,7 @@ impl PatternPanel {
             selection: Default::default(),
             band: None,
             clipboard: Vec::new(),
+            track_menu: None,
             graph_menu: None,
             tool: Tool::Multi,
             lane_clip: Vec::new(),
@@ -1475,6 +1480,13 @@ impl PatternPanel {
                     }
                     return false;
                 };
+                // The pen tool's right button opens the track's menu
+                // (v1: deleting is the erase and multi tools' job).
+                if self.tool == Tool::Pen && *kind == MouseKind::RightDown {
+                    model.pad[e] = track;
+                    self.track_menu = Some((track, path.clone()));
+                    return true;
+                }
                 // Shift-drag: rubber-band selection of steps that are on.
                 if *kind == MouseKind::Down && (app.mods.shift || select) {
                     if !app.mods.cmd {
