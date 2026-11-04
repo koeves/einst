@@ -26,6 +26,17 @@ pub fn read_project(path: &Path) -> Option<(Node, bool)> {
     }
 }
 
+/// The document of a host session: v1's plugin state (a v1 project text,
+/// possibly in a program / bank / preset container; `einst_formats::chunk`)
+/// converted, anything else parsed as is.
+pub fn session_document(state: &str) -> Option<Node> {
+    match einst_formats::chunk::convert(state.as_bytes()) {
+        Ok(Some(doc)) => Some(doc),
+        Ok(None) => Node::parse(state).ok(),
+        Err(_) => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -52,5 +63,17 @@ mod tests {
         let (proj, converted) = read_project(&pad).unwrap();
         assert!(converted);
         assert_eq!(proj.children[0].children[0].name.as_deref(), Some("Pad0"));
+    }
+
+    #[test]
+    fn v1_session_state_converts() {
+        let v1 = r#"<root StateVersion="2.1"><TimeInfo name="TimeInfo" Tempo="90" /></root>"#;
+        assert_eq!(session_document(v1).unwrap().version, Some(3000));
+        let v2 = r#"<root version="3000" CurrentEngine="1" />"#;
+        assert_eq!(session_document(v2).unwrap().attr("CurrentEngine"), Some("1"));
+        // A host preset file with the state opens as a project.
+        let p = scratch("Song.aupreset", &format!("<?xml version=\"1.0\"?><plist><dict><key>data</key><data>{}</data></dict></plist>", "PHJvb3QgU3RhdGVWZXJzaW9uPSIyLjEiIC8+"));
+        let (doc, converted) = read_project(&p).unwrap();
+        assert!(converted && doc.version == Some(3000));
     }
 }
