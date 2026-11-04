@@ -640,10 +640,12 @@ class Converter:
         s = min(w, h)
         nx = x + (w - s) // 2
         ny = y if info["fit"] == "top" else y + (h - s) // 2
-        body = looks.KNOB_BODY.get(info["look"]["parent"])
-        if body and s > 32:
-            i = int(round(s * body[1]))
-            decor.append(E("CtrlPanel", {"rect": [nx + i, ny + i, s - 2 * i, s - 2 * i], "style": body[0]}))
+        if s <= 32:
+            return
+        for style, x0, y0, x1, y1 in looks.KNOB_BODY.get(info["look"]["parent"], []):
+            l, t = int(round(s * x0)), int(round(s * y0))
+            r, b = int(round(s * x1)), int(round(s * y1))
+            decor.append(E("CtrlPanel", {"rect": [nx + l, ny + t, r - l, b - t], "style": style}))
             self.decor += 1
 
     # -- files
@@ -688,10 +690,13 @@ class Converter:
 CHASSIS = {
     ("RootSkin.skin", "MovePanel"): [
         E("CtrlPanel", {"rect": r, "style": s}) for r, s in [
+            # The front panel under the hardware controls: brushed, lighter
+            # towards the master section (v1's chassis bitmap).
+            ("1, 423, 826, 215", "ChassisFrontStyle"),
             ("2, 428, 283, 11", "ChassisBarStyle"),
-            ("290, 428, 392, 11", "ChassisBarStyle"),
-            ("688, 428, 138, 11", "ChassisBarStyle"),
-            ("290, 500, 392, 11", "ChassisBarStyle"),
+            ("290, 428, 392, 11", "ChassisBarMidStyle"),
+            ("688, 428, 138, 11", "ChassisBarRightStyle"),
+            ("290, 500, 392, 11", "ChassisBarMidStyle"),
             ("2, 443, 58, 58", "ChassisFrameStyle"),
             ("2, 504, 58, 56", "ChassisWellStyle"),
             ("688, 437, 138, 160", "ChassisFrameStyle"),

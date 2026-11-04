@@ -25,6 +25,7 @@ Rules match the image file name (no folder, no extension) with a regular
 expression; the first match wins. Buttons use their `imUp` image.
 """
 
+import math
 import re
 
 from theme import G, icon_font, text_font
@@ -45,11 +46,18 @@ TB = (0, 0, 2, 5)
 POPUP = {"renderer": "PopupButtonRenderer"}
 
 # Pad mode buttons: the face inside v1's 25 x 27 cells.
-PM = (1, 0, 0, 4)
-GRID_ICON = [("inside", 6 + 5 * (i % 3), 5 + 5 * (i // 3), 3, 3, "PadModeIconStyle") for i in range(9)]
+PM = (1, 1, 3, 5)
+PMF = dict(realBorderWidth="2", colBorder="HwFramePad")
+GRID_ICON = [("inside", 3 + 5 * (i % 3), 4 + 5 * (i // 3), 4, 4, "PadModeIconStyle") for i in range(9)]
 # (E with a small M over S: two 3 x 3 marks right of the E)
-EMS_ICON = [("inside", 17, 7, 3, 3, "PadModeIconStyle"), ("inside", 17, 13, 3, 3, "PadModeIconStyle")]
+EMS_ICON = [("inside", 15, 5, 3, 3, "PadModeIconStyle"), ("inside", 15, 11, 3, 3, "PadModeIconStyle")]
 CHECK = {"renderer": "CheckBoxButtonRenderer"}
+
+# The learn button's MIDI socket: a white disc with five pins round its
+# upper half (v1 drew it filled, not as an outline).
+MIDI_ICON = [("inside", 7, 5, 16, 16, "MidiDiscStyle")] + [
+    ("inside", round(15 + 4.6 * math.cos(math.radians(a)) - 1), round(13 - 4.6 * math.sin(math.radians(a)) - 1), 3, 3, "MidiPinStyle")
+    for a in (180, 135, 90, 45, 0)]
 
 # ---------------------------------------------------------------- buttons
 
@@ -58,25 +66,32 @@ BUTTONS = [
     (r"^Tab(On|Off|Disabled)", L("TabButtonStyle", upper=True)),  # ("/" spaced, see convert.py)
     (r"^(Show|Hide)$", L("BezelIconButtonStyle", text=G["right"])),
     # Transport (hardware strip).
-    (r"^PlayButton", L("HwPlayButtonStyle", text=G["right"], inset=TB)),
+    (r"^PlayButton", L("HwPlayButtonStyle", text=G["right"], inset=TB, font=icon_font(22))),
     (r"^RecButton", L("HwRecordButtonStyle", text=G["record"], inset=TB)),
     (r"^SongButton", L("HwSongButtonStyle", text="SONG", inset=TB)),
-    (r"^RestartButton", L("HwIconButtonStyle", text=G["skip_start"], inset=TB)),
-    (r"^LoopButton", L("HwGreyIconButtonStyle", text=G["loop"], inset=TB)),
-    (r"^RetroButton", L("HwIconButtonStyle", text=G["retrigger"], inset=TB)),
+    (r"^RestartButton", L("HwIconButtonStyle", text=G["skip_start"], inset=TB, colText="HwBlueIcon", colAltText="HwBlueIcon")),
+    (r"^LoopButton", L("HwIconButtonStyle", text=G["loop"], inset=TB, colText="HwIconDim", colAltText="HwIconDim")),
+    (r"^RetroButton", L("HwIconButtonStyle", text=G["retrigger"], inset=TB, colText="HwRed", colAltText="HwRedOn")),
     (r"^PanicButton", L("HwIconButtonStyle", text=G["warning"], inset=TB)),
-    (r"^LearnButton", L("HwGreyIconButtonStyle", text=G["midi"], inset=TB)),
+    (r"^LearnButton", L("HwGreyIconButtonStyle", text="", inset=TB, decor=MIDI_ICON)),
     (r"^Quantize", L("HwGreyIconButtonStyle", text=G["quantise"], inset=TB)),
     (r"^MetroButton", L("HwGreyIconButtonStyle", text=G["metronome"], inset=TB)),
-    (r"^UndoButton", L("HwDarkButtonStyle", text="UNDO", optRoundTopRight="false", optRoundBottomRight="false")),
-    (r"^RedoButton", L("HwDarkButtonStyle", text="REDO", optRoundTopRight="false", optRoundBottomRight="false")),
-    (r"^UndoRedoDropArrow", L("HwDarkIconButtonStyle", text=G["down"], optRoundTopLeft="false", optRoundBottomLeft="false")),
+    (r"^UndoButton", L("HwDarkButtonStyle", text="UNDO", optRoundTopRight="false", optRoundBottomRight="false", realTextOffset="3",
+                       realLetterSpacing="1", font=text_font(10, True), realTextOffsetY="0", inset=(0, 0, 0, 3))),
+    (r"^RedoButton", L("HwDarkButtonStyle", text="REDO", optRoundTopRight="false", optRoundBottomRight="false", realTextOffset="3",
+                       realLetterSpacing="1", font=text_font(10, True), realTextOffsetY="0", inset=(0, 0, 0, 3))),
+    # (UNDO / REDO and their arrows: one 24 px high bezel, the arrow part
+    # 12 px wide; the rest of v1's cells was the bitmap's shadow)
+    (r"^UndoRedoDropArrow", L("HwDarkIconButtonStyle", text=G["down"], optRoundTopLeft="false", optRoundBottomLeft="false",
+                              inset=(0, 0, 4, 3))),
     # Pad mode column.
-    # (icons: a 3 x 3 grid of small squares, a note, a velocity ramp, E with M/S)
-    (r"^PadModePad", L("HwButtonStyle", text="", inset=PM, decor=GRID_ICON)),
-    (r"^PadModeChro", L("HwButtonStyle", text="♩", font=text_font(24), inset=PM)),
-    (r"^PadModeVel", L("HwButtonStyle", text="◢", font=text_font(24), inset=PM)),
-    (r"^PadModeEMS", L("HwButtonStyle", text="E", font=text_font(14, True), inset=PM, decor=EMS_ICON, realTextOffset="-3")),
+    # (icons: a 3 x 3 grid of squares, a note, a velocity ramp, E with M/S)
+    # (a heavy 2 px frame; the velocity ramp spans the face, low and wide)
+    (r"^PadModePad", L("HwButtonStyle", text="", inset=PM, decor=GRID_ICON, **PMF)),
+    (r"^PadModeChro", L("HwButtonStyle", text="♩", font=text_font(24), inset=PM, enumTextShortenAlgorithm="none", **PMF)),
+    (r"^PadModeVel", L("HwButtonStyle", text="◢", font=text_font(18), inset=PM, realTextScaleX="1.5", realTextOffsetY="2",
+                       enumTextShortenAlgorithm="none", **PMF)),
+    (r"^PadModeEMS", L("HwButtonStyle", text="E", font=text_font(14, True), inset=PM, decor=EMS_ICON, realTextOffset="-3", **PMF)),
     (r"^FullLevel", L("HwButtonStyle", text="FULL", font=text_font(8, True))),
     (r"^Erase(Up|Down)", L("HwIconButtonStyle", text=G["eraser"], font=icon_font(12))),
     (r"^Follow", L("HwButtonStyle", text="FLW", font=text_font(8, True))),
@@ -105,8 +120,9 @@ BUTTONS = [
     # LCD buttons.
     (r"^LED(Standard|Link)Button|^LinkButton", L("LcdButtonStyle")),
     (r"^LEDSmallButton", L("LcdIconButtonStyle", text=G["power"])),
-    (r"^LEDMuteButton", L("LcdMuteButtonStyle")),
-    (r"^LEDSoloButton", L("LcdSoloButtonStyle")),
+    # (v1's mute / solo bitmaps: a 2 px frame a pixel above and below the cell)
+    (r"^LEDMuteButton", L("LcdMuteButtonStyle", inset=(0, -1, 0, -1))),
+    (r"^LEDSoloButton", L("LcdSoloButtonStyle", inset=(0, -1, 0, -1))),
     (r"^LED(Ultra|Large)?MenuButton|^LEDEffectCombo|^DragEditButton", L("LcdMenuButtonStyle", ctrl=POPUP)),
     (r"^LEDRadio(Large|Micro)Left", L("LcdButtonStyle", optRoundTopRight="false", optRoundBottomRight="false")),
     (r"^LEDRadio(Large|Micro)Center", L("LcdButtonStyle", realCornerRounding="0")),
@@ -196,6 +212,10 @@ FLAT_BUTTON = L("LcdButtonStyle")
 
 # ---------------------------------------------------------------- panels (imBackground)
 
+# Mixer strips: v1's strip bitmaps start with a dark band across the top
+# (2 px down, 13 px high; the bands of neighbouring strips meet).
+STRIP_HEAD = [("inside", 0, 2, 0, 13, "LcdStripHeadStyle")]
+
 PANELS = [
     (r"^Background", L("ChassisStyle")),
     (r"^AboutBackground", L("LcdPanelStyle", colFill="Ink", colBorder="Amber", realCornerRounding="6")),
@@ -203,9 +223,9 @@ PANELS = [
     (r"^ChainHeader", L("LcdHeaderStyle")),
     (r"^FXPanelBackground", L("LcdPanelStyle")),
     (r"^BreverbBackground", L("BasePanelStyle")),
-    (r"^(MiniChannel|Pad|Aux)Background(Even)", L("LcdRowEvenStyle", realCornerRounding="3")),
-    (r"^(MiniChannel|Pad|Aux)Background(Odd)", L("LcdRowOddStyle", realCornerRounding="3")),
-    (r"^(MiniChannel|Pad|Aux)Background(Selected)", L("LcdRowSelectedStyle", realCornerRounding="3")),
+    (r"^(MiniChannel|Pad|Aux)Background(Even)", L("LcdRowEvenStyle", realCornerRounding="3", decor=STRIP_HEAD)),
+    (r"^(MiniChannel|Pad|Aux)Background(Odd)", L("LcdRowOddStyle", realCornerRounding="3", decor=STRIP_HEAD)),
+    (r"^(MiniChannel|Pad|Aux)Background(Selected)", L("LcdStripSelectedStyle", realCornerRounding="3", decor=STRIP_HEAD)),
     (r"^Pad(Controls|Edit)Background", L("LcdPanelStyle", colFill="LcdMid")),
     (r"^PadSelectionNotSelected", L("LcdRowEvenStyle")),
     (r"^PadSelectionPrimary", L("LcdRowSelectedStyle")),
@@ -238,9 +258,20 @@ KNOBS = [
     (r"^LEDSpinner", L("SpinnerStyle", ctrl={"realDialThickness": "0.2"}), "center"),
 ]
 
-# The body drawn under knobs big enough to have one: (theme style, inset as
-# a fraction of the dial).
-KNOB_BODY = {}  # (the knobs draw their own face: colFace)
+# The panels drawn under knobs big enough to have them (dials over 32 px):
+# (theme style, left, top, right, bottom as fractions of the dial), in
+# drawing order. The large hardware knob sits in a light halo with a soft
+# shadow below, inside a ring lit grey at the top and black at the bottom.
+KNOB_BODY = {
+    "HardKnobStyle": [
+        ("HardKnobHaloStyle", -0.13, -0.13, 1.13, 1.13),
+        ("HardKnobShadowStyle", 0.0, 0.6, 1.0, 1.4),
+        ("HardKnobRingStyle", 0, 0, 1, 1),
+        # (the scale's end marks, below left and right)
+        ("HardKnobMarkStyle", -0.02, 0.99, 0.05, 1.06),
+        ("HardKnobMarkStyle", 0.95, 0.99, 1.02, 1.06),
+    ],
+}
 
 # ---------------------------------------------------------------- faders, pans, meters (imBackingStrip)
 
@@ -252,7 +283,7 @@ LED = {"intSegmentSize": "3", "intSegmentGap": "1"}
 TRACK = {"colFill": "LcdFace"}
 SLIDERS = [
     (r"^(HARDVU|EngineVU)", L("StripMeterStyle", **LED)),
-    (r"VU", L("LcdMeterStyle")),  # (v1's LCD meters: plain bars)
+    (r"VU", L("LcdMeterStyle", inset=(0, 0, 1, 0))),  # (v1's LCD meters: plain 3 px bars in 4 px rects)
     (r"PanBase", L("LcdPanStyle", ctrl={"realTrackInset": "0.0"}, **TRACK)),
     (r"^LEDSmVSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="15", **TRACK)),
     (r"^LEDFatSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="20", **TRACK)),
@@ -286,7 +317,7 @@ IMAGES = [
     (r"^PreviewVol$", L("GlyphLabelStyle", text=G["speaker"], cls="CtrlLabel", font=icon_font(10))),
     (r"^MasterTuneIcon$", L("ChassisGlyphLabelStyle", text=G["a"], cls="CtrlLabel")),
     (r"^MasterVolIcon$", L("ChassisGlyphLabelStyle", text=G["speaker"], cls="CtrlLabel")),
-    (r"^SwingIcon$", L("ChassisGlyphLabelStyle", text=G["pulse"], cls="CtrlLabel")),
+    (r"^SwingIcon$", L("ChassisGlyphLabelStyle", text=G["metronome"], cls="CtrlLabel", font=icon_font(12))),
     (r"^SearchBox$", L("LcdFieldStyle", realCornerRounding="8")),
     (r"^Scene(Empty|Full|Active|Cued)", L("LcdFieldStyle", realCornerRounding="3")),
 ]

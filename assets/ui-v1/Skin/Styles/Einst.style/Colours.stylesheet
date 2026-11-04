@@ -17,6 +17,14 @@
     <VColour name="ChassisLow" colour="#C4C6C5" />
     <VColour name="ChassisEdge" colour="#3A3B3E" />
     <VColour name="ChassisBar" colour="#8B9091" />
+    <VColour name="ChassisBarLeft" colour="#7C8182" />
+    <VColour name="ChassisBarLeftEnd" colour="#838889" />
+    <VColour name="ChassisBarMid" colour="#868B8C" />
+    <VColour name="ChassisBarMidEnd" colour="#A2A7A8" />
+    <VColour name="ChassisBarRight" colour="#A6ABAB" />
+    <VColour name="ChassisBarEnd" colour="#C0C4C4" />
+    <VColour name="ChassisFrontLit" colour="#FDFEFD" />
+    <VColour name="ChassisFrontDim" colour="#BABCBB" />
     <VColour name="ChassisBacking" colour="#A0A4A5" />
     <VColour name="ChassisBackingLow" colour="#929697" />
     <VColour name="ChassisBackingEdge" colour="#707475" />
@@ -24,8 +32,9 @@
     <VColour name="ChassisWell" colour="#808185" />
     <VColour name="ChassisText" colour="#ECECEC" />
     <VColour name="Bezel" colour="#0A0B0D" />
-    <VColour name="BezelText" colour="#B2B6BC" />
-    <VColour name="BezelTextOn" colour="#B0D4F5" />
+    <VColour name="BezelText" colour="#A0A5A6" />
+    <VColour name="BezelTextOn" colour="#C4DCE8" />
+    <VColour name="BezelTextGlow" colour="#1E68C8" />
     <VColour name="BezelTabOn" colour="#262E4E" />
     <VColour name="HwFace" colour="#E6E7E9" />
     <VColour name="HwFaceLow" colour="#C2C6C8" />
@@ -36,8 +45,13 @@
     <VColour name="HwGrey" colour="#BABBBD" />
     <VColour name="HwGreyLow" colour="#A2A4A6" />
     <VColour name="HwGreyIcon" colour="#F4F5F6" />
+    <VColour name="HwGreyFaceLow" colour="#8E9092" />
+    <VColour name="HwBlueIcon" colour="#284896" />
+    <VColour name="HwIconDim" colour="#969CA0" />
+    <VColour name="MidiPin" colour="#96989A" />
     <VColour name="HwFrame" colour="#3A3E3F" />
     <VColour name="HwFrameDark" colour="#34363A" />
+    <VColour name="HwFramePad" colour="#686A6B" />
     <VColour name="HwInk" colour="#3E4044" />
     <VColour name="HwInkOn" colour="#12193C" />
     <VColour name="HwGreen" colour="#22962E" />
@@ -76,12 +90,20 @@
     <VColour name="KeyFaceSelected" colour="#F0EED6" />
     <VColour name="KeyFrame" colour="#8C8E8D" />
     <VColour name="KeyAmber" colour="#F0D232" />
-    <VColour name="KnobFace" colour="#F8F7F8" />
-    <VColour name="KnobFaceLow" colour="#BEC2C1" />
+    <VColour name="KnobFace" colour="#FAF9FA" />
+    <VColour name="KnobFaceLow" colour="#B8BBBA" />
     <VColour name="KnobRing" colour="#16191A" />
+    <VColour name="KnobRingTop" colour="#80807E" />
+    <VColour name="KnobRingLow" colour="#040405" />
+    <VColour name="KnobHalo" colour="#EEEEED" />
+    <VColour name="KnobHaloLow" colour="#DCDDDC" />
+    <VColour name="KnobHaloEdge" colour="#C4C6C5" />
+    <VColour name="KnobShadow" colour="#646868" />
+    <VColour name="KnobMark" colour="#707272" />
+    <VColour name="KnobShadowOut" colour="200, 202, 201, 0" />
     <VColour name="KnobArc" colour="#2C4678" />
     <VColour name="KnobDot" colour="#4696E6" />
-    <VColour name="KnobPointer" colour="#2C2E30" />
+    <VColour name="KnobPointer" colour="#545658" />
     <VColour name="SmallKnobFace" colour="#424342" />
     <VColour name="SmallKnobFaceLow" colour="#1A1C1B" />
     <VColour name="SmallKnobRim" colour="#696D6E" />
@@ -91,8 +113,8 @@
     <VColour name="LedGreen" colour="#46D250" />
     <VColour name="MuteOn" colour="#E8544C" />
     <VColour name="SoloOn" colour="#F0D640" />
-    <VColour name="VuTrack" colour="#A0A7B6" />
-    <VColour name="VuLit" colour="#12193C" />
+    <VColour name="VuTrack" colour="#848A9A" />
+    <VColour name="VuLit" colour="#161C30" />
     <VColour name="RowSelected" colour="#E8E2BE" />
     <VColour name="PlayPosition" colour="#9EB4C6" />
     <VColour name="GridLine" colour="#BAC1CD" />
@@ -105,15 +127,29 @@
     <VColour name="LcdFace" colour="#F0F5FB" />
     <VColour name="LcdFaceLow" colour="#DEE4EE" />
     <VColour name="LcdEdge" colour="#8C95A4" />
+    <VColour name="LcdKeyFace" colour="#EEF5FD" />
+    <VColour name="LcdKeyEdge" colour="#969EAA" />
+    <VColour name="LcdKeyText" colour="#383C48" />
     <VColour name="LcdOn" colour="#404868" />
     <VColour name="LcdOnLow" colour="#12193C" />
-    <VColour name="LcdCap" colour="#2E3542" />
-    <VColour name="LcdCapLow" colour="#0E1420" />
-    <VColour name="LcdGrip" colour="#C8D0DE" />
+    <VColour name="LcdCap" colour="#5C6272" />
+    <VColour name="LcdCapLow" colour="#0E121C" />
+    <VColour name="LcdGrip" colour="#DEE4EE" />
+    <VColour name="StripSelected" colour="#454A64" />
+    <VColour name="StripHead" colour="#40455E" />
+    <VColour name="StripHeadEdge" colour="#12172C" />
+    <VColour name="StripSelectedEdge" colour="#4E536A" />
     <VColour name="LcdGroove" colour="#8A91A0" />
     <VColour name="StripOdd" colour="#BDC4D1" />
     <VColour name="StripEven" colour="#9EA6B5" />
-    <VColour name="BrowserSel" colour="#969DB1" />
+    <VColour name="BrowserSel" colour="#9EAABA" />
+    <VColour name="BrowserTreeSel" colour="#6C7A98" />
+    <VColour name="BrowserList" colour="#E4E7EC" />
+    <VColour name="BrowserHeader" colour="#DDE2E6" />
+    <VColour name="BrowserSplit" colour="#0A0A32" />
+    <VColour name="IconLine" colour="#404454" />
+    <VColour name="IconFace" colour="#CCD1DA" />
+    <VColour name="IconDark" colour="#282E54" />
     <VColour name="ModalFill" colour="#EDEDED" />
     <VColour name="ModalGroup" colour="#E5E5E5" />
     <VColour name="ModalBorder" colour="#898989" />

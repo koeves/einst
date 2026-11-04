@@ -14,10 +14,11 @@
             <CtrlPanel name="BrowserTabs" rect="7, 23, 295, 608" id="0" overloadClass="TabbedPanel" />
         </CtrlPanel>
         <CtrlPanel name="MovePanel" rect="306, 0, 829, 640" id="0" style="EmptyPanelStyle">
+            <CtrlPanel rect="1, 423, 826, 215" style="ChassisFrontStyle" />
             <CtrlPanel rect="2, 428, 283, 11" style="ChassisBarStyle" />
-            <CtrlPanel rect="290, 428, 392, 11" style="ChassisBarStyle" />
-            <CtrlPanel rect="688, 428, 138, 11" style="ChassisBarStyle" />
-            <CtrlPanel rect="290, 500, 392, 11" style="ChassisBarStyle" />
+            <CtrlPanel rect="290, 428, 392, 11" style="ChassisBarMidStyle" />
+            <CtrlPanel rect="688, 428, 138, 11" style="ChassisBarRightStyle" />
+            <CtrlPanel rect="290, 500, 392, 11" style="ChassisBarMidStyle" />
             <CtrlPanel rect="2, 443, 58, 58" style="ChassisFrameStyle" />
             <CtrlPanel rect="2, 504, 58, 56" style="ChassisWellStyle" />
             <CtrlPanel rect="688, 437, 138, 160" style="ChassisFrameStyle" />

@@ -2,22 +2,22 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 70, 200" id="0" style="EmptyPanelStyle">
         <CtrlButtonGroup name="PadMode" rect="4, 9, 52, 55" id="100001" style="BasePanelStyle">
-            <CtrlButton name="CtrlButton" rect="1, 0, 24, 23" displayName="Sample trigger mode" id="0" optIsMomentary="false" style="PadModePadsStyle" text="">
-                <CtrlPanel rect="6, 5, 3, 3" style="PadModeIconStyle" />
-                <CtrlPanel rect="11, 5, 3, 3" style="PadModeIconStyle" />
-                <CtrlPanel rect="16, 5, 3, 3" style="PadModeIconStyle" />
-                <CtrlPanel rect="6, 10, 3, 3" style="PadModeIconStyle" />
-                <CtrlPanel rect="11, 10, 3, 3" style="PadModeIconStyle" />
-                <CtrlPanel rect="16, 10, 3, 3" style="PadModeIconStyle" />
-                <CtrlPanel rect="6, 15, 3, 3" style="PadModeIconStyle" />
-                <CtrlPanel rect="11, 15, 3, 3" style="PadModeIconStyle" />
-                <CtrlPanel rect="16, 15, 3, 3" style="PadModeIconStyle" />
+            <CtrlButton name="CtrlButton" rect="1, 1, 21, 21" displayName="Sample trigger mode" id="0" optIsMomentary="false" style="PadModePadsStyle" text="">
+                <CtrlPanel rect="3, 4, 4, 4" style="PadModeIconStyle" />
+                <CtrlPanel rect="8, 4, 4, 4" style="PadModeIconStyle" />
+                <CtrlPanel rect="13, 4, 4, 4" style="PadModeIconStyle" />
+                <CtrlPanel rect="3, 9, 4, 4" style="PadModeIconStyle" />
+                <CtrlPanel rect="8, 9, 4, 4" style="PadModeIconStyle" />
+                <CtrlPanel rect="13, 9, 4, 4" style="PadModeIconStyle" />
+                <CtrlPanel rect="3, 14, 4, 4" style="PadModeIconStyle" />
+                <CtrlPanel rect="8, 14, 4, 4" style="PadModeIconStyle" />
+                <CtrlPanel rect="13, 14, 4, 4" style="PadModeIconStyle" />
             </CtrlButton>
-            <CtrlButton name="CtrlButton" rect="27, 0, 24, 23" displayName="Chromatic playback mode" id="1" optIsMomentary="false" style="PadModeChromaticStyle" text="♩" />
-            <CtrlButton name="CtrlButton" rect="1, 24, 24, 23" displayName="Velocity playback mode" id="2" optIsMomentary="false" style="PadModeVelocityStyle" text="◢" />
-            <CtrlButton name="CtrlButton" rect="27, 24, 24, 23" displayName="Engine Mute / Solo mode" id="3" optIsMomentary="false" style="PadModeEMSStyle" text="E">
-                <CtrlPanel rect="17, 7, 3, 3" style="PadModeIconStyle" />
-                <CtrlPanel rect="17, 13, 3, 3" style="PadModeIconStyle" />
+            <CtrlButton name="CtrlButton" rect="27, 1, 21, 21" displayName="Chromatic playback mode" id="1" optIsMomentary="false" style="PadModeChromaticStyle" text="♩" />
+            <CtrlButton name="CtrlButton" rect="1, 25, 21, 21" displayName="Velocity playback mode" id="2" optIsMomentary="false" style="PadModeVelocityStyle" text="◢" />
+            <CtrlButton name="CtrlButton" rect="27, 25, 21, 21" displayName="Engine Mute / Solo mode" id="3" optIsMomentary="false" style="PadModeEMSStyle" text="E">
+                <CtrlPanel rect="15, 5, 3, 3" style="PadModeIconStyle" />
+                <CtrlPanel rect="15, 11, 3, 3" style="PadModeIconStyle" />
             </CtrlButton>
         </CtrlButtonGroup>
         <CtrlButton name="FullLevelButton" rect="4, 69, 25, 27" displayName="Full level mode" id="100000" optIsMomentary="false" style="FullLevelStyle" text="FULL" />
