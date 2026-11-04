@@ -170,7 +170,9 @@ fn layer_version(n: &Node) -> u32 {
     n.attr("Ver").and_then(|v| v.parse::<f32>().ok()).map(|v| (v * 1000.0 + 0.5) as u32).unwrap_or(LAYER_VERSION)
 }
 
-const V1_ONLY_LAYER_ATTRS: [&str; 7] = ["Ver", "V2C", "V2P", "UsesTimestretch", "TSTracksBPM", "SourceBPM", "DestinationBPM"];
+/// Dropped v1 layer attributes. `SourceBPM` and `DestinationBPM` stay: the
+/// engine's v1 timestretch ratio reads them ([re:d8985e]).
+const V1_ONLY_LAYER_ATTRS: [&str; 5] = ["Ver", "V2C", "V2P", "UsesTimestretch", "TSTracksBPM"];
 
 /// [re:87acba] (v2 [re:6f7ded], ev_5075e9a1) loading a v1 layer.
 fn layer(n: &Node) -> Node {
@@ -197,6 +199,15 @@ fn layer(n: &Node) -> Node {
         set(&mut out, LayerParam::TimestretchTracksBPM.name(), on("TSTracksBPM"));
         let fast = n.attr("TSMode").is_some_and(|m| m == "Fast");
         set(&mut out, LayerParam::TimestretchMode.name(), if fast { 1.0 } else { 0.0 });
+        // v1's stretch is source over destination BPM ([re:d8985e]); as
+        // the amount (the length in %), as the editor sets it.
+        if n.attr("SourceBPM").is_some() || n.attr("DestinationBPM").is_some() {
+            let (src, dst) = (f("SourceBPM").unwrap_or(120.0) as f64, f("DestinationBPM").unwrap_or(120.0) as f64);
+            if src > 0.0 && dst > 0.0 && src != dst {
+                let amount = LayerParam::TimestretchAmount.curve().from_units((100.0 * src / dst) as f32).clamp(0.0, 1.0);
+                set(&mut out, LayerParam::TimestretchAmount.name(), amount);
+            }
+        }
     }
     // Below 3200 (v1 `Ver` < 3.2): the old cutoff/resonance scales. v1's own
     // remap (ev_7c48010c) and v2's are the same formula.

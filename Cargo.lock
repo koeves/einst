@@ -1095,6 +1095,7 @@ dependencies = [
 name = "einst-formats"
 version = "0.1.0"
 dependencies = [
+ "dreist-dsp",
  "dreist-engine",
  "dreist-formats",
  "thiserror 2.0.21",
