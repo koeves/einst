@@ -1,7 +1,9 @@
 //! Render Einst's editor to PNGs: `screens [out_dir]` (default
-//! `docs/screens/m3a`). Uses the demo project when installed, else a new
-//! project; one image per LCD page, the mapping column, the About and
-//! preferences dialogs and the main menu.
+//! `docs/screens/m4`). Uses the demo project when installed, else a new
+//! project; one image per LCD page, the mapping column, the dialogs
+//! (About, preferences, export, audio and MIDI settings, MIDI console),
+//! the effect panels authored for the newer types, the slicer and the
+//! main menu.
 
 use einst_editor::{Editor, Model};
 
@@ -19,7 +21,7 @@ fn editor() -> Editor {
 
 fn main() {
     einst::install();
-    let out = std::path::PathBuf::from(std::env::args().nth(1).unwrap_or_else(|| "docs/screens/m3a".into()));
+    let out = std::path::PathBuf::from(std::env::args().nth(1).unwrap_or_else(|| "docs/screens/m4".into()));
     std::fs::create_dir_all(&out).expect("out dir");
     let save = |ed: &mut Editor, name: &str| {
         let p = out.join(format!("{name}.png"));
@@ -34,16 +36,39 @@ fn main() {
         ed.sync();
         save(&mut ed, name);
     }
+    // The pad view of the Pad/Layers page (velocity split lanes under
+    // their ruler): a press on the pad item.
+    let mut ed = editor();
+    ed.model.editor_tab = 3;
+    ed.sync();
+    if let Some(p) = ed.app.root.path_of("PadSelection") {
+        let ev = dreist_gui::app::UiEvent::Mouse { path: p, overload: "PadSelectionButton".into(), kind: dreist_gui::app::MouseKind::Down, x: 2.0, y: 2.0 };
+        ed.handle(&ev);
+        // Velocity split mode: the lanes show.
+        let (e, pad) = (ed.model.engine, ed.model.pad[ed.model.engine]);
+        ed.model.engine_mut(e).child_mut_or_insert("Pad", &format!("Pad{pad}")).set("PadMode", dreist_dsp::voices::LAYER_MODE_NAMES[1]);
+        ed.sync();
+        save(&mut ed, "pad-view");
+    }
     let mut ed = editor();
     ed.model.utility_tab = 1;
     ed.sync();
     save(&mut ed, "mapping");
-    for modal in ["about", "preferences"] {
+    for modal in ["about", "preferences", "export", "audio", "midi", "console"] {
         let mut ed = editor();
         ed.show_modal(modal);
         std::thread::sleep(std::time::Duration::from_millis(600));
         ed.animate();
         save(&mut ed, modal);
+    }
+    let mut ed = editor();
+    einst_editor::screens::newer_effects(&mut ed);
+    save(&mut ed, "fx-newer-types");
+    let mut ed = editor();
+    if ed.open_slicer(&dreist_formats::legacy::demo("Hits/Cymbals/CY Cym Ar82 01 C2A St GB.wav")) {
+        std::thread::sleep(std::time::Duration::from_millis(400));
+        ed.animate();
+        save(&mut ed, "slicer");
     }
     // The master section's main menu.
     let mut ed = editor();

@@ -3706,23 +3706,258 @@ fn graph_halve_double_and_toolbar_insert() {
     assert!(steps >= n, "the track filled from step 1");
 }
 
-/// The standalone's audio / MIDI settings panels need their skins; a skin
-/// set without them opens nothing and leaves the editor usable.
+/// A device host for the standalone's settings panels: two outputs (B
+/// with its own rates), one input, two MIDI inputs and one output; counts
+/// the audio restarts.
+struct FakeDevices(std::sync::Arc<std::sync::atomic::AtomicUsize>);
+
+impl devices::DeviceHost for FakeDevices {
+    fn audio(&self, output: &str, _input: &str) -> devices::AudioSetup {
+        let rates = if output == "B" { vec![48000, 96000] } else { vec![44100, 48000] };
+        devices::AudioSetup { outputs: vec!["A".into(), "B".into()], inputs: vec!["Mic".into()], default_output: "A".into(), default_rate: rates[0], rates, out_channels: 4, in_channels: 2 }
+    }
+    fn midi(&self) -> devices::MidiSetup {
+        devices::MidiSetup { inputs: vec!["Pads".into(), "Keys".into()], outputs: vec!["Synth".into()] }
+    }
+    fn restart(&self, _: &dreist_formats::Node, _: Option<&std::path::Path>) {
+        self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    }
+}
+
+/// A control of the panel at `overlay` by name.
+fn panel_ctrl(ed: &Editor, overlay: &[usize], name: &str) -> Vec<usize> {
+    [overlay.to_vec(), ed.app.ctrl(overlay).unwrap().path_of(name).unwrap_or_else(|| panic!("no {name}"))].concat()
+}
+
+fn click_named(ed: &mut Editor, path: &[usize], on: bool) {
+    let name = ed.app.ctrl(path).unwrap().name.clone();
+    ed.handle(&UiEvent::Clicked { path: path.to_vec(), name, id: 0, on });
+}
+
+/// The standalone's audio settings (the v1 set's authored dialog): it
+/// opens from the menu, its popups list the host's devices, rates and
+/// buffers, the channel tabs switch, Cancel puts the choices back and OK
+/// after a change restarts audio.
 #[test]
-fn device_panels_without_their_skins_open_nothing() {
+fn audio_settings_dialog_opens_and_works() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
-    for p in [devices::Panel::Audio, devices::Panel::Midi] {
-        if ed.devices.available(p) {
-            continue;
-        }
-        ed.menu_command(if p == devices::Panel::Audio { crate::editor::shortcuts::MENU_AUDIO } else { crate::editor::shortcuts::MENU_MIDI });
-        ed.show_modal(if p == devices::Panel::Audio { "audio" } else { "midi" });
-        // The page tabs still answer.
-        let g = ed.app.root.path_of("MainTabButtons").unwrap();
-        let b = [g, vec![front::SONG_PAGE]].concat();
-        ed.handle(&UiEvent::Clicked { path: b, name: String::new(), id: 0, on: true });
-        assert_eq!(ed.model.editor_tab, front::SONG_PAGE);
-        ed.model.editor_tab = 0;
+    assert!(ed.devices.available(devices::Panel::Audio), "the v1 set has the audio dialog");
+    let restarts = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    ed.devices.host = Some(Box::new(FakeDevices(restarts.clone())));
+    ed.menu_command(crate::editor::shortcuts::MENU_AUDIO);
+    assert_eq!(ed.devices.open, Some(devices::Panel::Audio));
+    let o = ed.devices.overlay_path(devices::Panel::Audio).unwrap();
+    assert!(ed.app.ctrl(&o).unwrap().visible);
+    // The Windows driver panel and the check box template stay hidden.
+    for n in ["WinSettingPanel", "CheckBox"] {
+        assert!(!ed.app.ctrl(&panel_ctrl(&ed, &o, n)).unwrap().visible, "{n}");
     }
+    assert_eq!(ed.app.ctrl(&panel_ctrl(&ed, &o, "OutDevice")).unwrap().text, "A");
+    assert_eq!(ed.app.ctrl(&panel_ctrl(&ed, &o, "SampleRate")).unwrap().text, "44100");
+    // The output popup: pick B; its rate follows.
+    let out_dev = panel_ctrl(&ed, &o, "OutDevice");
+    click_named(&mut ed, &out_dev, false);
+    assert_eq!(ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap_or_default(), ["A", "B"]);
+    ed.app.menu = None;
+    ed.handle(&UiEvent::MenuSelected { anchor: out_dev.clone(), name: "OutDevice".into(), index: 1 });
+    ed.sync();
+    assert_eq!(ed.app.ctrl(&out_dev).unwrap().text, "B");
+    assert_eq!(ed.app.ctrl(&panel_ctrl(&ed, &o, "SampleRate")).unwrap().text, "48000");
+    // Buffer sizes.
+    let buf = panel_ctrl(&ed, &o, "BufferSize");
+    click_named(&mut ed, &buf, false);
+    assert_eq!(ed.app.menu.as_ref().unwrap().items.len(), devices::BUFFER_SIZES.len());
+    ed.app.menu = None;
+    ed.handle(&UiEvent::MenuSelected { anchor: buf, name: "BufferSize".into(), index: 2 });
+    assert_eq!(ed.devices.settings().buffer, 128);
+    // INPUTS / OUTPUTS.
+    let group = panel_ctrl(&ed, &o, "IOGroup");
+    let outputs = [group.clone(), vec![1]].concat();
+    click_named(&mut ed, &outputs, true);
+    ed.sync();
+    assert!(ed.app.ctrl(&outputs).unwrap().on && !ed.app.ctrl(&[group, vec![0]].concat()).unwrap().on);
+    // Cancel: back to A, no restart.
+    let cancel = panel_ctrl(&ed, &o, "Cancel");
+    click_named(&mut ed, &cancel, false);
+    assert_eq!(ed.devices.open, None);
+    assert_eq!(ed.devices.settings().output, "");
+    assert_eq!(restarts.load(std::sync::atomic::Ordering::SeqCst), 0);
+    // Again with OK: the change restarts audio.
+    ed.menu_command(crate::editor::shortcuts::MENU_AUDIO);
+    ed.handle(&UiEvent::MenuSelected { anchor: out_dev, name: "OutDevice".into(), index: 1 });
+    let ok = panel_ctrl(&ed, &o, "Close");
+    assert_eq!(ed.app.ctrl(&ok).unwrap().text, "OK");
+    click_named(&mut ed, &ok, false);
+    assert_eq!(ed.devices.open, None);
+    assert_eq!(restarts.load(std::sync::atomic::Ordering::SeqCst), 1);
+    // Refresh re-reads the devices without closing.
+    ed.menu_command(crate::editor::shortcuts::MENU_AUDIO);
+    let refresh = panel_ctrl(&ed, &o, "Refresh");
+    click_named(&mut ed, &refresh, false);
+    assert_eq!(ed.devices.open, Some(devices::Panel::Audio));
+}
+
+/// The standalone's MIDI settings: both tables list the host's devices,
+/// a click on a row's box picks that device (again: none), clock sync is
+/// off in the port, Cancel restores.
+#[test]
+fn midi_settings_dialog_opens_and_works() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    assert!(ed.devices.available(devices::Panel::Midi));
+    let restarts = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    ed.devices.host = Some(Box::new(FakeDevices(restarts.clone())));
+    ed.menu_command(crate::editor::shortcuts::MENU_MIDI);
+    assert_eq!(ed.devices.open, Some(devices::Panel::Midi));
+    let o = ed.devices.overlay_path(devices::Panel::Midi).unwrap();
+    let inputs = panel_ctrl(&ed, &o, "InputTable");
+    assert_eq!(ed.app.ctrl(&inputs).unwrap().overload, "DeviceTable:InputTable");
+    assert_eq!(ed.app.ctrl(&panel_ctrl(&ed, &o, "OutputTable")).unwrap().overload, "DeviceTable:OutputTable");
+    assert!(!ed.app.ctrl(&panel_ctrl(&ed, &o, "Sync")).unwrap().enabled, "no clock sync in the port");
+    // The second input's box (row 2 under the 20 px header).
+    let down = |ed: &mut Editor, path: &[usize], y: f32| {
+        ed.handle(&UiEvent::Mouse { path: path.to_vec(), overload: ed.app.ctrl(path).unwrap().overload.clone(), kind: dreist_gui::app::MouseKind::Down, x: 25.0, y });
+    };
+    down(&mut ed, &inputs, 20.0 + 18.0 + 5.0);
+    assert_eq!(ed.devices.settings().midi_in, "Keys");
+    down(&mut ed, &inputs, 20.0 + 18.0 + 5.0);
+    assert_eq!(ed.devices.settings().midi_in, "", "a second click turns it off");
+    let outputs = panel_ctrl(&ed, &o, "OutputTable");
+    down(&mut ed, &outputs, 25.0);
+    assert_eq!(ed.devices.settings().midi_out, "Synth");
+    let cancel = panel_ctrl(&ed, &o, "Cancel");
+    click_named(&mut ed, &cancel, false);
+    assert_eq!((ed.devices.open, ed.devices.settings().midi_out.as_str()), (None, ""));
+    assert_eq!(restarts.load(std::sync::atomic::Ordering::SeqCst), 0);
+}
+
+/// The MIDI console (main menu › Show MIDI console): incoming messages
+/// as text, the filters and Clear.
+#[test]
+fn midi_console_opens_and_filters() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.show_modal("console");
+    assert!(ed.midiconsole.open, "the v1 set has the console");
+    let o = ed.midiconsole.overlay_path().unwrap();
+    assert!(ed.app.ctrl(&o).unwrap().visible);
+    assert_eq!(ed.app.ctrl(&panel_ctrl(&ed, &o, "OutputView")).unwrap().overload, "MIDIConsoleView");
+    ed.midi_in(&[[0x90, 60, 100], [0xb0, 7, 64]]);
+    assert_eq!(ed.midiconsole.lines.len(), 2);
+    // Notes off: notes are no longer listed.
+    let notes = panel_ctrl(&ed, &o, "Notes");
+    click_named(&mut ed, &notes, false);
+    ed.midi_in(&[[0x90, 62, 100], [0xb0, 7, 65]]);
+    assert_eq!(ed.midiconsole.lines.len(), 3);
+    assert!(ed.midiconsole.lines[2].starts_with("C-Change"));
+    let clear = panel_ctrl(&ed, &o, "Clear");
+    click_named(&mut ed, &clear, false);
+    assert!(ed.midiconsole.lines.is_empty());
+}
+
+/// The effect types v1 had no skin for (a newer format's projects can
+/// hold them) get panels in v1's style: the slot shows a control per
+/// parameter (a combo for an option parameter) and the controls set the
+/// parameters.
+#[test]
+fn newer_effect_types_show_working_panels() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    let kinds = [6, 7, 10, 13, 14, 20, 21, 22, 26, 27, 37, 44, 45, 46, 47];
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = front::ENGINE_MIXER_PAGE;
+    for kind in kinds {
+        // A project's engine chain holding the effect in slot 1.
+        let e = ed.model.engine;
+        let chain = ed.model.engine_mut(e).child_mut_or_insert("EffectChain", "EffectChain");
+        chain.children.retain(|c| c.class != "Effect");
+        let mut fx = dreist_formats::Node::new("Effect", Some("Effect0"));
+        fx.set("EffectType", dreist_formats::params::EFFECT_TYPES[kind]).set("IsActive", "true");
+        chain.children.push(fx);
+        ed.sync();
+        let page = ed.mixers.iter().find(|m| m.kind == mixer::Kind::Engine).unwrap().page.clone();
+        let row = [page.clone(), ed.app.ctrl(&page).unwrap().path_of("ChainPanelScroll").expect("slot row")].concat();
+        let slot = [row.clone(), vec![0]].concat();
+        assert_eq!(ed.app.ctrl(&slot).unwrap().attr("fxKind"), Some(kind.to_string().as_str()), "kind {kind}");
+        let names = dreist_formats::params::effect_param_names(kind);
+        for (n, pname) in names.iter().enumerate() {
+            let c = ed.app.ctrl(&slot).unwrap().find(&format!("Control{}", n + 1)).unwrap_or_else(|| panic!("kind {kind}: no control for {pname}")).clone();
+            assert!(c.visible, "kind {kind}: {pname}");
+            if dreist_formats::params::effect_option_strings(kind, n).is_some() {
+                assert_eq!(c.class, "CtrlPopupButton", "kind {kind}: {pname} is an option");
+            }
+        }
+        // The first knob sets its parameter.
+        let (k, knob) = (0..names.len()).find_map(|n| ed.app.ctrl(&slot).unwrap().find(&format!("Control{}", n + 1)).filter(|c| c.class == "CtrlKnob").map(|c| (n, c.name.clone()))).unwrap();
+        let path = [slot.clone(), ed.app.ctrl(&slot).unwrap().path_of(&knob).unwrap()].concat();
+        ed.take_commands();
+        ed.handle(&UiEvent::ValueChanged { path, name: knob, id: 0, value: 0.25 });
+        let sent = ed.take_commands().into_iter().any(|c| matches!(c, Command::Message(m) if m.kind == id::SET_FX_PARAMETER && m.value[0] == k as f32 && (m.value[2] - 0.25).abs() < 1e-6));
+        assert!(sent, "kind {kind}: the knob sets parameter {k}");
+    }
+}
+
+/// The pen tool's right button opens the track's menu (as the track name
+/// area does) instead of deleting the step.
+#[test]
+fn pen_tool_right_click_opens_the_track_menu() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    use dreist_gui::app::MouseKind;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = 0;
+    ed.sync();
+    let gp = ed.app.root.path_of("PatternGrid").unwrap();
+    let lay = ed.pattern.as_ref().unwrap().layout(&ed.app, &ed.model).unwrap();
+    let (x, y) = (lay.step_x(2) + 2.0, lay.row_y(lay.row(3).unwrap()) + 2.0);
+    // A step on, with the multi tool's left button.
+    ed.handle(&UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind: MouseKind::Down, x, y });
+    ed.handle(&UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind: MouseKind::Up, x, y });
+    ed.pattern.as_mut().unwrap().tool = crate::pattern::Tool::Pen;
+    ed.take_commands();
+    ed.handle(&UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind: MouseKind::RightDown, x, y });
+    let items = ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap_or_default();
+    assert!(items.first().is_some_and(|i| i.contains("Cut")), "{items:?}");
+    assert!(items.iter().any(|i| i == "Clear track"));
+    assert!(!ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == id::SET_STEP_OFF)), "no delete");
+    assert_eq!(ed.model.pad[ed.model.engine], 3, "the track's pad is selected");
+    // The menu acts on that track: Clear track.
+    let clear = items.iter().position(|i| i == "Clear track").unwrap();
+    ed.app.menu = None;
+    ed.handle(&UiEvent::MenuSelected { anchor: gp, name: "PatternGrid".into(), index: clear });
+    let e = ed.model.engine;
+    assert!(!ed.model.pattern(e, ed.model.current_pattern(e)).tracks[3].steps[2].on, "Clear track cleared it");
+}
+
+/// The slicer's zoom scrollbar (added under the wave): dragging the
+/// thumb scrolls the zoomed view; it draws in the zoom slider style.
+#[test]
+fn slicer_zoom_scrollbar_scrolls() {
+    crate::app::test_setup();
+    use dreist_gui::app::MouseKind;
+    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    if !ed.open_slicer(&dreist_formats::legacy::demo("Hits/Cymbals/CY Cym Ar82 01 C2A St GB.wav")) {
+        return;
+    }
+    ed.sync();
+    let bar = ed.app.root.path_of(crate::slicer::ZOOM_BAR).expect("zoom bar");
+    let w = ed.app.ctrl(&bar).unwrap().rect.w as f32;
+    let panel = bar[..bar.len() - 1].to_vec();
+    let zoom_in = [panel.clone(), ed.app.ctrl(&panel).unwrap().path_of("ZoomInButton").unwrap()].concat();
+    // Zoomed in twice: a quarter of the file on view, in its middle.
+    let full = ed.slicer.view;
+    for _ in 0..2 {
+        ed.handle(&UiEvent::Clicked { path: zoom_in.clone(), name: "ZoomInButton".into(), id: 0, on: false });
+    }
+    let v = ed.slicer.view;
+    assert!(v.1 - v.0 < (full.1 - full.0) / 3, "{v:?}");
+    // Drag the thumb (from its middle) by a quarter of the track.
+    let x0 = (v.0 + v.1) as f32 / 2.0 / full.1 as f32 * w;
+    ed.handle(&UiEvent::Mouse { path: bar.clone(), overload: "WaveDisplayZoomSlider".into(), kind: MouseKind::Down, x: x0, y: 5.0 });
+    ed.handle(&UiEvent::Mouse { path: bar.clone(), overload: "WaveDisplayZoomSlider".into(), kind: MouseKind::Drag, x: x0 + w * 0.25, y: 5.0 });
+    ed.handle(&UiEvent::Mouse { path: bar, overload: "WaveDisplayZoomSlider".into(), kind: MouseKind::Up, x: x0 + w * 0.25, y: 5.0 });
+    let moved = ed.slicer.view;
+    assert!(moved.0 > v.0, "scrolled: {v:?} -> {moved:?}");
+    assert_eq!(moved.1 - moved.0, v.1 - v.0, "same zoom");
 }
