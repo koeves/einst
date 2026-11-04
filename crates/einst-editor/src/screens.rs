@@ -1,6 +1,6 @@
 //! Pixel regression: fingerprints of the editor rendered in fixed states
 //! (every LCD page, the mapping column, a pad mode, the dialogs, the
-//! slicer, the main menu) so refactors are checked pixel for pixel
+//! effect panels authored for the newer types, the slicer, the main menu) so refactors are checked pixel for pixel
 //! (`tests/golden/screens.txt`; `UPDATE_GOLDEN=1` rewrites it). Skipped
 //! without the factory content. Apps run [`check_screens`] with their own
 //! profile installed.
@@ -41,6 +41,21 @@ pub fn click(ed: &mut Editor, spec: &str, button: dreist_gui::app::MouseButton) 
     }
 }
 
+/// The engine mixer with four of the effect types v1 had no skin for in
+/// the selected engine's chain (Bloom, Maul, Reverb, Driver).
+pub fn newer_effects(ed: &mut Editor) {
+    ed.model.editor_tab = crate::front::ENGINE_MIXER_PAGE;
+    let e = ed.model.engine;
+    let chain = ed.model.engine_mut(e).child_mut_or_insert("EffectChain", "EffectChain");
+    chain.children.retain(|c| c.class != "Effect");
+    for (slot, kind) in [45, 22, 44, 21].into_iter().enumerate() {
+        let mut fx = dreist_formats::Node::new("Effect", Some(&format!("Effect{slot}")));
+        fx.set("EffectType", dreist_formats::params::EFFECT_TYPES[kind]).set("IsActive", "true");
+        chain.children.push(fx);
+    }
+    ed.sync();
+}
+
 pub fn shot(ed: &mut Editor) -> u64 {
     fnv_bytes(ed.render(1.0).data())
 }
@@ -72,7 +87,7 @@ pub fn check_screens(name: &str) {
     ed.model.engine_mut(e).set("EnginePadMode", "Chromatic");
     ed.sync();
     golden.check("chromatic-pads", shot(&mut ed), &[]);
-    for modal in ["about", "preferences", "export", "filefind"] {
+    for modal in ["about", "preferences", "export", "filefind", "audio", "midi", "console"] {
         let mut ed = editor().unwrap();
         ed.show_modal(modal);
         // Let the dialog slide in.
@@ -80,6 +95,11 @@ pub fn check_screens(name: &str) {
         ed.animate();
         golden.check(&format!("modal-{modal}"), shot(&mut ed), &[]);
     }
+    // The effect panels authored for the types v1 had no skin for, in the
+    // engine mixer's chain.
+    let mut ed = editor().unwrap();
+    newer_effects(&mut ed);
+    golden.check("fx-newer-types", shot(&mut ed), &[]);
     // The slicer over the LCD (slid in) on a factory hit.
     let mut ed = editor().unwrap();
     if ed.open_slicer(&dreist_formats::legacy::demo("Hits/Cymbals/CY Cym Ar82 01 C2A St GB.wav")) {
