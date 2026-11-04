@@ -11,8 +11,8 @@
         <CtrlPanel name="Split0" rect="138, 62, 508, 40" displayName="Layer 1 Velocity range" id="100002" overloadClass="EditorSplitControl" />
         <CtrlKnob name="Send1" rect="82, 64, 24, 26" displayName="Send 1" id="100016" realDialThickness="0.22" style="LEDKnobSmallLR" />
         <CtrlSlider name="Gain" rect="24, 65, 18, 106" displayName="Gain" id="100000" realTrackInset="0.0" style="FatVerticalFaderStyle" />
-        <CtrlLevelStrip name="VULeft" rect="47, 65, 4, 106" id="100012" style="VU106" />
-        <CtrlLevelStrip name="VURight" rect="52, 65, 4, 106" id="100013" style="VU106" />
+        <CtrlLevelStrip name="VULeft" rect="47, 65, 3, 106" id="100012" style="VU106" />
+        <CtrlLevelStrip name="VURight" rect="52, 65, 3, 106" id="100013" style="VU106" />
         <CtrlLabel name="SendImage0" rect="62, 68, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="" />
         <CtrlLabel name="CtrlLabel" rect="62, 68, 16, 18" id="100004" style="StandardLabelStyle" text="S1" />
         <CtrlKnob name="Send2" rect="82, 92, 24, 26" displayName="Send 2" id="100017" realDialThickness="0.22" style="LEDKnobSmallLR" />

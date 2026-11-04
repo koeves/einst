@@ -204,6 +204,11 @@ fn demo_state(c: &mut Ctrl) {
             k.walk_mut(&mut |s| match s.name.as_str() {
                 "NameLabel" => s.text = no.to_string(),
                 "OutputCombo" => s.text = "Master".into(),
+                // As on v1's mixer screen: centred pans, faders a little
+                // under unity, a third of the meters lit.
+                "PanKnob" => s.set_attr("demoValue", "0.5".into()),
+                "GainSlider" => s.set_attr("demoValue", "0.62".into()),
+                "VUMeterLeft" | "VUMeterRight" => s.set_attr("demoValue", "0.37".into()),
                 n if n.starts_with("Swing")
                     || n.starts_with("EngineSwing")
                     || n.starts_with("EnginePitch")
@@ -218,10 +223,13 @@ fn demo_state(c: &mut Ctrl) {
             });
         }
     });
-    // Mixer strips alternate (v1's code picks the even / odd backgrounds).
+    // Mixer strips alternate (v1's code picks the even / odd backgrounds);
+    // strip 6 is the selected one, as on v1's mixer screen.
     c.walk_mut(&mut |k| {
         if let Some(n) = k.name.strip_prefix("Channel").and_then(|n| n.parse::<u32>().ok()) {
-            if k.style == "EngineChannelBackgroundOdd" && n % 2 == 1 {
+            if k.style == "EngineChannelBackgroundOdd" && n == 5 {
+                k.style = "EngineChannelBackgroundSelected".into();
+            } else if k.style == "EngineChannelBackgroundOdd" && n % 2 == 1 {
                 k.style = "EngineChannelBackgroundEven".into();
             }
         }
@@ -274,6 +282,9 @@ fn demo_state(c: &mut Ctrl) {
             }
             "CtrlListBox" => k.set_attr("rows", "Kick 01.wav\nSnare 03.wav\nHat Closed.wav".into()),
             _ => {}
+        }
+        if let Some(v) = k.attr("demoValue").and_then(|v| v.parse::<f32>().ok()) {
+            k.value = v;
         }
         match k.name.as_str() {
             "MasterPitch" => k.value = 0.5,
@@ -434,13 +445,12 @@ fn song_lanes(skin: &mut Skin, page: &mut Ctrl) {
 }
 
 /// The browser column between its header and footer: crumbs, the source
-/// tree, the file list and the shortlist (BrowserTabs coordinates).
+/// tree, the file list and the shortlist (BrowserTabs coordinates), as on
+/// v1's pattern screen.
 fn browser(tabs: &mut Ctrl) {
     let mut x = 1;
-    for (i, crumb) in ["samples", "Einst Content", "Factory", "Loops", "Hip Hop"].iter().enumerate() {
-        let w = 16 + 5 * crumb.len() as i32;
-        let mut b = ctrl("CtrlButton", Rect::new(x, 37, w, 18), "BrowserCrumbStyle", crumb);
-        b.on = i == 4;
+    for (i, (crumb, w)) in [("..", 21), ("Factory Presets", 78), ("Drum Kits", 100)].iter().enumerate() {
+        let mut b = ctrl("CtrlButton", Rect::new(x, 37, *w, 18), "BrowserCrumbStyle", crumb);
         if i == 0 {
             b.set_attr("optArrowNotch", "false".into());
         }
@@ -448,23 +458,26 @@ fn browser(tabs: &mut Ctrl) {
         // The next crumb's notch takes this one's point.
         x += w - 5;
     }
+    // (text, heading, icon)
     let tree: &[(&str, bool, &str)] = &[
         ("\u{25BC} CONTENT", true, ""),
-        ("Factory", false, "folder"),
+        ("Einst Factory", false, "book"),
         ("\u{25BC} PLACES", true, ""),
-        ("Home", false, "folder"),
-        ("Documents", false, "folder"),
-        ("Desktop", false, "folder"),
+        ("Einst", false, "home"),
+        ("My Documents", false, "folder"),
+        ("Desktop", false, "desktop"),
         ("\u{25BC} DRIVES", true, ""),
-        ("Hard Drive", false, "folder"),
-        ("\u{25BC} FAVOURITES", true, ""),
-        ("Lo Fi", false, "folder"),
-        ("Processed", false, "folder"),
+        ("C:\\", false, "drive"),
+        ("D:\\", false, "drive"),
+        ("E:\\", false, "drive"),
+        ("F:\\", false, "disc"),
+        ("Z:\\", false, "drive"),
+        ("FAVOURITES", true, ""),
         ("SEARCHES", true, ""),
         ("SHORTLISTS", true, ""),
     ];
-    for (i, (text, head, icon)) in tree.iter().enumerate() {
-        let r = Rect::new(1, 60 + i as i32 * 20, 110, 20);
+    for (i, (text, head, kind)) in tree.iter().enumerate() {
+        let r = Rect::new(1, 60 + i as i32 * 20, 96, 20);
         let style = if *head {
             "BrowserTreeHeadStyle"
         } else if i == 1 {
@@ -473,38 +486,99 @@ fn browser(tabs: &mut Ctrl) {
             "BrowserTreeItemStyle"
         };
         tabs.children.push(label(r, style, text));
-        if !icon.is_empty() {
-            tabs.children.push(label(Rect::new(8, r.y, 14, 20), "BrowserTreeIconStyle", "\u{E911}"));
+        if !kind.is_empty() {
+            tabs.children.push(icon(Rect::new(14, r.y, 20, 20), kind, i == 1));
         }
     }
-    tabs.children.push(ctrl("CtrlButton", Rect::new(116, 58, 176, 18), "BrowserParentStyle", "Parent folder"));
-    let files = [
-        "065 Elecbeat 01 KS", "075 Kick&Snare 01 GC", "075 Kick&Snare 02 GC", "075 Kick&Snare 03 GC", "075 Percussion 02 GC", "075 Percussion 03 GC", "080 Elecbeat 01 KS", "080 Hats 01 GC",
-        "080 Kick&Snare 01 GC", "085 Elecbeat 01 KS", "085 Elecbeat 02 KS", "085 Kick&Snare 01 GC", "085 Kick&Snare 02 GC", "085 Kick&Snare 03 GC",
-    ];
-    let list = |r: Rect, rows: &[&str], ty: &str, badge: &str, header: bool| {
-        let mut t = ctrl("CtrlTableView", r, "BrowserListStyle", "");
-        if header {
-            t.set_attr("columns", "Name \u{25BC}|Type".into());
-        } else {
-            t.set_attr("optHeader", "false".into());
+    // The splitter between the tree and the list.
+    tabs.children.push(panel(Rect::new(99, 59, 2, 520), "BrowserSplitStyle"));
+    tabs.children.push(ctrl("CtrlButton", Rect::new(104, 59, 186, 18), "BrowserParentStyle", "Parent folder"));
+    // (name, type, size, icon)
+    let files = [("samples", "Folder", "\u{2013}", "folder"), ("Trance Kit", "Preset", "919KB", "preset")];
+    let mut t = ctrl("CtrlTableView", Rect::new(104, 79, 190, 384), "BrowserListStyle", "");
+    t.set_attr("columns", "Name \u{25BC}|Type|Size|\u{25BC}".into());
+    t.set_attr("columnWidths", "86,46,41".into());
+    t.set_attr("rows", files.iter().map(|(n, ty, sz, _)| format!("        {n}|{ty}|{sz}|")).collect::<Vec<_>>().join("\n"));
+    t.set_attr("intSelectedRow", "0".into());
+    for (i, (.., kind)) in files.iter().enumerate() {
+        t.children.push(icon(Rect::new(2, 19 + i as i32 * 25, 22, 20), kind, false));
+    }
+    // The list's scroll track, the height of the list.
+    t.children.push(panel(Rect::new(182, 17, 7, 367), "BrowserScrollStyle"));
+    tabs.children.push(t);
+    tabs.children.push(ctrl("CtrlTableView", Rect::new(104, 466, 190, 110), "BrowserListStyle", ""));
+}
+
+/// A browser icon (`kind`: book, home, folder, desktop, drive, disc,
+/// preset), drawn by [`Preview`] in BrowserIconStyle's colours
+/// (BrowserIconSelectedStyle on a selected row).
+fn icon(r: Rect, kind: &str, selected: bool) -> Ctrl {
+    let mut c = panel(r, if selected { "BrowserIconSelectedStyle" } else { "BrowserIconStyle" });
+    c.overload = "BrowserIcon".into();
+    c.set_attr("icon", kind.into());
+    c
+}
+
+/// Small vector icons for the browser's tree and list (v1 drew them from
+/// bitmaps): outlines in colBorder, faces in colFill, dark parts
+/// (the book's cover) in colAltFill, details in colText.
+fn draw_icon(r: &Renderer, p: &mut Painter, c: &Ctrl) {
+    use dreist_gui::paint::RectF;
+    let st = &c.style;
+    let line = r.styles.colour(st, "colBorder", Colour::BLACK);
+    let face = r.styles.colour(st, "colFill", Colour::WHITE);
+    let dark = r.styles.colour(st, "colAltFill", Colour::BLACK);
+    let text = r.styles.colour(st, "colText", Colour::BLACK);
+    let (w, h) = (c.rect.w as f32, c.rect.h as f32);
+    // A 16 x 16 design scaled to the rect's smaller side, centred.
+    let k = w.min(h) / 16.0;
+    let (ox, oy) = (((w - 16.0 * k) / 2.0).floor(), ((h - 16.0 * k) / 2.0).floor());
+    let rr = |x: f32, y: f32, w: f32, h: f32| RectF::new(ox + x * k, oy + y * k, w * k, h * k);
+    let pt = |x: f32, y: f32| (ox + x * k, oy + y * k);
+    match c.attr("icon").unwrap_or("") {
+        "book" => {
+            p.fill_rect(rr(2.0, 1.0, 12.0, 14.0), dark);
+            p.fill_polygon(&[pt(3.0, 2.0), pt(8.0, 4.0), pt(8.0, 14.0), pt(3.0, 12.0)], face);
+            p.fill_rect(rr(8.0, 2.0, 1.0, 12.0), line);
         }
-        t.set_attr("columnWidths", "118".into());
-        t.set_attr("rows", rows.iter().map(|f| format!("       {f}|{ty}")).collect::<Vec<_>>().join("\n"));
-        t.set_attr("intSelectedRow", "0".into());
-        let hh = if header { 17 } else { 0 };
-        for i in 0..rows.len() as i32 {
-            let y = hh + i * 25 + 3;
-            if y + 19 > r.h {
-                break;
-            }
-            t.children.push(ctrl("CtrlButton", Rect::new(3, y, 18, 19), "BrowserBadgeStyle", badge));
+        "home" => {
+            p.fill_rect(rr(3.5, 7.0, 9.0, 7.5), face);
+            p.stroke_rect(rr(3.5, 7.5, 9.0, 7.0), line, 1.0);
+            p.fill_polygon(&[pt(1.0, 8.0), pt(8.0, 1.5), pt(15.0, 8.0)], line);
+            p.fill_polygon(&[pt(3.5, 7.5), pt(8.0, 3.5), pt(12.5, 7.5)], face);
+            p.fill_rect(rr(7.0, 10.0, 3.0, 4.5), line);
         }
-        t.children.push(panel(Rect::new(r.w - 9, hh + 2, 7, 60), "BrowserScrollStyle"));
-        t
-    };
-    tabs.children.push(list(Rect::new(116, 78, 176, 384), &files, "REX 2", "RX2", true));
-    tabs.children.push(list(Rect::new(116, 466, 176, 110), &["CB Boss 01 GC", "CB Boss 02 GC"], "Wave", "WAV", false));
+        "folder" => {
+            p.fill_polygon(&[pt(1.0, 4.0), pt(6.0, 4.0), pt(7.5, 5.5), pt(15.0, 5.5), pt(15.0, 14.0), pt(1.0, 14.0)], face);
+            p.polyline(&[pt(1.5, 14.0), pt(1.5, 3.5), pt(6.0, 3.5), pt(7.5, 5.5), pt(14.5, 5.5), pt(14.5, 13.5), pt(1.5, 13.5)], line, 1.0);
+            p.polyline(&[pt(1.5, 7.5), pt(14.5, 7.5)], line, 1.0);
+        }
+        "desktop" => {
+            p.fill_rect(rr(1.5, 2.5, 13.0, 9.0), face);
+            p.stroke_rect(rr(1.5, 2.5, 13.0, 9.0), line, 1.0);
+            p.fill_rect(rr(6.0, 12.0, 4.0, 1.5), line);
+            p.fill_rect(rr(4.0, 13.5, 8.0, 1.5), line);
+        }
+        "drive" => {
+            p.fill_rounded(rr(3.0, 1.0, 10.0, 14.0), 2.0, [true; 4], face);
+            p.stroke_rounded(rr(3.5, 1.5, 9.0, 13.0), 2.0, [true; 4], line, 1.0);
+            p.fill_rect(rr(4.0, 10.0, 8.0, 1.0), line);
+            p.fill_rect(rr(10.0, 12.0, 1.5, 1.5), text);
+        }
+        "disc" => {
+            p.fill_ellipse(rr(1.5, 1.5, 13.0, 13.0), face);
+            p.stroke_ellipse(rr(1.5, 1.5, 13.0, 13.0), line, 1.0);
+            p.stroke_ellipse(rr(5.0, 5.0, 6.0, 6.0), line, 1.0);
+        }
+        "preset" => {
+            // A page with a turned corner and a type label.
+            p.fill_polygon(&[pt(2.0, 1.0), pt(11.0, 1.0), pt(14.0, 4.0), pt(14.0, 15.0), pt(2.0, 15.0)], face);
+            p.polyline(&[pt(11.0, 1.5), pt(2.5, 1.5), pt(2.5, 14.5), pt(13.5, 14.5), pt(13.5, 4.0), pt(11.0, 1.5), pt(11.0, 4.0), pt(13.5, 4.0)], line, 1.0);
+            let font = r.styles.font(st);
+            p.text(rr(2.5, 8.0, 11.0, 6.5), "PST", text, &font, dreist_gui::style::HAlign::Center, dreist_gui::style::VAlign::Center);
+        }
+        _ => {}
+    }
 }
 
 /// The editor draws the logo mark itself; this preview fills Einst's "E"
@@ -514,6 +588,10 @@ struct Preview;
 
 impl CustomDraw for Preview {
     fn draw(&self, r: &Renderer, p: &mut Painter, c: &Ctrl) -> bool {
+        if c.overload == "BrowserIcon" {
+            draw_icon(r, p, c);
+            return true;
+        }
         if c.overload != "Logo" {
             return false;
         }
