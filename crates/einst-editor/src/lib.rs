@@ -412,6 +412,11 @@ impl Editor {
             self.sync();
             return;
         }
+        if which.eq_ignore_ascii_case("console") {
+            self.midiconsole.show();
+            self.sync();
+            return;
+        }
         if which.eq_ignore_ascii_case("audio") || which.eq_ignore_ascii_case("midi") {
             self.devices.show(if which.eq_ignore_ascii_case("audio") { devices::Panel::Audio } else { devices::Panel::Midi });
             self.sync();

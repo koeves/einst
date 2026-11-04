@@ -227,8 +227,9 @@ pub fn save_preset_file(path: &std::path::Path, node: &Node) -> std::io::Result<
     dreist_formats::file::write_atomic(path, root.to_xml())
 }
 
-/// Effect type index → its v1 skin (`Effects/<name>.skin`): the model
-/// filters have one each; the types v1 lacks have none (an empty panel).
+/// Effect type index → its skin (`Effects/<name>.skin`): v1's own, the
+/// model filters one each; the types v1 lacked have skins authored in
+/// v1's style (scripts/uigen/authored.py). Every type has one.
 fn skin_for(kind: usize) -> Option<&'static str> {
     Some(match kind {
         1 => "Gain",
@@ -236,18 +237,28 @@ fn skin_for(kind: usize) -> Option<&'static str> {
         3 => "ParaEQ",
         4 => "DJEQ",
         5 => "VariEQ",
+        6 => "HiLo",
+        7 => "Enhancer",
         8 => "ChanComp",
         9 => "BusComp",
+        10 => "VCAComp",
         11 => "NoiseGate",
         12 => "EnvShaper",
+        13 => "DrumDynamics",
+        14 => "Limiter",
         15 => "Delay",
         16 => "Flanger",
         17 => "Chorus",
         18 => "Phaser",
         19 => "Distortion",
+        20 => "ShapedDistortion",
+        21 => "Driver",
+        22 => "Maul",
         23 => "Crusher",
         24 => "RingSting",
         25 => "Shifter",
+        26 => "Amber",
+        27 => "PhaseMod",
         28 => "Filter",
         29 => "ModFilter",
         30 => "Comb",
@@ -257,12 +268,17 @@ fn skin_for(kind: usize) -> Option<&'static str> {
         34 => "Filter101",
         35 => "FilterProdigy",
         36 => "FilterMS20",
+        37 => "ClassicFilter",
         38 => "Freezer",
         39 => "BreverbHall",
         40 => "BreverbPlate",
         41 => "BreverbRoom",
         42 => "BreverbInverse",
         43 => "TinCan",
+        44 => "Reverb",
+        45 => "Bloom",
+        46 => "DirtyDAC",
+        47 => "AnalogRingMod",
         _ => return None,
     })
 }

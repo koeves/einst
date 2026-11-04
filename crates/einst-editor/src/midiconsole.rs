@@ -13,6 +13,8 @@ use dreist_gui::{Colour, Ctrl, Skin};
 use crate::EditorError;
 
 const ROW: f32 = 15.0;
+/// The list's style (v1 set: `ModalListStyle`).
+const STYLE: &str = "ModalListStyle";
 const MAX_LINES: usize = 1000;
 
 /// Note name: "C#3" style; `mode` 0 → C0 at 0, 1 → C-2, 2 → C-1;
@@ -89,6 +91,11 @@ impl MidiConsole {
         Ok(MidiConsole { overlay, open: false, lines: Vec::new(), notes: true, ccs: true, other: true, scroll_end: true })
     }
 
+    /// Open the console (a skin set without it opens nothing).
+    pub fn show(&mut self) {
+        self.open = self.overlay.is_some();
+    }
+
     /// New MIDI from the engine.
     pub fn push(&mut self, msgs: &[[u8; 3]], mode: u8) -> bool {
         if !self.open || msgs.is_empty() {
@@ -121,6 +128,12 @@ impl MidiConsole {
                 }
             }
         }
+    }
+
+    /// The console's path (tests).
+    #[cfg(test)]
+    pub fn overlay_path(&self) -> Option<Vec<usize>> {
+        self.overlay.clone()
     }
 
     fn mine(&self, path: &[usize]) -> bool {
@@ -166,14 +179,20 @@ impl MidiConsole {
         }
         let s = r.styles;
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
-        let font = s.font("ListViewSyle");
-        let text = s.colour("ListViewSyle", "colText", Colour::WHITE);
-        p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour("ListViewSyle", "colFill", Colour::rgba(20, 20, 20, 255)));
-        let rows = (h / ROW).floor() as usize;
+        let font = s.font(STYLE);
+        let text = s.colour(STYLE, "colText", Colour::BLACK);
+        let alt = s.colour(STYLE, "colRowAlt", Colour::TRANSPARENT);
+        p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour(STYLE, "colFill", Colour::WHITE));
+        let rows = ((h - 2.0) / ROW).floor() as usize;
         let first = self.lines.len().saturating_sub(rows);
         for (k, l) in self.lines.iter().skip(first).enumerate() {
-            p.text(RectF::new(4.0, k as f32 * ROW, w - 8.0, ROW), l, text, &font, HAlign::Left, VAlign::Center);
+            let y = 1.0 + k as f32 * ROW;
+            if (first + k) % 2 == 1 {
+                p.fill_rect(RectF::new(1.0, y, w - 2.0, ROW), alt);
+            }
+            p.text(RectF::new(4.0, y, w - 8.0, ROW), l, text, &font, HAlign::Left, VAlign::Center);
         }
+        p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), s.colour(STYLE, "colBorder", Colour::BLACK), 1.0);
         true
     }
 }
