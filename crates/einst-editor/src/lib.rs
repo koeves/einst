@@ -6,6 +6,7 @@
 mod accel;
 pub mod app;
 pub mod browser;
+pub mod browsericons;
 pub mod command;
 mod conv;
 mod convertor;

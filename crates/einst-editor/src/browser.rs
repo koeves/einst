@@ -55,6 +55,8 @@ struct Source {
     cat: &'static str,
     /// Colour label index (0 = none).
     colour: usize,
+    /// Its tree icon ([`crate::browsericons::draw`] kinds).
+    icon: &'static str,
 }
 
 #[derive(Clone, Debug)]
@@ -482,6 +484,53 @@ pub fn content_dir() -> PathBuf {
     std::env::var_os("DREIST_CONTENT").map(PathBuf::from).unwrap_or_else(|| crate::options::documents_dir().join("Content"))
 }
 
+/// v1's content, beside the current format's: the packs in v1's content
+/// pack database (`ContentPacks.xml` in the `System` folder of v1's user
+/// support folder, `~/Library/Application Support/<vendor>/<v1>`) and the
+/// folders in the `Content` folder of v1's documents folder
+/// (`~/Documents/<vendor>/<v1>`), as v1's path builders make them (static
+/// reading of v1's engine; v1's installer chose the packs' folder, so the
+/// database is the only record of it). `EINST_V1_CONTENT` replaces both
+/// (one folder of packs). The names come from the legacy table: the
+/// vendor folder of the current documents folder and the document root
+/// element, which is v1's name.
+pub fn v1_content_dirs() -> Vec<PathBuf> {
+    if let Some(d) = std::env::var_os("EINST_V1_CONTENT") {
+        return subdirs(Path::new(&d));
+    }
+    let home = dreist_formats::paths::home();
+    let vendor = Path::new(dreist_formats::legacy::DOCUMENTS_DIR).parent().map(Path::to_path_buf).unwrap_or_default();
+    let v1 = dreist_formats::legacy::ROOT_ELEMENT;
+    let mut v = subdirs(&home.join(&vendor).join(v1).join("Content"));
+    let db = home.join("Library/Application Support").join(vendor.file_name().unwrap_or_default()).join(v1).join("System/ContentPacks.xml");
+    if let Ok(text) = std::fs::read_to_string(db) {
+        for p in content_pack_paths(&text) {
+            if !v.contains(&p) {
+                v.push(p);
+            }
+        }
+    }
+    v
+}
+
+/// The pack folders a content pack database names: every quoted value or
+/// element text that is an absolute path to an existing folder (the
+/// database's element names are not known, only that it holds the packs'
+/// paths).
+fn content_pack_paths(xml: &str) -> Vec<PathBuf> {
+    let mut v: Vec<PathBuf> = Vec::new();
+    for part in xml.split(['"', '<', '>']) {
+        let t = part.trim().replace("&amp;", "&").replace("&apos;", "'");
+        if t.starts_with('/') && Path::new(&t).is_dir() {
+            let p = PathBuf::from(t.trim_end_matches('/'));
+            if !v.contains(&p) && !hidden(&p) {
+                v.push(p);
+            }
+        }
+    }
+    v
+}
+
 fn subdirs(p: &Path) -> Vec<PathBuf> {
     let mut v: Vec<PathBuf> = std::fs::read_dir(p).map(|rd| rd.flatten().map(|e| e.path()).filter(|p| p.is_dir() && !hidden(p)).collect()).unwrap_or_default();
     v.sort();
@@ -493,13 +542,27 @@ fn hidden(p: &Path) -> bool {
 }
 
 fn sources(favourites: &[PathBuf], searches: &[String], shortlists: &[(String, Vec<PathBuf>)]) -> Vec<Source> {
+    sources_with(favourites, searches, shortlists, &v1_content_dirs())
+}
+
+/// [`sources`] with v1's content packs `v1`.
+fn sources_with(favourites: &[PathBuf], searches: &[String], shortlists: &[(String, Vec<PathBuf>)], v1: &[PathBuf]) -> Vec<Source> {
     let mut v = Vec::new();
     let home = dreist_formats::paths::home();
     let (labels, hidden) = (load_labels(), hidden_content());
     for cat in CATEGORIES {
-        v.push(Source { label: cat.into(), path: None, header: true, cat, colour: 0 });
+        v.push(Source { label: cat.into(), path: None, header: true, cat, colour: 0, icon: "" });
         let items: Vec<(String, PathBuf)> = match cat {
-            "Content" => subdirs(&content_dir()).into_iter().map(|p| (p.file_name().unwrap().to_string_lossy().into_owned(), p)).collect(),
+            // The current format's content packs, then v1's.
+            "Content" => {
+                let mut dirs = subdirs(&content_dir());
+                for d in v1 {
+                    if !dirs.contains(d) {
+                        dirs.push(d.clone());
+                    }
+                }
+                dirs.into_iter().map(|p| (p.file_name().unwrap().to_string_lossy().into_owned(), p)).collect()
+            }
             "Places" => ["", "Desktop", "Documents", "Music"].iter().map(|d| (if d.is_empty() { "Home".to_string() } else { d.to_string() }, home.join(d))).filter(|(_, p)| p.is_dir()).collect(),
             "Drives" => subdirs(Path::new("/Volumes")).into_iter().map(|p| (p.file_name().unwrap().to_string_lossy().into_owned(), p)).collect(),
             "Favourites" => favourites.iter().map(|p| (p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), p.clone())).collect(),
@@ -520,7 +583,16 @@ fn sources(favourites: &[PathBuf], searches: &[String], shortlists: &[(String, V
                 continue;
             }
             let (name, colour) = label_of(&labels, &path);
-            v.push(Source { label: name.unwrap_or(label), path: Some(path), header: false, cat, colour });
+            let icon = match cat {
+                "Content" => "book",
+                "Places" if path == home => "home",
+                "Places" if path.file_name().is_some_and(|n| n == "Desktop") => "desktop",
+                "Drives" => "drive",
+                "Searches" => "search",
+                "Shortlists" => "list",
+                _ => "folder",
+            };
+            v.push(Source { label: name.unwrap_or(label), path: Some(path), header: false, cat, colour, icon });
         }
     }
     v
@@ -1843,6 +1915,7 @@ impl Browser {
                 let font = s.font(SOURCE_STYLE);
                 let text = s.colour(SOURCE_STYLE, "colText", Colour::BLACK);
                 let sel = crate::front::colour_or(s, SOURCE_SELECTED_STYLE, "colFill", Colour::rgba(232, 204, 91, 255));
+                let sel_text = s.colour(SOURCE_SELECTED_STYLE, "colText", text);
                 let mut bold = s.font(SOURCE_HEAD_STYLE);
                 bold.bold = true;
                 for (i, src) in self.sources.iter().enumerate() {
@@ -1859,8 +1932,12 @@ impl Browser {
                     if current {
                         p.fill_rect(RectF::new(0.0, y, w, SOURCE_ROW), sel);
                     }
-                    let col = text;
-                    let (x, f) = if src.header { (4.0, &bold) } else { (16.0, &font) };
+                    let col = if current { sel_text } else { text };
+                    let (x, f) = if src.header { (4.0, &bold) } else { (34.0, &font) };
+                    if !src.icon.is_empty() {
+                        let st = if current { crate::browsericons::SELECTED_STYLE } else { crate::browsericons::STYLE };
+                        crate::browsericons::draw(r, p, st, RectF::new(13.0, y + (SOURCE_ROW - 18.0) / 2.0, 18.0, 18.0), src.icon, "");
+                    }
                     p.text(RectF::new(x, y, w - x - 4.0, SOURCE_ROW), &src.label, col, f, HAlign::Left, VAlign::Center);
                 }
                 true
@@ -1869,6 +1946,7 @@ impl Browser {
                 let font = s.font(ITEM_STYLE);
                 let text = s.colour(ITEM_STYLE, "colText", Colour::BLACK);
                 let sel = crate::front::colour_or(s, ITEM_STYLE, "colSelection", Colour::rgba(232, 204, 91, 255));
+                let sel_text = s.colour(ITEM_STYLE, "colSelectedText", text);
                 let (row, alt) = (crate::front::colour_or(s, ITEM_STYLE, "colRow", Colour::TRANSPARENT), crate::front::colour_or(s, ITEM_STYLE, "colRowAlt", Colour::TRANSPARENT));
                 p.fill_rect(RectF::new(0.0, 0.0, w, h), crate::front::colour_or(s, ITEM_STYLE, "colFill", Colour::TRANSPARENT));
                 let rows = (h / FILE_ROW) as usize + 1;
@@ -1884,11 +1962,15 @@ impl Browser {
                     if let Some((_, pr)) = self.loading.as_ref().filter(|(lp, pr)| *lp == en.path && *pr > 0.0 && *pr <= 1.0) {
                         p.fill_rect(RectF::new(2.0, y + 2.0, (w - 4.0) * pr, FILE_ROW - 2.0), sel.with_alpha(0.6));
                     }
-                    let col = text;
+                    let col = if selected { sel_text } else { text };
+                    // The folder icon, or the file's type badge.
+                    let st = if selected { crate::browsericons::SELECTED_STYLE } else { crate::browsericons::STYLE };
+                    let icon = RectF::new(3.0, y + 1.0, 16.0, FILE_ROW - 2.0);
                     if en.dir {
-                        // Folder glyph.
-                        p.fill_rounded(RectF::new(4.0, y + 5.0, 12.0, 9.0), 1.5, [true; 4], col.with_alpha(0.6));
-                        p.fill_rect(RectF::new(4.0, y + 3.5, 5.0, 2.0), col.with_alpha(0.6));
+                        crate::browsericons::draw(r, p, st, icon, "folder", "");
+                    } else {
+                        let ext = en.path.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
+                        crate::browsericons::draw(r, p, st, icon, "file", &crate::browsericons::badge(&ext));
                     }
                     p.text(RectF::new(22.0, y, w - 26.0, FILE_ROW), &en.name, col, &font, HAlign::Left, VAlign::Center);
                 }
@@ -1975,6 +2057,21 @@ mod search_tests {
         assert_eq!(b.last().map(|b| (b.label.as_str(), b.display.as_str())), Some(("Kits", "Kits (No slice)")));
         let b = nav_layout(&mut m, &["Search Results".into()], false, false, 300.0);
         assert_eq!((b.len(), b[0].w, b[0].index), (1, 89.0, -1));
+    }
+
+    #[test]
+    fn content_lists_v1_packs_too() {
+        crate::app::test_setup();
+        let tmp = std::env::temp_dir().join(format!("einst-v1-content-{}", std::process::id()));
+        let pack = tmp.join("Old Factory");
+        std::fs::create_dir_all(&pack).unwrap();
+        // A database naming the pack (and a file, which is no folder).
+        let xml = format!("<root><ContentPack path=\"{}\" /><X>{}/none.txt</X></root>", pack.display(), tmp.display());
+        assert_eq!(content_pack_paths(&xml), vec![pack.clone()]);
+        let v = sources_with(&[], &[], &[], &subdirs(&tmp));
+        let item = v.iter().find(|s| s.path.as_deref() == Some(pack.as_path())).expect("v1 pack listed");
+        assert_eq!((item.cat, item.icon, item.label.as_str()), ("Content", "book", "Old Factory"));
+        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]

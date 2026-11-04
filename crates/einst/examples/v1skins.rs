@@ -519,66 +519,12 @@ fn icon(r: Rect, kind: &str, selected: bool) -> Ctrl {
     c
 }
 
-/// Small vector icons for the browser's tree and list (v1 drew them from
-/// bitmaps): outlines in colBorder, faces in colFill, dark parts
-/// (the book's cover) in colAltFill, details in colText.
+/// The browser icons, as the editor draws them.
 fn draw_icon(r: &Renderer, p: &mut Painter, c: &Ctrl) {
-    use dreist_gui::paint::RectF;
-    let st = &c.style;
-    let line = r.styles.colour(st, "colBorder", Colour::BLACK);
-    let face = r.styles.colour(st, "colFill", Colour::WHITE);
-    let dark = r.styles.colour(st, "colAltFill", Colour::BLACK);
-    let text = r.styles.colour(st, "colText", Colour::BLACK);
-    let (w, h) = (c.rect.w as f32, c.rect.h as f32);
-    // A 16 x 16 design scaled to the rect's smaller side, centred.
-    let k = w.min(h) / 16.0;
-    let (ox, oy) = (((w - 16.0 * k) / 2.0).floor(), ((h - 16.0 * k) / 2.0).floor());
-    let rr = |x: f32, y: f32, w: f32, h: f32| RectF::new(ox + x * k, oy + y * k, w * k, h * k);
-    let pt = |x: f32, y: f32| (ox + x * k, oy + y * k);
-    match c.attr("icon").unwrap_or("") {
-        "book" => {
-            p.fill_rect(rr(2.0, 1.0, 12.0, 14.0), dark);
-            p.fill_polygon(&[pt(3.0, 2.0), pt(8.0, 4.0), pt(8.0, 14.0), pt(3.0, 12.0)], face);
-            p.fill_rect(rr(8.0, 2.0, 1.0, 12.0), line);
-        }
-        "home" => {
-            p.fill_rect(rr(3.5, 7.0, 9.0, 7.5), face);
-            p.stroke_rect(rr(3.5, 7.5, 9.0, 7.0), line, 1.0);
-            p.fill_polygon(&[pt(1.0, 8.0), pt(8.0, 1.5), pt(15.0, 8.0)], line);
-            p.fill_polygon(&[pt(3.5, 7.5), pt(8.0, 3.5), pt(12.5, 7.5)], face);
-            p.fill_rect(rr(7.0, 10.0, 3.0, 4.5), line);
-        }
-        "folder" => {
-            p.fill_polygon(&[pt(1.0, 4.0), pt(6.0, 4.0), pt(7.5, 5.5), pt(15.0, 5.5), pt(15.0, 14.0), pt(1.0, 14.0)], face);
-            p.polyline(&[pt(1.5, 14.0), pt(1.5, 3.5), pt(6.0, 3.5), pt(7.5, 5.5), pt(14.5, 5.5), pt(14.5, 13.5), pt(1.5, 13.5)], line, 1.0);
-            p.polyline(&[pt(1.5, 7.5), pt(14.5, 7.5)], line, 1.0);
-        }
-        "desktop" => {
-            p.fill_rect(rr(1.5, 2.5, 13.0, 9.0), face);
-            p.stroke_rect(rr(1.5, 2.5, 13.0, 9.0), line, 1.0);
-            p.fill_rect(rr(6.0, 12.0, 4.0, 1.5), line);
-            p.fill_rect(rr(4.0, 13.5, 8.0, 1.5), line);
-        }
-        "drive" => {
-            p.fill_rounded(rr(3.0, 1.0, 10.0, 14.0), 2.0, [true; 4], face);
-            p.stroke_rounded(rr(3.5, 1.5, 9.0, 13.0), 2.0, [true; 4], line, 1.0);
-            p.fill_rect(rr(4.0, 10.0, 8.0, 1.0), line);
-            p.fill_rect(rr(10.0, 12.0, 1.5, 1.5), text);
-        }
-        "disc" => {
-            p.fill_ellipse(rr(1.5, 1.5, 13.0, 13.0), face);
-            p.stroke_ellipse(rr(1.5, 1.5, 13.0, 13.0), line, 1.0);
-            p.stroke_ellipse(rr(5.0, 5.0, 6.0, 6.0), line, 1.0);
-        }
-        "preset" => {
-            // A page with a turned corner and a type label.
-            p.fill_polygon(&[pt(2.0, 1.0), pt(11.0, 1.0), pt(14.0, 4.0), pt(14.0, 15.0), pt(2.0, 15.0)], face);
-            p.polyline(&[pt(11.0, 1.5), pt(2.5, 1.5), pt(2.5, 14.5), pt(13.5, 14.5), pt(13.5, 4.0), pt(11.0, 1.5), pt(11.0, 4.0), pt(13.5, 4.0)], line, 1.0);
-            let font = r.styles.font(st);
-            p.text(rr(2.5, 8.0, 11.0, 6.5), "PST", text, &font, dreist_gui::style::HAlign::Center, dreist_gui::style::VAlign::Center);
-        }
-        _ => {}
-    }
+    let rect = dreist_gui::paint::RectF::new(0.0, 0.0, c.rect.w as f32, c.rect.h as f32);
+    let kind = c.attr("icon").unwrap_or("");
+    let (kind, label) = if kind == "preset" { ("file", "PST") } else { (kind, "") };
+    einst_editor::browsericons::draw(r, p, &c.style, rect, kind, label);
 }
 
 /// The editor draws the logo mark itself; this preview fills Einst's "E"
