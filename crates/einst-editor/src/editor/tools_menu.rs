@@ -14,6 +14,7 @@ pub(crate) enum MainAction {
     ClearDefault,
     FindMissing,
     Export,
+    MidiConsole,
     TransportOptions,
     ResetScale,
     None,
@@ -32,6 +33,7 @@ impl Editor {
             (String::new(), None),
             ("Find missing files...".into(), FindMissing),
             ("Export as audio...".into(), Export),
+            ("Show MIDI console".into(), MidiConsole),
             (String::new(), None),
             ("Reset UI scale to 100%".into(), ResetScale),
             (String::new(), None),
@@ -97,6 +99,11 @@ impl Editor {
                     MainAction::FindMissing => self.filefind.show(filefind::missing_files(&self.model)),
                     // [re:c7a8f1].
                     MainAction::Export => self.modals.show(&mut self.app, modal::Kind::Export),
+                    // The MIDI console (`MIDIDisplayPanel.skin`).
+                    MainAction::MidiConsole => {
+                        self.midiconsole.show();
+                        return false;
+                    }
                     // Lambda #8: scale 1 (when not already);
                     // LastEditorScaleFactor 100.
                     MainAction::ResetScale => {

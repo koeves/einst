@@ -11,12 +11,14 @@
 //! everything ([re:43218b]). The IOGroup tabs (INPUTS / OUTPUTS) fill
 //! IOTable ([re:ae7160]): columns "Enabled" (50) and
 //! "Description", one row per stereo pair, outputs ending with "All
-//! outputs". Refresh re-reads the devices, Close closes.
+//! outputs". Refresh re-reads the devices, Close (OK) closes, Cancel puts
+//! the choices back as they were when the panel opened.
 //!
 //! MIDI ([re:d4cd64],
 //! [re:cce3c4]): InputTable with "Enable", "Clock" and "Description",
 //! OutputTable with "Enable" and "Description"; Refresh, Sync to clock,
-//! Close.
+//! Cancel, Close. The v1 set's panels are authored in v1's dialog style
+//! (`Global/AudioOptions.skin`, `Global/MIDIOptions.skin`).
 //!
 //! Port: the standalone (nih-plug) opens one input device, one output
 //! device, one MIDI input and one MIDI output, chosen when audio starts.
@@ -110,8 +112,9 @@ pub enum Panel {
 
 const ROW: f32 = 18.0;
 const HEADER: f32 = 20.0;
-const LIST_STYLE: &str = "DefaultTableViewStyle";
-const HEADER_STYLE: &str = "DefaultTableViewHeaderStyle";
+/// The tables draw in v1's table style, their boxes in the check style.
+const LIST_STYLE: &str = "GlobalTableStyle";
+const CHECK_STYLE: &str = "ModalCheckButtonStyle";
 const CHECK_W: f32 = 50.0;
 
 pub struct Devices {
@@ -198,8 +201,21 @@ impl Devices {
     }
 
     /// Whether the skin set has panel `p`.
+    #[cfg(test)]
     pub fn available(&self, p: Panel) -> bool {
         self.overlay(p).is_some()
+    }
+
+    /// The panel's path (tests).
+    #[cfg(test)]
+    pub fn overlay_path(&self, p: Panel) -> Option<Vec<usize>> {
+        self.overlay(p).cloned()
+    }
+
+    /// The stored choices being edited (tests).
+    #[cfg(test)]
+    pub fn settings(&self) -> &Settings {
+        &self.settings
     }
 
     fn overlay(&self, p: Panel) -> Option<&Vec<usize>> {
@@ -270,6 +286,15 @@ impl Devices {
         }
     }
 
+    /// Cancel: the choices as they were when the panel opened.
+    fn cancel(&mut self) {
+        if self.settings != self.opened_with {
+            self.settings = self.opened_with.clone();
+            self.changed();
+        }
+        self.open = None;
+    }
+
     fn changed(&mut self) {
         let mut o = Options::load();
         self.settings.store(&mut o);
@@ -314,6 +339,7 @@ impl Devices {
                 match (parent.as_str(), name.as_str()) {
                     ("IOGroup", _) => self.io_tab = *path.last().unwrap_or(&0),
                     (_, "Close") => self.close(),
+                    (_, "Cancel") => self.cancel(),
                     (_, "Refresh") => self.refresh(),
                     (_, n @ ("SampleRate" | "BufferSize" | "InDevice" | "OutDevice")) => {
                         let items = self.popup_items(n);
@@ -375,31 +401,33 @@ impl Devices {
         let s = r.styles;
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
         let font = s.font(LIST_STYLE);
-        let text = s.colour(LIST_STYLE, "colText", Colour::WHITE);
-        let alt = s.colour(LIST_STYLE, "colAltFill", Colour::TRANSPARENT);
-        p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour(LIST_STYLE, "colFill", Colour::rgba(30, 30, 30, 255)));
+        let text = s.colour(LIST_STYLE, "colText", Colour::BLACK);
+        let (row, alt) = (s.colour(LIST_STYLE, "colRow", Colour::TRANSPARENT), s.colour(LIST_STYLE, "colRowAlt", Colour::TRANSPARENT));
+        let border = s.colour(LIST_STYLE, "colBorder", Colour::BLACK);
+        p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour(LIST_STYLE, "colFill", Colour::TRANSPARENT));
         let cols: Vec<(&str, f32, f32)> = match table {
             "InputTable" => vec![("Enable", 0.0, CHECK_W), ("Clock", CHECK_W, CHECK_W), ("Description", 2.0 * CHECK_W, w - 2.0 * CHECK_W)],
             "IOTable" => vec![("Enabled", 0.0, CHECK_W), ("Description", CHECK_W, w - CHECK_W)],
             _ => vec![("Enable", 0.0, CHECK_W), ("Description", CHECK_W, w - CHECK_W)],
         };
-        let hfill = s.colour(HEADER_STYLE, "colFill", Colour::WHITE);
-        let htext = s.colour(HEADER_STYLE, "colText", Colour::BLACK);
-        let hdiv = s.colour(HEADER_STYLE, "colAltBorder", Colour::BLACK);
-        let hfont = s.font(HEADER_STYLE);
+        let hfill = s.colour(LIST_STYLE, "colHeaderFill", Colour::TRANSPARENT);
+        let htext = s.colour(LIST_STYLE, "colHeaderText", text);
+        let hdiv = s.colour(LIST_STYLE, "colHeaderDivider", border);
         p.fill_rect(RectF::new(0.0, 0.0, w, HEADER), hfill);
+        p.fill_rect(RectF::new(0.0, HEADER - 1.0, w, 1.0), hdiv);
         for (title, x, cw) in &cols {
-            p.text(RectF::new(x + 4.0, 0.0, cw - 8.0, HEADER), title, htext, &hfont, HAlign::Left, VAlign::Center);
-            p.fill_rect(RectF::new(x + cw - 1.0, 0.0, 1.0, HEADER), hdiv);
+            p.text(RectF::new(x + 4.0, 0.0, cw - 8.0, HEADER), title, htext, &font, HAlign::Left, VAlign::Center);
+            p.fill_rect(RectF::new(x + cw - 1.0, 0.0, 1.0, h), s.colour(LIST_STYLE, "colColumnDivider", hdiv));
         }
         // [re:a817ff] boxes, 16 × 16 at (17, 2) in the cell.
+        let (cfill, cborder, tick) = (s.colour(CHECK_STYLE, "colFill", Colour::WHITE), s.colour(CHECK_STYLE, "colBorder", Colour::BLACK), s.colour(CHECK_STYLE, "colTick", Colour::BLACK));
         let check = |p: &mut Painter, x: f32, y: f32, on: bool, enabled: bool| {
-            let a = if enabled { 255 } else { 90 };
+            let a = if enabled { 1.0 } else { 0.35 };
             let r = RectF::new(x + 17.0, y + 1.0, 16.0, 16.0);
-            p.fill_rect(r, Colour::rgba(20, 20, 20, a));
-            p.stroke_rect(r, Colour::rgba(150, 150, 150, a), 1.0);
+            p.fill_rect(r, cfill.with_alpha(cfill.f_alpha() * a));
+            p.stroke_rect(r.inset(0.5), cborder.with_alpha(cborder.f_alpha() * a), 1.0);
             if on {
-                p.fill_rect(RectF::new(r.x + 4.0, r.y + 4.0, 8.0, 8.0), Colour::rgba(230, 230, 230, a));
+                p.fill_rect(RectF::new(r.x + 4.0, r.y + 4.0, 8.0, 8.0), tick.with_alpha(tick.f_alpha() * a));
             }
         };
         for (k, (on, clock, desc)) in self.rows(table).iter().enumerate() {
@@ -407,9 +435,7 @@ impl Devices {
             if y > h {
                 break;
             }
-            if k % 2 == 1 {
-                p.fill_rect(RectF::new(0.0, y, w, ROW), alt);
-            }
+            p.fill_rect(RectF::new(0.0, y, w, ROW), if k % 2 == 1 { alt } else { row });
             check(p, 0.0, y, *on, table != "IOTable");
             if let Some(cl) = clock {
                 check(p, CHECK_W, y, *cl, false);
@@ -417,6 +443,7 @@ impl Devices {
             let (_, x, cw) = cols[cols.len() - 1];
             p.text(RectF::new(x + 4.0, y, cw - 8.0, ROW), desc, text, &font, HAlign::Left, VAlign::Center);
         }
+        p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), border, 1.0);
         true
     }
 }
