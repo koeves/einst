@@ -46,15 +46,17 @@ pub fn effect_menu(category: usize) -> Vec<usize> {
 /// the step lanes at note start with the tracks' scale, compression and
 /// unrounded randomisation ([re:51afe0]);
 /// one pan stage at the layer ([re:f87c3f]); the aux send summing
-/// ([re:99f309]).
+/// ([re:99f309]);
+/// the mirrored, per-block reverse ([re:18d53d], [re:fece0b]) and the
+/// end fade from the sample that reaches it ([re:fece0b], [re:093661]).
 pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules {
     sampler_auto_stop_seconds: 1.0,
     envelope_v1_ends: true,
     loop_v1: true,
     lanes_v1: true,
     pan_v1: true,
-    reverse_v1: false,
-    end_fade_v1: false,
+    reverse_v1: true,
+    end_fade_v1: true,
     sends_v1: true,
     timestretch_v1: false,
 };
