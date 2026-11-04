@@ -112,8 +112,8 @@ pub fn metronome_sound() -> String {
 /// folder under one of the profile's earlier names is moved there.
 pub fn settings_dir() -> Option<PathBuf> {
     // Unit tests get a scratch folder instead of the user's.
-    if cfg!(test) {
-        return Some(std::env::temp_dir().join(format!("dreist-test-{}", std::process::id())));
+    if let Some(d) = test_settings_dir() {
+        return Some(d);
     }
     // A separate settings folder (tools, fuzzing).
     if let Some(d) = std::env::var_os(crate::app::SETTINGS_ENV) {
@@ -125,6 +125,30 @@ pub fn settings_dir() -> Option<PathBuf> {
         migrate_settings(&base, crate::app::SETTINGS_DIR, crate::app::LEGACY_SETTINGS_DIRS);
     });
     Some(base.join(crate::app::SETTINGS_DIR))
+}
+
+/// A unit test's settings folder: one per test thread, like the options
+/// file (`TEST_FILE`), so the shortlists, favourites or labels a test
+/// writes never show in an editor another test renders at the same time
+/// (the screens golden). Removed when the thread ends.
+#[cfg(test)]
+fn test_settings_dir() -> Option<PathBuf> {
+    struct Dir(PathBuf);
+    impl Drop for Dir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    thread_local! {
+        static DIR: Dir = Dir(std::env::temp_dir().join(format!("dreist-test-{}-{}", std::process::id(), NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed))));
+    }
+    Some(DIR.with(|d| d.0.clone()))
+}
+
+#[cfg(not(test))]
+fn test_settings_dir() -> Option<PathBuf> {
+    None
 }
 
 /// Move the first existing `legacy` folder under `base` to `name`, unless
