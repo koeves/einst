@@ -253,24 +253,25 @@ impl Scenes {
         let s = r.styles;
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
         let st = "GlobalTableStyle";
-        let ink = s.colours.get("Ink").copied().unwrap_or(Colour::rgba(18, 25, 60, 255));
-        let fill = crate::front::colour_or(s, st, "colFill", Colour::rgba(222, 229, 237, 255));
-        p.fill_rect(RectF::new(0.0, 0.0, w, h), fill);
+        // v1's table style: the header band, rows and alternate rows,
+        // column dividers and the frame.
+        let ink = s.colour(st, "colBorder", Colour::rgba(18, 25, 60, 255));
+        p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour(st, "colFill", Colour::rgba(222, 229, 237, 255)));
         let row_h = (h / 9.0).floor().max(12.0);
         let cols = [(0.0, 50.0), (50.0, 180.0), (230.0, w - 230.0)];
-        p.fill_rect(RectF::new(0.0, 0.0, w, row_h), crate::front::colour_or(s, st, "colHeaderFill", Colour::rgba(169, 176, 191, 255)));
+        p.fill_rect(RectF::new(0.0, 0.0, w, row_h), s.colour(st, "colHeaderFill", Colour::rgba(169, 176, 191, 255)));
+        p.line(0.0, row_h - 0.5, w, row_h - 0.5, s.colour(st, "colHeaderDivider", ink), 1.0);
         let font = s.font(st);
-        let text = crate::front::colour_or(s, st, "colText", ink);
-        let alt = crate::front::colour_or(s, st, "colAltFill", Colour::rgba(199, 206, 217, 100));
+        let text = s.colour(st, "colText", ink);
+        let htext = s.colour(st, "colHeaderText", text);
+        let (row, alt) = (s.colour(st, "colRow", Colour::TRANSPARENT), s.colour(st, "colRowAlt", Colour::rgba(199, 206, 217, 100)));
         for ((x, cw), name) in cols.iter().zip(["Engine", "Pattern", "Power"]) {
-            p.text(RectF::new(x + 3.0, 0.0, cw - 6.0, row_h), name, text, &font, HAlign::Left, VAlign::Center);
+            p.text(RectF::new(x + 3.0, 0.0, cw - 6.0, row_h), name, htext, &font, HAlign::Left, VAlign::Center);
         }
         let sc = manager(model).scenes.get(self.selected).cloned().unwrap_or_default();
         for e in 0..8 {
             let y = row_h * (e + 1) as f32;
-            if e % 2 == 1 {
-                p.fill_rect(RectF::new(0.0, y, w, row_h), alt);
-            }
+            p.fill_rect(RectF::new(0.0, y, w, row_h), if e % 2 == 1 { alt } else { row });
             let (pat, pow) = if sc.used {
                 let se = sc.engines[e];
                 let name = model.pattern_name(e, se.pattern);
@@ -282,8 +283,9 @@ impl Scenes {
                 p.text(RectF::new(x + 3.0, y, cw - 6.0, row_h), &t, text, &font, HAlign::Left, VAlign::Center);
             }
         }
+        let div = s.colour(st, "colColumnDivider", ink);
         for (x, _) in cols.iter().skip(1) {
-            p.line(x + 0.5, 0.0, x + 0.5, h, ink, 1.0);
+            p.line(x + 0.5, 0.0, x + 0.5, h, div, 1.0);
         }
         p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), ink, 1.0);
     }
@@ -459,28 +461,25 @@ impl Scenes {
     }
 }
 
-/// The trigger area of a slot: the field, tinted when the slot holds a
-/// scene, amber outlined when cued and amber filled when playing.
+/// The trigger area of a slot by its state (`SceneTrigger{Empty,Used,
+/// Cued,Active}Style`): the field (colFill) in its edge (colBorder), the
+/// inner block (colAltFill: ink when the slot holds a scene, amber while
+/// it plays) and the cue ring (colAltBorder).
 fn draw_trigger(r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) {
     use dreist_gui::paint::RectF;
     let s = r.styles;
     let (w, h) = (c.rect.w as f32, c.rect.h as f32);
-    let st = "TriggerImageViewStyleImageStyle";
-    let ink = s.colours.get("Ink").copied().unwrap_or(Colour::rgba(18, 25, 60, 255));
-    let amber = s.colours.get("SelectedObjectColour").copied().unwrap_or(Colour::rgba(236, 189, 47, 255));
-    let field = crate::front::colour_or(s, st, "colFill", Colour::rgba(222, 229, 237, 255));
+    let st = match c.attr("sceneState").unwrap_or("empty") {
+        "used" => "SceneTriggerUsedStyle",
+        "cued" => "SceneTriggerCuedStyle",
+        "active" => "SceneTriggerActiveStyle",
+        _ => "SceneTriggerEmptyStyle",
+    };
     let rr = RectF::new(0.5, 0.5, w - 1.0, h - 1.0);
-    p.fill_rect(rr, field);
-    match c.attr("sceneState").unwrap_or("empty") {
-        "used" => p.fill_rect(RectF::new(3.0, 3.0, w - 6.0, h - 6.0), Colour::rgba(ink.r, ink.g, ink.b, 150)),
-        "cued" => {
-            p.fill_rect(RectF::new(3.0, 3.0, w - 6.0, h - 6.0), Colour::rgba(ink.r, ink.g, ink.b, 150));
-            p.stroke_rect(RectF::new(2.0, 2.0, w - 4.0, h - 4.0), amber, 2.0);
-        }
-        "active" => p.fill_rect(RectF::new(3.0, 3.0, w - 6.0, h - 6.0), amber),
-        _ => {}
-    }
-    p.stroke_rect(rr, crate::front::colour_or(s, st, "colBorder", Colour::rgba(ink.r, ink.g, ink.b, 140)), 1.0);
+    p.fill_rect(rr, s.colour(st, "colFill", Colour::rgba(222, 229, 237, 255)));
+    p.fill_rect(RectF::new(3.0, 3.0, w - 6.0, h - 6.0), s.colour(st, "colAltFill", Colour::TRANSPARENT));
+    p.stroke_rect(RectF::new(2.0, 2.0, w - 4.0, h - 4.0), s.colour(st, "colAltBorder", Colour::TRANSPARENT), 2.0);
+    p.stroke_rect(rr, s.colour(st, "colBorder", Colour::rgba(18, 25, 60, 140)), 1.0);
 }
 
 /// The scene view control: the four visible rows' area over the mini-map.
@@ -493,8 +492,8 @@ fn draw_view(r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painte
     // The mini-map sits 2 px in (ScrollArea at 449,112; the control at 447,110).
     let y = 2.0 + 3.0 + (ROWS - 1 - top_row) as f32 * 13.0 - 2.0;
     let rr = RectF::new(1.5, y, c.rect.w as f32 - 3.0, VISIBLE_ROWS as f32 * 13.0 + 2.0);
-    p.fill_rect(rr, crate::front::colour_or(s, st, "colAltFill", Colour::rgba(232, 239, 247, 120)));
-    p.stroke_rect(rr, crate::front::colour_or(s, st, "colBorder", Colour::rgba(18, 25, 60, 255)), 1.0);
+    p.fill_rect(rr, s.colour(st, "colAltFill", Colour::rgba(232, 239, 247, 120)));
+    p.stroke_rect(rr, s.colour(st, "colBorder", Colour::rgba(18, 25, 60, 255)), 1.0);
 }
 
 #[cfg(test)]

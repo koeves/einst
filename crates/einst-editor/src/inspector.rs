@@ -33,10 +33,9 @@ use crate::model::{LAYERS, Model};
 
 const WAVE_STYLE: &str = "WaveDisplayStyle";
 
-/// A wave display colour: the style's attribute when the theme defines
-/// it, else the palette colour `named`.
-fn wave_colour(s: &dreist_gui::style::StyleSheet, attr: &str, named: &str, default: Colour) -> Colour {
-    crate::timeline::style_or_named(s, WAVE_STYLE, attr, named, default)
+/// A wave display colour (`WaveDisplayStyle`'s `attr`).
+fn wave_colour(s: &dreist_gui::style::StyleSheet, attr: &str, default: Colour) -> Colour {
+    s.colour(WAVE_STYLE, attr, default)
 }
 
 /// The layer toggles posted as their own messages: Reverse
@@ -629,8 +628,12 @@ impl Inspector {
             let selected = !pad_view && (li == l || lmask & (1u8 << li.min(7)) != 0);
             let locked = model.layer_node(e, p, li).is_some_and(|n| n.locked());
             let Some(r) = app.ctrl_mut(rp) else { continue };
-            r.style = if selected {
+            // The current layer amber, the others of a multiple selection
+            // `SelectionButtonMultiStyle`.
+            r.style = if selected && li == l {
                 "SelectionButtonPrimaryStyle"
+            } else if selected {
+                "SelectionButtonMultiStyle"
             } else if li % 2 == 0 {
                 "SelectionButtonEvenStyle"
             } else {
@@ -1346,8 +1349,8 @@ impl Inspector {
         let s = r.styles;
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
         let purple = Colour::rgba(128, 0, 128, 255);
-        let top = wave_colour(s, "colFill", "WaveEditorBackgroundColour", purple);
-        let mid = wave_colour(s, "colAltFill", "WaveEditorBackgroundColour", purple);
+        let top = wave_colour(s, "colFill", purple);
+        let mid = wave_colour(s, "colAltFill", purple);
         // Vertical gradient top → middle → bottom, drawn as bands.
         let bands = (h as usize).max(1);
         for i in 0..bands {
@@ -1366,17 +1369,17 @@ impl Inspector {
         // 15..30, the waveform below.
         let (wy, full_h) = (crate::timeline::WAVE_TOP, h);
         let h = (full_h - wy).max(1.0);
-        let centre = wave_colour(s, "colCenterLine", "WaveEditorWaveColour", purple);
+        let centre = wave_colour(s, "colCenterLine", purple);
         p.line(0.0, wy + (h / 2.0).floor() + 0.5, w, wy + (h / 2.0).floor() + 0.5, centre.with_alpha(0.5), 1.0);
         let Some(path) = model.layer_sample(e, pad, l) else {
-            p.fill_rect(RectF::new(0.0, 0.0, w, wy), wave_colour(s, "colTimelineBackground", "LcdDim", purple));
+            p.fill_rect(RectF::new(0.0, 0.0, w, wy), wave_colour(s, "colTimelineBackground", purple));
             return;
         };
         let mut cache = self.peaks.borrow_mut();
         let Some(pk) = cache.get(&path) else { return };
-        let line = wave_colour(s, "colLine", "WaveEditorWaveColour", purple);
-        let disabled = wave_colour(s, "colLineDisabled", "WaveEditorDisabledWaveColour", line);
-        let looping_col = wave_colour(s, "colLineLooping", "WaveEditorLoopWaveColour", line);
+        let line = wave_colour(s, "colLine", purple);
+        let disabled = wave_colour(s, "colLineDisabled", line);
+        let looping_col = wave_colour(s, "colLineLooping", line);
         let m = wave_markers(model, e, pad, l, pk.frames as u32);
         let n = pk.buckets.len();
         let cols = w as usize;
@@ -1412,6 +1415,7 @@ impl Inspector {
         // [re:25235f]): a 2 px line from the marker strip down and
         // a 12 px disc (15·0.75 rounded up to even) with a black inset at
         // the top of the strip.
+        let hole = wave_colour(s, "colMarkerHole", Colour::BLACK);
         let marker = |p: &mut Painter, f: u32, col: Colour| {
             let x = ((f as f32 / frames - v0) / vl * w).round();
             if x < -6.0 || x > w + 6.0 {
@@ -1421,13 +1425,13 @@ impl Inspector {
             p.fill_rect(RectF::new(x - 1.0, top, 2.0, full_h - 1.0 - top), col);
             let d = 12.0;
             p.fill_ellipse(RectF::new(x - d / 2.0, top, d, d), col);
-            p.fill_ellipse(RectF::new(x - d / 2.0 + 2.0, top + 2.0, d - 4.0, d - 4.0), Colour::BLACK);
+            p.fill_ellipse(RectF::new(x - d / 2.0 + 2.0, top + 2.0, d - 4.0, d - 4.0), hole);
         };
-        marker(p, m.start, wave_colour(s, "colStartMarker", "WaveEditorStartMarkerColour", purple));
-        marker(p, m.end.min(pk.frames as u32 - 1), wave_colour(s, "colEndMarker", "WaveEditorEndMarkerColour", purple));
+        marker(p, m.start, wave_colour(s, "colStartMarker", purple));
+        marker(p, m.end.min(pk.frames as u32 - 1), wave_colour(s, "colEndMarker", purple));
         if m.looping {
-            marker(p, m.loop_start, wave_colour(s, "colLoopStartMarker", "WaveEditorLoopStartMarkerColour", purple));
-            marker(p, m.loop_end.min(pk.frames as u32 - 1), wave_colour(s, "colLoopEndMarker", "WaveEditorLoopEndMarkerColour", purple));
+            marker(p, m.loop_start, wave_colour(s, "colLoopStartMarker", purple));
+            marker(p, m.loop_end.min(pk.frames as u32 - 1), wave_colour(s, "colLoopEndMarker", purple));
         }
         // [re:c29608]: Amp (top half when both
         // show) and Free envelopes over the waveform.
@@ -1454,20 +1458,17 @@ impl Inspector {
                 poly.push((poly.last().unwrap().0, y + ah));
                 poly.insert(0, (poly[0].0, y + ah));
                 let pink = Colour::rgba(255, 192, 203, 255);
-                let back = if s.raw(WAVE_STYLE, "colEnvelopeBack").is_some() {
-                    s.colour(WAVE_STYLE, "colEnvelopeBack", pink).with_alpha(0.2)
-                } else {
-                    s.colours.get(if is_amp { "AmpEnvelopeBackColour" } else { "FreeEnvelopeBackColour" }).copied().unwrap_or(pink.with_alpha(0.2))
-                };
+                let back = wave_colour(s, if is_amp { "colAmpEnvelopeBack" } else { "colFreeEnvelopeBack" }, pink.with_alpha(0.2));
                 p.fill_polygon(&poly, back);
-                p.polyline(&line_pts, wave_colour(s, "colEnvelopeLine", if is_amp { "AmpEnvelopeLineColour" } else { "FreeEnvelopeLineColour" }, pink), 1.0);
+                p.polyline(&line_pts, wave_colour(s, "colEnvelopeLine", pink), 1.0);
                 let geo = EnvGeo { w, y0: wy, h, v0, vl, frames, rate: pk.rate, start: m.start, end: m.end };
                 let grabbed = self.env_drag.filter(|d| d.0 == is_amp).map(|d| d.1);
                 let handles = if mode == "OneShotLengthBound" { Vec::new() } else { env_handles(model, e, pad, l, is_amp, &mode, &geo, y, ah) };
+                let (handle, hole) = (wave_colour(s, "colEnvelopeHandle", Colour::WHITE), wave_colour(s, "colMarkerHole", Colour::BLACK));
                 for (k, r) in handles {
-                    p.fill_rect(r, Colour::WHITE);
+                    p.fill_rect(r, handle);
                     let inner = RectF::new(r.x + 2.0, r.y + 2.0, r.w - 4.0, r.h - 4.0);
-                    let col = if grabbed == Some(k) { wave_colour(s, "colEnvelopeGrab", "SelectedObjectColour", Colour::BLACK) } else { Colour::BLACK };
+                    let col = if grabbed == Some(k) { wave_colour(s, "colEnvelopeGrab", Colour::BLACK) } else { hole };
                     p.fill_rect(inner, col);
                 }
                 // Title box: "AMP ENVELOPE" / "FREE ENVELOPE", centred 10 px down.
@@ -1476,7 +1477,7 @@ impl Inspector {
                 let (mw, mh) = p.fonts.measure(&font, label);
                 let (tw, th) = (mw + 10.0, mh + 10.0);
                 let bx = ((w - tw) / 2.0).floor();
-                p.fill_rounded(RectF::new(bx, y + 10.0, tw, th), 3.0, [true; 4], Colour::rgba(64, 64, 64, 255).with_alpha(0.5));
+                p.fill_rounded(RectF::new(bx, y + 10.0, tw, th), 3.0, [true; 4], wave_colour(s, "colTitleFill", Colour::rgba(64, 64, 64, 128)));
                 p.text(RectF::new(bx, y + 10.0, tw, th), label, s.colour(WAVE_STYLE, "colText", Colour::WHITE), &font, dreist_gui::style::HAlign::Center, dreist_gui::style::VAlign::Center);
             }
         }
@@ -1698,7 +1699,7 @@ fn envelope_points(model: &Model, e: usize, p: usize, l: usize, amp: bool, mode:
 fn draw_sampling(sm: &crate::model::Sampling, r: &Renderer, p: &mut Painter, w: f32, h: f32) {
     let s = r.styles;
     let purple = Colour::rgba(128, 0, 128, 255);
-    let line = wave_colour(s, "colLine", "WaveEditorWaveColour", purple);
+    let line = wave_colour(s, "colLine", purple);
     let n = sm.buckets.len();
     if n == 0 {
         return;
@@ -1713,7 +1714,7 @@ fn draw_sampling(sm: &crate::model::Sampling, r: &Renderer, p: &mut Painter, w: 
         p.fill_rect(RectF::new(x as f32, y0, 1.0, (y1 - y0).max(1.0)), line);
     }
     for (x, col) in [(0.0, "colStartMarker"), (w - 1.0, "colEndMarker")] {
-        p.fill_rect(RectF::new((x - 1.0f32).max(0.0), 0.0, 2.0, h), wave_colour(s, col, if col == "colStartMarker" { "WaveEditorStartMarkerColour" } else { "WaveEditorEndMarkerColour" }, purple));
+        p.fill_rect(RectF::new((x - 1.0f32).max(0.0), 0.0, 2.0, h), wave_colour(s, col, purple));
     }
 }
 

@@ -1247,9 +1247,9 @@ impl SongPanel {
                 }
             }
         }
-        // Loop range.
+        // Loop range (`SongLoopStyle`).
         if song.loop_enabled {
-            let col = position.with_alpha(0.5);
+            let col = colour("SongLoopStyle", "colFill", position.with_alpha(0.5));
             p.fill_rect(RectF::new(song.loop_start as f32 * self.zoom - off, 0.0, ((song.loop_end - song.loop_start) as f32 * self.zoom).max(0.0), TIMELINE_H), col);
         }
         // Parts.
@@ -1299,9 +1299,10 @@ impl SongPanel {
                 }
             }
         }
-        // Parts being recorded (colRecording) and retro parts (colRetro).
-        let rec_col = Colour::rgba(244, 116, 116, 255);
-        let retro_col = Colour::rgba(244, 116, 116, 160);
+        // Parts being recorded (`SongPartRecordingStyle`) and retro parts
+        // (`SongPartRetroStyle`): fill and edge.
+        let rec_col = (colour("SongPartRecordingStyle", "colFill", Colour::rgba(244, 116, 116, 255)), colour("SongPartRecordingStyle", "colBorder", border));
+        let retro_col = (colour("SongPartRetroStyle", "colFill", Colour::rgba(244, 116, 116, 160)), colour("SongPartRetroStyle", "colBorder", border));
         let grow = |p: &SongPart| model.song_pos.filter(|pos| *pos > p.start).map(|pos| pos - p.start).unwrap_or(p.length);
         let extra = self
             .recording
@@ -1309,7 +1310,7 @@ impl SongPanel {
             .enumerate()
             .filter_map(|(t, x)| x.as_ref().map(|(p, _)| (t, p.start, grow(p), rec_col)))
             .chain(self.retro.iter().enumerate().flat_map(|(t, ps)| ps.iter().map(move |(p, _)| (t, p.start, p.length, retro_col))));
-        for (t, start, length, col) in extra {
+        for (t, start, length, (col, edge)) in extra {
             let y = TIMELINE_H + t as f32 * rh;
             let x0 = start as f32 * self.zoom - off;
             let x1 = (start + length) as f32 * self.zoom - off;
@@ -1318,7 +1319,7 @@ impl SongPanel {
             }
             let rect = RectF::new(x0.round() - 1.0, y + 1.0, (x1 - x0).round().max(1.0) + 1.0, rh - 2.0);
             p.fill_rounded(rect, radius, [true; 4], col);
-            p.stroke_rounded(rect.inset(0.5), radius, [true; 4], border, 1.0);
+            p.stroke_rounded(rect.inset(0.5), radius, [true; 4], edge, 1.0);
         }
         // Insert marker.
         let mx = ((self.marker as f32 - self.scroll) * self.zoom).round() + 0.5;

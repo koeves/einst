@@ -102,18 +102,21 @@ pub fn auto_zoom(mode: i64, frames: u32, start: u32, end: u32) -> Option<(f32, f
     Some(clamp(v))
 }
 
-/// [re:867658]: the thumb in colFill, 2 px white
-/// edge lines, white 10 px discs with black 6 px centres.
+/// [re:867658]: the thumb in colFill, 2 px edge
+/// lines and 10 px discs (white there; colAltFill) with 6 px centres
+/// (black; colBorder), over the track (colTrack).
 pub fn draw(p: &mut Painter, s: &StyleSheet, style: &str, w: f32, h: f32, view: (f32, f32)) {
+    p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour(style, "colTrack", Colour::TRANSPARENT));
     let (tx, tw) = thumb(view, w);
-    p.fill_rect(RectF::new(tx, 0.0, tw, h), crate::timeline::style_or_named(s, style, "colFill", "InkSoft", Colour::rgba(255, 192, 203, 255)));
+    p.fill_rect(RectF::new(tx, 0.0, tw, h), s.colour(style, "colFill", Colour::rgba(255, 192, 203, 255)));
+    let (edge, centre) = (s.colour(style, "colAltFill", Colour::WHITE), s.colour(style, "colBorder", Colour::BLACK));
     for ex in [tx, tx + tw] {
-        p.fill_rect(RectF::new(ex - 1.0, 0.0, 2.0, h), Colour::WHITE);
+        p.fill_rect(RectF::new(ex - 1.0, 0.0, 2.0, h), edge);
     }
     let cy = (h as i32 / 2) as f32;
     for ex in [tx, tx + tw] {
-        p.fill_ellipse(RectF::new(ex - 5.0, cy - 5.0, 10.0, 10.0), Colour::WHITE);
-        p.fill_ellipse(RectF::new(ex - 3.0, cy - 3.0, 6.0, 6.0), Colour::BLACK);
+        p.fill_ellipse(RectF::new(ex - 5.0, cy - 5.0, 10.0, 10.0), edge);
+        p.fill_ellipse(RectF::new(ex - 3.0, cy - 3.0, 6.0, 6.0), centre);
     }
 }
 

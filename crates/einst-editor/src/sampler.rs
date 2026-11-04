@@ -278,6 +278,11 @@ pub(crate) const RULER: f32 = crate::timeline::STRIP;
 pub(crate) const WAVE_TOP: f32 = crate::timeline::WAVE_TOP;
 
 /// A theme colour (the v1 `WaveEditor*` / `PreviewEditor*` names).
+/// A wave display colour (`WaveDisplayStyle`'s `attr`).
+pub(crate) fn wave(r: &Renderer, attr: &str, default: Colour) -> Colour {
+    r.styles.colour("WaveDisplayStyle", attr, default)
+}
+
 pub(crate) fn colour(r: &Renderer, name: &str, default: Colour) -> Colour {
     r.styles.colours.get(name).copied().unwrap_or(default)
 }
@@ -286,7 +291,7 @@ pub(crate) fn colour(r: &Renderer, name: &str, default: Colour) -> Colour {
 /// the file start, or bars.beats at `tempo`) over the visible `start_s` ..
 /// `start_s + len_s`.
 pub(crate) fn draw_ruler(r: &Renderer, p: &mut Painter, w: f32, start_s: f64, len_s: f64, beats: bool, tempo: f64) {
-    let ink = colour(r, "WaveEditorTextColour", Colour::rgba(18, 25, 60, 255));
+    let ink = wave(r, "colTimelineText", Colour::rgba(18, 25, 60, 255));
     p.fill_rect(RectF::new(0.0, 0.0, w, WAVE_TOP), colour(r, "LcdLight", Colour::rgba(222, 229, 237, 255)));
     p.line(0.0, RULER + 0.5, w, RULER + 0.5, ink.with_alpha(0.4), 1.0);
     p.line(0.0, WAVE_TOP - 0.5, w, WAVE_TOP - 0.5, ink, 1.0);
@@ -855,9 +860,9 @@ impl Sampler {
             return false;
         }
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
-        let ink = colour(r, "WaveEditorWaveColour", Colour::rgba(18, 25, 60, 255));
+        let ink = wave(r, "colLine", Colour::rgba(18, 25, 60, 255));
         let area = RectF::new(0.0, WAVE_TOP, w, h - WAVE_TOP);
-        p.fill_rect(RectF::new(0.0, 0.0, w, h), colour(r, "WaveEditorBackgroundColour", Colour::rgba(178, 170, 158, 255)));
+        p.fill_rect(RectF::new(0.0, 0.0, w, h), wave(r, "colFill", Colour::rgba(178, 170, 158, 255)));
         let live = model.sampler.state == 2 || self.takes.is_empty();
         if let (true, Some(sm)) = (live, model.sampling.as_ref()) {
             // Recording: the whole take so far fills the display.
@@ -872,7 +877,7 @@ impl Sampler {
             // Outside the markers the wave is dimmed.
             let (xs, xe) = (self.x_of(t.start, w), self.x_of(t.end, w));
             let (a, b) = (xs.clamp(0.0, w).floor(), xe.clamp(0.0, w).ceil());
-            let dim = colour(r, "WaveEditorDisabledWaveColour", ink.with_alpha(0.4));
+            let dim = wave(r, "colLineDisabled", ink.with_alpha(0.4));
             draw_wave(p, area, &t.buckets, BUCKET, v0, v1, dim, (0.0, a));
             draw_wave(p, area, &t.buckets, BUCKET, v0, v1, ink, (a, b));
             draw_wave(p, area, &t.buckets, BUCKET, v0, v1, dim, (b, w));
@@ -889,7 +894,7 @@ impl Sampler {
         } else {
             draw_ruler(r, p, w, 0.0, 1.0, self.timeline_beats, model.tempo());
         }
-        p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), colour(r, "WaveEditorBorderColour", ink), 1.0);
+        p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), wave(r, "colTimelineMarkers", ink), 1.0);
         true
     }
 }
