@@ -1566,6 +1566,30 @@ fn engine_step_writes_reach_the_document() {
     assert_eq!(st.and_then(|n| n.attr("State")), Some("true"));
 }
 
+/// A layer row's Trigger plays that layer only; the pad item's the pad.
+#[test]
+fn layer_trigger_plays_the_layer() {
+    crate::app::test_setup();
+    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    ed.model.editor_tab = crate::front::PADS_PAGE;
+    ed.sync();
+    let (e, p) = (ed.model.engine, ed.model.pad[ed.model.engine]);
+    let row = ed.app.root.path_of("LayerSelectionButton2").unwrap();
+    let trig = |ed: &Editor, from: &[usize]| {
+        let host = ed.app.ctrl(from).unwrap();
+        let mut path = from.to_vec();
+        path.extend(host.path_of("Trigger").unwrap());
+        path
+    };
+    let t = trig(&ed, &row);
+    ed.take_commands();
+    ed.handle(&UiEvent::Pressed { path: t.clone(), name: "Trigger".into() });
+    let cmds = ed.take_commands();
+    assert!(matches!(cmds.as_slice(), [Command::LayerHit { engine, pad, layer: 2, velocity: 127 }] if *engine == e && *pad == p), "{cmds:?}");
+    ed.handle(&UiEvent::Clicked { path: t, name: "Trigger".into(), id: 0, on: false });
+    assert!(matches!(ed.take_commands().as_slice(), [Command::PadRelease { .. }]));
+}
+
 #[test]
 fn v2a_knob_reset_and_edit() {
     crate::app::test_setup();
