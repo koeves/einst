@@ -4,39 +4,45 @@
 use crate::*;
 
 impl Editor {
-    /// The master section's LOAD and SAVE menus (the original's File menu,
-    /// [re:4139f8] [re:3ce6a1]): LOAD has Open Preset, Open Recent ▸ (when
-    /// there are recent presets), Open Engine, Open Kit, Open others... ▸
-    /// (Pad, Pattern Bank, Pattern, Mappings); SAVE has Save Preset /
-    /// As..., Save Engine / As..., Save Kit / As..., Save others... ▸ (Pad,
-    /// Pattern Bank, Pattern, Mappings).
+    /// The master section's LOAD and SAVE menus ([re:be6692]
+    /// [re:d52ca7]): LOAD has Load preset, engine, kit, pad, pattern bank,
+    /// pattern, pattern from MIDI, mappings and Load Guru... ▸ (Preset, Kit,
+    /// Pattern, Pattern Bank); SAVE has Save preset, current engine, kit,
+    /// current pad, pattern bank, current pattern, current pattern as MIDI,
+    /// mappings and Export as audio.... Every save asks for the file.
     pub(crate) fn file_menu(&mut self, ev: &UiEvent) -> bool {
         use project::Part;
         let e = self.model.engine;
+        let p = self.model.pad[e];
+        let pat = self.model.current_pattern(e);
         match ev {
             UiEvent::Clicked { path, name, .. } if name == "LoadButton" => {
-                let mut items = vec![("Open Preset".to_string(), FileAction::OpenPreset)];
-                if !recent_presets().is_empty() {
-                    items.push(("Open Recent ▸".into(), FileAction::RecentMenu));
-                }
-                items.extend([
-                    ("Open Engine".to_string(), FileAction::Open(Part::Engine(e))),
-                    ("Open Kit".into(), FileAction::Open(Part::Kit(e))),
-                    ("Open others... ▸".into(), FileAction::OthersMenu),
-                ]);
+                let items = vec![
+                    ("Load preset".to_string(), FileAction::OpenPreset),
+                    ("Load engine".into(), FileAction::Open(Part::Engine(e))),
+                    ("Load kit".into(), FileAction::Open(Part::Kit(e))),
+                    ("Load pad".into(), FileAction::Open(Part::Pad(e, p))),
+                    ("Load pattern bank".into(), FileAction::Open(Part::Bank(e))),
+                    ("Load pattern".into(), FileAction::Open(Part::Pattern(e, pat))),
+                    ("Load pattern from MIDI".into(), FileAction::OpenMidi),
+                    ("Load mappings".into(), FileAction::Open(Part::Mappings)),
+                    ("Load Guru... ▸".into(), FileAction::GuruMenu),
+                ];
                 self.show_file_menu(path, items);
                 false
             }
             // (The sampler page has a SaveButton of its own.)
             UiEvent::Clicked { path, name, .. } if name == "SaveButton" && front::path_in(&self.app.root, "UtilityControls", "SaveButton").as_ref() == Some(path) => {
                 let items = vec![
-                    ("Save Preset".to_string(), FileAction::SavePreset { as_new: false }),
-                    ("Save Preset As...".into(), FileAction::SavePreset { as_new: true }),
-                    ("Save Engine".into(), FileAction::Save { part: Part::Engine(e), as_new: false }),
-                    ("Save Engine As...".into(), FileAction::Save { part: Part::Engine(e), as_new: true }),
-                    ("Save Kit".into(), FileAction::Save { part: Part::Kit(e), as_new: false }),
-                    ("Save Kit As...".into(), FileAction::Save { part: Part::Kit(e), as_new: true }),
-                    ("Save others... ▸".into(), FileAction::SaveOthersMenu),
+                    ("Save preset".to_string(), FileAction::SavePreset { as_new: true }),
+                    ("Save current engine".into(), FileAction::Save { part: Part::Engine(e), as_new: true }),
+                    ("Save kit".into(), FileAction::Save { part: Part::Kit(e), as_new: true }),
+                    ("Save current pad".into(), FileAction::Save { part: Part::Pad(e, p), as_new: true }),
+                    ("Save pattern bank".into(), FileAction::Save { part: Part::Bank(e), as_new: true }),
+                    ("Save current pattern".into(), FileAction::Save { part: Part::Pattern(e, pat), as_new: true }),
+                    ("Save current pattern as MIDI".into(), FileAction::SaveMidi),
+                    ("Save mappings".into(), FileAction::Save { part: Part::Mappings, as_new: true }),
+                    ("Export as audio...".into(), FileAction::ExportAudio),
                 ];
                 self.show_file_menu(path, items);
                 false
@@ -54,43 +60,38 @@ impl Editor {
     pub(crate) fn file_action(&mut self, anchor: &[usize], action: FileAction) -> bool {
         use project::Part;
         let e = self.model.engine;
-        let p = self.model.pad[e];
         let pat = self.model.current_pattern(e);
         match action {
             FileAction::None => return false,
-            FileAction::RecentMenu => {
-                let items = recent_presets().into_iter().map(|f| (f.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), FileAction::Recent(f))).collect();
+            FileAction::GuruMenu => {
+                let items = [("Preset", guru::Kind::Preset), ("Kit", guru::Kind::Kit), ("Pattern", guru::Kind::Pattern), ("Pattern Bank", guru::Kind::Bank)];
+                let items = items.into_iter().map(|(l, k)| (l.to_string(), FileAction::OpenGuru(k))).collect();
                 self.show_file_menu(anchor, items);
                 return false;
             }
-            FileAction::OthersMenu => {
-                let items = vec![
-                    ("Open Pad".to_string(), FileAction::Open(Part::Pad(e, p))),
-                    ("Open Pattern Bank".into(), FileAction::Open(Part::Bank(e))),
-                    ("Open Pattern".into(), FileAction::Open(Part::Pattern(e, pat))),
-                    ("Open Pattern From MIDI".into(), FileAction::OpenMidi),
-                    ("Open Mappings".into(), FileAction::Open(Part::Mappings)),
-                ];
-                self.show_file_menu(anchor, items);
-                return false;
+            FileAction::OpenGuru(kind) => {
+                let Some(f) = self.dialog(Dialog::OpenGuru(kind)) else { return false };
+                let part = match kind {
+                    guru::Kind::Preset => {
+                        self.outbox.push(Command::LoadProject(f));
+                        return true;
+                    }
+                    guru::Kind::Kit => Part::Kit(e),
+                    guru::Kind::Bank => Part::Bank(e),
+                    guru::Kind::Pattern => Part::Pattern(e, pat),
+                };
+                if !self.open_part(part, &f) {
+                    return false;
+                }
             }
-            FileAction::SaveOthersMenu => {
-                let items = vec![
-                    ("Save Pad".to_string(), FileAction::Save { part: Part::Pad(e, p), as_new: true }),
-                    ("Save Pattern Bank".into(), FileAction::Save { part: Part::Bank(e), as_new: true }),
-                    ("Save Pattern".into(), FileAction::Save { part: Part::Pattern(e, pat), as_new: true }),
-                    ("Save Pattern As MIDI".into(), FileAction::SaveMidi),
-                    ("Save Mappings".into(), FileAction::Save { part: Part::Mappings, as_new: true }),
-                ];
-                self.show_file_menu(anchor, items);
-                return false;
+            FileAction::ExportAudio => {
+                return self.main_action(anchor, crate::editor::tools_menu::MainAction::Export);
             }
             FileAction::OpenPreset => {
                 if let Some(f) = self.dialog(Dialog::OpenProject) {
                     self.outbox.push(Command::LoadProject(f));
                 }
             }
-            FileAction::Recent(f) => self.outbox.push(Command::LoadProject(f)),
             FileAction::Open(part) => {
                 let Some(f) = self.dialog(Dialog::OpenPart(part)) else { return false };
                 if !self.open_part(part, &f) {
@@ -153,7 +154,10 @@ impl Editor {
         let swing = eng.children_of("SwingTemplate").next().map(dreist_engine::pattern::Swing::from_node).unwrap_or_default();
         let num = eng.u32("TempoNumerator").unwrap_or(1).max(1) as f64;
         let den = eng.u32("TempoDenominator").unwrap_or(1).max(1) as f64;
-        let bpm = self.model.doc.children.iter().find(|c| c.class == "TimeInfo").and_then(|t| t.f32("Tempo")).unwrap_or(120.0) as f64;
+        let time = self.model.doc.children.iter().find(|c| c.class == "TimeInfo");
+        let bpm = time.and_then(|t| t.f32("Tempo")).unwrap_or(120.0) as f64;
+        // The project's time signature ([re:ee9d6e]).
+        let time_sig = (time.and_then(|t| t.u32("TSN")).unwrap_or(4).max(1), time.and_then(|t| t.u32("TSD")).unwrap_or(4).max(1));
         let one_shot: Vec<bool> = (0..64)
             .map(|p| {
                 !(0..model::LAYERS).any(|l| self.model.layer(e, p, l).valid && self.model.layer_node(e, p, l).and_then(|n| n.attr("PlaybackMode")).is_some_and(|m| matches!(m, "Gated" | "Looping")))
@@ -164,7 +168,7 @@ impl Editor {
             pattern: &pattern,
             engine: e,
             bpm,
-            time_sig: (4, 4),
+            time_sig,
             tempo_mult: num / den,
             swing: &swing,
             swing_depth: eng.f32("SwingTemplateDepth").unwrap_or(0.0) as f64,

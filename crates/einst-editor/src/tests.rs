@@ -1660,47 +1660,48 @@ fn file_menu_parts_save_and_open() {
     let save_menu = |ed: &mut Editor| open_menu(ed, true);
     open(&mut ed);
     let items = ed.app.menu.as_ref().unwrap().items.clone();
-    assert!(!items.contains(&"New".to_string()) && items.contains(&"Open Engine".to_string()) && !items.contains(&"Save Kit As...".to_string()), "{items:?}");
+    assert_eq!(
+        items,
+        ["Load preset", "Load engine", "Load kit", "Load pad", "Load pattern bank", "Load pattern", "Load pattern from MIDI", "Load mappings", "Load Guru... ▸"].map(String::from).to_vec()
+    );
     ed.app.menu = None;
     save_menu(&mut ed);
     let items = ed.app.menu.as_ref().unwrap().items.clone();
-    assert!(items.contains(&"Save Kit As...".to_string()) && !items.contains(&"Open Engine".to_string()), "{items:?}");
-    pick(&mut ed, "Save Engine As...");
+    assert_eq!(items.len(), 9, "{items:?}");
+    assert_eq!(items[6], "Save current pattern as MIDI");
+    pick(&mut ed, "Save current engine");
     let text = std::fs::read_to_string(dir.join("x.einstengine")).expect("engine file");
     assert!(text.contains("<Engine name=\"Engine\""), "{}", &text[..200.min(text.len())]);
     assert!(dir.join("x.samples").is_dir(), "samples collected");
-    // Save others ▸ Save Pattern.
+    // Save current pattern.
     ed.app.menu = None;
     save_menu(&mut ed);
-    pick(&mut ed, "Save others... ▸");
-    pick(&mut ed, "Save Pattern");
+    pick(&mut ed, "Save current pattern");
     assert!(std::fs::read_to_string(dir.join("x.einstpattern")).unwrap().contains("<StepPattern name=\"StepPattern\""));
     ed.app.menu = None;
     save_menu(&mut ed);
-    pick(&mut ed, "Save others... ▸");
-    pick(&mut ed, "Save Pattern As MIDI");
+    pick(&mut ed, "Save current pattern as MIDI");
     let mid = std::fs::read(dir.join("x.mid")).expect("midi file");
     assert_eq!(&mid[..4], b"MThd");
     let ch = (ed.model.engine & 15) as u8;
     assert!(mid.windows(1).any(|w| w[0] == 0x90 | ch), "note ons on the engine's channel");
-    // Open Pattern From MIDI brings the same pattern back (steps on).
+    // Load pattern from MIDI brings the same pattern back (steps on).
     let pat = ed.model.current_pattern(ed.model.engine);
     let on_before: usize = ed.model.pattern(ed.model.engine, pat).tracks.iter().map(|t| t.steps.iter().filter(|s| s.on).count()).sum();
     ed.app.menu = None;
     open(&mut ed);
-    pick(&mut ed, "Open others... ▸");
-    pick(&mut ed, "Open Pattern From MIDI");
+    pick(&mut ed, "Load pattern from MIDI");
     let on_after: usize = ed.model.pattern(ed.model.engine, pat).tracks.iter().map(|t| t.steps.iter().filter(|s| s.on).count()).sum();
     assert!(on_after > 0 && on_after <= on_before, "{on_after} vs {on_before}");
     assert_eq!(ed.model.pattern_name(ed.model.engine, pat), "x");
-    // Change the engine, then Open Engine brings the file back.
+    // Change the engine, then Load engine brings the file back.
     let e = ed.model.engine;
     let before = ed.model.engine_node(e).and_then(|n| n.children.iter().find(|c| c.class == "Pad").cloned());
     ed.model.engine_mut(e).children.retain(|c| c.class != "Pad");
     ed.take_commands();
     ed.app.menu = None;
     open(&mut ed);
-    pick(&mut ed, "Open Engine");
+    pick(&mut ed, "Load engine");
     let after = ed.model.engine_node(e).and_then(|n| n.children.iter().find(|c| c.class == "Pad").cloned());
     assert_eq!(after.map(|n| n.name), before.map(|n| n.name));
     assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Rebuild { .. })));
