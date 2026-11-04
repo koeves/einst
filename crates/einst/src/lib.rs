@@ -44,16 +44,18 @@ pub fn effect_menu(category: usize) -> Vec<usize> {
 /// rules (ev_dc13a646) and the forward loop without crossfade, wrapping at
 /// the loop end minus 3 frames (ev_29992d9a);
 /// the step lanes at note start with the tracks' scale, compression and
-/// unrounded randomisation ([re:51afe0]).
+/// unrounded randomisation ([re:51afe0]);
+/// one pan stage at the layer ([re:f87c3f]); the aux send summing
+/// ([re:99f309]).
 pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules {
     sampler_auto_stop_seconds: 1.0,
     envelope_v1_ends: true,
     loop_v1: true,
     lanes_v1: true,
-    pan_v1: false,
+    pan_v1: true,
     reverse_v1: false,
     end_fade_v1: false,
-    sends_v1: false,
+    sends_v1: true,
     timestretch_v1: false,
 };
 
