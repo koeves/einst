@@ -90,6 +90,16 @@ pub fn native_dialogs() -> crate::DialogFn {
             let (ext, desc, _) = part.file_type();
             rfd::FileDialog::new().set_title("Please select the location to save to").add_filter(desc, &[ext]).set_file_name(format!("Untitled.{ext}")).save_file()
         }
+        // [re:be6692]: the LOAD menu's Guru dialogs.
+        crate::Dialog::OpenGuru(kind) => {
+            let (desc, ext, noun) = match kind {
+                crate::guru::Kind::Preset => ("Guru preset files", "GRU", "Guru preset"),
+                crate::guru::Kind::Kit => ("Guru kit files", "KIT", "Guru kit"),
+                crate::guru::Kind::Pattern => ("Guru pattern files", "G01", "Guru pattern"),
+                crate::guru::Kind::Bank => ("Guru pattern bank files", "G24", "Guru pattern bank"),
+            };
+            rfd::FileDialog::new().set_title(format!("Please choose the {noun} to load")).add_filter(desc, &[ext, &ext.to_ascii_lowercase()]).pick_file()
+        }
         crate::Dialog::OpenGuruSwing => rfd::FileDialog::new().set_title("Please choose the file(s) you wish to import").add_filter("GURU swing template files", &["txt"]).pick_file(),
         crate::Dialog::OpenMidiTemplate => rfd::FileDialog::new().set_title("Please choose the file(s) you wish to import").add_filter("MIDI files", &["mid"]).pick_file(),
         crate::Dialog::OpenMidi => rfd::FileDialog::new().set_title("Please choose the MIDI file to load").add_filter("Pattern MIDI files", &["mid", "midi"]).pick_file(),

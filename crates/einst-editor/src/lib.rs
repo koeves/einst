@@ -19,7 +19,7 @@ pub mod filefind;
 mod front;
 mod fxchain;
 mod fxtext;
-mod guru;
+pub mod guru;
 mod header;
 mod inspector;
 mod learn;
@@ -89,12 +89,14 @@ pub enum Dialog {
     OpenPart(project::Part),
     /// File menu › Save … As: a part file.
     SavePart(project::Part),
-    /// File menu › Save others › Save Pattern As MIDI: a `.mid`.
+    /// SAVE › Save current pattern as MIDI: a `.mid`.
     SaveMidi,
-    /// File menu › Open others › Open Pattern From MIDI: a `.mid`.
+    /// LOAD › Load pattern from MIDI: a `.mid`.
     OpenMidi,
     /// Swing menu › Import Guru shuffle: a Guru 1 `.txt` template.
     OpenGuruSwing,
+    /// LOAD › Load Guru... ▸: a file of that kind.
+    OpenGuru(guru::Kind),
     /// Swing menu › Import MIDI template: a `.mid` ("Please choose the
     /// file(s) you wish to import").
     OpenMidiTemplate,
@@ -113,10 +115,9 @@ pub fn product() -> &'static str {
 enum FileAction {
     None,
     OpenPreset,
-    RecentMenu,
-    Recent(std::path::PathBuf),
-    OthersMenu,
-    SaveOthersMenu,
+    GuruMenu,
+    OpenGuru(guru::Kind),
+    ExportAudio,
     Open(project::Part),
     SavePreset { as_new: bool },
     Save { part: project::Part, as_new: bool },
