@@ -171,7 +171,9 @@ impl PatMenu {
         self.show(app, anchor, p, items);
     }
 
-    fn track_menu(&mut self, app: &mut App, anchor: &[usize], model: &Model, clip: &Clipboard, t: usize) {
+    /// Track `t`'s menu at `anchor` (the track name area, or the grid
+    /// under the pen tool).
+    pub(crate) fn track_menu(&mut self, app: &mut App, anchor: &[usize], model: &Model, clip: &Clipboard, t: usize) {
         let e = model.engine;
         let tl = track_node(model, e, t).is_some_and(|n| n.locked());
         let pl = pad_locked(model, e, t);

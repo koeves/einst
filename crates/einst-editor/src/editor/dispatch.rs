@@ -238,6 +238,11 @@ impl Editor {
             }
             if let Some(p) = &mut self.pattern {
                 changed |= p.handle(&mut self.app, &mut self.model, ev, &mut self.outbox);
+                if let Some((t, anchor)) = p.track_menu.take() {
+                    self.patmenu.selection = p.selection.clone();
+                    self.patmenu.track_menu(&mut self.app, &anchor, &self.model, &self.clipboard, t);
+                    changed = true;
+                }
             }
             changed |= self.inspector.handle(&mut self.app, &mut self.model, ev, &mut self.outbox);
             for m in &mut self.mixers {
