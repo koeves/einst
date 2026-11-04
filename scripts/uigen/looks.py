@@ -312,7 +312,7 @@ IMAGES = [
     (r"^Glue", L("LcdGlueStyle")),
     (r"^(Pad|Layer)Glue$", L("LcdGlueStyle")),
     (r"^NavigationBackground$", L("LcdFieldStyle", realCornerRounding="4")),
-    (r"^GraphMarkers$", L("LcdRulerStyle")),
+    (r"^GraphMarkers$", L("LcdRulerStyle", ctrl={"overloadClass": "VelocityRuler"})),  # (labelled by the editor)
     (r"^GraphIcon$", L("ChassisGlyphLabelStyle", text=G["wave"], cls="CtrlLabel")),
     (r"^PreviewVol$", L("GlyphLabelStyle", text=G["speaker"], cls="CtrlLabel", font=icon_font(10))),
     (r"^MasterTuneIcon$", L("ChassisGlyphLabelStyle", text=G["a"], cls="CtrlLabel")),

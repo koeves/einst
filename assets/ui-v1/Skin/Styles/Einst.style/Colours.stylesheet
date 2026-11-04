@@ -124,6 +124,23 @@
     <VColour name="LaneAlt" colour="#CCD3DD" />
     <VColour name="PartSelected" colour="#E5D89E" />
     <VColour name="Crumb" colour="#BEC3CC" />
+    <VColour name="WaveBack" colour="#B2AA9E" />
+    <VColour name="WaveMarker" colour="#FA7919" />
+    <VColour name="WaveLoopMarker" colour="#18293E" />
+    <VColour name="WaveDisabled" colour="169, 176, 191, 180" />
+    <VColour name="WaveTitle" colour="18, 25, 60, 140" />
+    <VColour name="EnvAmpBack" colour="76, 83, 111, 80" />
+    <VColour name="EnvFreeBack" colour="0, 0, 0, 80" />
+    <VColour name="EnvLine" colour="#2D334C" />
+    <VColour name="SplitGraph" colour="76, 83, 111, 200" />
+    <VColour name="SplitTick" colour="18, 25, 60, 102" />
+    <VColour name="SplitTickBar" colour="18, 25, 60, 51" />
+    <VColour name="SceneUsed" colour="18, 25, 60, 150" />
+    <VColour name="SceneEdge" colour="18, 25, 60, 140" />
+    <VColour name="PastLength" colour="169, 176, 191, 140" />
+    <VColour name="RecordingPart" colour="222, 229, 237, 200" />
+    <VColour name="RetroPart" colour="187, 81, 81, 75" />
+    <VColour name="RetroEdge" colour="#BB5151" />
     <VColour name="LcdFace" colour="#F0F5FB" />
     <VColour name="LcdFaceLow" colour="#DEE4EE" />
     <VColour name="LcdEdge" colour="#8C95A4" />
@@ -155,6 +172,7 @@
     <VColour name="ModalBorder" colour="#898989" />
     <VColour name="ModalField" colour="#F3F3F3" />
     <VColour name="ModalOn" colour="#BDC4CD" />
+    <VColour name="ModalList" colour="#FAFAFA" />
     <VColour name="PanelDarkest" colour="#3A3B3E" />
     <VColour name="StandardControlBackground" colour="#DEE5ED" />
     <VColour name="StandardControlBorder" colour="#12193C" />

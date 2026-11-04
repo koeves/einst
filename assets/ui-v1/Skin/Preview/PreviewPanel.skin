@@ -32,5 +32,6 @@
             <CtrlButton name="CancelButton" rect="694, 15, 50, 17" displayName="Cancel slicing" id="100000" optIsMomentary="true" style="LEDMomentaryButtonStyle" text="Cancel" />
             <CtrlButton name="DoneButton" rect="747, 15, 50, 17" displayName="Confirm slicing" id="100000" optIsMomentary="true" style="LEDMomentaryButtonStyle" text="Done" />
         </CtrlPanel>
+        <CtrlPanel name="PreviewZoomSlider" rect="8, 327, 772, 12" displayName="Drag to scroll, drag an edge to zoom" overloadClass="WaveDisplayZoomSlider" style="WaveDisplayZoomSliderStyle" />
     </CtrlPanel>
 </root>

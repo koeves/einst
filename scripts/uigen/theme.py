@@ -143,6 +143,26 @@ COLOURS = {
     "LaneAlt": (204, 211, 221),
     "PartSelected": (229, 216, 158),
     "Crumb": (190, 195, 204),
+    # Code-drawn LCD content after v1's colour table (the survey's
+    # palette section): wave display, envelopes, velocity split, scenes,
+    # song parts being recorded, the area past a track's length.
+    "WaveBack": (178, 170, 158),
+    "WaveMarker": (250, 121, 25),
+    "WaveLoopMarker": (24, 41, 62),
+    "WaveDisabled": (169, 176, 191, 180),
+    "WaveTitle": (18, 25, 60, 140),
+    "EnvAmpBack": (76, 83, 111, 80),
+    "EnvFreeBack": (0, 0, 0, 80),
+    "EnvLine": (45, 51, 76),
+    "SplitGraph": (76, 83, 111, 200),
+    "SplitTick": (18, 25, 60, 102),
+    "SplitTickBar": (18, 25, 60, 51),
+    "SceneUsed": (18, 25, 60, 150),
+    "SceneEdge": (18, 25, 60, 140),
+    "PastLength": (169, 176, 191, 140),
+    "RecordingPart": (222, 229, 237, 200),
+    "RetroPart": (187, 81, 81, 75),
+    "RetroEdge": (187, 81, 81),
     # LCD controls (light faces, mid blue-grey edges).
     "LcdFace": (240, 245, 251),
     "LcdFaceLow": (222, 228, 238),
@@ -176,6 +196,7 @@ COLOURS = {
     "ModalBorder": (137, 137, 137),
     "ModalField": (243, 243, 243),
     "ModalOn": (189, 196, 205),
+    "ModalList": (250, 250, 250),
     # Names dreist-gui itself looks up (window backdrop, base defaults).
     "PanelDarkest": (58, 59, 62),
     "StandardControlBackground": (222, 229, 237),
@@ -304,7 +325,9 @@ def base_styles():
     st("LcdStripSelectedStyle", "LcdRowEvenStyle", colFill="StripSelected", colBorder="StripSelectedEdge")
     st("LcdGlueStyle", "BasePanelStyle", colFill="StripHead")
     st("LcdStripHeadStyle", "BasePanelStyle", colFill="StripHead", colBorder="StripHeadEdge", optDrawBorder="true", realBorderWidth="2")
-    st("LcdRulerStyle", "BasePanelStyle", colFill="LcdDim", realCornerRounding="1")
+    # (the velocity ruler over the split lanes: ticks every 16, labels
+    # every 32; drawn by the editor, `VelocityRuler`)
+    st("LcdRulerStyle", "BasePanelStyle", colFill="LcdDim", realCornerRounding="1", colText="Ink", colTick="InkMid", font=text_font(7, True))
     st("LcdFieldStyle", "BasePanelStyle", colFill="LcdLight", colBorder="Ink", optDrawBorder="true", realCornerRounding="2")
     st("LcdPlotStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkMid", optDrawBorder="true", realCornerRounding="2")
 
@@ -440,6 +463,7 @@ def base_styles():
     st("ModalButtonStyle", "BaseButtonStyle", colFill="ModalGroup", colAltFill="ModalOn", colBorder="Ink", colAltBorder="Ink",
        colAltText="Ink", realCornerRounding="3")
     st("ModalFieldStyle", "BaseTextBoxStyle", colFill="ModalField", colBorder="Ink")
+    st("ModalListStyle", "BaseTableStyle", colFill="ModalList", colBorder="Ink", colText="Ink", colRowAlt="ModalGroup", font=text_font(10))
     st("ModalProgressStyle", "BaseStyle", optDrawBorder="true", colFill="ModalField", colBorder="Ink", colAltFill="InkMid", colAltBorder="Ink")
     st("CheckBoxStyle", "BaseStyle", colFill="LcdLight", colBorder="Ink", colAltFill="LcdLight", colAltBorder="Ink",
        colTick="Ink", realCornerRounding="2", realTickInset="3", realTickLineWidth="2")
@@ -481,12 +505,49 @@ def base_styles():
     st("BrowserIconSelectedStyle", "BrowserIconStyle")
     st("BrowserSplitStyle", "BasePanelStyle", colFill="BrowserSplit")
     st("BrowserParentStyle", "BaseButtonStyle", colFill="LcdLight", colBorder="InkSoft", realCornerRounding="0", font=text_font(10))
-    st("BrowserListStyle", "BaseTableStyle", font=text_font(10), colFill="BrowserList", colBorder="InkSoft", colRow="BrowserList",
+    st("BrowserListStyle", "BaseTableStyle", font=text_font(10), colFill="BrowserList", colBorder="InkSoft", colRow="BrowserList", colSelectedText="Ink",
        colRowAlt="BrowserList", colSelection="BrowserSel", colHeaderFill="BrowserHeader", colHeaderDivider="InkMid",
        colColumnDivider="InkSoft", optAltRowColours="true", optColumnDividers="true", optRowDividers="true", colRowDivider="InkSoft",
        intRowHeight="25", intHeaderHeight="17")
     st("BrowserBadgeStyle", "BaseButtonStyle", colFill="LcdLight", colBorder="InkMid", realCornerRounding="2", font=text_font(7, True))
     st("BrowserScrollStyle", "BasePanelStyle", colFill="Ink", realCornerRounding="2")
+
+    # Wave displays (layer page, sampler, slicer): background, the wave
+    # (normal / outside the markers / inside the loop), markers, the
+    # timeline strip and the envelopes drawn over the wave.
+    st("WaveDisplayStyle", "BasePanelStyle", colFill="WaveBack", colAltFill="WaveBack", colCenterLine="Ink", colLine="Ink",
+       colLineDisabled="WaveDisabled", colLineLooping="InkMid", colStartMarker="WaveMarker", colEndMarker="WaveMarker",
+       colLoopStartMarker="WaveLoopMarker", colLoopEndMarker="WaveLoopMarker", colMarkerHole="Ink", colTimelineBackground="LcdDim",
+       colTimelineText="Ink", colTimelineMarkers="Ink", colAmpEnvelopeBack="EnvAmpBack", colFreeEnvelopeBack="EnvFreeBack",
+       colEnvelopeLine="EnvLine", colEnvelopeHandle="LcdLight", colEnvelopeGrab="Amber", colTitleFill="WaveTitle", colText="LcdLight",
+       font=text_font(9, True), fontTimeline=text_font(8))
+    # (track, thumb, its edge lines and grips, the grips' centres)
+    st("WaveDisplayZoomSliderStyle", "BasePanelStyle", colTrack="LcdDim", colFill="InkSoft", colAltFill="LcdFace", colBorder="Ink")
+    # Velocity split lanes: the split's area, the dragged handle, tick
+    # lines (every eighth lighter), the handles.
+    st("VSplitStyle", "BasePanelStyle", colFill="SplitGraph", colAltFill="AmberSoft", colBorder="SplitTick", colAltBorder="SplitTickBar",
+       colHandle="Ink")
+    # Scene slots' trigger area by state: the field and its edge, the
+    # inner block (a used scene ink, the playing one amber), the cue ring.
+    st("SceneTriggerEmptyStyle", "BasePanelStyle", colFill="LcdLight", colBorder="SceneEdge", colAltFill="Transparent",
+       colAltBorder="Transparent")
+    st("SceneTriggerUsedStyle", "SceneTriggerEmptyStyle", colAltFill="SceneUsed")
+    st("SceneTriggerCuedStyle", "SceneTriggerEmptyStyle", colAltFill="SceneUsed", colAltBorder="Amber")
+    st("SceneTriggerActiveStyle", "SceneTriggerEmptyStyle", colAltFill="Amber")
+    # The effect chain's slot bar: one item per slot, the shown ones lit.
+    st("FxSlotItemStyle", "BasePanelStyle", colFill="LcdFace", colBorder="LcdEdge", colText="Ink", font=text_font(9))
+    st("FxSlotItemLitStyle", "FxSlotItemStyle", colFill="AmberSoft", colBorder="Ink")
+    # A layer row in a multiple selection (the primary row stays amber).
+    st("SelectionButtonMultiStyle", "LcdRowSelectedStyle", colFill="RowSelected", realCornerRounding="0")
+    # Pattern grid: past a track's length, its length marker (amber while
+    # dragged) and the selected steps.
+    st("GridPastLengthStyle", "BasePanelStyle", colFill="PastLength")
+    st("PatternTrackMarkerStyle", "BasePanelStyle", colFill="InkMid", colAltFill="Amber")
+    st("StepSelectionStyle", "BasePanelStyle", colFill="AmberSoft")
+    # Song page: parts being recorded and retro parts, the loop range.
+    st("SongPartRecordingStyle", "BasePanelStyle", colFill="RecordingPart", colBorder="Ink")
+    st("SongPartRetroStyle", "BasePanelStyle", colFill="RetroPart", colBorder="RetroEdge")
+    st("SongLoopStyle", "BasePanelStyle", colFill="AmberTint")
 
     # Tooltips and menus (read by dreist-gui by these names).
     st("TooltipStyle", "BaseStyle", optDrawBorder="true", enumDisabledDrawMode="NormalDrawing", colFill="ToolTipPanelColour",
@@ -494,6 +555,17 @@ def base_styles():
     st("MenuStyle", "BaseStyle", optDrawBorder="true", optDrawShadow="true", colFill="LcdLight", colBorder="Ink", colAltFill="Amber",
        colDivider="InkSoft", colSubMenuArrow="Ink", colText="Ink", realCornerRounding="3")
     return S
+
+
+# Attributes set on converted v1 styles (v1 left them to code or to a
+# bitmap): style -> attrs.
+STYLE_OVERRIDES = {
+    # The table header band (v1's header bitmap).
+    "GlobalTableStyle": {"colHeaderFill": "LcdDim"},
+    "GlobalTableStyleAlwaysVisibleHSlider": {"colHeaderFill": "LcdDim"},
+    # The slicer's screen (v1's background bitmap).
+    "PreviewPanelBackgroundStyle": {"colFill": "Lcd"},
+}
 
 
 # Style classes of the theme styles that dreist-gui dispatches on by class.
