@@ -88,7 +88,13 @@ impl Document {
 /// engines, patterns and banks are placed in engine 0 of an otherwise empty
 /// project. The second value is the folder relative sample paths resolve in
 /// (`<file>.samples`, as both versions do).
+///
+/// A host's program, bank or preset file holding v1's plugin state opens
+/// as that project ([`crate::chunk`]).
 pub fn open_as_project(path: &Path) -> Result<Option<(Node, std::path::PathBuf)>, Error> {
+    if crate::chunk::is_state_file(path) {
+        return Ok(crate::chunk::convert(&std::fs::read(path)?)?.map(|doc| (doc, dreist_formats::model::samples_dir(path))));
+    }
     let Some(kind) = FileKind::from_path(path) else { return Ok(None) };
     Ok(convert_file(path)?.map(|doc| (as_project(kind, doc), dreist_formats::model::samples_dir(path))))
 }

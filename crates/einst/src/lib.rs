@@ -31,8 +31,18 @@ pub static PROFILE: Profile = Profile {
 
 /// The extensions Einst's Open dialog offers besides projects: v1 parts
 /// open as projects (into engine 0).
-pub const OPEN_ALSO: &[&str] =
-    &[dreist_formats::profile::LEGACY.kit, dreist_formats::profile::LEGACY.pad, dreist_formats::profile::LEGACY.engine, dreist_formats::profile::LEGACY.pattern, dreist_formats::profile::LEGACY.bank];
+/// A host's program, bank and preset files with v1's plugin state open as
+/// projects too (`einst_formats::chunk`).
+pub const OPEN_ALSO: &[&str] = &[
+    dreist_formats::profile::LEGACY.kit,
+    dreist_formats::profile::LEGACY.pad,
+    dreist_formats::profile::LEGACY.engine,
+    dreist_formats::profile::LEGACY.pattern,
+    dreist_formats::profile::LEGACY.bank,
+    einst_formats::chunk::EXTENSIONS[0],
+    einst_formats::chunk::EXTENSIONS[1],
+    einst_formats::chunk::EXTENSIONS[2],
+];
 
 /// v1's effect menu: its 32 types in v1's order and categories.
 pub fn effect_menu(category: usize) -> Vec<usize> {

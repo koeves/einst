@@ -8,6 +8,7 @@
 //! per-object `Ver` floats instead of `version` ints) and the semantics.
 
 pub mod bindings;
+pub mod chunk;
 pub mod kind;
 pub mod v1;
 pub mod v2;

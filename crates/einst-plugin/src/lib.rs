@@ -289,7 +289,8 @@ impl Plugin for EinstPlugin {
         let mut cache = editor::lock(&cache_handle);
         let session = self.params.session.read().ok().and_then(|s| s.clone());
         let from_session = session.as_ref().and_then(|s| {
-            let doc = dreist_formats::Node::parse(&s.doc).ok()?;
+            // v1's plugin state converts ([re:53d0e3]).
+            let doc = einst::v1io::session_document(&s.doc)?;
             let samples = s.samples.as_ref().map(PathBuf::from);
             let g = Dreist::from_document(&doc, samples.as_deref().unwrap_or(std::path::Path::new(".")), sr, options, &mut cache)?;
             Some((g, samples))
