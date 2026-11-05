@@ -654,7 +654,7 @@ fn mixer_output_menu_routes_the_channel() {
         n.attr("OutputLocation") == Some("Sub output 2") || n.children.iter().any(find)
     }
     assert!(find(&ed.model.doc), "a channel routed to Sub output 2");
-    assert_eq!(super::mixer::output_items()[3], "S 2");
+    assert_eq!(super::mixer::output_items()[3], "Sub output 2");
 }
 
 #[test]

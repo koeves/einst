@@ -173,18 +173,7 @@ fn filter_types(algorithm: usize) -> Vec<String> {
     }
 }
 
-/// The output item index of a stored `OutputLocation` (unknown → Parent).
-fn output_index(name: &str) -> usize {
-    let num = |p: &str| name.strip_prefix(p).and_then(|n| n.trim().parse::<usize>().ok());
-    match name {
-        "Master" => 1,
-        _ => match (num("Sub output "), num("Aux ")) {
-            (Some(k @ 1..=32), _) => k + 1,
-            (_, Some(k @ 1..=4)) => k + 33,
-            _ => 0,
-        },
-    }
-}
+use crate::mixer::output_index;
 
 /// Index of a layer's stored mode (display name, or enum name) in `labels` / `names`.
 fn mode_index(node: Option<&dreist_formats::Node>, key: &str, labels: &[&str], names: &[&str], default: usize) -> usize {
@@ -1022,8 +1011,8 @@ impl Inspector {
                 let i = *index;
                 let param = |par: LayerParam, v: f32| msg(id::SET_LAYER_PARAMETER, &idx, &[par as u8 as f32, v, 0.0]);
                 match menu {
-                    Menu::LayerOutput => out.push(msg(id::SET_LAYER_OUTPUT, &idx, &[i.min(37) as f32])),
-                    Menu::PadOutput => out.push(msg(id::SET_PAD_OUTPUT, &ep, &[i.min(37) as f32])),
+                    Menu::LayerOutput => out.push(msg(id::SET_LAYER_OUTPUT, &idx, &[crate::mixer::output_location(i)])),
+                    Menu::PadOutput => out.push(msg(id::SET_PAD_OUTPUT, &ep, &[crate::mixer::output_location(i)])),
                     Menu::Choke => out.push(msg(id::SET_LAYER_CUT_MODE, &idx, &[i as f32])),
                     Menu::PlayMode => out.push(msg(id::SET_LAYER_PLAY_MODE, &idx, &[i as f32])),
                     Menu::FilterAlgorithm => out.push(param(LayerParam::FilterAlgorithm, i.min(3) as f32 / 3.0)),

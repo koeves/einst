@@ -2201,7 +2201,7 @@ impl Browser {
             // Header Options ([re:5eecea] [re:ea2f28]).
             UiEvent::MenuSelected { index, .. } if self.header_menu == 2 => {
                 self.header_menu = 0;
-                self.preview_output = (*index + 1).min(32);
+                self.preview_output = (*index + 1).min(16);
                 out.push(crate::command::msg(dreist_engine::binding::id::SET_PREVIEW_OUTPUT, &[], &[self.preview_output as f32]));
                 true
             }
@@ -2216,11 +2216,12 @@ impl Browser {
                         self.new_shortlist(files);
                     }
                     3 => {
-                        // Output pairs ([re:d686a0]).
+                        // Output pairs, as v1 lists them ([re:3f4d0d]): Master,
+                        // Sub output 1..15.
                         if let Some(p) = app.root.path_of("ToolButton").filter(|p| p.starts_with(&self.page)) {
-                            let items = (1..=32).map(|k| if k == 1 { "Main".to_string() } else { format!("Sub output {} / {}", 2 * k - 3, 2 * k - 2) }).collect();
+                            let items = crate::mixer::preview_output_items();
                             self.header_menu = 2;
-                            app.open_menu(&p, items, Some(self.preview_output - 1));
+                            app.open_menu(&p, items, self.preview_output.checked_sub(1));
                         }
                         return false;
                     }
