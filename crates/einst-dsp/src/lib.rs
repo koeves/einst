@@ -10,7 +10,7 @@
 //! and the shared effects whose v1 build differs in more than its 2^x
 //! (dreist-re `einst/docs/re/effects-v1.md`): Channel Compressor, Noise
 //! Gate, Parametric / DJ EQ, Filter, Delay, Comb Filter, Tin Can Verb, Ring
-//! Mod and the ladder filters. Effects that differ only by v1's fast 2^x use Dreist's
+//! Mod, the ladder filters, Flanger, Chorus and Phaser. Effects that differ only by v1's fast 2^x use Dreist's
 //! nodes with [`fast_exp2`] installed as `dreist_dsp::fx::exp2`
 //! (`einst::install`).
 //!
@@ -21,13 +21,16 @@
 //! in place of Dreist's v2 nodes.
 
 pub mod audio_freeze;
+pub mod chorus;
 pub mod comb;
 pub mod delay;
 pub mod envelope_shaper;
+pub mod flanger;
 pub mod gain;
 pub mod ladder;
 mod math;
 pub mod noise_gate;
+pub mod phaser;
 pub mod ring_mod;
 pub mod ssl_eq;
 pub mod ssl_filter;
@@ -49,6 +52,8 @@ pub const BUS_COMPRESSOR: usize = 9;
 pub const NOISE_GATE: usize = 11;
 pub const ENVELOPE_SHAPER: usize = 12;
 pub const DELAY: usize = 15;
+pub const FLANGER: usize = 16;
+pub const CHORUS: usize = 17;
 pub const PHASER: usize = 18;
 pub const DISTORTION: usize = 19;
 pub const BIT_CRUSHER: usize = 23;
@@ -86,6 +91,9 @@ pub fn create(kind: usize) -> Option<Box<dyn Node>> {
         GRANDAD_FILTER => Box::new(ladder::Ladder::new(ladder::Kind::Moog)),
         CHILD_GENIUS_FILTER => Box::new(ladder::Ladder::new(ladder::Kind::Prodigy)),
         ENVELOPE_SHAPER => Box::new(envelope_shaper::EnvelopeShaper::new()),
+        FLANGER => Box::new(flanger::Flanger::new()),
+        CHORUS => Box::new(chorus::Chorus::new()),
+        PHASER => Box::new(phaser::Phaser::new()),
         _ => return None,
     })
 }
@@ -103,6 +111,9 @@ pub fn internal_ports(kind: usize) -> &'static [(usize, f32)] {
         NOISE_GATE => &[(6, 0.0), (7, 0.0), (8, 0.0), (9, 1.0)],
         // Same hidden ports as v2 (`dreist_dsp` setup) for the copied nodes.
         FILTER => &[(4, 1.0)],
+        FLANGER => &[(6, 0.0), (7, 1.0)],
+        CHORUS => &[(3, 1.0)],
+        PHASER => &[(6, 1.0), (7, 0.0), (8, 0.0)],
         DELAY => &[(1, 1.0), (7, 1.0), (4, 0.0)],
         AUDIO_FREEZER => &[(3, 1.0), (8, 0.0), (7, 0.0), (9, 1.0)],
         TIN_CAN_VERB => &[(6, 1.0), (5, 0.0)],

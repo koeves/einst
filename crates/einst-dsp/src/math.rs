@@ -14,7 +14,10 @@ pub(crate) fn sat(x: f32) -> f32 {
     ((c.abs() * 0.0625 - 0.25) * c * c + 1.0) * c
 }
 
-/// 4-point cubic read at `pos` in a power-of-two ring (v2's summation order).
+/// 4-point cubic read at `pos` in a power-of-two ring, in v1's order: the
+/// constant term `b·−0.5 + c + a·−1/3 + d·−1/6` left to right (v1's
+/// Delay ev_0cdaf927, Comb ev_8625fc5a, Audio Freezer ev_544675a5, Flanger
+/// ev_0503858b; Geist2 groups it `((c − a/3) − b/2) − d/6`).
 #[inline]
 pub(crate) fn cubic(buf: &[f32], mask: u32, pos: f32) -> f32 {
     let i = pos.floor() as i32 as u32;
@@ -23,7 +26,7 @@ pub(crate) fn cubic(buf: &[f32], mask: u32, pos: f32) -> f32 {
     let b = buf[(i & mask) as usize];
     let c = buf[(i.wrapping_add(1) & mask) as usize];
     let d = buf[(i.wrapping_add(2) & mask) as usize];
-    ((((b - c) * 0.5 + (d - a) * 0.16666667) * t + ((a + c) * 0.5 - b)) * t + (((c - a * 0.33333334) - b * 0.5) - d * 0.16666667)) * t + b
+    ((((b - c) * 0.5 + (d - a) * 0.16666667) * t + ((a + c) * 0.5 - b)) * t + (b * -0.5 + c + a * -0.33333334 + d * -0.16666667)) * t + b
 }
 
 /// Ring sizes: the smallest power of two ≥ `n` (1 below 2).
