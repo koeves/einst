@@ -265,9 +265,31 @@ pub fn copy_to_next(model: &mut Model, e: usize) -> Option<usize> {
 /// [re:e64ec5].
 pub const INSERTABLE: [&str; 15] =
     ["Ramp Up", "Ramp Down", "Sine", "Cosine", "Triangle", "Square Up", "Square Down", "Alternate", "Even On", "Even Off", "Log Curve", "Exp Curve", "Pow2", "Pow3", "Randomise"];
-const GRAPH_MENU: [&str; 13] = [
-    "Reset to default values", "", "Cut", "Copy", "Paste", "", "Clear automation track", "Clear all automation tracks", "Clear all pattern automation tracks", "Invert automation values",
-    "Reverse automation values", "", "Insert ▸",
+/// The graph lane menu as v1 builds it ([re:2eda04]): the tools, the lane
+/// edits, Insert.
+const GRAPH_MENU: [&str; 18] = [
+    "Pen", "Delete", "Select", "Multi Tool", "", "Reset to default value", "", "Cut", "Copy", "Paste", "", "Clear automation track", "Clear all automation tracks",
+    "Clear all pattern automation tracks", "Invert automation values", "Reverse automation values", "", "Insert ▸",
+];
+
+/// v1's Insert submenu of the graph lane ([re:2eda04]): labels and the
+/// [`insert_from`] shape each one draws.
+const GRAPH_INSERT: [(&str, usize); 15] = [
+    ("Random", 14),
+    ("Ramp up", 0),
+    ("Ramp down", 1),
+    ("Sine", 2),
+    ("Cosine", 3),
+    ("Triangle", 4),
+    ("Square up", 5),
+    ("Square down", 6),
+    ("Alternate", 7),
+    ("Even -> max", 8),
+    ("Even -> min", 9),
+    ("Log curve", 10),
+    ("Exp curve", 11),
+    ("x^2", 12),
+    ("x^3", 13),
 ];
 
 /// The pattern editing tools, in the tools panel's order.
@@ -1381,7 +1403,7 @@ impl PatternPanel {
                 if insert {
                     self.graph_target = None;
                     let mut rng = self.rng;
-                    let shape = insert_from(*index, n, start, &mut || {
+                    let shape = insert_from(GRAPH_INSERT.get(*index).map_or(14, |g| g.1), n, start, &mut || {
                         rng ^= rng << 13;
                         rng ^= rng >> 17;
                         rng ^= rng << 5;
@@ -1395,25 +1417,26 @@ impl PatternPanel {
                 }
                 let idx = [e as i32, -1, -1, cur, track as i32];
                 match *index {
-                    0 => send_all(out, &vec![dreist_formats::params::step_lane_default(lane); n]),
-                    2 | 3 => {
+                    0..=3 => self.tool = TOOLS[*index],
+                    5 => send_all(out, &vec![dreist_formats::params::step_lane_default(lane); n]),
+                    7 | 8 => {
                         self.lane_clip = vals.clone();
-                        if *index == 2 {
+                        if *index == 7 {
                             out.push(msg(id::CLEAR_TRACK_AUTOMATION, &idx, &[lane as f32]));
                         }
                     }
-                    4 => {
+                    9 => {
                         let clip = self.lane_clip.clone();
                         send_all(out, &clip[..clip.len().min(n)]);
                     }
-                    6 => out.push(msg(id::CLEAR_TRACK_AUTOMATION, &idx, &[lane as f32])),
-                    7 => out.push(msg(id::CLEAR_ALL_TRACK_AUTOMATION, &idx, &[0.0])),
-                    8 => out.push(msg(id::CLEAR_ALL_PATTERN_AUTOMATION, &idx[..4], &[0.0])),
-                    9 => send_all(out, &vals.iter().map(|v| 1.0 - v).collect::<Vec<_>>()),
-                    10 => send_all(out, &vals.iter().rev().copied().collect::<Vec<_>>()),
-                    12 => {
+                    11 => out.push(msg(id::CLEAR_TRACK_AUTOMATION, &idx, &[lane as f32])),
+                    12 => out.push(msg(id::CLEAR_ALL_TRACK_AUTOMATION, &idx, &[0.0])),
+                    13 => out.push(msg(id::CLEAR_ALL_PATTERN_AUTOMATION, &idx[..4], &[0.0])),
+                    14 => send_all(out, &vals.iter().map(|v| 1.0 - v).collect::<Vec<_>>()),
+                    15 => send_all(out, &vals.iter().rev().copied().collect::<Vec<_>>()),
+                    17 => {
                         self.graph_menu = Some(true);
-                        app.open_menu(anchor, INSERTABLE.iter().map(|s| s.to_string()).collect(), None);
+                        app.open_menu(anchor, GRAPH_INSERT.iter().map(|g| g.0.to_string()).collect(), None);
                         return false;
                     }
                     _ => {}

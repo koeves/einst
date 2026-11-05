@@ -29,7 +29,6 @@ const PATTERNS: usize = 24;
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Action {
     // Pattern selector.
-    Rename,
     CutPattern,
     CopyPattern,
     PastePattern,
@@ -38,9 +37,7 @@ enum Action {
     LockPattern,
     ResetVelocity,
     Quantize,
-    ExtractGroove,
     ConvertTiming,
-    ExportAudio,
     SwapMenu,
     CopyMenu,
     MoveMenu,
@@ -166,9 +163,8 @@ impl PatMenu {
     fn pattern_menu(&mut self, app: &mut App, anchor: &[usize], model: &Model, clip: &Clipboard, p: usize) {
         let e = model.engine;
         let sep = || (String::new(), Action::None, true);
+        // v1's list ([re:00b273]).
         let items = vec![
-            ("Rename pattern".into(), Action::Rename, true),
-            sep(),
             ("Cut".into(), Action::CutPattern, true),
             ("Copy".into(), Action::CopyPattern, true),
             ("Paste".into(), Action::PastePattern, clip.pattern.is_some()),
@@ -180,14 +176,11 @@ impl PatMenu {
             sep(),
             ("Reset pattern velocity".into(), Action::ResetVelocity, true),
             ("Quantize pattern timing".into(), Action::Quantize, true),
-            ("Extract groove from pattern".into(), Action::ExtractGroove, true),
             ("Convert timing".into(), Action::ConvertTiming, true),
             sep(),
             ("Swap with... ▸".into(), Action::SwapMenu, true),
             ("Copy to... ▸".into(), Action::CopyMenu, true),
             ("Move to... ▸".into(), Action::MoveMenu, true),
-            sep(),
-            ("Export as audio (stops playback)...".into(), Action::ExportAudio, true),
         ];
         self.show(app, anchor, p, items);
     }
@@ -301,14 +294,6 @@ impl PatMenu {
         };
         match a {
             Action::None => false,
-            Action::Rename => {
-                out.push(msg(id::SELECT_PATTERN, &[e as i32, -1, -1, n as i32], &[0.0]));
-                set_current(model, e, n);
-                if let Some(p) = app.root.path_of("PatternNameBox") {
-                    app.begin_edit(&p);
-                }
-                true
-            }
             Action::CutPattern | Action::CopyPattern => {
                 clip.pattern = Some(pattern_or_empty(model, e, n));
                 if a == Action::CutPattern {
@@ -345,17 +330,8 @@ impl PatMenu {
                 out.push(msg(id::QUANTIZE_PATTERN_TIMING, &[e as i32, -1, -1, n as i32, -1, -1], &[0.0]));
                 true
             }
-            // e_extractGrooveFromPattern (0x136) → the groove from the pattern.
-            Action::ExtractGroove => {
-                self.groove = Some(n);
-                false
-            }
             Action::ConvertTiming => {
                 self.convert = Some(n);
-                true
-            }
-            Action::ExportAudio => {
-                self.export = true;
                 true
             }
             Action::SwapMenu | Action::CopyMenu | Action::MoveMenu => {
@@ -494,11 +470,6 @@ impl PatMenu {
             }
         }
     }
-}
-
-fn set_current(model: &mut Model, e: usize, p: usize) {
-    let st = model.engine_mut(e).child_mut_or_insert("EngineState", "EngineState");
-    st.set("CurrentPattern", p);
 }
 
 #[cfg(test)]
