@@ -65,6 +65,15 @@ pub(crate) enum Channel {
     Layer(usize),
 }
 
+/// The engine strip swing menu's head items.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum SwingRequest {
+    /// Extract timing from engine k's current pattern.
+    Extract(usize),
+    ImportMidi,
+    ImportGuru,
+}
+
 /// OutputCombo items, as the original v1 fills them ([re:eab727],
 /// [re:59154a] long names): Parent, Master, Sub output 1..15, Buss 1..4.
 pub fn output_items() -> Vec<String> {
@@ -182,6 +191,8 @@ pub struct Mixer {
     route_all_menu: Option<Channel>,
     /// The swing template menu of an engine strip: engine, template paths.
     swing_menu: Option<(usize, Vec<std::path::PathBuf>)>,
+    /// A swing menu head item for the editor (dialogs, the groove).
+    pub swing_request: Option<SwingRequest>,
     fx: Option<crate::fxchain::FxPanel>,
     /// Global mixer: the aux or the master whose chain is shown.
     bus_view: Channel,
@@ -247,7 +258,7 @@ impl Mixer {
             Some(h) => Some(crate::fxchain::FxPanel::build(skin, root, h)?),
             None => None,
         };
-        Ok(Mixer { kind, page: page.to_vec(), strips, glue, mode: 0, output_menu: None, route_all_menu: None, swing_menu: None, fx, bus_view: Channel::Aux(0) })
+        Ok(Mixer { kind, page: page.to_vec(), strips, glue, mode: 0, output_menu: None, route_all_menu: None, swing_menu: None, swing_request: None, fx, bus_view: Channel::Aux(0) })
     }
 
     /// A chain preset was saved somewhere: the panel counts presets again.
@@ -662,7 +673,15 @@ impl Mixer {
         let p = model.pad[model.engine] as i32;
         if let UiEvent::MenuSelected { index, .. } = ev {
             if let Some((k, paths)) = self.swing_menu.take() {
-                let Some(path) = paths.get(*index) else { return true };
+                // [re:832a12]: the three head items post 0x10f (extract timing
+                // of engine k's current pattern), 0x110 / 0x111 (imports).
+                match *index {
+                    0 => self.swing_request = Some(SwingRequest::Extract(k)),
+                    1 => self.swing_request = Some(SwingRequest::ImportMidi),
+                    2 => self.swing_request = Some(SwingRequest::ImportGuru),
+                    _ => {}
+                }
+                let Some(path) = index.checked_sub(4).and_then(|i| paths.get(i)) else { return true };
                 if let Some(n) = crate::swing::load(path) {
                     let sw = dreist_engine::pattern::Swing::from_node(&n);
                     out.push(Command::SwingTemplate(k, Box::new(n), Box::new(sw)));
@@ -736,15 +755,19 @@ impl Mixer {
                 self.output_menu = Some(ch);
                 return true;
             }
-            // The engine strip's swing template menu (the templates,
-            // current checked) → `e_setEngineSwingTemplate`.
+            // The engine strip's swing template menu ([re:6012ce]): Extract
+            // timing from current pattern, Import MIDI template, Import Guru
+            // swing/shuffle, then the templates (current checked) →
+            // `e_setEngineSwingTemplate`.
             if name == "EngineSwingTemplateCombo" {
                 let Some((Channel::Engine(k), _)) = self.hit(app, path) else { return false };
                 let paths = crate::swing::template_paths(&dreist_formats::paths::skin_dir());
                 let current = model.engine_node(k).and_then(|n| n.children.iter().find(|c| c.class == "SwingTemplate")).map(|n| crate::swing::name_of(Some(n), std::path::Path::new("")));
                 let names: Vec<String> = paths.iter().map(|p| crate::swing::name_of(crate::swing::load(p).as_ref(), p)).collect();
-                let checked = names.iter().position(|l| Some(l) == current.as_ref());
-                app.open_menu(path, names, checked);
+                let checked = names.iter().position(|l| Some(l) == current.as_ref()).map(|i| i + 4);
+                let mut labels = vec!["Extract timing from current pattern".to_string(), "Import MIDI template".into(), "Import Guru swing/shuffle".into(), String::new()];
+                labels.extend(names);
+                app.open_menu(path, labels, checked);
                 self.swing_menu = Some((k, paths));
                 return true;
             }

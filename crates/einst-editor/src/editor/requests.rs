@@ -50,6 +50,14 @@ impl Editor {
                 self.patmenu.groove = Some(n);
             }
         }
+        for m in self.mixers.iter_mut() {
+            match m.swing_request.take() {
+                Some(crate::mixer::SwingRequest::Extract(k)) => self.patmenu.groove = Some(self.model.current_pattern(k)),
+                Some(crate::mixer::SwingRequest::ImportMidi) => out.push(Request::ImportMidiTemplate),
+                Some(crate::mixer::SwingRequest::ImportGuru) => out.push(Request::ImportGuruSwing),
+                None => {}
+            }
+        }
         if let Some(n) = self.patmenu.groove.take() {
             out.push(Request::ExtractGroove(n));
         }

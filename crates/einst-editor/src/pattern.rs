@@ -1312,7 +1312,7 @@ impl PatternPanel {
             }
             // Swing template menu ([re:587c2e]
             // [re:05f028]): Extract timing from current pattern, Import MIDI
-            // template, Import Guru shuffle, divider, the templates
+            // template, Import Guru swing/shuffle, divider, the templates
             // (swing template paths, current checked).
             UiEvent::RightClicked { path, name } if name == SWING_KNOB => {
                 self.swing_knob_menu = true;
@@ -1334,7 +1334,7 @@ impl PatternPanel {
                 let current = model.engine_node(e).and_then(|n| n.children.iter().find(|c| c.class == "SwingTemplate")).map(|n| crate::swing::name_of(Some(n), std::path::Path::new("")));
                 let names: Vec<String> = paths.iter().map(|p| crate::swing::name_of(crate::swing::load(p).as_ref(), p)).collect();
                 let checked = names.iter().position(|l| Some(l) == current.as_ref()).map(|i| i + SWING_HEAD);
-                let mut labels = vec!["Extract timing from current pattern".to_string(), "Import MIDI template".into(), "Import Guru shuffle".into(), String::new()];
+                let mut labels = vec!["Extract timing from current pattern".to_string(), "Import MIDI template".into(), "Import Guru swing/shuffle".into(), String::new()];
                 labels.extend(names);
                 if self.swing_knob_menu {
                     labels.extend([String::new(), "Reset".into(), "Edit".into()]);
