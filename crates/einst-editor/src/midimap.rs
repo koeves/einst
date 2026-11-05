@@ -195,7 +195,21 @@ fn binding_node_mut<'a>(doc: &'a mut Node, r: &Row) -> Option<&'a mut Node> {
 }
 
 /// The row right-click menu.
-const ROW_MENU: [&str; 6] = ["Remove mapping", "", "Invert range", "Reset min", "Reset max", "Reset min and max"];
+/// A row menu item ([re:d0102a] / [re:6a32d0]).
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum RowItem {
+    Remove,
+    /// Expand (back to its default width) or collapse (to its minimum) a
+    /// column.
+    InvertColumn(usize),
+    CollapseAll,
+    ExpandAll,
+    InvertRange,
+    ResetMin,
+    ResetMax,
+    ResetBoth,
+    None,
+}
 
 /// Remove one binding, renumbering the rest under its key.
 pub fn remove(doc: &mut Node, r: &Row) {
@@ -321,7 +335,7 @@ pub struct MidiMap {
     /// Row whose Type menu is open.
     menu_row: Option<usize>,
     /// A row's right-click menu is open (the row).
-    row_menu: Option<usize>,
+    row_menu: Option<(usize, Vec<RowItem>)>,
     /// Min/max drag: (row, column 4/5, start y, start value).
     drag: Option<(usize, usize, f32, f32)>,
     locked: bool,
@@ -630,13 +644,29 @@ impl MidiMap {
                     // [re:fb19a6] [re:1cc864]: a row's
                     // right-click menu (the row gets selected).
                     MouseKind::RightDown => {
-                        let Some((row, _)) = self.cell(app, rs.len(), *x, *y) else { return false };
+                        let Some((row, col)) = self.cell(app, rs.len(), *x, *y) else { return false };
                         if row >= rs.len() {
                             return false;
                         }
                         self.selected = Some(row);
-                        self.row_menu = Some(row);
-                        app.open_menu(path, ROW_MENU.iter().map(|s| s.to_string()).collect(), None);
+                        let mut items = vec![("Remove mapping".to_string(), RowItem::Remove), (String::new(), RowItem::None)];
+                        // Not the fixed columns (Clear, Focus).
+                        if COLUMNS.get(col).is_some_and(|c| c.2 != c.3) {
+                            let collapsed = self.widths[col] <= COLUMNS[col].2;
+                            items.push(((if collapsed { "Expand column" } else { "Collapse column" }).to_string(), RowItem::InvertColumn(col)));
+                        }
+                        items.extend([
+                            ("Collapse all columns".to_string(), RowItem::CollapseAll),
+                            ("Expand all columns".to_string(), RowItem::ExpandAll),
+                            (String::new(), RowItem::None),
+                            ("Invert range".to_string(), RowItem::InvertRange),
+                            ("Reset min".to_string(), RowItem::ResetMin),
+                            ("Reset max".to_string(), RowItem::ResetMax),
+                            ("Reset min and max".to_string(), RowItem::ResetBoth),
+                        ]);
+                        let (labels, actions): (Vec<String>, Vec<RowItem>) = items.into_iter().unzip();
+                        self.row_menu = Some((row, actions));
+                        app.open_menu(path, labels, None);
                         true
                     }
                     MouseKind::Down => {
@@ -696,19 +726,34 @@ impl MidiMap {
             // Remove mapping (0xf), Invert range / Reset min / max / both
             // (0x3a after editing the binding).
             UiEvent::MenuSelected { name, index, .. } if name == "TableView" && self.row_menu.is_some() => {
-                let Some(row) = self.row_menu.take() else { return false };
+                let Some((row, actions)) = self.row_menu.take() else { return false };
+                let a = actions.get(*index).copied().unwrap_or(RowItem::None);
+                let resizable = |k: usize| COLUMNS[k].2 != COLUMNS[k].3;
+                match a {
+                    RowItem::InvertColumn(k) => {
+                        self.widths[k] = if self.widths[k] <= COLUMNS[k].2 { COLUMNS[k].1 } else { COLUMNS[k].2 };
+                        return true;
+                    }
+                    RowItem::CollapseAll | RowItem::ExpandAll => {
+                        for k in (0..COLUMNS.len()).filter(|&k| resizable(k)) {
+                            self.widths[k] = if a == RowItem::CollapseAll { COLUMNS[k].2 } else { COLUMNS[k].1 };
+                        }
+                        return true;
+                    }
+                    RowItem::None => return false,
+                    _ => {}
+                }
                 let Some(r) = rows(&model.doc).get(row).cloned() else { return false };
-                if *index == 0 {
+                if a == RowItem::Remove {
                     remove(&mut model.doc, &r);
                     self.selected = None;
                 } else if let Some(n) = binding_node_mut(&mut model.doc, &r) {
                     let (lo, hi) = (n.f32("Min").unwrap_or(0.0), n.f32("Max").unwrap_or(1.0));
-                    let (lo, hi) = match index {
-                        2 => (hi, lo),
-                        3 => (0.0, hi),
-                        4 => (lo, 1.0),
-                        5 => (0.0, 1.0),
-                        _ => return false,
+                    let (lo, hi) = match a {
+                        RowItem::InvertRange => (hi, lo),
+                        RowItem::ResetMin => (0.0, hi),
+                        RowItem::ResetMax => (lo, 1.0),
+                        _ => (0.0, 1.0),
                     };
                     n.set("Min", dreist_formats::node::format_g16(lo as f64)).set("Max", dreist_formats::node::format_g16(hi as f64));
                 }
