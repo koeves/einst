@@ -950,6 +950,12 @@ fn free_layer(model: &Model, e: usize, p: usize, l: usize) -> bool {
 impl crate::Editor {
     /// A file for take `i`: the save dialog, or (without one) a free name
     /// in the record folder.
+    /// A free file for take `i` in the record folder (no dialog: a dragged
+    /// take).
+    pub(crate) fn sampler_record_file(&self, i: usize) -> Option<std::path::PathBuf> {
+        free_filename(&record_dir(&self.modals.options), &self.sampler.file_stem(i))
+    }
+
     fn sampler_file(&mut self, i: usize) -> Option<std::path::PathBuf> {
         let stem = self.sampler.file_stem(i);
         if self.dialogs.is_some() {

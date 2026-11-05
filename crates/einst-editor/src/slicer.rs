@@ -777,23 +777,8 @@ impl Slicer {
         };
         self.pattern = slice::extract_pattern_with_locks(&self.slices, start, end, self.analysis.bars, self.analysis.beats, self.multi_layer, quantize_rex(), &blocked);
         let usable: Vec<SlicePoint> = self.slices.iter().filter(|s| !s.deleted).copied().collect();
-        // Load `file` with region (s0, s1) into (p, l), reset its envelopes.
         let load = |model: &mut Model, p: usize, l: usize, s0: u32, s1: u32, name: &str| {
-            if !crate::browser::load_sample_into_layer(model, e, p, l, &file) {
-                return;
-            }
-            let layer = model.layer_mut(e, p, l);
-            layer.children.retain(|c| c.class != "AudioFileMarkers");
-            for nm in ["StartEndMarkers", "LoopMarkers"] {
-                let mut m = Node::new("AudioFileMarkers", Some(nm));
-                m.set("StartSample", s0).set("EndSample", s1).set("SampleLength", frames);
-                layer.children.push(m);
-            }
-            reset_envelopes(layer, (s1 - s0) as f64, frames as f64, sr);
-            layer.set(dreist_formats::params::LayerParam::AmpEnvAttack.name(), 0.1);
-            if !name.is_empty() {
-                model.set_layer_name(e, p, l, name);
-            }
+            load_region(model, e, p, l, &file, (s0, s1, frames, sr), name);
         };
         if what != Extract::Pattern {
             if usable.len() < 2 {
@@ -851,6 +836,21 @@ impl Slicer {
         }
         self.extracted = true;
         Self::rebuild(model, out);
+    }
+
+    /// [re:a1dc9f] / [re:8fe850]: the selected slice (else the whole
+    /// region) dragged onto pad `p`'s layer `l`: the file with that region.
+    pub fn drop_on_pad(&self, model: &mut Model, e: usize, p: usize, l: usize) -> bool {
+        let Some(file) = self.file.clone() else { return false };
+        let frames = self.frames();
+        let sr = self.audio.as_ref().map(|a| a.data.sample_rate).unwrap_or(44100.0);
+        let (start, end) = self.region();
+        let usable: Vec<SlicePoint> = self.slices.iter().filter(|s| !s.deleted).copied().collect();
+        let (s0, s1) = match self.selected.and_then(|i| self.slices.get(i)).and_then(|sel| usable.iter().position(|u| u.start == sel.start)) {
+            Some(k) => slice::slice_markers(&usable, k, end),
+            None => (start, end),
+        };
+        load_region(model, e, p, l, &file, (s0, s1, frames, sr), "")
     }
 
     pub fn draw(&self, model: &Model, r: &Renderer, p: &mut Painter, c: &Ctrl) -> bool {
@@ -1014,4 +1014,25 @@ mod tests {
         assert!(s.slices.iter().any(|p| p.start == 3000 && p.deleted));
         assert_eq!(s.slice_span(3500), Some((1000, 44100)), "deleted slices do not cut");
     }
+}
+
+/// Load `file` with region (start, end) of (frames at sr) into (e, p, l)
+/// and reset its envelopes ([re:4220aa], AmpEnvAttack 0.1).
+fn load_region(model: &mut Model, e: usize, p: usize, l: usize, file: &Path, (s0, s1, frames, sr): (u32, u32, u32, f32), name: &str) -> bool {
+    if !crate::browser::load_sample_into_layer(model, e, p, l, file) {
+        return false;
+    }
+    let layer = model.layer_mut(e, p, l);
+    layer.children.retain(|c| c.class != "AudioFileMarkers");
+    for nm in ["StartEndMarkers", "LoopMarkers"] {
+        let mut m = Node::new("AudioFileMarkers", Some(nm));
+        m.set("StartSample", s0).set("EndSample", s1).set("SampleLength", frames);
+        layer.children.push(m);
+    }
+    reset_envelopes(layer, (s1 - s0) as f64, frames as f64, sr);
+    layer.set(dreist_formats::params::LayerParam::AmpEnvAttack.name(), 0.1);
+    if !name.is_empty() {
+        model.set_layer_name(e, p, l, name);
+    }
+    true
 }
