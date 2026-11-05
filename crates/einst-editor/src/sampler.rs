@@ -170,17 +170,16 @@ pub enum Request {
     Slice,
 }
 
-/// The Export/Send menu: items and their requests (`None`: the auto-crop
-/// check or a separator).
+/// The Export/Send menu as v1 builds it ([re:3da5b8]): items and their
+/// requests (`None`: the auto-crop check or a separator).
 fn send_menu(auto_crop: bool) -> Vec<(String, Option<Request>)> {
     vec![
         ("Export take...".into(), Some(Request::ExportTake)),
         ("Export all takes...".into(), Some(Request::ExportAll)),
-        (String::new(), None),
-        ("Send take to current pad".into(), Some(Request::SendToPad)),
-        ("Send all takes to empty pads".into(), Some(Request::SendAllToPads)),
+        ("Send take to current pad...".into(), Some(Request::SendToPad)),
+        ("Send all takes to empty pads...".into(), Some(Request::SendAllToPads)),
         ("Send all takes to free layers on current pad...".into(), Some(Request::SendToFreeLayers)),
-        ("Send all takes to free layers on empty pads".into(), Some(Request::SendToEmptyPadLayers)),
+        ("Send all takes to free layers on empty pads...".into(), Some(Request::SendToEmptyPadLayers)),
         (String::new(), None),
         (format!("{}Auto-crop saved samples", if auto_crop { dreist_gui::menu::CHECK } else { "" }), None),
     ]

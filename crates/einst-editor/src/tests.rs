@@ -1537,9 +1537,9 @@ fn sampler_page_modes_arm_record_and_preview() {
     let sb = sampler_path(&ed, "SaveButton");
     ed.handle(&UiEvent::Clicked { path: sb.clone(), name: "SaveButton".into(), id: 0, on: false });
     let items = ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap();
-    assert_eq!((items[0].as_str(), items[3].as_str(), items.len()), ("Export take...", "Send take to current pad", 9));
+    assert_eq!((items[0].as_str(), items[2].as_str(), items.len()), ("Export take...", "Send take to current pad...", 8));
     ed.app.menu = None;
-    ed.handle(&UiEvent::MenuSelected { anchor: sb, name: "SaveButton".into(), index: 8 });
+    ed.handle(&UiEvent::MenuSelected { anchor: sb, name: "SaveButton".into(), index: 7 });
     assert!(ed.sampler.auto_crop);
 }
 
