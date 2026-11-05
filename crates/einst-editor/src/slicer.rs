@@ -690,11 +690,12 @@ impl Slicer {
                     MouseKind::Drag => {
                         if let Some((x0, y0, v)) = self.view_drag {
                             self.view = v;
-                            self.zoom((-(y - y0) as f64 / 100.0).exp2(), (x0 / w.max(1.0)) as f64);
+                            let (zs, ss) = crate::zoomslider::drag_signs();
+                            self.zoom((-(y - y0) as f64 * zs as f64 / 100.0).exp2(), (x0 / w.max(1.0)) as f64);
                             let (a, b) = self.view;
-                            let shift = ((x - x0) / w.max(1.0)) as f64 * (b - a) as f64;
+                            let shift = ((x - x0) / w.max(1.0)) as f64 * (b - a) as f64 * ss as f64;
                             let n = self.frames() as f64;
-                            let a2 = (a as f64 - shift).clamp(0.0, (n - (b - a) as f64).max(0.0));
+                            let a2 = (a as f64 + shift).clamp(0.0, (n - (b - a) as f64).max(0.0));
                             self.view = (a2 as u32, (a2 + (b - a) as f64) as u32);
                             return true;
                         }

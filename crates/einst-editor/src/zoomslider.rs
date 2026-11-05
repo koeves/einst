@@ -120,6 +120,15 @@ pub fn draw(p: &mut Painter, s: &StyleSheet, style: &str, w: f32, h: f32, view: 
     }
 }
 
+/// [re:079fd4]: the wave displays' drag signs (zoom, scroll). Dragging down
+/// widens the view and dragging right scrolls right; the preferences
+/// `GuiDragDownToZoom` / `GuiDragLeftToScrollRight` flip them.
+pub fn drag_signs() -> (f32, f32) {
+    let o = crate::options::Options::load();
+    let s = |k: &str| if o.bool(k, false) { -1.0 } else { 1.0 };
+    (s("GuiDragDownToZoom"), s("GuiDragLeftToScrollRight"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
