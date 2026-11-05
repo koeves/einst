@@ -107,6 +107,55 @@ fn sort_entries(v: &mut [Entry], col: Column, asc: bool) {
     });
 }
 
+/// The view options menu's file types ([re:8b51c3]), each shown unless
+/// unticked (option `Show<type>`, spaces as underscores, default on,
+/// [re:b1c42d]).
+pub const VIEW_TYPES: [&str; 13] = ["Audio", "Presets", "Engines", "Kits", "Pads", "Patterns", "Pattern Bank", "MIDI", "Guru Kit", "Guru Pattern", "Guru Pattern Bank", "Folders", "Sample Folders"];
+
+fn view_option(t: usize) -> String {
+    format!("Show{}", VIEW_TYPES[t].replace(' ', "_"))
+}
+
+/// The [`VIEW_TYPES`] entry a listed item belongs to; `None` for a file of
+/// no type, which the original hides whenever any type is (that includes
+/// Guru songs, [re:ca74b1]).
+fn view_type(e: &Entry) -> Option<usize> {
+    use dreist_formats::profile::{DocKind, doc_kind};
+    if e.dir {
+        return Some(if e.path.extension().is_some_and(|x| x.eq_ignore_ascii_case("samples")) { 12 } else { 11 });
+    }
+    let ext = e.path.extension().map(|x| x.to_string_lossy().to_lowercase()).unwrap_or_default();
+    Some(match ext.as_str() {
+        "wav" | "aif" | "aiff" | "rx2" | "rex" | "rex2" | "rcy" | "rcso" => 0,
+        "mid" => 7,
+        "kit" => 8,
+        "g01" => 9,
+        "g24" => 10,
+        x => match doc_kind(x)? {
+            DocKind::Project => 1,
+            DocKind::Engine => 2,
+            DocKind::Kit => 3,
+            DocKind::Pad => 4,
+            DocKind::Pattern => 5,
+            DocKind::Bank => 6,
+            _ => return None,
+        },
+    })
+}
+
+/// [re:ca74b1]: with every type shown the folder lists as is; otherwise
+/// items of unticked types go, sample folders only while Folders is on.
+fn visible(show: &[bool; 13], e: &Entry) -> bool {
+    if show.iter().all(|s| *s) {
+        return true;
+    }
+    match view_type(e) {
+        Some(12) => show[11] && show[12],
+        Some(t) => show[t],
+        None => false,
+    }
+}
+
 /// The current shortlist's menu ([re:200a75]).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum ShortAction {
@@ -249,8 +298,11 @@ pub struct Browser {
     short_scroll: usize,
     /// The open shortlist menu's actions.
     short_menu: Vec<ShortAction>,
-    /// The view options menu ([re:543135]): 1 open, 2 its Columns submenu.
+    /// The view options menu ([re:543135]): 1 open, 2 its Columns submenu,
+    /// 3 its View submenu.
     view_menu: u8,
+    /// [`VIEW_TYPES`] shown.
+    show: [bool; 13],
 }
 
 /// [re:2717b8] /
@@ -717,11 +769,9 @@ fn list(dir: &Path) -> Vec<Entry> {
             rd.flatten()
                 .map(|e| e.path())
                 .filter(|p| !hidden(p))
-                .filter(|p| {
-                    // `.samples` folders belong to presets/kits.
-                    let samples = p.extension().is_some_and(|e| e == "samples");
-                    (p.is_dir() && !samples) || p.extension().is_some_and(listed)
-                })
+                // Folders, `.samples` ones too (v1 lists them; its View
+                // menu's Sample Folders hides them, [re:ca74b1]).
+                .filter(|p| p.is_dir() || p.extension().is_some_and(listed))
                 .map(|p| Entry { name: p.file_name().unwrap().to_string_lossy().into_owned(), dir: p.is_dir(), path: p })
                 .collect()
         })
@@ -987,6 +1037,10 @@ impl Browser {
             short_scroll: 0,
             short_menu: Vec::new(),
             view_menu: 0,
+            show: {
+                let o = crate::options::Options::load();
+                std::array::from_fn(|t| o.bool(&view_option(t), true))
+            },
         };
         b.searches = load_saved_searches();
         b.sources = sources(&b.favourites, &b.searches, &b.shortlists);
@@ -1058,6 +1112,8 @@ impl Browser {
         // A favourite file: open its folder with it selected.
         let (dir, select) = if dir.is_file() { (dir.parent().map(Path::to_path_buf).unwrap_or(dir.clone()), Some(dir)) } else { (dir, None) };
         self.entries = list(&dir);
+        let show = self.show;
+        self.entries.retain(|e| visible(&show, e));
         sort_entries(&mut self.entries, self.sort.0, self.sort.1);
         self.dir = Some(dir);
         self.search = None;
@@ -2008,12 +2064,41 @@ impl Browser {
             // a column's check item shows or hides it (saved as an option).
             UiEvent::MenuSelected { anchor, index, .. } if self.view_menu == 1 => {
                 self.view_menu = 0;
-                if *index == 0 {
-                    let check = |on: bool, t: &str| if on { format!("✓ {t}") } else { t.to_string() };
-                    self.view_menu = 2;
-                    app.open_menu(anchor, vec![check(self.show_type, "Type"), check(self.show_size, "Size")], None);
+                let check = |on: bool, t: &str| if on { format!("✓ {t}") } else { t.to_string() };
+                match *index {
+                    0 => {
+                        let mut items: Vec<String> = VIEW_TYPES.iter().zip(self.show).map(|(t, on)| check(on, t)).collect();
+                        items.push(String::new());
+                        items.push("View all".into());
+                        self.view_menu = 3;
+                        app.open_menu(anchor, items, None);
+                    }
+                    1 => {
+                        self.view_menu = 2;
+                        app.open_menu(anchor, vec![check(self.show_type, "Type"), check(self.show_size, "Size")], None);
+                    }
+                    _ => {}
                 }
                 false
+            }
+            // [re:130c7c]: a type toggles, View all shows every one; the
+            // folder lists again.
+            UiEvent::MenuSelected { index, .. } if self.view_menu == 3 => {
+                self.view_menu = 0;
+                match *index {
+                    t @ 0..=12 => self.show[t] = !self.show[t],
+                    14 => self.show = [true; 13],
+                    _ => return false,
+                }
+                let mut o = crate::options::Options::load();
+                for t in 0..13 {
+                    o.set(&view_option(t), self.show[t]);
+                }
+                o.save();
+                if let Some(d) = self.dir.clone().filter(|_| self.search.is_none()) {
+                    self.go(d, false);
+                }
+                true
             }
             UiEvent::MenuSelected { index, .. } if self.view_menu == 2 => {
                 self.view_menu = 0;
@@ -2184,7 +2269,7 @@ impl Browser {
                 // [re:543135]: Columns ▸ Type / Size.
                 "ViewOptionsButton" => {
                     self.view_menu = 1;
-                    app.open_menu(path, vec!["Columns ▸".into()], None);
+                    app.open_menu(path, vec!["View ▸".into(), "Columns ▸".into()], None);
                     false
                 }
                 "ParentButton" => {
@@ -2520,6 +2605,27 @@ mod search_tests {
         let item = v.iter().find(|s| s.path.as_deref() == Some(pack.as_path())).expect("v1 pack listed");
         assert_eq!((item.cat, item.icon, item.label.as_str()), ("Content", "book", "Old Factory"));
         let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    /// [re:ca74b1]: the View menu's types; all on shows everything, else
+    /// unticked types go, and sample folders follow Folders.
+    #[test]
+    fn view_filter_types() {
+        crate::app::test_setup();
+        let e = |n: &str, dir: bool| Entry { name: n.into(), path: PathBuf::from(format!("/x/{n}")), dir };
+        let mut show = [true; 13];
+        assert!(visible(&show, &e("a.txt", false)), "all on: as listed");
+        show[0] = false;
+        assert!(!visible(&show, &e("a.wav", false)) && visible(&show, &e("b.mid", false)));
+        assert!(!visible(&show, &e("a.gru", false)), "no type: hidden while filtering");
+        assert!(visible(&show, &e("Kick.samples", true)));
+        show[11] = false;
+        assert!(!visible(&show, &e("Kits", true)) && !visible(&show, &e("Kick.samples", true)));
+        show[11] = true;
+        show[12] = false;
+        assert!(visible(&show, &e("Kits", true)) && !visible(&show, &e("Kick.samples", true)));
+        assert_eq!(view_type(&e("a.einstkit", false)), Some(3));
+        assert_eq!(view_option(6), "ShowPattern_Bank");
     }
 
     /// [re:acb2eb], [re:22e64a]: the Type and Size columns' texts.
