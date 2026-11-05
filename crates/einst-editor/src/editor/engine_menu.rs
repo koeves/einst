@@ -6,11 +6,9 @@ use crate::*;
 /// [re:796ecd]).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) enum EngineAction {
-    Rename,
     Cut,
     Copy,
     Paste,
-    Power,
     UnMute,
     UnSolo,
     Reset,
@@ -19,15 +17,11 @@ pub(crate) enum EngineAction {
     None,
 }
 
-/// The engine name edit box.
-pub(crate) const ENGINE_NAME_EDIT: &str = "EngineNameEdit";
-
 impl Editor {
     /// Pad right-click menu ([re:816870]).
     /// The engine selectors' right-click menu ([re:b6961a]
-    ///  [re:796ecd], items [re:45f3d6]..[re:11c0d7]): Rename
-    /// engine (0x8a), Cut / Copy / Paste (0x97), Pattern Power (0xa8),
-    /// Un-mute / Un-solo all pads / layers on this engine (0x8e / 0x8f,
+    ///  [re:796ecd], items [re:45f3d6]..[re:11c0d7]; v1's own list
+    /// [re:5a9b42]): Cut / Copy / Paste (0x97), Un-mute / Un-solo all pads / layers on this engine (0x8e / 0x8f,
     /// enabled while the engine's muted / soloed icon is lit), Reset engine
     /// (0x9b), Reset all engines (confirmed; 0x9b for every engine). The
     /// port edits the document and rebuilds.
@@ -39,19 +33,16 @@ impl Editor {
                 let Some((e, _)) = header::selector_hit(&self.app, &base, path) else { return false };
                 let e = e.min(model::ENGINES - 1);
                 let icon = |ed: &Editor, n: &str| ed.app.ctrl(&[base.as_slice(), &[e]].concat()).and_then(|s| s.find(n)).is_some_and(|c| c.on);
-                let check = |on: bool, t: &str| if on { format!("{}{t}", dreist_gui::menu::CHECK) } else { t.to_string() };
                 let items = vec![
-                    ("Rename engine".to_string(), EngineAction::Rename),
-                    (String::new(), EngineAction::None),
                     ("Cut".into(), EngineAction::Cut),
                     ("Copy".into(), EngineAction::Copy),
                     (dreist_gui::menu::item("Paste", self.clipboard.engine.is_some()), EngineAction::Paste),
                     (String::new(), EngineAction::None),
-                    (check(self.model.pattern_power(e), "Pattern Power"), EngineAction::Power),
                     (dreist_gui::menu::item("Un-mute all pads / layers on this engine", icon(self, "EngineMutedIcon")), EngineAction::UnMute),
                     (dreist_gui::menu::item("Un-solo all pads / layers on this engine", icon(self, "EngineSoloedIcon")), EngineAction::UnSolo),
                     (String::new(), EngineAction::None),
                     ("Reset engine".into(), EngineAction::Reset),
+                    (String::new(), EngineAction::None),
                     ("Reset all engines".into(), EngineAction::ResetAll),
                 ];
                 let (labels, acts): (Vec<String>, Vec<EngineAction>) = items.into_iter().unzip();
@@ -68,12 +59,6 @@ impl Editor {
                     ed.model.doc.children.retain(|c| !(c.class == "Engine" && c.name.as_deref() == Some(&n)));
                 };
                 match acts.get(*index).copied().unwrap_or(EngineAction::None) {
-                    EngineAction::Rename => {
-                        let Some(c) = self.app.ctrl(&path).cloned() else { return true };
-                        let rect = dreist_gui::Rect::new(c.rect.x + c.rect.w / 2 - 75, c.rect.y + c.rect.h / 2 - 10, 150, 20);
-                        self.app.open_edit_box(&path[..path.len() - 1], ENGINE_NAME_EDIT, rect, self.model.engine_name(e));
-                        self.engine_rename = Some(e);
-                    }
                     EngineAction::Cut | EngineAction::Copy => {
                         let mut n = self.model.engine_node(e).cloned().unwrap_or_else(|| dreist_formats::Node::new("Engine", Some(&name)));
                         n.name = None;
@@ -92,7 +77,6 @@ impl Editor {
                         }
                         rebuild(self);
                     }
-                    EngineAction::Power => self.outbox.push(command::msg(id::SET_PATTERN_POWER_STATE, &[e as i32], &[!self.model.pattern_power(e) as i32 as f32])),
                     EngineAction::UnMute | EngineAction::UnSolo => {
                         let solo = acts[*index] == EngineAction::UnSolo;
                         let (pk, lk) = if solo { (id::SOLO_PAD, id::SET_LAYER_SOLO) } else { (id::MUTE_PAD, id::SET_LAYER_MUTE) };
@@ -124,17 +108,6 @@ impl Editor {
                         rebuild(self);
                     }
                     EngineAction::None => {}
-                }
-                true
-            }
-            UiEvent::TextCommitted { path, name, text } if name == ENGINE_NAME_EDIT => {
-                let parent = path[..path.len() - 1].to_vec();
-                if let Some(c) = self.app.ctrl_mut(&parent) {
-                    c.children.retain(|k| k.name != ENGINE_NAME_EDIT);
-                }
-                if let Some(e) = self.engine_rename.take() {
-                    let t: String = text.trim().chars().take(63).collect();
-                    self.model.engine_mut(e).set("Name", t);
                 }
                 true
             }

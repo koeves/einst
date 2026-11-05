@@ -1,5 +1,4 @@
 use super::*;
-use crate::editor::engine_menu::ENGINE_NAME_EDIT;
 use crate::editor::knobs::KNOB_EDIT;
 
 /// A file of the installed factory content (`DREIST_CONTENT` overrides
@@ -1175,23 +1174,17 @@ fn engine_selector_menu() {
         ed.handle(&UiEvent::MenuSelected { anchor: at.clone(), name: "x".into(), index });
         items
     };
-    let items = pick(&mut ed, &s6, 3);
-    assert_eq!(items[0], "Rename engine");
-    assert!(items[4].starts_with(dreist_gui::menu::DISABLED));
+    let items = pick(&mut ed, &s6, 1);
+    assert_eq!(items[..3], ["Cut", "Copy", &format!("{}Paste", dreist_gui::menu::DISABLED)]);
     let pads = |ed: &Editor, e: usize| ed.model.engine_node(e).map(|n| n.children.iter().filter(|c| c.class == "Pad").count()).unwrap_or(0);
     let pads6 = pads(&ed, 6);
     assert!(pads6 > 0);
     // Paste engine 7's copy over engine 1.
-    pick(&mut ed, &s0, 4);
+    pick(&mut ed, &s0, 2);
     assert_eq!(pads(&ed, 0), pads6);
     // Reset engine 1.
-    pick(&mut ed, &s0, 10);
+    pick(&mut ed, &s0, 7);
     assert!(ed.model.engine_node(0).is_none());
-    // Rename.
-    pick(&mut ed, &s6, 0);
-    let edit = ed.app.root.path_of(ENGINE_NAME_EDIT).unwrap();
-    ed.handle(&UiEvent::TextCommitted { path: edit, name: ENGINE_NAME_EDIT.into(), text: "Drums".into() });
-    assert_eq!(ed.model.engine_name(6), "Drums");
 }
 
 #[test]
@@ -1842,9 +1835,6 @@ fn pad_menu_multi_selection() {
     menu(&mut ed, "Lock pad");
     assert!(padmenu::pad_locked(&ed.model, e, 1) && padmenu::pad_locked(&ed.model, e, 3));
     assert!(!padmenu::pad_locked(&ed.model, e, 2));
-    menu(&mut ed, "Set colour label... ▸");
-    ed.handle(&UiEvent::MenuSelected { anchor: pad1.clone(), name: "EditorPad".into(), index: 8 });
-    assert_eq!(ed.model.pad_node(e, 3).and_then(|n| n.attr("PadColour")), Some("0, 128, 255, 255"));
 }
 
 #[test]
@@ -1928,7 +1918,7 @@ fn pad_row_menu() {
 }
 
 #[test]
-fn pad_menu_locks_colours_and_swaps() {
+fn pad_menu_locks_and_swaps() {
     crate::app::test_setup();
     let p = demo("Presets/Hollow.geist");
     let Ok(proj) = dreist_formats::Project::load(&p) else { return };
@@ -1967,11 +1957,8 @@ fn pad_menu_locks_colours_and_swaps() {
     }
     menu(&mut ed, "Unlock all pads");
     assert!(!padmenu::pad_locked(&ed.model, e, 1));
-    menu(&mut ed, "Set colour label... ▸");
-    ed.handle(&UiEvent::MenuSelected { anchor: pad1.clone(), name: "EditorPad".into(), index: 8 });
-    assert_eq!(ed.model.pad_node(e, 1).and_then(|n| n.attr("PadColour")), Some("0, 128, 255, 255"));
     let (a, b) = (ed.model.pad_name(e, 1), ed.model.pad_name(e, 2));
-    menu(&mut ed, "Swap pad to... ▸");
+    menu(&mut ed, "Swap pad to ▸");
     ed.handle(&UiEvent::MenuSelected { anchor: pad1.clone(), name: "EditorPad".into(), index: 2 });
     assert_eq!((ed.model.pad_name(e, 2), ed.model.pad_name(e, 1)), (a, b));
     assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Rebuild { .. })));
@@ -2056,7 +2043,7 @@ fn move_pad_resets_the_source() {
     let e = ed.model.engine;
     ed.model.set_pad_name(e, 0, "Kick");
     let src = ed.model.pad_node(e, 0).cloned().unwrap();
-    let path = pad_menu_pick(&mut ed, 0, "Move pad to... ▸");
+    let path = pad_menu_pick(&mut ed, 0, "Move pad to ▸");
     ed.handle(&UiEvent::MenuSelected { anchor: path, name: "EditorPad".into(), index: 5 });
     let mut moved = ed.model.pad_node(e, 5).cloned().unwrap();
     moved.name = src.name.clone();

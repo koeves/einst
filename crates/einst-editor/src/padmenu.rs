@@ -60,7 +60,6 @@ pub enum PadAction {
     Lock,
     UnlockAll,
     LockTrackAndPad,
-    Rename,
     SwapMenu,
     Swap(usize),
     CopyMenu,
@@ -77,8 +76,6 @@ pub enum PadAction {
     Reveal(usize),
     SaveMenu,
     SaveSample(usize),
-    ColourMenu,
-    Colour(usize),
     None,
 }
 
@@ -285,44 +282,40 @@ impl PadMenu {
                 ("Clear pad".into(), PadAction::ClearPad, false),
                 ("Clear all pads".into(), PadAction::ClearAll, true),
                 sep(),
-                (format!("{}Lock pad", if locked { "✓ " } else { "" }), PadAction::Lock, true),
+                ((if locked { "Unlock pad" } else { "Lock pad" }).into(), PadAction::Lock, true),
                 ("Unlock all pads".into(), PadAction::UnlockAll, true),
                 (if locked || track_locked { "Unlock track and pad" } else { "Lock track and pad" }.into(), PadAction::LockTrackAndPad, true),
-                sep(),
-                ("Set colour label... ▸".into(), PadAction::ColourMenu, true),
             ];
             self.show(app, anchor, p, items);
             return;
         }
+        // [re:9cd713]: v1's pad menu.
         let items = vec![
             ("Cut".into(), PadAction::Cut { track: false }, !locked),
-            ("Cut with track".into(), PadAction::Cut { track: true }, !locked),
+            ("Cut with pattern".into(), PadAction::Cut { track: true }, !locked),
             ("Copy".into(), PadAction::Copy { track: false }, true),
-            ("Copy with track".into(), PadAction::Copy { track: true }, true),
+            ("Copy with pattern".into(), PadAction::Copy { track: true }, true),
             ("Paste".into(), PadAction::Paste { track: false }, clip.pad.is_some() && !locked),
-            ("Paste with track".into(), PadAction::Paste { track: true }, clip.pad.is_some() && clip.track.is_some() && !locked),
+            ("Paste with pattern".into(), PadAction::Paste { track: true }, clip.pad.is_some() && clip.track.is_some() && !locked),
             sep(),
             ("Clear pad".into(), PadAction::ClearPad, !locked && has_samples),
             ("Clear all pads".into(), PadAction::ClearAll, true),
-            ("Clear pad layer... ▸".into(), PadAction::ClearLayerMenu, !locked && has_samples),
+            ("Clear pad layer ▸".into(), PadAction::ClearLayerMenu, !locked && has_samples),
             sep(),
-            (format!("{}Lock pad", if locked { "✓ " } else { "" }), PadAction::Lock, true),
+            ((if locked { "Unlock pad" } else { "Lock pad" }).into(), PadAction::Lock, true),
             ("Unlock all pads".into(), PadAction::UnlockAll, true),
             (if locked || track_locked { "Unlock track and pad" } else { "Lock track and pad" }.into(), PadAction::LockTrackAndPad, true),
             sep(),
-            ("Rename pad".into(), PadAction::Rename, true),
+            ("Clone using pitching ▸".into(), PadAction::CloneMenu, true),
             sep(),
-            ("Swap pad to... ▸".into(), PadAction::SwapMenu, true),
-            ("Copy pad to... ▸".into(), PadAction::CopyMenu, true),
-            ("Move pad to... ▸".into(), PadAction::MoveMenu, true),
-            ("Clone pad... ▸".into(), PadAction::CloneMenu, true),
+            ("Swap pad to ▸".into(), PadAction::SwapMenu, true),
+            ("Copy pad to ▸".into(), PadAction::CopyMenu, true),
+            ("Move pad to ▸".into(), PadAction::MoveMenu, true),
             sep(),
-            ("Copy sample path... ▸".into(), PadAction::PathMenu, has_samples),
-            ("Open parent folder in browser... ▸".into(), PadAction::ParentMenu, has_samples),
+            ("Copy sample path ▸".into(), PadAction::PathMenu, has_samples),
+            ("Open parent folder in browser ▸".into(), PadAction::ParentMenu, has_samples),
             ("Reveal in Finder ▸".into(), PadAction::RevealMenu, has_samples),
-            ("Save layer sample... ▸".into(), PadAction::SaveMenu, has_samples),
-            sep(),
-            ("Set colour label... ▸".into(), PadAction::ColourMenu, true),
+            ("Save layer sample ▸".into(), PadAction::SaveMenu, has_samples),
         ];
         self.show(app, anchor, p, items);
     }
@@ -390,11 +383,6 @@ impl PadMenu {
                 let items =
                     vec![("Upwards".into(), PadAction::Clone(Clone::Up), true), ("Downwards".into(), PadAction::Clone(Clone::Down), true), ("Centered".into(), PadAction::Clone(Clone::Centred), true)];
                 self.show(app, anchor, p, items);
-                Outcome::default()
-            }
-            PadAction::ColourMenu => {
-                self.open = Some((p, (0..=COLOURS.len()).map(PadAction::Colour).collect(), anchor.to_vec()));
-                app.open_menu(anchor, vec![colour_grid_item()], None);
                 Outcome::default()
             }
             PadAction::Copy { track } | PadAction::Cut { track } => {
@@ -467,13 +455,6 @@ impl PadMenu {
                 done
             }
             // The pad inspector's name box (the original edits the pad label).
-            PadAction::Rename => {
-                model.pad[e] = p;
-                if let Some(b) = app.root.path_of("PadName") {
-                    app.begin_edit(&b);
-                }
-                done
-            }
             // 0x54 `e_swapPads` [e, p] = q.
             PadAction::Swap(q) => {
                 let (a_node, b_node) = (pad_or_empty(model, e, p), pad_or_empty(model, e, q));
@@ -517,19 +498,7 @@ impl PadMenu {
                     let _ = std::process::Command::new("open").arg("-R").arg(f).spawn();
                 }
                 Outcome::default()
-            }
-            // 0x49 `e_setPadColour`; `PadColour` = "r, g, b, a" (none when transparent).
-            PadAction::Colour(i) => {
-                for &q in &targets {
-                    let pad = model.pad_mut(e, q);
-                    pad.attrs.retain(|(k, _)| k != "PadColour");
-                    if let Some(c) = i.checked_sub(1).and_then(|k| COLOURS.get(k)) {
-                        let v = u32::from_str_radix(&c[1..], 16).unwrap_or(0);
-                        pad.set("PadColour", format!("{}, {}, {}, 255", v >> 16, (v >> 8) & 255, v & 255));
-                    }
-                }
-                done
-            }
+            } // 0x49 `e_setPadColour`; `PadColour` = "r, g, b, a" (none when transparent).
         }
     }
 }
