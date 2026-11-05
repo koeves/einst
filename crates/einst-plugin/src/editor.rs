@@ -486,6 +486,7 @@ impl Editor for DreistEditor {
             for c in structural {
                 match c {
                     Command::Rebuild { doc, samples } => bridge.rebuild(*doc, samples),
+                    Command::ReloadSamples(paths) => lock(&bridge.cache).forget(&paths),
                     Command::ExportAudio { doc, samples, path, options, reveal, status } => {
                         let sr = f32::from_bits(bridge.sample_rate.load(std::sync::atomic::Ordering::Relaxed));
                         let sr = if sr > 0.0 { sr as u32 } else { 44100 };

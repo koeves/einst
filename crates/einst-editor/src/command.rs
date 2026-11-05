@@ -46,6 +46,8 @@ pub enum Command {
     },
     /// The project was saved to this path (the host remembers it).
     Saved(std::path::PathBuf),
+    /// Samples changed on disk: read them again (a rebuild follows).
+    ReloadSamples(Vec<std::path::PathBuf>),
     /// Start (`Some`) or stop the preview voice.
     Preview(Option<std::sync::Arc<dreist_dsp::voice::SampleData>>),
     /// Preview frames `start..end` of a sample, optionally looping.
@@ -80,7 +82,7 @@ pub enum Command {
 impl Command {
     /// Handled by the host on a worker thread, not by the audio thread.
     pub fn is_structural(&self) -> bool {
-        matches!(self, Command::LoadProject(_) | Command::Rebuild { .. } | Command::Saved(_) | Command::ExportAudio { .. })
+        matches!(self, Command::LoadProject(_) | Command::Rebuild { .. } | Command::Saved(_) | Command::ExportAudio { .. } | Command::ReloadSamples(_))
     }
 
     /// Engine state a rebuilt engine takes from the document, which neither
@@ -107,7 +109,7 @@ impl Command {
             Command::SetPadMode { engine, mode } => g.set_pad_mode(*engine, *mode),
             Command::SelectEngine(e) => g.select_engine(*e),
             Command::NoteRepeatSync(e, on) => g.set_note_repeat_sync(*e, *on),
-            Command::LoadProject(_) | Command::Rebuild { .. } | Command::Saved(_) | Command::ExportAudio { .. } => {}
+            Command::LoadProject(_) | Command::Rebuild { .. } | Command::Saved(_) | Command::ExportAudio { .. } | Command::ReloadSamples(_) => {}
             Command::Play(on) => {
                 if *on {
                     g.play()
