@@ -10,9 +10,9 @@
         <CtrlLabel name="CtrlLabel" rect="32, 40, 26, 13" id="100006" style="StandardLabelStyle" text="Comp" />
         <CtrlLabel name="CtrlLabel" rect="65, 40, 26, 13" id="100003" style="StandardLabelStyle" text="Rand" />
         <CtrlLabel name="CtrlLabel" rect="85, 40, 66, 13" id="100002" style="StandardLabelCenteredStyle" text="Mode" />
-        <CtrlKnob name="ScaleKnob" rect="5, 52, 17, 17" displayName="Offset" id="100001" overloadClass="TimedKnob" realDialThickness="0.22" style="LEDKnobMicroLR" />
-        <CtrlKnob name="CompKnob" rect="37, 52, 17, 17" displayName="Compression" id="100005" overloadClass="TimedKnob" realDialThickness="0.22" style="LEDKnobMicroLR" />
-        <CtrlKnob name="RandKnob" rect="69, 52, 17, 17" displayName="Randomisation" id="100002" overloadClass="TimedKnob" realDialThickness="0.22" style="LEDKnobMicroLR" />
+        <CtrlKnob name="ScaleKnob" rect="5, 52, 17, 17" displayName="Offset" id="100001" overloadClass="TimedKnob" realDialThickness="0.13" style="LEDKnobMicroLR" />
+        <CtrlKnob name="CompKnob" rect="37, 52, 17, 17" displayName="Compression" id="100005" overloadClass="TimedKnob" realDialThickness="0.13" style="LEDKnobMicroLR" />
+        <CtrlKnob name="RandKnob" rect="69, 52, 17, 17" displayName="Randomisation" id="100002" overloadClass="TimedKnob" realDialThickness="0.13" style="LEDKnobMicroLR" />
         <CtrlButtonGroup name="ModeGroup" rect="93, 52, 50, 19" id="100000" style="BasePanelStyle">
             <CtrlButton name="CtrlButton" rect="0, 0, 25, 17" id="100000" optIsMomentary="false" style="MicroRadioButtonLeftStyle" text="Edit" />
             <CtrlButton name="CtrlButton" rect="23, 0, 25, 17" id="100001" optIsMomentary="false" style="MicroRadioButtonRightStyle" text="Live" />

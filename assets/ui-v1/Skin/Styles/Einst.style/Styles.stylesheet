@@ -84,7 +84,7 @@
     <CtrlStyle name="PadStyle" colBevelDark="0, 0, 0, 70" colBevelLight="255, 255, 255, 45" colBorder="PadFrame" colFill="PadFace" colFillGradientTo="PadFaceLow" colText="PadText" optBevel="true" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="3" />
     <CtrlStyle name="PadSelectedStyle" colBorder="Amber" parentStyle0="PadStyle" realBorderWidth="2" />
     <CtrlStyle name="PadNameStyle" colText="PadText" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseLabelStyle" />
-    <CtrlStyle name="PadLedStyle" colFill="PadFrame" parentStyle0="BasePanelStyle" realCornerRounding="1" />
+    <CtrlStyle name="PadLedStyle" colFill="PadFrame" parentStyle0="BasePanelStyle" realCornerRounding="1.5" />
     <CtrlStyle name="PadLed1Style" colFill="PadColour1" parentStyle0="PadLedStyle" />
     <CtrlStyle name="PadLed2Style" colFill="PadColour2" parentStyle0="PadLedStyle" />
     <CtrlStyle name="PadLed3Style" colFill="PadColour3" parentStyle0="PadLedStyle" />
@@ -96,7 +96,7 @@
     <CtrlStyle name="HardKnobShadowStyle" colFill="KnobShadow" colFillGradientTo="KnobShadowOut" enumGradientDirection="Radial" parentStyle0="BasePanelStyle" realCornerRounding="100" realGradientCentreY="0.45" realGradientRadius="0.5" />
     <CtrlStyle name="HardKnobBodyStyle" colBorder="HwFrame" colFill="KnobFace" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="100" />
     <CtrlStyle name="HardKnobSmallStyle" colAltBorder="HwFace" colAltFill="KnobRing" colFace="SmallKnobFace" colFaceGradientTo="SmallKnobFaceLow" colFill="SmallKnobRim" colFillHighlight="SmallKnobRim" colPointer="HwFace" parentStyle0="BaseKnobStyle" realFaceInset="0" realPointerInset="1" realPointerWidth="1.5" />
-    <CtrlStyle name="LcdKnobStyle" parentStyle0="BaseKnobStyle" />
+    <CtrlStyle name="LcdKnobStyle" colFill="InkMid" colFillHighlight="InkMid" parentStyle0="BaseKnobStyle" />
     <CtrlStyle name="SpinnerFaceStyle" parentStyle0="BaseKnobStyle" />
     <CtrlStyle name="LcdKnobBodyStyle" colBorder="InkSoft" colFill="LcdLight" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="100" />
     <CtrlStyle name="SpinnerStyle" colFace="Transparent" colFill="Transparent" colFillHighlight="InkSoft" optPointer="false" parentStyle0="BaseKnobStyle" />
@@ -124,7 +124,7 @@
     <CtrlStyle name="GridBarLineStyle" colFill="InkSoft" parentStyle0="GridLineStyle" />
     <CtrlStyle name="GridRowSelectedStyle" colFill="RowSelected" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="GridPositionStyle" colFill="PlayPosition" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="StepOnStyle" colBorder="Ink" colFill="StepOn" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="1" />
+    <CtrlStyle name="StepOnStyle" colBorder="StepEdge" colFill="StepOn" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="SongLaneStyle" colFill="LcdLight" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="SongLaneAltStyle" colFill="LaneAlt" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="SongLaneSelectedStyle" colFill="RowSelected" parentStyle0="BasePanelStyle" />
@@ -155,8 +155,8 @@
     <CtrlStyle name="SceneTriggerUsedStyle" colAltFill="SceneUsed" parentStyle0="SceneTriggerEmptyStyle" />
     <CtrlStyle name="SceneTriggerCuedStyle" colAltBorder="Amber" colAltFill="SceneUsed" parentStyle0="SceneTriggerEmptyStyle" />
     <CtrlStyle name="SceneTriggerActiveStyle" colAltFill="Amber" parentStyle0="SceneTriggerEmptyStyle" />
-    <CtrlStyle name="FxSlotItemStyle" colBorder="LcdEdge" colFill="LcdFace" colText="Ink" font="Sans9" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="FxSlotItemLitStyle" colBorder="Ink" colFill="AmberSoft" parentStyle0="FxSlotItemStyle" />
+    <CtrlStyle name="FxSlotItemStyle" colBorder="Ink" colFill="FxSlotDim" colText="Ink" font="Sans9" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="FxSlotItemLitStyle" colFill="FxSlotLit" parentStyle0="FxSlotItemStyle" />
     <CtrlStyle name="SelectionButtonMultiStyle" colFill="RowSelected" parentStyle0="LcdRowSelectedStyle" realCornerRounding="0" />
     <CtrlStyle name="GridPastLengthStyle" colFill="PastLength" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="PatternTrackMarkerStyle" colAltFill="Amber" colFill="InkMid" parentStyle0="BasePanelStyle" />

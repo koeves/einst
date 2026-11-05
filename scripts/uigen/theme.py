@@ -139,7 +139,10 @@ COLOURS = {
     "GridLine": (186, 193, 205),
     "GridBack": (208, 213, 222),
     "GridDash": (150, 158, 174),
-    "StepOn": (98, 106, 136),
+    "StepOn": (90, 101, 131),
+    "StepEdge": (51, 55, 92),
+    "FxSlotLit": (204, 210, 220),
+    "FxSlotDim": (122, 127, 142),
     "LaneAlt": (204, 211, 221),
     "PartSelected": (237, 224, 179),
     # Song lanes (round 4, measured): the navy lane foot and its ticks, the
@@ -421,7 +424,7 @@ def base_styles():
        realCornerRounding="3", colText="PadText", optBevel="true", colBevelLight="255, 255, 255, 45", colBevelDark="0, 0, 0, 70")
     st("PadSelectedStyle", "PadStyle", colBorder="Amber", realBorderWidth="2")
     st("PadNameStyle", "BaseLabelStyle", colText="PadText", font=text_font(10), enumTextHorizontalAlign="center")
-    st("PadLedStyle", "BasePanelStyle", colFill="PadFrame", realCornerRounding="1")
+    st("PadLedStyle", "BasePanelStyle", colFill="PadFrame", realCornerRounding="1.5")  # round dots (v1, round 5)
     for i in range(1, 5):  # a pad's colour (v1's PadColour1-4) on its first LED
         st(f"PadLed{i}Style", "PadLedStyle", colFill=f"PadColour{i}")
 
@@ -444,7 +447,8 @@ def base_styles():
     st("HardKnobSmallStyle", "BaseKnobStyle", colFill="SmallKnobRim", colFillHighlight="SmallKnobRim", colAltFill="KnobRing",
        colAltBorder="HwFace", colFace="SmallKnobFace", colFaceGradientTo="SmallKnobFaceLow", realFaceInset="0", colPointer="HwFace",
        realPointerWidth="1.5", realPointerInset="1")
-    st("LcdKnobStyle", "BaseKnobStyle")
+    # v1: a uniform dark ring (the value shows by the pointer), light face.
+    st("LcdKnobStyle", "BaseKnobStyle", colFill="InkMid", colFillHighlight="InkMid")
     st("SpinnerFaceStyle", "BaseKnobStyle")
     st("LcdKnobBodyStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkSoft", optDrawBorder="true", realCornerRounding="100")
     st("SpinnerStyle", "BaseKnobStyle", colFill="Transparent", colFillHighlight="InkSoft", optPointer="false", colFace="Transparent")
@@ -488,7 +492,7 @@ def base_styles():
     st("GridBarLineStyle", "GridLineStyle", colFill="InkSoft")
     st("GridRowSelectedStyle", "BasePanelStyle", colFill="RowSelected")
     st("GridPositionStyle", "BasePanelStyle", colFill="PlayPosition")
-    st("StepOnStyle", "BasePanelStyle", colFill="StepOn", colBorder="Ink", optDrawBorder="true", realCornerRounding="1")
+    st("StepOnStyle", "BasePanelStyle", colFill="StepOn", colBorder="StepEdge", optDrawBorder="true", realCornerRounding="0")
     st("SongLaneStyle", "BasePanelStyle", colFill="LcdLight")
     st("SongLaneAltStyle", "BasePanelStyle", colFill="LaneAlt")
     st("SongLaneSelectedStyle", "BasePanelStyle", colFill="RowSelected")
@@ -544,8 +548,10 @@ def base_styles():
     st("SceneTriggerCuedStyle", "SceneTriggerEmptyStyle", colAltFill="SceneUsed", colAltBorder="Amber")
     st("SceneTriggerActiveStyle", "SceneTriggerEmptyStyle", colAltFill="Amber")
     # The effect chain's slot bar: one item per slot, the shown ones lit.
-    st("FxSlotItemStyle", "BasePanelStyle", colFill="LcdFace", colBorder="LcdEdge", colText="Ink", font=text_font(9))
-    st("FxSlotItemLitStyle", "FxSlotItemStyle", colFill="AmberSoft", colBorder="Ink")
+    # v1 (round 5): the shown slots light blue-grey, the others a darker
+    # slate, both with a dark edge.
+    st("FxSlotItemStyle", "BasePanelStyle", colFill="FxSlotDim", colBorder="Ink", colText="Ink", font=text_font(9))
+    st("FxSlotItemLitStyle", "FxSlotItemStyle", colFill="FxSlotLit")
     # A layer row in a multiple selection (the primary row stays amber).
     st("SelectionButtonMultiStyle", "LcdRowSelectedStyle", colFill="RowSelected", realCornerRounding="0")
     # Pattern grid: past a track's length, its length marker (amber while

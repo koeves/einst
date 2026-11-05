@@ -7,12 +7,15 @@
 //! - background: groups of a beat's steps alternate `colFill` /
 //!   `colAltFill` ([re:ac984a]);
 //! - the selected track's row in `colSelectedTrack` ([re:5a68a7]);
-//! - grid lines: one per step in `colGridBeat`, every 4th in `colGridBar`,
-//!   and track separators in `colGridBar` α0.35 ([re:60f2b5], [re:ecd2fe]);
-//! - steps ([re:cef393], [re:b3cfd7]): inset
-//!   2/1/4/3 when the row is ≥ 10 px, rounded rect radius 2 (or h/4 when
-//!   small) in `colStep` at alpha `vel·0.85 + 0.15`; repeats subdivide
-//!   one-shot steps;
+//! - grid lines: one per step, every 4th in `colGridBar`, and track
+//!   separators ([re:60f2b5], [re:ecd2fe] in the later version); v1 dashes
+//!   the step lines and the track separators (`GridDashStyle`, 2 on, 2
+//!   off) and draws the bar lines solid (measured from v1 screenshots,
+//!   dreist-re ui-v1-style round 5);
+//! - steps ([re:cef393], [re:b3cfd7] in the later version: rounded and
+//!   inset 2/1/4/3); v1 fills the cell but for a 2 px gap with a square
+//!   hit in `colStep` and a 1 px `StepOnStyle` edge, at alpha
+//!   `vel·0.85 + 0.15`; repeats subdivide one-shot steps;
 //! - beyond the track length: `colOverlay` (track drawing);
 //! - the current step column in `colPosition` ([re:bfe463]);
 //! - pattern power off: `colPowerOverlay` α0.3 and "Pattern power off"
@@ -2191,6 +2194,7 @@ impl PatternPanel {
         }
         // Steps.
         let step_col = grid_colour(s, "colStep");
+        let step_edge = s.colour("StepOnStyle", "colBorder", Colour::rgba(51, 55, 92, 255));
         let overlay = grid_colour(s, "colOverlay");
         for row in 0..lay.tracks {
             let Some(t) = pat.tracks.get(lay.track(row)) else { continue };
@@ -2198,21 +2202,22 @@ impl PatternPanel {
                 if !step.on || !lay.step_range().contains(&st) {
                     continue;
                 }
-                let mut a = lay.step_rect(row, st);
-                if a.h >= 10.0 {
-                    a = RectF::new(a.x + 2.0, a.y + 1.0, a.w - 4.0, a.h - 3.0);
-                }
+                // v1 (measured): the hit fills its cell but for a 2 px
+                // light gap, with a 1 px dark edge; velocity lightens it.
+                let a = lay.step_rect(row, st);
                 let a = RectF::new(a.x.round(), a.y.round(), a.w.round(), a.h.round());
                 let a = if a.h <= 4.0 {
                     RectF::new(a.x - 1.0, a.y - 1.0, (a.w + 2.0).max(0.0), (a.h + 2.0).max(0.0))
-                } else if a.w > 4.0 {
-                    a.inset(2.0)
+                } else if a.w > 5.0 {
+                    RectF::new(a.x + 2.0, a.y + 2.0, a.w - 3.0, a.h - 3.0)
                 } else {
                     a
                 };
                 let vel = step.lanes[lane::VELOCITY].clamp(0.0, 1.0);
-                let radius = if a.h * 0.5 < 2.0 { (a.h * 0.25).floor().max(0.0) } else { 2.0 };
-                p.fill_rounded(a, radius, [true; 4], step_col.with_alpha(vel * 0.85 + 0.15));
+                p.fill_rect(a, step_col.with_alpha(vel * 0.85 + 0.15));
+                if a.h >= 8.0 && a.w >= 8.0 {
+                    p.stroke_rect(a.inset(0.5), step_edge.with_alpha(vel * 0.7 + 0.3), 1.0);
+                }
             }
             // Beyond the track length.
             let len = t.length as usize;
@@ -2249,12 +2254,24 @@ impl PatternPanel {
             p.stroke_rect(RectF::new(x0, r0, x1 - x0, r1 - r0), sel, 1.0);
         }
         // Grid lines.
+        // v1 dashes the row lines and the step lines (2 on, 2 off), bar
+        // lines solid (measured, ui-v1-style "pattern grid").
         let bar = grid_colour(s, "colGridBar");
         let beat = grid_colour(s, "colGridBeat");
+        let dash = s.colour("GridDashStyle", "colFill", beat);
+        let dashed = |p: &mut Painter, x0: f32, y0: f32, x1: f32, y1: f32| {
+            let horizontal = y0 == y1;
+            let len = if horizontal { x1 - x0 } else { y1 - y0 };
+            let mut t = 0.0;
+            while t < len {
+                let r = if horizontal { RectF::new(x0 + t, y0 - 0.5, 2.0f32.min(len - t), 1.0) } else { RectF::new(x0 - 0.5, y0 + t, 1.0, 2.0f32.min(len - t)) };
+                p.fill_rect(r, dash);
+                t += 4.0;
+            }
+        };
         for row in 0..lay.tracks {
             for y in [lay.row_y(row), lay.row_y(row) + lay.row_h] {
-                let y = y.round() - 0.5;
-                p.line(0.0, y, w, y, bar.with_alpha(bar.f_alpha() * 0.35), 1.0);
+                dashed(p, 0.0, y.round(), w, y.round());
             }
         }
         // MultiTrack graph rows.
@@ -2263,8 +2280,11 @@ impl PatternPanel {
         }
         for st in lay.first_step..=lay.step_range().end {
             let x = lay.step_x(st).round() + 0.5;
-            let col = if st % 4 == 0 || st == lay.steps { bar } else { beat };
-            p.line(x, 0.0, x, h, col, 1.0);
+            if st % 4 == 0 || st == lay.steps {
+                p.line(x, 0.0, x, h, bar, 1.0);
+            } else {
+                dashed(p, x, 0.0, x, h);
+            }
         }
         // Pattern power off.
         if !model.pattern_power(e) {

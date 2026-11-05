@@ -120,7 +120,10 @@
     <VColour name="GridLine" colour="#BAC1CD" />
     <VColour name="GridBack" colour="#D0D5DE" />
     <VColour name="GridDash" colour="#969EAE" />
-    <VColour name="StepOn" colour="#626A88" />
+    <VColour name="StepOn" colour="#5A6583" />
+    <VColour name="StepEdge" colour="#33375C" />
+    <VColour name="FxSlotLit" colour="#CCD2DC" />
+    <VColour name="FxSlotDim" colour="#7A7F8E" />
     <VColour name="LaneAlt" colour="#CCD3DD" />
     <VColour name="PartSelected" colour="#EDE0B3" />
     <VColour name="LaneFoot" colour="#2C304D" />

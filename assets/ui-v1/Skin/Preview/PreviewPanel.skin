@@ -23,7 +23,7 @@
                 <CtrlButton name="CtrlButton" rect="58, 0, 60, 20" displayName="Divide audio in to an equal number of sections" id="100009" optIsMomentary="false" style="RadioButtonRightStyle" text="Divide" />
             </CtrlButtonGroup>
             <CtrlValueBox name="ChopDivisionBox" rect="350, 15, 50, 17" id="100011" optSingleClickEdit="true" style="LEDSmallNonDragableValueBoxStyle" />
-            <CtrlKnob name="SensitivitySlider" rect="370, 15, 17, 17" displayName="Transient detection threshold" id="100026" realDialThickness="0.22" style="LEDKnobMicroLR" />
+            <CtrlKnob name="SensitivitySlider" rect="370, 15, 17, 17" displayName="Transient detection threshold" id="100026" realDialThickness="0.13" style="LEDKnobMicroLR" />
             <CtrlButton name="AnalyzeButton" rect="414, 15, 50, 17" displayName="Classify slices as a specific type of drum and allocate to pads based on this analysis" id="100023" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Classify" />
             <CtrlButton name="MultiLayersButton" rect="466, 15, 50, 17" displayName="Use multiple layers on each pad when allocating slices" id="100000" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Use layers" />
             <CtrlButton name="BothButton" rect="529, 15, 50, 17" displayName="Send both audio to pads and the pattern" id="0" optIsMomentary="true" style="LEDMomentaryButtonStyle" text="Audio+Ptn" />

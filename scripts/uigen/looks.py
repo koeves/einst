@@ -255,8 +255,9 @@ TEXT_BOXES = [
 KNOBS = [
     (r"^HARDKnobLarge", L("HardKnobStyle", ctrl={"realDialThickness": "0.12"}, inset=(4, 12, 8, 20)), "top"),
     (r"^HARDKnobSmall", L("HardKnobSmallStyle", ctrl={"realDialThickness": "0.07"}, inset=(2, 1, 2, 5)), "top"),
-    (r"^LEDKnobLarge", L("LcdKnobStyle", ctrl={"realDialThickness": "0.14"}), "center"),
-    (r"^LEDKnob(Small|Micro)", L("LcdKnobStyle", ctrl={"realDialThickness": "0.22"}), "center"),
+    (r"^LEDKnobLarge", L("LcdKnobStyle", ctrl={"realDialThickness": "0.10"}), "center"),
+    # (v1: a thin dark open ring with a pointer; measured 2 px on 17)
+    (r"^LEDKnob(Small|Micro)", L("LcdKnobStyle", ctrl={"realDialThickness": "0.13"}), "center"),
     (r"^LEDSpinner", L("SpinnerStyle", ctrl={"realDialThickness": "0.2"}), "center"),
 ]
 
