@@ -3163,6 +3163,72 @@ fn layer_toggles_reach_the_document() {
     assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SET_LAYER_PHASE_POSITION)));
 }
 
+/// The browser's file list (path) after browsing `dir`.
+pub(crate) fn browser_list(ed: &mut Editor, dir: &std::path::Path) -> Option<Vec<usize>> {
+    ed.browser.as_mut()?.browse(dir.to_path_buf());
+    fn by(c: &Ctrl, path: &mut Vec<usize>) -> Option<Vec<usize>> {
+        if c.overload == "BrowserFileList" {
+            return Some(path.clone());
+        }
+        for (i, k) in c.children.iter().enumerate() {
+            path.push(i);
+            if let Some(p) = by(k, path) {
+                return Some(p);
+            }
+            path.pop();
+        }
+        None
+    }
+    by(&ed.app.root, &mut Vec::new())
+}
+
+/// A preview test folder with two short WAVs (`a.wav` 300 frames, `b.wav` 200).
+pub(crate) fn preview_files(name: &str) -> std::path::PathBuf {
+    let dir = std::env::temp_dir().join(format!("einst-{name}-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    for (f, n) in [("a.wav", 300), ("b.wav", 200)] {
+        let v = vec![0.25f32; n];
+        dreist_engine::write_wav(&dir.join(f), 44100, &v, &v).unwrap();
+    }
+    dir
+}
+
+#[test]
+fn browser_preview_starts_on_the_press_and_reuses_decoded_files() {
+    crate::app::test_setup();
+    use dreist_gui::app::MouseKind;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let dir = preview_files("preview-press");
+    let Some(list) = browser_list(&mut ed, &dir) else { return };
+    ed.browser.as_mut().unwrap().set_preview_mode(true);
+    let ev = |kind, row: f32| UiEvent::Mouse { path: list.clone(), overload: "BrowserFileList".into(), kind, x: 5.0, y: row * 18.0 + 2.0 };
+    let preview = |cmds: Vec<Command>| {
+        cmds.into_iter().find_map(|c| match c {
+            Command::Preview(Some(d)) => Some(d),
+            _ => None,
+        })
+    };
+    // Selecting a file previews it on the press, without waiting for the
+    // next frame's poll (a local file decodes within the wait).
+    ed.handle(&ev(MouseKind::Down, 0.0));
+    let a = preview(ed.take_commands()).expect("the press previews a.wav");
+    assert_eq!(a.left.len(), 300);
+    ed.handle(&ev(MouseKind::Up, 0.0));
+    assert!(preview(ed.take_commands()).is_none(), "the release adds nothing");
+    ed.handle(&ev(MouseKind::Down, 1.0));
+    assert_eq!(preview(ed.take_commands()).expect("b.wav").left.len(), 200);
+    // Back to a.wav: the decoded audio is reused.
+    ed.handle(&ev(MouseKind::Down, 0.0));
+    let again = preview(ed.take_commands()).expect("a.wav again");
+    assert!(std::sync::Arc::ptr_eq(&a, &again));
+    // Preview off: a press only selects.
+    ed.browser.as_mut().unwrap().set_preview_mode(false);
+    ed.handle(&ev(MouseKind::Down, 1.0));
+    assert!(preview(ed.take_commands()).is_none());
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn browser_menu_acts_on_the_selection() {
     crate::app::test_setup();

@@ -394,6 +394,9 @@ impl Drop for Handle {
     }
 }
 
+/// How often the open editor hands its document back.
+const SYNC_INTERVAL: std::time::Duration = std::time::Duration::from_millis(500);
+
 /// v1's window (fixed; `einst_editor` lays it out at this size).
 pub const SIZE: (u32, u32) = (1135, 640);
 
@@ -433,7 +436,7 @@ impl Editor for DreistEditor {
         let bridge = self.bridge.clone();
         let params = self.params.clone();
         let size = self.size.clone();
-        let mut frames = 0u32;
+        let mut synced = std::time::Instant::now();
         let mut inbox = Inbox::default();
         // The last previews' samples: the audio thread may still be playing
         // one, and must not be the one to free it.
@@ -519,8 +522,8 @@ impl Editor for DreistEditor {
                 }
             }
             // About twice a second: hand the edited document back, for the
-            // next editor and the host's session state.
-            frames = frames.wrapping_add(1);
+            // next editor and the host's session state (the link also runs
+            // right after events that made commands, so this goes by time).
             if ed.closing {
                 // The last call: the final document, then the headless
                 // sync takes over.
@@ -528,7 +531,8 @@ impl Editor for DreistEditor {
                 bridge.editor_open.store(false, std::sync::atomic::Ordering::Release);
                 return;
             }
-            if frames.is_multiple_of(30) {
+            if synced.elapsed() >= SYNC_INTERVAL {
+                synced = std::time::Instant::now();
                 sync_session(&bridge, &params, ed, false);
             }
             // Take what the audio thread left, then act on it without the
