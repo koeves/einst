@@ -70,6 +70,8 @@ enum Target {
     PadHeader,
     Pattern(usize),
     Engine(usize),
+    /// The browser's shortlist pane.
+    Shortlist,
 }
 
 fn ext(p: &Path) -> String {
@@ -112,6 +114,7 @@ impl Editor {
                 "EditorPad" => return c.attr("padIndex")?.parse().ok().map(Target::Pad),
                 "LayerRow" => return c.attr("layer")?.parse().ok().map(Target::Layer),
                 "PatternSelector" => return c.name.strip_prefix("Key")?.parse().ok().map(Target::Pattern),
+                "BrowserShortList" => return Some(Target::Shortlist),
                 _ => {}
             }
             match c.name.as_str() {
@@ -259,7 +262,13 @@ impl Editor {
     }
 
     pub(crate) fn dropped(&mut self, ev: &UiEvent) -> bool {
-        let UiEvent::Dropped { from, to, .. } = ev else { return false };
+        let UiEvent::Dropped { from, to, y, .. } = ev else { return false };
+        // The browser's source list: the row under the pointer.
+        if let Some(n) = (1..=to.len()).rev().find(|&n| self.app.ctrl(&to[..n]).is_some_and(|c| c.overload == "BrowserSourceList")) {
+            let Some(Source::Files(files)) = self.drag_source(from) else { return false };
+            let row = ((*y - self.app.origin(&to[..n]).1 as f32) / crate::browser::SOURCE_ROW).max(0.0) as usize;
+            return self.browser.as_mut().is_some_and(|b| b.drop_on_source(row, &files));
+        }
         let (Some(src), Some(dst)) = (self.drag_source(from), self.drop_target(to)) else { return false };
         if let Some(b) = self.browser.as_mut() {
             b.drag_started();
@@ -374,6 +383,15 @@ impl Editor {
                 self.outbox.push(Command::SelectEngine(t));
                 let part = if x == Some(DocKind::Kit) { crate::project::Part::Kit(t) } else { crate::project::Part::Engine(t) };
                 self.open_part(part, &files[0])
+            }
+            // [re:d5abda] / [re:13bdb0]: files only, from elsewhere than the
+            // shortlist itself, join the current shortlist.
+            (Source::Files(files), Target::Shortlist) => {
+                let own = self.app.ctrl(from).is_some_and(|c| c.overload == "BrowserShortList");
+                if own || files.iter().any(|f| f.is_dir()) {
+                    return false;
+                }
+                self.browser.as_mut().is_some_and(|b| b.add_to_current_shortlist(files))
             }
             _ => false,
         }

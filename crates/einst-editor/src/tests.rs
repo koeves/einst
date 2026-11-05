@@ -4324,3 +4324,22 @@ fn sampler_preview_output_menu() {
     ed.handle(&UiEvent::MenuSelected { anchor: k, name: "PreviewVolume".into(), index: 3 });
     assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SET_PREVIEW_OUTPUT && m.value[0] == 4.0)));
 }
+
+/// v1's browser drop targets: files join the current shortlist; folders
+/// dropped on Favourites become favourites.
+#[test]
+fn browser_shortlist_and_favourites_drops() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let dir = std::env::temp_dir().join(format!("einst-drop-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let f = dir.join("a.wav");
+    std::fs::write(&f, b"").unwrap();
+    let Some(b) = ed.browser.as_mut() else { return };
+    assert!(b.add_to_current_shortlist(vec![f.clone()]));
+    assert!(!b.add_to_current_shortlist(vec![f.clone()]), "already there");
+    let fav = b.source_rows().iter().position(|(cat, header)| *cat == "Favourites" && *header).unwrap();
+    assert!(!b.drop_on_source(fav, std::slice::from_ref(&f)), "files are not favourites");
+    assert!(b.drop_on_source(fav, std::slice::from_ref(&dir)));
+    let _ = std::fs::remove_dir_all(&dir);
+}
