@@ -128,7 +128,7 @@ pub struct PatternPanel {
     clipboard: Vec<(usize, usize, dreist_engine::pattern::StepData)>,
     /// A pen-tool right click on a track: its menu, for the editor to open
     /// (the menu's owner): (track, grid path).
-    pub(crate) track_menu: Option<(usize, Vec<usize>)>,
+    pub(crate) track_menu: Option<(usize, Option<usize>, Vec<usize>)>,
     /// Graph Options menu open (false = top level, true = Insert submenu).
     graph_menu: Option<bool>,
     /// The editing tool (the tools panel, manual §9:4): pen, erase,
@@ -196,7 +196,7 @@ enum ToolbarAction {
 
 /// Lanes offered by "Drag Edits..." ([re:4120dd] 0..0x27 without
 /// Duration and LinkToPrevious).
-fn drag_lanes() -> Vec<usize> {
+pub(crate) fn drag_lanes() -> Vec<usize> {
     (0..CORE_LANES).filter(|&l| l != 9 && l != 10).collect()
 }
 
@@ -470,7 +470,7 @@ const MARKER_H: f32 = 15.0;
 /// menu.
 const CORE_LANES: usize = 39;
 
-fn lane_label(lane: usize) -> String {
+pub(crate) fn lane_label(lane: usize) -> String {
     // v1's routing-depth lanes, as its envelope rows name them.
     const ROUTING: [&str; 4] = ["Amp Env Depth 1", "Amp Env Depth 2", "Free Env Depth 1", "Free Env Depth 2"];
     if let Some(l) = ROUTING.get(lane.wrapping_sub(dreist_formats::params::V1_ROUTING_LANE)) {
@@ -1461,6 +1461,10 @@ impl PatternPanel {
             }
             UiEvent::Mouse { path, overload, kind, x, y } if overload == "PatternGrid" => {
                 let Some(lay) = self.layout(app, model) else { return false };
+                // [re:ced31a]: the right button opens the track menu
+                // under the pen, erase and select tools; the multi tool's
+                // deletes.
+                let menu = *kind == MouseKind::RightDown && self.tool != Tool::Multi;
                 // The erase tool's left button deletes; the select tool's
                 // left button selects as shift does with the others.
                 let kind = &match (self.tool, kind) {
@@ -1489,11 +1493,9 @@ impl PatternPanel {
                     }
                     return false;
                 };
-                // The pen tool's right button opens the track's menu
-                // (v1: deleting is the erase and multi tools' job).
-                if self.tool == Tool::Pen && *kind == MouseKind::RightDown {
+                if menu {
                     model.pad[e] = track;
-                    self.track_menu = Some((track, path.clone()));
+                    self.track_menu = Some((track, Some(step), path.clone()));
                     return true;
                 }
                 // Shift-drag: rubber-band selection of steps that are on.
@@ -2081,6 +2083,37 @@ impl PatternPanel {
     /// Steps are selected (the arrow keys nudge them).
     pub fn has_selection(&self) -> bool {
         !self.selection.is_empty()
+    }
+
+    /// The step clipboard holds steps.
+    pub fn has_copied_steps(&self) -> bool {
+        !self.clipboard.is_empty()
+    }
+
+    /// A track menu pick the pattern editor carries out.
+    pub fn menu_request(&mut self, app: &mut App, model: &mut Model, req: crate::patmenu::EditorRequest, out: &mut Vec<Command>) -> bool {
+        use crate::patmenu::EditorRequest as R;
+        match req {
+            R::Tool(i) => {
+                self.tool = TOOLS[i.min(3)];
+                true
+            }
+            R::DragLane(l) => {
+                model.pattern_view[model.engine].drag_lane = l;
+                true
+            }
+            R::Cut => self.shortcut(model, "x", true, out),
+            R::Copy => self.shortcut(model, "c", true, out),
+            R::Paste(t, s) => {
+                model.pad[model.engine] = t;
+                self.selection = std::iter::once((t, s)).collect();
+                self.shortcut(model, "v", true, out)
+            }
+            R::Duplicate => {
+                let anchor = self.page.clone();
+                self.toolbar_action(app, model, &anchor, ToolbarAction::Duplicate, out)
+            }
+        }
     }
 
     fn shortcut(&mut self, model: &mut Model, key: &str, cmd: bool, out: &mut Vec<Command>) -> bool {

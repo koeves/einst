@@ -7,12 +7,14 @@
 //!   message 0x136), Convert timing (Pattern Convertor panel); Swap with /
 //!   Copy to / Move to ▸ patterns ([re:c23a58] /
 //!   copy / move); Export as audio (current pattern).
-//! - [re:ca3223] [re:3c8b75] (track name area):
-//!   Cut / Cut with pad, Copy / Copy with pad, Paste / Paste with pad;
-//!   Clear track, Clear all tracks, Clear pad, Select tracks' pad; Lock all
-//!   tracks (0xb8), Unlock all tracks (0xb9), Lock / Unlock track (0xb7),
-//!   the track-and-pad lock pair; Insert ▸ (insertable patterns); Set
-//!   colour label ▸ (the pad colour).
+//! - Track menu, as the original v1 builds it ([re:fdbfcb], commands
+//!   [re:ebb1c9]): Pen / Erase / Select / Multi Tool; Dragging alters... ▸;
+//!   Delete (the step under the mouse, or the selection it is in); Cut,
+//!   Copy, Paste (at that step), Duplicate selected steps / Duplicate
+//!   pattern; Extract groove from pattern, Quantize pattern timing, Reset
+//!   pattern velocity, Quantize track timing, Reset track velocity; Clear
+//!   track, Clear all tracks; Lock / Unlock track, Unlock all tracks, the
+//!   track-and-pad lock pair, Select tracks' pad; Insert ▸.
 
 use dreist_engine::binding::id;
 use dreist_formats::Node;
@@ -20,7 +22,7 @@ use dreist_gui::app::{App, MouseKind, UiEvent};
 
 use crate::command::{Command, msg};
 use crate::model::Model;
-use crate::padmenu::{COLOURS, Clipboard, pad_locked, pad_or_empty, put_pad, reset_pad, set_lock, track_mut, track_node};
+use crate::padmenu::{Clipboard, pad_locked, set_lock, track_mut, track_node};
 
 const PATTERNS: usize = 24;
 
@@ -46,21 +48,38 @@ enum Action {
     CopyTo(usize),
     MoveTo(usize),
     // Track.
-    CutTrack { pad: bool },
-    CopyTrack { pad: bool },
-    PasteTrack { pad: bool },
+    Editor(EditorRequest),
+    DragMenu,
+    Delete(usize),
+    PatternGroove,
+    PatternQuantize,
+    PatternVelocity,
+    TrackQuantize,
+    TrackVelocity,
     ClearTrack,
     ClearAllTracks,
-    ClearPad,
     SelectPad,
-    LockAllTracks(bool),
+    UnlockAllTracks,
     LockTrack,
     LockTrackAndPad,
-    ColourMenu,
-    Colour(usize),
     InsertMenu,
     Insert(usize),
     None,
+}
+
+/// Track menu items the pattern editor carries out (v1 routes them to the
+/// pattern editor panel).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum EditorRequest {
+    /// Tools panel index (Pen, Erase, Select, Multi).
+    Tool(usize),
+    /// "Dragging alters..." lane.
+    DragLane(usize),
+    Cut,
+    Copy,
+    /// Paste at (track, step).
+    Paste(usize, usize),
+    Duplicate,
 }
 
 /// [re:8a256e]: the `.patterntemplate`
@@ -106,8 +125,10 @@ pub struct PatMenu {
     /// The pattern editor's step selection (track, step), set by the
     /// editor before events reach the menu.
     pub selection: std::collections::BTreeSet<(usize, usize)>,
-    /// The selection was cut: the editor clears it in the pattern panel.
-    pub selection_cut: bool,
+    /// A track menu pick for the pattern editor.
+    pub editor: Option<EditorRequest>,
+    /// The pattern editor's step clipboard holds steps (set by the editor).
+    pub steps_copied: bool,
 }
 
 fn pattern_locked(model: &Model, e: usize, p: usize) -> bool {
@@ -171,13 +192,17 @@ impl PatMenu {
         self.show(app, anchor, p, items);
     }
 
-    /// Track `t`'s menu at `anchor` (the track name area, or the grid
-    /// under the pen tool).
-    pub(crate) fn track_menu(&mut self, app: &mut App, anchor: &[usize], model: &Model, clip: &Clipboard, t: usize) {
+    /// Track `t`'s menu at `anchor` (the track name area, or a step `step`
+    /// of the grid under the pen, erase or select tool).
+    pub(crate) fn track_menu(&mut self, app: &mut App, anchor: &[usize], model: &Model, _clip: &Clipboard, t: usize, step: Option<usize>) {
         let e = model.engine;
+        let cur = model.current_pattern(e);
+        let pat = model.pattern(e, cur);
         let tl = track_node(model, e, t).is_some_and(|n| n.locked());
         let pl = pad_locked(model, e, t);
-        let has_samples = (0..crate::padmenu::LAYERS).any(|l| model.layer(e, t, l).valid);
+        let sel = !self.selection.is_empty();
+        let empty = pat.tracks.iter().all(|tr| tr.steps.iter().all(|s| !s.on));
+        let step_on = step.and_then(|s| pat.tracks.get(t).and_then(|tr| tr.steps.get(s))).is_some_and(|s| s.on);
         let pair = match (tl, pl) {
             (true, true) => "Unlock track and pad",
             (true, false) => "Unlock track and lock pad",
@@ -185,27 +210,36 @@ impl PatMenu {
             (false, false) => "Lock track and pad",
         };
         let sep = || (String::new(), Action::None, true);
+        let r = |q: EditorRequest| Action::Editor(q);
         let items = vec![
-            ("Cut".into(), Action::CutTrack { pad: false }, !tl && !self.selection.is_empty()),
-            ("Cut with pad".into(), Action::CutTrack { pad: true }, !tl && !pl),
-            ("Copy".into(), Action::CopyTrack { pad: false }, true),
-            ("Copy with pad".into(), Action::CopyTrack { pad: true }, !tl),
-            ("Paste".into(), Action::PasteTrack { pad: false }, clip.track.is_some() && !tl),
-            ("Paste with pad".into(), Action::PasteTrack { pad: true }, clip.track.is_some() && clip.pad.is_some() && !pl),
+            ("Pen Tool".into(), r(EditorRequest::Tool(0)), true),
+            ("Erase Tool".into(), r(EditorRequest::Tool(1)), true),
+            ("Select Tool".into(), r(EditorRequest::Tool(2)), true),
+            ("Multi Tool".into(), r(EditorRequest::Tool(3)), true),
+            ("Dragging alters... ▸".into(), Action::DragMenu, true),
+            sep(),
+            ("Delete".into(), step.map_or(Action::None, Action::Delete), step.is_some() && !tl && (sel || step_on)),
+            sep(),
+            ("Cut".into(), r(EditorRequest::Cut), !tl && sel),
+            ("Copy".into(), r(EditorRequest::Copy), sel),
+            ("Paste".into(), r(EditorRequest::Paste(t, step.unwrap_or(0))), self.steps_copied && !tl),
+            ((if sel { "Duplicate selected steps" } else { "Duplicate pattern" }).into(), r(EditorRequest::Duplicate), !tl && !empty),
+            sep(),
+            ("Extract groove from pattern".into(), Action::PatternGroove, true),
+            ("Quantize pattern timing".into(), Action::PatternQuantize, true),
+            ("Reset pattern velocity".into(), Action::PatternVelocity, true),
+            ("Quantize track timing".into(), Action::TrackQuantize, !tl),
+            ("Reset track velocity".into(), Action::TrackVelocity, !tl),
             sep(),
             ("Clear track".into(), Action::ClearTrack, !tl),
             ("Clear all tracks".into(), Action::ClearAllTracks, !tl),
-            ("Clear pad".into(), Action::ClearPad, has_samples && !pl),
+            sep(),
+            (if tl { "Unlock track" } else { "Lock track" }.into(), Action::LockTrack, true),
+            ("Unlock all tracks".into(), Action::UnlockAllTracks, true),
+            (pair.into(), Action::LockTrackAndPad, true),
             ("Select tracks' pad".into(), Action::SelectPad, true),
             sep(),
-            ("Lock all tracks".into(), Action::LockAllTracks(true), true),
-            ("Unlock all tracks".into(), Action::LockAllTracks(false), true),
-            (if tl { "Unlock track" } else { "Lock track" }.into(), Action::LockTrack, true),
-            (pair.into(), Action::LockTrackAndPad, true),
-            sep(),
             ("Insert ▸".into(), Action::InsertMenu, !tl),
-            sep(),
-            ("Set colour label... ▸".into(), Action::ColourMenu, true),
         ];
         self.show(app, anchor, t, items);
     }
@@ -231,7 +265,7 @@ impl PatMenu {
                     }
                     MouseKind::RightDown => {
                         let path = path.clone();
-                        self.track_menu(app, &path, model, clip, t);
+                        self.track_menu(app, &path, model, clip, t, None);
                         true
                     }
                     _ => false,
@@ -351,50 +385,53 @@ impl PatMenu {
                 rebuild(model, out);
                 true
             }
-            // lambda #1 [re:4436e5]: Cut copies the pattern
-            // ([re:aa54c8]), keeps only the editor-selected
-            // steps in the copy and posts
-            // 0xb1 `e_clearSelectedStepsInPattern` [e, −1, −1, pattern].
-            Action::CutTrack { pad: false } => {
-                let cur = model.current_pattern(e);
-                let mut copy = model.pattern_node(e, cur).cloned().unwrap_or_else(|| Node::new("StepPattern", Some(&format!("StepPattern{cur}"))));
-                let index = |n: &Node, prefix: &str| n.name.as_deref().and_then(|x| x.strip_prefix(prefix)).and_then(|x| x.parse::<usize>().ok());
-                for tr in copy.children.iter_mut().filter(|c| c.class == "Track") {
-                    let Some(t) = index(tr, "Track") else { continue };
-                    tr.children.retain(|st| st.class != "Step" || index(st, "S").is_some_and(|k| self.selection.contains(&(t, k))));
-                }
-                clip.pattern = Some(copy);
-                let sp = model.engine_mut(e).child_mut_or_insert("StepPattern", &format!("StepPattern{cur}"));
-                for tr in sp.children.iter_mut().filter(|c| c.class == "Track") {
-                    let Some(t) = index(tr, "Track") else { continue };
-                    tr.children.retain(|st| st.class != "Step" || !index(st, "S").is_some_and(|k| self.selection.contains(&(t, k))));
-                }
-                self.selection_cut = true;
-                rebuild(model, out);
+            Action::Editor(q) => {
+                self.editor = Some(q);
                 true
             }
-            Action::CopyTrack { pad } | Action::CutTrack { pad } => {
-                clip.track = Some(track_node(model, e, n).cloned().unwrap_or_else(|| Node::new("Track", Some(&format!("Track{n}")))));
-                clip.pad = pad.then(|| pad_or_empty(model, e, n));
-                if matches!(a, Action::CutTrack { .. }) {
-                    let cur = model.current_pattern(e) as i32;
-                    out.push(msg(id::CLEAR_TRACK, &[e as i32, -1, -1, cur, n as i32, -1], &[0.0]));
-                    if pad {
-                        reset_pad(model.pad_mut(e, n));
-                        rebuild(model, out);
-                    }
-                    return true;
-                }
+            // [re:fdbfcb]: the step graph lanes as check items.
+            Action::DragMenu => {
+                let lanes = crate::pattern::drag_lanes();
+                let cur = model.pattern_view[e].drag_lane;
+                let items = lanes
+                    .iter()
+                    .map(|&l| {
+                        (
+                            if l == cur { format!("{}{}", dreist_gui::menu::CHECK, crate::pattern::lane_label(l)) } else { crate::pattern::lane_label(l) },
+                            Action::Editor(EditorRequest::DragLane(l)),
+                            true,
+                        )
+                    })
+                    .collect();
+                self.show(app, anchor, n, items);
                 false
             }
-            Action::PasteTrack { pad } => {
-                let Some(mut t) = clip.track.clone() else { return false };
-                t.name = Some(format!("Track{n}"));
-                *track_mut(model, e, n) = t;
-                if let (true, Some(p)) = (pad, clip.pad.clone()) {
-                    put_pad(model, e, n, p);
+            // 0xd3 step off: the selection when the step is in it, else
+            // the step.
+            Action::Delete(st) => {
+                let cur = model.current_pattern(e) as i32;
+                let steps: Vec<(usize, usize)> = if self.selection.contains(&(n, st)) { self.selection.iter().copied().collect() } else { vec![(n, st)] };
+                for (t, k) in steps {
+                    out.push(msg(id::SET_STEP_OFF, &[e as i32, t as i32, -1, cur, t as i32, k as i32], &[0.0]));
                 }
-                rebuild(model, out);
+                true
+            }
+            Action::PatternGroove => {
+                self.groove = Some(model.current_pattern(e));
+                false
+            }
+            Action::PatternQuantize | Action::PatternVelocity => {
+                let cur = model.current_pattern(e) as i32;
+                let k = if a == Action::PatternQuantize { id::QUANTIZE_PATTERN_TIMING } else { id::QUANTIZE_PATTERN_VELOCITY };
+                out.push(msg(k, &[e as i32, -1, -1, cur, -1, -1], &[0.0]));
+                true
+            }
+            // [re:db9a5f]: the track's timing / velocity back to the
+            // defaults (its Shift / Velocity lane).
+            Action::TrackQuantize | Action::TrackVelocity => {
+                let cur = model.current_pattern(e) as i32;
+                let l = if a == Action::TrackQuantize { dreist_engine::pattern::lane::SHIFT } else { dreist_engine::pattern::lane::VELOCITY };
+                out.push(msg(id::CLEAR_TRACK_AUTOMATION, &[e as i32, n as i32, -1, cur, n as i32, -1], &[l as f32]));
                 true
             }
             Action::ClearTrack => {
@@ -407,20 +444,15 @@ impl PatMenu {
                 out.push(msg(id::CLEAR_PATTERN, &[e as i32, -1, -1, cur], &[0.0]));
                 true
             }
-            Action::ClearPad => {
-                reset_pad(model.pad_mut(e, n));
-                rebuild(model, out);
-                true
-            }
             Action::SelectPad => {
                 model.pad[e] = n;
                 true
             }
-            // 0xb8 `e_lockAllTracks` / 0xb9 `e_unlockAllTracks`.
-            Action::LockAllTracks(on) => {
+            // 0xb9 `e_unlockAllTracks`.
+            Action::UnlockAllTracks => {
                 for t in 0..crate::padmenu::PADS {
-                    if on || track_node(model, e, t).is_some() {
-                        set_lock(track_mut(model, e, t), on);
+                    if track_node(model, e, t).is_some() {
+                        set_lock(track_mut(model, e, t), false);
                     }
                 }
                 true
@@ -457,20 +489,6 @@ impl PatMenu {
                     } else {
                         out.push(msg(id::SET_STEP_OFF, &index, &[0.0]));
                     }
-                }
-                true
-            }
-            Action::ColourMenu => {
-                self.open = Some((n, (0..=COLOURS.len()).map(Action::Colour).collect(), anchor.to_vec()));
-                app.open_menu(anchor, vec![crate::padmenu::colour_grid_item()], None);
-                false
-            }
-            Action::Colour(i) => {
-                let pad = model.pad_mut(e, n);
-                pad.attrs.retain(|(k, _)| k != "PadColour");
-                if let Some(c) = i.checked_sub(1).and_then(|k| COLOURS.get(k)) {
-                    let v = u32::from_str_radix(&c[1..], 16).unwrap_or(0);
-                    pad.set("PadColour", format!("{}, {}, {}, 255", v >> 16, (v >> 8) & 255, v & 255));
                 }
                 true
             }
