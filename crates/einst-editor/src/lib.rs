@@ -174,7 +174,6 @@ pub struct Editor {
     /// An open engine selector menu (anchor, engine, item actions); the
     /// "Reset all engines" confirmation; the engine being renamed.
     engine_menu: Option<(Vec<usize>, usize, Vec<EngineAction>)>,
-    engine_rename: Option<usize>,
     /// A typed knob edit in progress: the knob, its id and the conversion.
     knob_edit: Option<(Vec<usize>, String, i32, dreist_formats::params::Curve)>,
     /// The open File menu level (main menu or a submenu) and its actions.
@@ -328,7 +327,6 @@ impl Editor {
             history_menu: None,
             knob_menu: None,
             engine_menu: None,
-            engine_rename: None,
             knob_edit: None,
             file_menu: None,
             main_menu: false,
