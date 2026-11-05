@@ -240,6 +240,12 @@ fn err(e: impl std::fmt::Display) -> EditorError {
 }
 
 impl Editor {
+    /// Show or hide the browser column ([`front::set_browser_visible`]).
+    pub fn set_browser_hidden(&mut self, hidden: bool) {
+        self.front.browser_hidden = hidden;
+        front::set_browser_visible(&mut self.app, !hidden);
+    }
+
     /// Build the editor from the installed resources (`theme`, e.g.
     /// "Einst"): the v1 layout (`front`) with its pages.
     pub fn new(theme: &str, model: Model) -> Result<Editor, EditorError> {

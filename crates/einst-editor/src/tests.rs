@@ -4289,3 +4289,22 @@ fn envelope_rows_edit_v1_routing_slots() {
     ed.sync();
     assert_eq!(ed.app.root.find("FreeEnvDest1Combo").unwrap().text, "Drive");
 }
+
+/// v1's browser show / hide: the window shrinks to the main panel and
+/// comes back.
+#[test]
+fn browser_show_hide_resizes_the_window() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let b = ed.app.root.path_of("ShowHideButton").unwrap();
+    assert!(ed.app.ctrl(&b).unwrap().visible);
+    ed.handle(&UiEvent::Clicked { path: b.clone(), name: "ShowHideButton".into(), id: 100000, on: true });
+    assert_eq!(ed.app.size(), (830, 640));
+    assert!(ed.app.resize_request);
+    let mp = ed.app.root.path_of("MovePanel").unwrap();
+    assert_eq!(ed.app.ctrl(&mp).unwrap().rect.x, 1);
+    assert!(!ed.app.ctrl(&ed.app.root.path_of("BrowsePanel").unwrap()).unwrap().visible);
+    ed.handle(&UiEvent::Clicked { path: b, name: "ShowHideButton".into(), id: 100000, on: false });
+    assert_eq!(ed.app.size(), (1135, 640));
+    assert_eq!(ed.app.ctrl(&mp).unwrap().rect.x, 306);
+}
