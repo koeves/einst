@@ -1880,29 +1880,51 @@ fn layer_row_menu() {
         items
     };
     assert!(ed.model.layer(e, pad, 0).valid);
-    ed.model.layer_mut(e, pad, 0).set("Gain", 0.3).set("AmpEnvAttack", 0.4).set("AmpEnvAttack_Slot1", 0.2);
-    menu(&mut ed, "Reset Envelopes");
+    let items = menu(&mut ed, "Copy");
+    assert_eq!(items.iter().map(|s| s.trim_start_matches(|c: char| !c.is_ascii_alphanumeric())).collect::<Vec<_>>(), padmenu::LAYER_ITEMS.iter().map(|s| s.to_string()).collect::<Vec<_>>());
+    ed.model.layer_mut(e, pad, 0).set("AmpEnvAttack", 0.4).set("LayerGain", 0.3);
+    menu(&mut ed, "Reset envelopes");
     let n = ed.model.layer_node(e, pad, 0).unwrap();
-    assert!(n.attr("AmpEnvAttack").is_none() && n.attr("AmpEnvAttack_Slot1").is_some() && n.attr("Gain").is_some());
+    assert_eq!(n.f32("AmpEnvAttack"), Some(0.0));
+    assert_eq!(n.f32("LayerGain"), Some(0.3));
     assert!(n.f32("AmpEnvHold").is_some_and(|h| (0.0..=1.0).contains(&h)));
-    menu(&mut ed, "Reset");
+    menu(&mut ed, "Reset layer");
     let n = ed.model.layer_node(e, pad, 0).unwrap();
-    assert!(n.attr("Gain").is_none() && n.attr("AmpEnvAttack_Slot1").is_none() && n.attr("AudioFileName").is_some());
-    // Locked rows refuse Cut / Paste / Clear.
-    menu(&mut ed, "Copy");
-    menu(&mut ed, "Lock");
-    assert!(padmenu::layer_locked(&ed.model, e, pad, 0));
-    let items = menu(&mut ed, "Lock");
-    assert!(items[8].starts_with(dreist_gui::menu::CHECK));
-    for i in [0, 2, 4, 5, 6] {
-        assert!(items[i].starts_with(dreist_gui::menu::DISABLED), "{}", items[i]);
-    }
+    assert!((n.f32("LayerGain").unwrap() - 0.7937).abs() < 1e-3 && n.attr("AudioFileName").is_some());
     menu(&mut ed, "Cut");
     assert!(!ed.model.layer(e, pad, 0).valid);
     menu(&mut ed, "Paste");
     assert!(ed.model.layer(e, pad, 0).valid);
-    menu(&mut ed, "Clear");
+    menu(&mut ed, "Clear layer");
     assert!(ed.model.layer_node(e, pad, 0).is_some_and(|n| n.attrs.is_empty()));
+    ed.outbox.clear();
+    menu(&mut ed, "Tune loop to tempo");
+    assert!(ed.outbox.iter().any(|c| matches!(c, crate::command::Command::Message(m) if m.kind == dreist_engine::binding::id::TUNE_LAYER)));
+}
+
+#[test]
+fn pad_row_menu() {
+    crate::app::test_setup();
+    let p = demo("Presets/Hollow.geist");
+    let Ok(proj) = dreist_formats::Project::load(&p) else { return };
+    let mut model = Model::new(proj.raw);
+    model.samples = Some(dreist_formats::model::samples_dir(&p));
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), model) else { return };
+    let e = ed.model.engine;
+    let pad = ed.model.pad[e];
+    let mut clip = padmenu::Clipboard::default();
+    let mut out = Vec::new();
+    let items = padmenu::pad_row_items(&ed.model, &clip, e, pad);
+    assert_eq!(items.len(), padmenu::PAD_ROW_ITEMS.len());
+    ed.model.layer_mut(e, pad, 1).set("LayerGain", 0.2);
+    assert!(padmenu::pad_row_action(&mut ed.model, &mut clip, e, pad, 6, &mut out));
+    assert!((ed.model.layer_node(e, pad, 1).unwrap().f32("LayerGain").unwrap() - 0.7937).abs() < 1e-3);
+    assert!(!padmenu::pad_row_action(&mut ed.model, &mut clip, e, pad, 4, &mut out));
+    assert_eq!(crate::multipad::layer_selection(&ed.model, e, pad).1, 0xff);
+    assert!(padmenu::pad_row_action(&mut ed.model, &mut clip, e, pad, 0, &mut out));
+    assert!(clip.pad.is_some() && !ed.model.layer(e, pad, 0).valid);
+    assert!(padmenu::pad_row_action(&mut ed.model, &mut clip, e, pad, 2, &mut out));
+    assert!(ed.model.layer(e, pad, 0).valid);
 }
 
 #[test]
