@@ -20,7 +20,7 @@ use dreist_gui::app::{App, MouseKind, UiEvent};
 
 use crate::command::{Command, msg};
 use crate::model::Model;
-use crate::padmenu::{COLOURS, Clipboard, clear_samples, pad_locked, pad_or_empty, put_pad, set_lock, track_mut, track_node};
+use crate::padmenu::{COLOURS, Clipboard, pad_locked, pad_or_empty, put_pad, reset_pad, set_lock, track_mut, track_node};
 
 const PATTERNS: usize = 24;
 
@@ -380,7 +380,7 @@ impl PatMenu {
                     let cur = model.current_pattern(e) as i32;
                     out.push(msg(id::CLEAR_TRACK, &[e as i32, -1, -1, cur, n as i32, -1], &[0.0]));
                     if pad {
-                        clear_samples(model.pad_mut(e, n));
+                        reset_pad(model.pad_mut(e, n));
                         rebuild(model, out);
                     }
                     return true;
@@ -408,7 +408,7 @@ impl PatMenu {
                 true
             }
             Action::ClearPad => {
-                clear_samples(model.pad_mut(e, n));
+                reset_pad(model.pad_mut(e, n));
                 rebuild(model, out);
                 true
             }

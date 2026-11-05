@@ -132,11 +132,13 @@ pub(crate) fn set_lock(n: &mut Node, on: bool) {
     }
 }
 
-/// `e_deallocatePadSamples`: the pad's layers lose their samples.
-pub(crate) fn clear_samples(pad: &mut Node) {
-    for l in pad.children.iter_mut().filter(|c| c.class == "Layer") {
-        clear_layer(l);
-    }
+/// `e_deallocatePadSamples` ([re:8719e8]): the pad is reset to a new
+/// one: samples, layers, effects, mix, sends, output, lock, layer mode and
+/// name (back to the default, shown as the pad number). Only the velocity
+/// to amp depth survives, and the colour label (not a v1 setting).
+pub(crate) fn reset_pad(pad: &mut Node) {
+    pad.attrs.retain(|(k, _)| k == "V2A" || k == "PadColour");
+    pad.children.clear();
 }
 
 fn clear_layer(l: &mut Node) {
@@ -397,7 +399,7 @@ impl PadMenu {
                 clip.track = if track { Some(track_node(model, e, p).cloned().unwrap_or_else(|| Node::new("Track", Some(&format!("Track{p}"))))) } else { None };
                 clip.pad = Some(pad_or_empty(model, e, p));
                 if matches!(a, PadAction::Cut { .. }) {
-                    clear_samples(model.pad_mut(e, p));
+                    reset_pad(model.pad_mut(e, p));
                     if track {
                         track_mut(model, e, p).children.retain(|c| c.class != "Step");
                     }
@@ -417,14 +419,15 @@ impl PadMenu {
                 done
             }
             PadAction::ClearPad => {
-                clear_samples(model.pad_mut(e, p));
+                reset_pad(model.pad_mut(e, p));
                 rebuild(model, out);
                 done
             }
+            // Locked pads are skipped ([re:8719e8]).
             PadAction::ClearAll => {
                 for q in 0..PADS {
-                    if model.pad_node(e, q).is_some() {
-                        clear_samples(model.pad_mut(e, q));
+                    if model.pad_node(e, q).is_some() && !pad_locked(model, e, q) {
+                        reset_pad(model.pad_mut(e, q));
                     }
                 }
                 rebuild(model, out);
@@ -477,12 +480,13 @@ impl PadMenu {
                 rebuild(model, out);
                 done
             }
-            // 0x56 `e_setPad` [e, q] with a copy; Move also clears the source (0xe3).
+            // 0x56 `e_setPad` [e, q] with a copy; Move copies and then resets the
+            // source ([re:8719e8]).
             PadAction::CopyTo(q) | PadAction::MoveTo(q) => {
                 let node = pad_or_empty(model, e, p);
                 put_pad(model, e, q, node);
                 if matches!(a, PadAction::MoveTo(_)) {
-                    clear_samples(model.pad_mut(e, p));
+                    reset_pad(model.pad_mut(e, p));
                 }
                 rebuild(model, out);
                 done

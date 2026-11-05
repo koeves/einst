@@ -281,7 +281,7 @@ impl Editor {
                     let node = padmenu::pad_or_empty(&self.model, e, p);
                     padmenu::put_pad(&mut self.model, e, q, node);
                     if m.shift {
-                        padmenu::clear_samples(self.model.pad_mut(e, p));
+                        padmenu::reset_pad(self.model.pad_mut(e, p));
                     }
                 } else {
                     let (a, b) = (padmenu::pad_or_empty(&self.model, e, p), padmenu::pad_or_empty(&self.model, e, q));

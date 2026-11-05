@@ -1955,6 +1955,96 @@ fn pad_menu_locks_colours_and_swaps() {
     assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Rebuild { .. })));
 }
 
+/// The right-click menu of the `EditorPad` with `padIndex` `idx`: picks
+/// the item ending with `label`; returns the pad's path.
+fn pad_menu_pick(ed: &mut Editor, idx: usize, label: &str) -> Vec<usize> {
+    fn find(c: &dreist_gui::Ctrl, idx: &str, path: &mut Vec<usize>) -> bool {
+        for (i, k) in c.children.iter().enumerate() {
+            path.push(i);
+            if (k.overload == "EditorPad" && k.attr("padIndex") == Some(idx)) || find(k, idx, path) {
+                return true;
+            }
+            path.pop();
+        }
+        false
+    }
+    let mut path = Vec::new();
+    assert!(find(&ed.app.root, &idx.to_string(), &mut path));
+    ed.handle(&UiEvent::Mouse { path: path.clone(), overload: "EditorPad".into(), kind: dreist_gui::app::MouseKind::RightDown, x: 5.0, y: 5.0 });
+    let items = ed.app.menu.as_ref().expect("pad menu").items.clone();
+    let i = items.iter().position(|s| s.ends_with(label)).unwrap_or_else(|| panic!("{label} in {items:?}"));
+    ed.handle(&UiEvent::MenuSelected { anchor: path.clone(), name: "EditorPad".into(), index: i });
+    path
+}
+
+/// The grid label of pad `p` (pad grid children are pads 0..16 in order).
+fn pad_grid_label(ed: &Editor, p: usize) -> String {
+    ed.app.root.find("EditorPads").unwrap().children[p].find("NameLabel").unwrap().text.clone()
+}
+
+/// Clear pad resets the whole pad, name included ([re:8719e8]); the
+/// default name shows as the pad number ([re:1cc6fe]).
+#[test]
+fn clear_pad_resets_the_pad_and_its_name() {
+    crate::app::test_setup();
+    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    let e = ed.model.engine;
+    assert!(ed.model.layer(e, 0, 0).valid);
+    ed.model.set_pad_name(e, 0, "Kick");
+    ed.model.pad_mut(e, 0).set("V2A", "0.25").set("Gain", "0.5").set("PadMode", "Random");
+    pad_menu_pick(&mut ed, 0, "Clear pad");
+    let pad = ed.model.pad_node(e, 0).unwrap();
+    assert_eq!(ed.model.pad_name(e, 0), None);
+    assert!(pad.children.is_empty(), "{pad:?}");
+    assert_eq!(pad.attrs, vec![("V2A".to_string(), "0.25".to_string())]);
+    assert!(!ed.model.layer(e, 0, 0).valid);
+    assert_eq!(pad_grid_label(&ed, 0), "1");
+    // A stored default name also shows as the number.
+    ed.model.set_pad_name(e, 0, "Pad 1");
+    ed.model.set_pad_name(e, 1, "Pad 1");
+    pad_menu_pick(&mut ed, 2, "Lock pad");
+    assert_eq!((pad_grid_label(&ed, 0), pad_grid_label(&ed, 1)), ("1".to_string(), "Pad 1".to_string()));
+}
+
+/// Clear all pads resets every unlocked pad and skips locked ones
+/// ([re:8719e8]).
+#[test]
+fn clear_all_pads_resets_unlocked_pads() {
+    crate::app::test_setup();
+    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    let e = ed.model.engine;
+    ed.model.set_pad_name(e, 1, "Snare");
+    pad_menu_pick(&mut ed, 1, "Lock pad");
+    let locked = ed.model.pad_node(e, 1).cloned();
+    pad_menu_pick(&mut ed, 0, "Clear all pads");
+    assert_eq!(ed.model.pad_node(e, 1).cloned(), locked);
+    for p in (0..16).filter(|&p| p != 1) {
+        assert_eq!(ed.model.pad_name(e, p), None, "pad {p}");
+        assert!(!ed.model.layer(e, p, 0).valid, "pad {p}");
+        assert_eq!(pad_grid_label(&ed, p), (p + 1).to_string());
+    }
+}
+
+/// Move pad copies the pad and resets the source, name included
+/// ([re:8719e8]).
+#[test]
+fn move_pad_resets_the_source() {
+    crate::app::test_setup();
+    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    let e = ed.model.engine;
+    ed.model.set_pad_name(e, 0, "Kick");
+    let src = ed.model.pad_node(e, 0).cloned().unwrap();
+    let path = pad_menu_pick(&mut ed, 0, "Move pad to... ▸");
+    ed.handle(&UiEvent::MenuSelected { anchor: path, name: "EditorPad".into(), index: 5 });
+    let mut moved = ed.model.pad_node(e, 5).cloned().unwrap();
+    moved.name = src.name.clone();
+    assert_eq!(moved, src);
+    assert_eq!(ed.model.pad_name(e, 5).as_deref(), Some("Kick"));
+    assert_eq!(ed.model.pad_name(e, 0), None);
+    assert!(!ed.model.layer(e, 0, 0).valid);
+    assert_eq!(pad_grid_label(&ed, 0), "1");
+}
+
 fn walk_find(dir: &std::path::Path, ext: &str) -> Option<std::path::PathBuf> {
     for e in std::fs::read_dir(dir).ok()?.flatten() {
         let p = e.path();
