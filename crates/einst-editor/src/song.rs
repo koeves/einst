@@ -96,6 +96,7 @@ struct Op {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum MenuAction {
+    Tool(usize),
     Cut,
     Copy,
     Paste,
@@ -524,12 +525,18 @@ impl SongPanel {
 
     fn context_menu(&mut self, app: &mut App, anchor: &[usize], qn: f64) {
         let any = !self.selected.is_empty();
+        // v1's list ([re:ef2c92]).
         let items: Vec<(String, MenuAction, bool)> = vec![
+            ("Pen Tool".into(), MenuAction::Tool(0), true),
+            ("Delete Tool".into(), MenuAction::Tool(1), true),
+            ("Select Tool".into(), MenuAction::Tool(2), true),
+            ("Multi Tool".into(), MenuAction::Tool(3), true),
+            (String::new(), MenuAction::None, true),
             ("Cut Parts".into(), MenuAction::Cut, any),
             ("Copy Parts".into(), MenuAction::Copy, any),
             ("Paste Parts".into(), MenuAction::Paste, !self.clipboard.is_empty()),
             ("Delete Parts".into(), MenuAction::Delete, any),
-            ("Duplicate Parts".into(), MenuAction::Duplicate, true),
+            ("Duplicate Parts".into(), MenuAction::Duplicate, any),
             (String::new(), MenuAction::None, true),
             ("Quantize Parts (start)".into(), MenuAction::QuantizeStart, any),
             ("Quantize Parts (start/end)".into(), MenuAction::QuantizeBoth, any),
@@ -537,6 +544,7 @@ impl SongPanel {
             (String::new(), MenuAction::None, true),
             ("Select All Parts".into(), MenuAction::SelectAll, true),
             ("Select Empty Parts".into(), MenuAction::SelectEmpty, true),
+            (String::new(), MenuAction::None, true),
             ("Clear All Parts".into(), MenuAction::ClearAll, true),
             (String::new(), MenuAction::None, true),
             ("Edit Pattern".into(), MenuAction::EditPattern, self.selected.len() == 1),
@@ -980,6 +988,10 @@ impl SongPanel {
             }
         };
         match a {
+            MenuAction::Tool(k) => {
+                self.tool = SONG_TOOLS[k.min(3)];
+                return true;
+            }
             MenuAction::None => return false,
             MenuAction::Copy | MenuAction::Cut => {
                 let t0 = picked.iter().map(|(_, p)| p.start).fold(f64::MAX, f64::min);
