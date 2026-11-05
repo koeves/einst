@@ -4192,13 +4192,25 @@ fn browser_list_pane_header_and_shortlist() {
     assert_eq!(ed.browser.as_ref().unwrap().test_columns(), (false, false));
     let view = at(&ed, "ViewOptionsButton");
     ed.handle(&UiEvent::Clicked { path: view.clone(), name: "ViewOptionsButton".into(), id: 0, on: false });
-    ed.handle(&UiEvent::MenuSelected { anchor: view.clone(), name: "ViewOptionsButton".into(), index: 0 });
-    ed.handle(&UiEvent::MenuSelected { anchor: view, name: "ViewOptionsButton".into(), index: 1 });
+    ed.handle(&UiEvent::MenuSelected { anchor: view.clone(), name: "ViewOptionsButton".into(), index: 1 });
+    ed.handle(&UiEvent::MenuSelected { anchor: view.clone(), name: "ViewOptionsButton".into(), index: 1 });
     assert_eq!(ed.browser.as_ref().unwrap().test_columns(), (false, true));
     assert!(crate::options::Options::load().bool("FileHeaderShowStateSize", false));
     click(&mut ed, hw - 10.0);
     assert_eq!(names(&ed), vec!["b.wav", "a.wav"], "smaller first");
     click(&mut ed, hw - 10.0);
+    assert_eq!(names(&ed), vec!["a.wav", "b.wav"]);
+    // View ▸ Audio off hides the audio files; View all brings them back
+    // ([re:ca74b1]).
+    let pick = |ed: &mut Editor, i: usize| {
+        ed.handle(&UiEvent::Clicked { path: view.clone(), name: "ViewOptionsButton".into(), id: 0, on: false });
+        ed.handle(&UiEvent::MenuSelected { anchor: view.clone(), name: "ViewOptionsButton".into(), index: 0 });
+        ed.handle(&UiEvent::MenuSelected { anchor: view.clone(), name: "ViewOptionsButton".into(), index: i });
+    };
+    pick(&mut ed, 0);
+    assert!(names(&ed).is_empty());
+    assert!(!crate::options::Options::load().bool("ShowAudio", true));
+    pick(&mut ed, 14);
     assert_eq!(names(&ed), vec!["a.wav", "b.wav"]);
     // The chosen shortlist lists below; the folder's files stay.
     let name = ed.browser.as_mut().unwrap().test_shortlist(vec![dir.join("b.wav"), dir.join("a.wav")]);
