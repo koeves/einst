@@ -149,12 +149,14 @@ fn project_converts_loads_and_plays() {
     assert!(dreist_engine::hold::needs_reset_on_load(&layer.raw));
     assert_eq!(layer.raw.f32("TimestretchActive"), Some(0.0));
     assert_eq!(layer.raw.f32("Cutoff_Velocity"), Some(0.0));
-    assert!(layer.raw.children_of("LayerModulationRouting").next().is_none());
-    // Steps keep v2's lanes only; the track keeps modifiers of those lanes.
+    // The routings stay slot by slot (all without a destination here).
+    assert_eq!(dreist_formats::legacy::routing_slots(&layer.raw), Some([None; 4]));
+    // Steps keep v2's lanes and v1's routing depths; the track keeps
+    // modifiers of those lanes.
     let track = &p.engines[0].patterns[0].tracks[0];
     assert_eq!(track.steps.len(), 4);
     assert_eq!(track.steps[1].velocity, Some(0.9));
-    assert!(track.steps[0].raw.attr("Ampenvdepth1").is_none());
+    assert_eq!(track.steps[0].raw.attr("Ampenvdepth1"), Some("0.7"));
     assert_eq!(track.raw.attr("VelocityRand"), Some("0.6"));
     assert!(track.raw.attr("AmpenvdepthRand").is_none());
     assert!(render(&doc, 3.0) > 1e-3, "silent");
