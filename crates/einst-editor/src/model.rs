@@ -48,6 +48,9 @@ pub struct Model {
     pub song_pos: Option<f64>,
     /// The host reports a loop ([re:a26535]).
     pub host_loop: bool,
+    /// Decoded sample bytes the engine holds (the memory readout), once
+    /// the plugin has built an engine.
+    pub memory: Option<u64>,
     /// Option `PatternEditorFollow`: the pattern editor and the song
     /// scroll to keep the playback position in view.
     pub follow_playback: bool,
@@ -286,6 +289,7 @@ impl Model {
             sampler: SamplerView::default(),
             song_pos: None,
             host_loop: false,
+            memory: None,
             follow_playback: crate::options::Options::load().bool("PatternEditorFollow", false),
             all_layers: false,
             all_pads: false,

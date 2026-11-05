@@ -4142,3 +4142,17 @@ fn slicer_zoom_scrollbar_scrolls() {
     assert!(moved.0 > v.0, "scrolled: {v:?} -> {moved:?}");
     assert_eq!(moved.1 - moved.0, v.1 - v.0, "same zoom");
 }
+
+/// The master display's memory readout shows the engine's sample memory
+/// in the original's units ([re:91925c], [re:04a6c7]).
+#[test]
+fn memory_readout_shows_sample_memory() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let text = |ed: &Editor| ed.app.root.find("MemoryUsageBox").map(|c| c.text.clone()).unwrap_or_default();
+    ed.sync();
+    assert_eq!(text(&ed), "", "nothing before the plugin reports");
+    ed.model.memory = Some(20_656_947);
+    ed.sync();
+    assert_eq!(text(&ed), "19.7MB");
+}

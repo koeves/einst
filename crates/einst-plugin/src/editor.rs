@@ -168,6 +168,9 @@ pub struct Bridge {
     pub project_path: Mutex<Option<PathBuf>>,
     /// Rebuild progress for the browser's loading bar (taken by the editor).
     pub load_progress: Arc<Mutex<Option<f32>>>,
+    /// Decoded sample bytes of the latest built engine, for the master
+    /// display's memory readout.
+    pub sample_bytes: AtomicU64,
 }
 
 /// A lock that survives a panic elsewhere (the data is plain state).
@@ -328,6 +331,7 @@ fn worker(bridge: Weak<Bridge>) {
             drop(doc);
             // A newer request supersedes this build.
             if let Some(g) = built.filter(|_| lock(&me.request).is_none()) {
+                me.sample_bytes.store(g.sample_bytes(), Ordering::Release);
                 let stale = lock(&me.replace).replace((n, Box::new(g)));
                 drop(stale);
             }
@@ -562,6 +566,7 @@ impl Editor for DreistEditor {
             if let Some(f) = lock(&bridge.load_progress).take() {
                 ed.load_progress(f);
             }
+            ed.model.memory = Some(bridge.sample_bytes.load(Ordering::Acquire));
             ed.set_playback(inbox.playing, inbox.steps, inbox.song_pos);
             // The preview volume is editor-side.
             if let Some(view) = inbox.sampler.take() {
