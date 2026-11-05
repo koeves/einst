@@ -4218,3 +4218,39 @@ fn browser_list_pane_header_and_shortlist() {
     assert_eq!(ed.browser.as_ref().unwrap().test_short_names(), vec!["b.wav"]);
     let _ = std::fs::remove_dir_all(&root);
 }
+
+/// A v1 layer's envelope rows are its four routings: they show the slots
+/// and edit them in place (depth and destination per slot), keeping the
+/// envelope depths in step and asking for a rebuild ([re:fad3cb]).
+#[test]
+fn envelope_rows_edit_v1_routing_slots() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    use dreist_formats::legacy::{routing_slots, set_routing_slot};
+    use dreist_formats::{LayerParam, TransmodSource};
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let (e, p, l) = (ed.model.engine, ed.model.pad[ed.model.engine], ed.model.layer[ed.model.engine]);
+    for (r, slot) in [Some((1u8, 0.9f32)), Some((1, 0.7)), None, Some((0, 0.25))].into_iter().enumerate() {
+        set_routing_slot(ed.model.layer_mut(e, p, l), r, slot);
+    }
+    ed.model.editor_tab = crate::front::PADS_PAGE;
+    ed.sync();
+    assert_eq!(ed.app.root.find("AmpEnvDest2Combo").unwrap().text, "Cutoff");
+    assert_eq!(ed.app.root.find("FreeEnvDest2Combo").unwrap().text, "Pitch");
+    assert!((ed.app.root.find("AmpEnvDepth2Knob").unwrap().value - 0.7).abs() < 1e-6);
+    // Depth: the slot changes; the amp envelope's cutoff depth is the mean.
+    let knob = ed.app.root.path_of("AmpEnvDepth2Knob").unwrap();
+    ed.take_commands();
+    ed.handle(&UiEvent::ValueChanged { path: knob, name: "AmpEnvDepth2Knob".into(), id: 0, value: 0.5 });
+    let cmds = ed.take_commands();
+    assert_eq!(routing_slots(ed.model.layer_node(e, p, l).unwrap()).unwrap()[1], Some((1, 0.5)));
+    assert!(cmds.iter().any(|c| matches!(c, Command::Rebuild { .. })));
+    assert!(cmds.iter().any(|c| matches!(c, Command::Message(m) if m.kind == id::SET_LAYER_PARAMETER && m.value[0] == LayerParam::FilterCutoff as u8 as f32 && (m.value[1] - 0.8).abs() < 1e-5 && m.value[2] == TransmodSource::AmpEnvelope as u8 as f32)));
+    // Destination: slot 2 (free envelope, first row) to Drive, depth kept.
+    let combo = ed.app.root.path_of("FreeEnvDest1Combo").unwrap();
+    ed.handle(&UiEvent::Clicked { path: combo.clone(), name: "FreeEnvDest1Combo".into(), id: 0, on: false });
+    ed.handle(&UiEvent::MenuSelected { anchor: combo, name: "FreeEnvDest1Combo".into(), index: 3 });
+    assert_eq!(routing_slots(ed.model.layer_node(e, p, l).unwrap()).unwrap()[2], Some((3, 0.5)));
+    ed.sync();
+    assert_eq!(ed.app.root.find("FreeEnvDest1Combo").unwrap().text, "Drive");
+}
