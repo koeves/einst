@@ -27,12 +27,105 @@ use crate::{EditorError, err};
 pub const CATEGORIES: [&str; 6] = ["Content", "Places", "Drives", "Favourites", "Searches", "Shortlists"];
 const SOURCE_ROW: f32 = 25.0;
 const FILE_ROW: f32 = 18.0;
+
+/// v1's list pane ([re:fa4043], [re:ed8e61]): a "Parent folder" button
+/// across the top (20 px), the column header 2 px below it (18 px, the
+/// view options button over the scroll bar's column at its right), then a
+/// split of the folder's list over the current shortlist.
+const PARENT_H: i32 = 20;
+const HEADER_Y: i32 = 22;
+const HEADER_H: i32 = 18;
+const LIST_Y: i32 = HEADER_Y + HEADER_H;
+const SLIDER_W: i32 = 11;
+/// The split's bar (v1: 6 px; with no saved position it sits mid-way,
+/// [re:d70824]).
+const LIST_BAR: i32 = 6;
+/// Type and Size columns ([re:9195ec]): 45 px each at the right, Size
+/// rightmost; Name takes the rest.
+const COLUMN_W: f32 = 45.0;
+
+/// A file list column ([re:0feb7a]: clicking its header sorts by it,
+/// clicking it again reverses the order).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Column {
+    Name,
+    Type,
+    Size,
+}
+
+/// The Type column's text ([re:acb2eb]).
+pub fn type_label(path: &Path, dir: bool) -> &'static str {
+    use dreist_formats::profile::{DocKind, doc_kind};
+    if dir {
+        return "Folder";
+    }
+    let ext = path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+    match ext.as_str() {
+        "wav" => "Wave",
+        "aif" => "AIF",
+        "aiff" => "AIFF",
+        "rx2" | "rex2" => "REX 2",
+        "rex" | "rcy" | "rcso" => "Recycle",
+        "mid" => "MIDI",
+        e => match doc_kind(e) {
+            Some(DocKind::Project) => "Preset",
+            Some(DocKind::Kit) => "Kit",
+            Some(DocKind::Pattern) => "Pattern",
+            Some(DocKind::Pad) => "Pad",
+            Some(DocKind::Bank) => "Bank",
+            Some(DocKind::Engine) => "Engine",
+            _ => match e {
+                "g01" => "Guru G01",
+                "g24" => "Guru G24",
+                "kit" => "Guru kit",
+                "gru" => "Guru song",
+                _ => "Unknown",
+            },
+        },
+    }
+}
+
+/// The Size column's text ([re:22e64a]): "--" for a folder.
+pub fn size_label(path: &Path, dir: bool) -> String {
+    if dir {
+        return "--".into();
+    }
+    std::fs::metadata(path).map(|m| dreist_engine::memory::bytes_label(m.len())).unwrap_or_else(|_| "--".into())
+}
+
+/// Folders first, then by `col` (ascending or not); names break ties.
+fn sort_entries(v: &mut [Entry], col: Column, asc: bool) {
+    let size = |e: &Entry| if e.dir { 0 } else { std::fs::metadata(&e.path).map(|m| m.len()).unwrap_or(0) };
+    v.sort_by(|a, b| {
+        let by = match col {
+            Column::Name => std::cmp::Ordering::Equal,
+            Column::Type => type_label(&a.path, a.dir).cmp(type_label(&b.path, b.dir)),
+            Column::Size => size(a).cmp(&size(b)),
+        }
+        .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        b.dir.cmp(&a.dir).then(if asc { by } else { by.reverse() })
+    });
+}
+
+/// The current shortlist's menu ([re:200a75]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ShortAction {
+    None,
+    SelectAll,
+    Remove,
+    Crop,
+    Clear,
+    Export,
+    DeleteSliceInfo,
+}
 /// The theme's content styles for the code-drawn lists: the file list
 /// (`BrowserListStyle`), the source tree (`BrowserTree*`) and the path
 /// navigator (`BrowserCrumbStyle`).
 const ITEM_STYLE: &str = "BrowserListStyle";
 const SOURCE_STYLE: &str = "BrowserTreeItemStyle";
 const SOURCE_HEAD_STYLE: &str = "BrowserTreeHeadStyle";
+/// The list's column header ([re:6f787e]: v1's header colours).
+const HEADER_STYLE: &str = "BrowserListHeaderStyle";
 const SOURCE_SELECTED_STYLE: &str = "BrowserTreeSelectedStyle";
 const NAV_STYLE: &str = "BrowserCrumbStyle";
 
@@ -144,6 +237,20 @@ pub struct Browser {
     nav_pressed: Option<usize>,
     /// The open navigator menu: its folder and actions.
     nav_menu: Option<(PathBuf, Vec<NavAction>)>,
+    /// The Type and Size columns shown (options `FileHeaderShowStateType`
+    /// / `FileHeaderShowStateSize`, off by default, [re:a81e4b]).
+    show_type: bool,
+    show_size: bool,
+    /// The sort column and order ([re:0feb7a]).
+    sort: (Column, bool),
+    /// The current shortlist's list: selected rows, anchor, scroll.
+    short_sel: Vec<usize>,
+    short_anchor: Option<usize>,
+    short_scroll: usize,
+    /// The open shortlist menu's actions.
+    short_menu: Vec<ShortAction>,
+    /// The view options menu ([re:543135]): 1 open, 2 its Columns submenu.
+    view_menu: u8,
 }
 
 /// [re:2717b8] /
@@ -193,7 +300,6 @@ enum FileAction {
     ShortlistMenu,
     AddToShortlist(usize),
     AddToNewShortlist,
-    RemoveFromShortlist,
     Favourite,
     FavouriteFolder,
     LoadRandom,
@@ -775,9 +881,37 @@ fn build_column(skin: &mut Skin, host: &mut Ctrl) -> Result<(), EditorError> {
     }
     let mut sources = panel("SourceList", "BrowserSourceList", Rect::new(0, 0, 103, body), "InvisibleStyle");
     sources.display_name = "SplitterPanel0".into();
-    let mut pane = panel("Browser", "", Rect::new(107, 0, w - 107, body), "InvisibleStyle");
+    let pw = w - 107;
+    let mut pane = panel("Browser", "", Rect::new(107, 0, pw, body), "InvisibleStyle");
     pane.display_name = "SplitterPanel1".into();
-    pane.children.push(panel("FileList", "BrowserFileList", Rect::new(0, 0, w - 107, body), "InvisibleStyle"));
+    let button = |name: &str, r: Rect, style: &str, text: &str| Ctrl {
+        class: "CtrlButton".into(),
+        name: name.into(),
+        style: style.into(),
+        text: text.into(),
+        rect: r,
+        visible: true,
+        enabled: true,
+        zorder: 1,
+        ..Ctrl::default()
+    };
+    pane.children.push(button("ParentFolderButton", Rect::new(0, 0, pw, PARENT_H), "BrowserParentNavigationButtonStyle", "Parent folder"));
+    pane.children.push(panel("ListHeader", "BrowserListHeader", Rect::new(0, HEADER_Y, pw - SLIDER_W, HEADER_H), "InvisibleStyle"));
+    pane.children.push(button("ViewOptionsButton", Rect::new(pw - SLIDER_W, HEADER_Y, SLIDER_W, HEADER_H), "BrowserHeaderViewOptionsButtonStyle", "▼"));
+    let lh = body - LIST_Y;
+    let half = lh / 2 - LIST_BAR / 2;
+    let mut lists = panel("ListSplit", "", Rect::new(0, LIST_Y, pw, lh), "InvisibleStyle");
+    lists.class = "CtrlSplitterPanel".into();
+    for (k, v) in [("SplitterPanelStyle", "BrowserListSplitStyle".to_string()), ("intSplitPosition", half.to_string()), ("intSplitterDim", LIST_BAR.to_string()), ("optIsVertical", "true".into())] {
+        lists.set_attr(k, v);
+    }
+    let mut files = panel("FileList", "BrowserFileList", Rect::new(0, 0, pw, half), "InvisibleStyle");
+    files.display_name = "SplitterPanel0".into();
+    let mut short = panel("ShortList", "BrowserShortList", Rect::new(0, half + LIST_BAR, pw, lh - half - LIST_BAR), "InvisibleStyle");
+    short.display_name = "SplitterPanel1".into();
+    lists.children.push(files);
+    lists.children.push(short);
+    pane.children.push(lists);
     split.children.push(sources);
     split.children.push(pane);
     host.children.push(split);
@@ -845,6 +979,14 @@ impl Browser {
             nav_menu: None,
             preview_output: 1,
             pads_track: crate::options::Options::load().bool("PadsTrackBrowser", false),
+            show_type: crate::options::Options::load().bool("FileHeaderShowStateType", false),
+            show_size: crate::options::Options::load().bool("FileHeaderShowStateSize", false),
+            sort: (Column::Name, true),
+            short_sel: Vec::new(),
+            short_anchor: None,
+            short_scroll: 0,
+            short_menu: Vec::new(),
+            view_menu: 0,
         };
         b.searches = load_saved_searches();
         b.sources = sources(&b.favourites, &b.searches, &b.shortlists);
@@ -877,6 +1019,11 @@ impl Browser {
     }
 
     fn go(&mut self, dir: PathBuf, record: bool) {
+        // A shortlist becomes the current one; the folder stays.
+        if let Some(n) = dir.to_str().and_then(|s| s.strip_prefix("shortlist:")) {
+            self.show_shortlist(n.to_string());
+            return;
+        }
         if record {
             if let Some(d) = self.dir.take() {
                 self.history.push(d);
@@ -901,7 +1048,6 @@ impl Browser {
                 .map(|p| Entry { name: p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), dir: p.is_dir(), path: p })
                 .collect();
             self.search = Path::new(f).file_stem().map(|s| s.to_string_lossy().into_owned());
-            self.shortlist = None;
             self.saved = true;
             self.selected = None;
             self.scroll = 0;
@@ -909,14 +1055,10 @@ impl Browser {
             return;
         }
         self.saved = false;
-        if let Some(n) = dir.to_str().and_then(|s| s.strip_prefix("shortlist:")) {
-            self.show_shortlist(n.to_string());
-            return;
-        }
-        self.shortlist = None;
         // A favourite file: open its folder with it selected.
         let (dir, select) = if dir.is_file() { (dir.parent().map(Path::to_path_buf).unwrap_or(dir.clone()), Some(dir)) } else { (dir, None) };
         self.entries = list(&dir);
+        sort_entries(&mut self.entries, self.sort.0, self.sort.1);
         self.dir = Some(dir);
         self.search = None;
         self.selected = select.and_then(|s| self.entries.iter().position(|e| e.path == s));
@@ -924,15 +1066,52 @@ impl Browser {
         self.multi.clear();
     }
 
-    /// [re:4f921b]: the shortlist's files.
+    /// [re:4f921b]; in v1 the chosen shortlist becomes the current one,
+    /// listed under the folder's files ([re:dbf248]).
     fn show_shortlist(&mut self, name: String) {
-        let files = self.shortlists.iter().find(|(n, _)| *n == name).map(|(_, f)| f.clone()).unwrap_or_default();
-        self.entries = files.into_iter().map(|p| Entry { name: p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), dir: p.is_dir(), path: p }).collect();
         self.shortlist = Some(name);
-        self.search = None;
-        self.selected = None;
-        self.scroll = 0;
-        self.multi.clear();
+        self.short_sel.clear();
+        self.short_anchor = None;
+        self.short_scroll = 0;
+    }
+
+    /// The current shortlist's files, in the header's sort order.
+    fn short_entries(&self) -> Vec<Entry> {
+        let files = self.shortlist.as_ref().and_then(|n| self.shortlists.iter().find(|(s, _)| s == n)).map(|(_, f)| f.clone()).unwrap_or_default();
+        let mut v: Vec<Entry> = files.into_iter().map(|p| Entry { name: p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), dir: p.is_dir(), path: p }).collect();
+        sort_entries(&mut v, self.sort.0, self.sort.1);
+        v
+    }
+
+    /// Sort by `col` ([re:0feb7a]): the same column again reverses the
+    /// order. The selected file stays selected.
+    fn sort_by(&mut self, col: Column) {
+        self.sort = if self.sort.0 == col { (col, !self.sort.1) } else { (col, true) };
+        let keep: Vec<PathBuf> = self.selection().into_iter().filter_map(|i| self.entries.get(i).map(|e| e.path.clone())).collect();
+        let lead = self.selected.and_then(|i| self.entries.get(i).map(|e| e.path.clone()));
+        sort_entries(&mut self.entries, self.sort.0, self.sort.1);
+        self.selected = lead.and_then(|p| self.entries.iter().position(|e| e.path == p));
+        self.multi = if keep.len() > 1 { self.entries.iter().enumerate().filter(|(_, e)| keep.contains(&e.path)).map(|(i, _)| i).collect() } else { Vec::new() };
+        self.short_sel.clear();
+        self.short_anchor = None;
+    }
+
+    /// The header's columns (x, width) for a list `w` wide: Name, then
+    /// Type and Size when shown ([re:9195ec]).
+    fn columns(&self, w: f32) -> Vec<(Column, f32, f32)> {
+        let mut right = w;
+        let mut v = Vec::new();
+        if self.show_size {
+            right -= COLUMN_W;
+            v.push((Column::Size, right, COLUMN_W));
+        }
+        if self.show_type {
+            right -= COLUMN_W;
+            v.push((Column::Type, right, COLUMN_W));
+        }
+        v.push((Column::Name, 0.0, right));
+        v.reverse();
+        v
     }
 
     /// The navigator's parts: the folder's components, else one label
@@ -940,9 +1119,6 @@ impl Browser {
     fn nav_parts(&self) -> (Vec<String>, bool) {
         if self.search.is_some() {
             return (vec!["Search Results".into()], false);
-        }
-        if let Some(n) = &self.shortlist {
-            return (vec![n.clone()], false);
         }
         match &self.dir {
             Some(d) => (
@@ -1269,7 +1445,7 @@ impl Browser {
         let sel: Vec<Entry> = self.selection().into_iter().filter_map(|k| self.entries.get(k).cloned()).collect();
         let many = sel.len() >= 2;
         let search = self.search.is_some();
-        let listing = search || self.shortlist.is_some();
+        let listing = search;
         let files_only = !sel.is_empty() && sel.iter().all(|e| !e.dir);
         let folders_only = !sel.is_empty() && sel.iter().all(|e| e.dir);
         let mut v = vec![("Select all".to_string(), FileAction::SelectAll), (String::new(), FileAction::None)];
@@ -1292,15 +1468,12 @@ impl Browser {
         };
         self.shortlist_ok = files_only;
         v.push((label, FileAction::ShortlistMenu));
-        if self.shortlist.is_some() {
-            v.push((if many { "Remove selected items from this shortlist".to_string() } else { format!("Remove \"{name}\" from this shortlist") }, FileAction::RemoveFromShortlist));
-        }
         v.push((String::new(), FileAction::None));
         let fav = if many { "Add selected items to favourites".to_string() } else { format!("Add \"{name}\" to favourites") };
         v.push((item(fav, folders_only), FileAction::Favourite));
         if !listing {
             v.push(("Add current folder to favourites".into(), FileAction::FavouriteFolder));
-        } else if search && !self.saved && self.shortlist.is_none() {
+        } else if search && !self.saved {
             v.push(("Save search results".into(), FileAction::SaveSearch));
         }
         v.push((String::new(), FileAction::None));
@@ -1409,16 +1582,6 @@ impl Browser {
                     return false;
                 }
                 self.new_shortlist(paths);
-                true
-            }
-            FileAction::RemoveFromShortlist => {
-                let Some(name) = self.shortlist.clone() else { return false };
-                let gone: Vec<PathBuf> = self.menu_targets().into_iter().map(|e| e.path).collect();
-                if let Some((_, files)) = self.shortlists.iter_mut().find(|(n, _)| *n == name) {
-                    files.retain(|f| !gone.contains(f));
-                }
-                save_shortlists(&self.shortlists);
-                self.show_shortlist(name);
                 true
             }
             // Folders only; already
@@ -1536,6 +1699,21 @@ impl Browser {
     }
 
     #[cfg(test)]
+    pub fn current_dir(&self) -> Option<&Path> {
+        self.dir.as_deref()
+    }
+
+    #[cfg(test)]
+    pub fn test_short_names(&self) -> Vec<String> {
+        self.short_entries().into_iter().map(|e| e.name).collect()
+    }
+
+    #[cfg(test)]
+    pub fn test_columns(&self) -> (bool, bool) {
+        (self.show_type, self.show_size)
+    }
+
+    #[cfg(test)]
     pub fn entry_paths(&self) -> Vec<PathBuf> {
         self.entries.iter().map(|e| e.path.clone()).collect()
     }
@@ -1568,6 +1746,11 @@ impl Browser {
     }
 
     pub fn sync(&mut self, app: &mut App, model: &Model) {
+        // [re:381995]: the list pane's button.
+        let previous = self.search.is_some();
+        if let Some(b) = app.root.path_of("ParentFolderButton").filter(|p| p.starts_with(&self.page)).and_then(|p| app.ctrl_mut(&p)) {
+            b.text = if previous { "Previous location" } else { "Parent folder" }.into();
+        }
         self.pane.sync(app, &self.page);
         let (lp, lt) = (all_locked(model, "Pad", 64), all_locked(model, "StepPattern", 24));
         if let Some(page) = app.ctrl_mut(&self.page) {
@@ -1596,6 +1779,11 @@ impl Browser {
 
     fn open(&mut self, i: usize, model: &mut Model, out: &mut Vec<Command>) -> bool {
         let Some(en) = self.entries.get(i).cloned() else { return false };
+        self.open_entry(en, model, out)
+    }
+
+    /// Open a file or folder of either list (see [`Browser::open`]).
+    fn open_entry(&mut self, en: Entry, model: &mut Model, out: &mut Vec<Command>) -> bool {
         if en.dir {
             self.go(en.path, true);
             return true;
@@ -1816,6 +2004,115 @@ impl Browser {
                 }
                 true
             }
+            // The view options menu and its Columns submenu ([re:130c7c]):
+            // a column's check item shows or hides it (saved as an option).
+            UiEvent::MenuSelected { anchor, index, .. } if self.view_menu == 1 => {
+                self.view_menu = 0;
+                if *index == 0 {
+                    let check = |on: bool, t: &str| if on { format!("✓ {t}") } else { t.to_string() };
+                    self.view_menu = 2;
+                    app.open_menu(anchor, vec![check(self.show_type, "Type"), check(self.show_size, "Size")], None);
+                }
+                false
+            }
+            UiEvent::MenuSelected { index, .. } if self.view_menu == 2 => {
+                self.view_menu = 0;
+                let (key, on) = match *index {
+                    0 => {
+                        self.show_type = !self.show_type;
+                        ("FileHeaderShowStateType", self.show_type)
+                    }
+                    1 => {
+                        self.show_size = !self.show_size;
+                        ("FileHeaderShowStateSize", self.show_size)
+                    }
+                    _ => return false,
+                };
+                let mut o = crate::options::Options::load();
+                o.set(key, on);
+                o.save();
+                true
+            }
+            // The column header: sort by the clicked column ([re:0feb7a]).
+            UiEvent::Mouse { path, overload, kind: MouseKind::Down, x, .. } if overload == "BrowserListHeader" => {
+                let w = app.ctrl(path).map(|c| c.rect.w as f32).unwrap_or(0.0);
+                if let Some((col, ..)) = self.columns(w).into_iter().find(|(_, cx, cw)| *x >= *cx && *x < cx + cw) {
+                    self.sort_by(col);
+                }
+                true
+            }
+            // The current shortlist ([re:dbf248]): click selects (cmd
+            // toggles, shift extends), a second click opens; Auto load /
+            // Preview act on the press as in the folder's list.
+            UiEvent::Mouse { overload, kind: MouseKind::Down, y, .. } if overload == "BrowserShortList" => {
+                let list = self.short_entries();
+                let i = self.short_scroll + (*y / FILE_ROW).max(0.0) as usize;
+                if i >= list.len() {
+                    self.short_sel.clear();
+                    return true;
+                }
+                if app.mods.cmd {
+                    if let Some(k) = self.short_sel.iter().position(|&s| s == i) {
+                        self.short_sel.remove(k);
+                    } else {
+                        self.short_sel.push(i);
+                    }
+                    self.short_anchor = Some(i);
+                    return true;
+                }
+                if app.mods.shift {
+                    let a = self.short_anchor.unwrap_or(i);
+                    self.short_sel = (a.min(i)..=a.max(i)).collect();
+                    return true;
+                }
+                let again = self.short_sel == [i];
+                self.short_sel = vec![i];
+                self.short_anchor = Some(i);
+                if again || list[i].dir || self.auto_load || self.previews_on_press(&list[i]) {
+                    return self.open_entry(list[i].clone(), model, out);
+                }
+                true
+            }
+            UiEvent::Wheel { overload, dy, .. } if overload == "BrowserShortList" => {
+                let max = self.short_entries().len().saturating_sub(1) as i32;
+                self.short_scroll = (self.short_scroll as i32 - dy.round() as i32 * 3).clamp(0, max) as usize;
+                true
+            }
+            // [re:200a75]: the shortlist's menu.
+            UiEvent::Mouse { path, overload, kind: MouseKind::RightDown, y, .. } if overload == "BrowserShortList" => {
+                use dreist_gui::menu::item;
+                let list = self.short_entries();
+                let i = self.short_scroll + (*y / FILE_ROW).max(0.0) as usize;
+                if i < list.len() && !self.short_sel.contains(&i) {
+                    self.short_sel = vec![i];
+                    self.short_anchor = Some(i);
+                }
+                let (any, items) = (!self.short_sel.is_empty(), !list.is_empty());
+                let mut v = vec![
+                    (item("Select all", items), ShortAction::SelectAll),
+                    (String::new(), ShortAction::None),
+                    (item("Remove selected", any), ShortAction::Remove),
+                    (item("Crop to selected", any), ShortAction::Crop),
+                    (item("Clear shortlist", items), ShortAction::Clear),
+                    (String::new(), ShortAction::None),
+                    // The port keeps every shortlist saved (no separate
+                    // shortlist file to write).
+                    (item("Save as shortlist file", false), ShortAction::None),
+                    (item("Collect files and export as favourite", items), ShortAction::Export),
+                ];
+                if self.short_sel.iter().filter_map(|&k| list.get(k)).any(|e| e.path.with_extension("gsa").exists()) {
+                    v.push((String::new(), ShortAction::None));
+                    v.push(("Delete slice information".into(), ShortAction::DeleteSliceInfo));
+                }
+                let (labels, actions): (Vec<String>, Vec<ShortAction>) = v.into_iter().unzip();
+                self.short_menu = actions;
+                app.open_menu(path, labels, None);
+                true
+            }
+            UiEvent::MenuSelected { index, .. } if !self.short_menu.is_empty() => {
+                let a = std::mem::take(&mut self.short_menu).get(*index).copied().unwrap_or(ShortAction::None);
+                self.short_action(a)
+            }
             // Header Options ([re:5eecea] [re:ea2f28]).
             UiEvent::MenuSelected { index, .. } if self.header_menu == 2 => {
                 self.header_menu = 0;
@@ -1871,6 +2168,24 @@ impl Browser {
                 "LockPatternsButton" => {
                     toggle_lock_all(model, "StepPattern", 24);
                     true
+                }
+                // [re:381995]: "Previous location" while search results are
+                // listed, else the folder's parent.
+                "ParentFolderButton" => {
+                    if self.search.is_some() {
+                        if let Some(p) = self.history.pop() {
+                            self.go(p, false);
+                        }
+                    } else if let Some(p) = self.dir.as_ref().and_then(|d| d.parent()).map(Path::to_path_buf) {
+                        self.go(p, true);
+                    }
+                    true
+                }
+                // [re:543135]: Columns ▸ Type / Size.
+                "ViewOptionsButton" => {
+                    self.view_menu = 1;
+                    app.open_menu(path, vec!["Columns ▸".into()], None);
+                    false
                 }
                 "ParentButton" => {
                     if let Some(p) = self.dir.as_ref().and_then(|d| d.parent()).map(Path::to_path_buf) {
@@ -1990,36 +2305,42 @@ impl Browser {
                 true
             }
             "BrowserFileList" => {
-                let font = s.font(ITEM_STYLE);
-                let text = s.colour(ITEM_STYLE, "colText", Colour::BLACK);
-                let sel = crate::front::colour_or(s, ITEM_STYLE, "colSelection", Colour::rgba(232, 204, 91, 255));
-                let sel_text = s.colour(ITEM_STYLE, "colSelectedText", text);
-                let (row, alt) = (crate::front::colour_or(s, ITEM_STYLE, "colRow", Colour::TRANSPARENT), crate::front::colour_or(s, ITEM_STYLE, "colRowAlt", Colour::TRANSPARENT));
-                p.fill_rect(RectF::new(0.0, 0.0, w, h), crate::front::colour_or(s, ITEM_STYLE, "colFill", Colour::TRANSPARENT));
-                let rows = (h / FILE_ROW) as usize + 1;
-                for (k, en) in self.entries.iter().enumerate().skip(self.scroll).take(rows) {
-                    let y = (k - self.scroll) as f32 * FILE_ROW;
-                    let selected = if self.multi.is_empty() { self.selected == Some(k) } else { self.multi.contains(&k) };
-                    p.fill_rect(RectF::new(0.0, y, w, FILE_ROW), if k % 2 == 0 { row } else { alt });
-                    if selected {
-                        p.fill_rect(RectF::new(0.0, y, w, FILE_ROW), sel);
+                let selected = |k: usize| if self.multi.is_empty() { self.selected == Some(k) } else { self.multi.contains(&k) };
+                self.draw_rows(r, p, w, h, &self.entries, self.scroll, &selected);
+                true
+            }
+            "BrowserShortList" => {
+                let list = self.short_entries();
+                self.draw_rows(r, p, w, h, &list, self.short_scroll, &|k| self.short_sel.contains(&k));
+                true
+            }
+            // [re:6f787e]: the header: its frame, the column titles (Name
+            // at the left, Type and Size centred), dividers after Name and
+            // Type, and the sort order's arrow in the sorted column.
+            "BrowserListHeader" => {
+                let st = HEADER_STYLE;
+                let back = crate::front::colour_or(s, st, "colFill", Colour::TRANSPARENT);
+                let edge = s.colour(st, "colBorder", Colour::BLACK);
+                let text = s.colour(st, "colText", Colour::BLACK);
+                let font = s.font(st);
+                p.fill_rect(RectF::new(1.0, 0.0, w - 2.0, h - 1.0), back);
+                p.stroke_rect(RectF::new(1.5, 0.5, w - 3.0, h - 2.0), edge, 1.0);
+                for (col, x, cw) in self.columns(w) {
+                    let title = match col {
+                        Column::Name => "Name",
+                        Column::Type => "Type",
+                        Column::Size => "Size",
+                    };
+                    if col != Column::Name {
+                        p.line(x + 0.5, 0.0, x + 0.5, h - 1.0, edge, 1.0);
                     }
-                    // The loading bar ([re:68977d]): colAltFill,
-                    // (2, 2, (w − 4)·p, h − 2) while 0 < p ≤ 1.
-                    if let Some((_, pr)) = self.loading.as_ref().filter(|(lp, pr)| *lp == en.path && *pr > 0.0 && *pr <= 1.0) {
-                        p.fill_rect(RectF::new(2.0, y + 2.0, (w - 4.0) * pr, FILE_ROW - 2.0), sel.with_alpha(0.6));
+                    let (tx, align) = if col == Column::Name { (x + 4.0, HAlign::Left) } else { (x, HAlign::Center) };
+                    p.text(RectF::new(tx, 0.0, cw - 12.0 - (tx - x), h - 1.0), title, text, &font, align, VAlign::Center);
+                    if self.sort.0 == col {
+                        let (ax, cy) = (x + cw - 10.0, (h - 1.0) / 2.0);
+                        let tri = if self.sort.1 { [(ax, cy - 2.0), (ax + 7.0, cy - 2.0), (ax + 3.5, cy + 2.0)] } else { [(ax, cy + 2.0), (ax + 7.0, cy + 2.0), (ax + 3.5, cy - 2.0)] };
+                        p.fill_polygon(&tri, text);
                     }
-                    let col = if selected { sel_text } else { text };
-                    // The folder icon, or the file's type badge.
-                    let st = if selected { crate::browsericons::SELECTED_STYLE } else { crate::browsericons::STYLE };
-                    let icon = RectF::new(3.0, y + 1.0, 16.0, FILE_ROW - 2.0);
-                    if en.dir {
-                        crate::browsericons::draw(r, p, st, icon, "folder", "");
-                    } else {
-                        let ext = en.path.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
-                        crate::browsericons::draw(r, p, st, icon, "file", &crate::browsericons::badge(&ext));
-                    }
-                    p.text(RectF::new(22.0, y, w - 26.0, FILE_ROW), &en.name, col, &font, HAlign::Left, VAlign::Center);
                 }
                 true
             }
@@ -2079,6 +2400,86 @@ impl Browser {
     }
 
     /// Mouse wheel / scroll support for the file list.
+    /// Rows of a list (the folder's or the shortlist's) from `scroll`:
+    /// alternate shading, selection, the loading bar, icon and name, and
+    /// the Type and Size columns when shown, after a divider each
+    /// ([re:22e64a]).
+    #[allow(clippy::too_many_arguments)]
+    fn draw_rows(&self, r: &Renderer, p: &mut Painter, w: f32, h: f32, entries: &[Entry], scroll: usize, selected: &dyn Fn(usize) -> bool) {
+        let s = r.styles;
+        let font = s.font(ITEM_STYLE);
+        let text = s.colour(ITEM_STYLE, "colText", Colour::BLACK);
+        let sel = crate::front::colour_or(s, ITEM_STYLE, "colSelection", Colour::rgba(232, 204, 91, 255));
+        let sel_text = s.colour(ITEM_STYLE, "colSelectedText", text);
+        let divider = crate::front::colour_or(s, ITEM_STYLE, "colBorder", text).with_alpha(0.5);
+        let (row, alt) = (crate::front::colour_or(s, ITEM_STYLE, "colRow", Colour::TRANSPARENT), crate::front::colour_or(s, ITEM_STYLE, "colRowAlt", Colour::TRANSPARENT));
+        p.fill_rect(RectF::new(0.0, 0.0, w, h), crate::front::colour_or(s, ITEM_STYLE, "colFill", Colour::TRANSPARENT));
+        // Columns line up with the header, which leaves the scroll bar's
+        // width free at the right.
+        let cols = self.columns(w - SLIDER_W as f32);
+        let name_w = cols.first().map(|c| c.2).unwrap_or(w);
+        let rows = (h / FILE_ROW) as usize + 1;
+        for (k, en) in entries.iter().enumerate().skip(scroll).take(rows) {
+            let y = (k - scroll) as f32 * FILE_ROW;
+            let on = selected(k);
+            p.fill_rect(RectF::new(0.0, y, w, FILE_ROW), if k % 2 == 0 { row } else { alt });
+            if on {
+                p.fill_rect(RectF::new(0.0, y, w, FILE_ROW), sel);
+            }
+            // The loading bar ([re:68977d]): colAltFill,
+            // (2, 2, (w − 4)·p, h − 2) while 0 < p ≤ 1.
+            if let Some((_, pr)) = self.loading.as_ref().filter(|(lp, pr)| *lp == en.path && *pr > 0.0 && *pr <= 1.0) {
+                p.fill_rect(RectF::new(2.0, y + 2.0, (w - 4.0) * pr, FILE_ROW - 2.0), sel.with_alpha(0.6));
+            }
+            let col = if on { sel_text } else { text };
+            // The folder icon, or the file's type badge.
+            let st = if on { crate::browsericons::SELECTED_STYLE } else { crate::browsericons::STYLE };
+            let icon = RectF::new(3.0, y + 1.0, 16.0, FILE_ROW - 2.0);
+            if en.dir {
+                crate::browsericons::draw(r, p, st, icon, "folder", "");
+            } else {
+                let ext = en.path.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
+                crate::browsericons::draw(r, p, st, icon, "file", &crate::browsericons::badge(&ext));
+            }
+            p.text(RectF::new(22.0, y, name_w - 24.0, FILE_ROW), &en.name, col, &font, HAlign::Left, VAlign::Center);
+            for &(c, x, cw) in cols.iter().skip(1) {
+                p.line(x + 0.5, y, x + 0.5, y + FILE_ROW, divider, 1.0);
+                let t = if c == Column::Type { type_label(&en.path, en.dir).to_string() } else { size_label(&en.path, en.dir) };
+                p.text(RectF::new(x + 3.0, y, cw - 4.0, FILE_ROW), &t, col, &font, HAlign::Left, VAlign::Center);
+            }
+        }
+    }
+
+    /// Apply a shortlist menu action to the current shortlist.
+    fn short_action(&mut self, a: ShortAction) -> bool {
+        let Some(name) = self.shortlist.clone() else { return false };
+        let list = self.short_entries();
+        let sel: Vec<PathBuf> = self.short_sel.iter().filter_map(|&k| list.get(k)).map(|e| e.path.clone()).collect();
+        let edit = |me: &mut Browser, f: &dyn Fn(&mut Vec<PathBuf>)| {
+            if let Some((_, files)) = me.shortlists.iter_mut().find(|(n, _)| *n == name) {
+                f(files);
+            }
+            save_shortlists(&me.shortlists);
+            me.short_sel.clear();
+            me.short_anchor = None;
+            me.short_scroll = 0;
+        };
+        match a {
+            ShortAction::SelectAll => self.short_sel = (0..list.len()).collect(),
+            ShortAction::Remove => edit(self, &|f| f.retain(|p| !sel.contains(p))),
+            ShortAction::Crop => edit(self, &|f| f.retain(|p| sel.contains(p))),
+            ShortAction::Clear => edit(self, &|f| f.clear()),
+            ShortAction::Export => self.export_request = Some((name, true)),
+            ShortAction::DeleteSliceInfo => {
+                for p in &sel {
+                    let _ = std::fs::remove_file(p.with_extension("gsa"));
+                }
+            }
+            ShortAction::None => return false,
+        }
+        true
+    }
+
     pub fn scroll_by(&mut self, rows: i32) {
         let max = self.entries.len().saturating_sub(1);
         self.scroll = (self.scroll as i32 + rows).clamp(0, max as i32) as usize;
@@ -2119,6 +2520,25 @@ mod search_tests {
         let item = v.iter().find(|s| s.path.as_deref() == Some(pack.as_path())).expect("v1 pack listed");
         assert_eq!((item.cat, item.icon, item.label.as_str()), ("Content", "book", "Old Factory"));
         let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    /// [re:acb2eb], [re:22e64a]: the Type and Size columns' texts.
+    #[test]
+    fn type_and_size_labels() {
+        crate::app::test_setup();
+        let p = |n: &str| PathBuf::from(format!("/x/{n}"));
+        assert_eq!(type_label(&p("Kits"), true), "Folder");
+        for (n, t) in
+            [("a.wav", "Wave"), ("a.AIF", "AIF"), ("a.aiff", "AIFF"), ("a.rx2", "REX 2"), ("a.rex", "Recycle"), ("a.mid", "MIDI"), ("a.g01", "Guru G01"), ("a.gru", "Guru song"), ("a.txt", "Unknown")]
+        {
+            assert_eq!(type_label(&p(n), false), t, "{n}");
+        }
+        assert_eq!(type_label(&p("a.einstkit"), false), "Kit");
+        assert_eq!(size_label(&p("Kits"), true), "--");
+        let f = std::env::temp_dir().join(format!("einst-size-{}.wav", std::process::id()));
+        std::fs::write(&f, vec![0u8; 3000]).unwrap();
+        assert_eq!(size_label(&f, false), "2.93KB");
+        let _ = std::fs::remove_file(&f);
     }
 
     #[test]

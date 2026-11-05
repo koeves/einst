@@ -144,6 +144,8 @@
     <CtrlStyle name="BrowserIconSelectedStyle" parentStyle0="BrowserIconStyle" />
     <CtrlStyle name="BrowserSplitStyle" colAltBorder="BrowserSplit" colFill="BrowserSplit" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="BrowserTreeBackStyle" colFill="BrowserTreeBack" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="BrowserListSplitStyle" colAltBorder="#7A8090" colFill="#BCC1CB" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="BrowserListHeaderStyle" colBorder="BrowserHeaderDividerColour" colFill="BrowserHeader" colText="BrowserHeaderTextColour" font="Sans10" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="BrowserParentStyle" colBorder="InkSoft" colFill="LcdLight" font="Sans10" parentStyle0="BaseButtonStyle" realCornerRounding="0" />
     <CtrlTableViewStyle name="BrowserListStyle" colBorder="InkSoft" colColumnDivider="InkSoft" colFill="BrowserList" colHeaderDivider="InkMid" colHeaderFill="BrowserHeader" colRow="BrowserList" colRowAlt="BrowserList" colRowDivider="InkSoft" colSelectedText="Ink" colSelection="BrowserSel" font="Sans10" intHeaderHeight="17" intRowHeight="25" optAltRowColours="true" optColumnDividers="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
     <CtrlStyle name="BrowserBadgeStyle" colBorder="InkMid" colFill="LcdLight" font="Sans7Bold" parentStyle0="BaseButtonStyle" realCornerRounding="2" />

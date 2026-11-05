@@ -4156,3 +4156,65 @@ fn memory_readout_shows_sample_memory() {
     ed.sync();
     assert_eq!(text(&ed), "19.7MB");
 }
+
+/// v1's list pane ([re:fa4043]): Parent folder goes up, the header sorts
+/// by the clicked column and its Columns menu adds Size, and the chosen
+/// shortlist is listed under the folder's files with its own menu
+/// ([re:dbf248], [re:200a75]).
+#[test]
+fn browser_list_pane_header_and_shortlist() {
+    crate::app::test_setup();
+    use dreist_gui::app::MouseKind;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let root = std::env::temp_dir().join(format!("einst-pane-{}", std::process::id()));
+    let dir = root.join("x");
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("a.wav"), vec![0u8; 3000]).unwrap();
+    std::fs::write(dir.join("b.wav"), vec![0u8; 100]).unwrap();
+    let Some(page) = ed.browser.as_ref().map(|b| b.page().to_vec()) else { return };
+    let at = |ed: &Editor, name: &str| -> Vec<usize> { [page.clone(), ed.app.ctrl(&page).unwrap().path_of(name).unwrap()].concat() };
+    let names = |ed: &Editor| ed.browser.as_ref().unwrap().entry_paths().iter().map(|p| p.file_name().unwrap().to_string_lossy().into_owned()).collect::<Vec<_>>();
+    ed.browser.as_mut().unwrap().browse(dir.clone());
+    // Parent folder.
+    let parent = at(&ed, "ParentFolderButton");
+    ed.handle(&UiEvent::Clicked { path: parent, name: "ParentFolderButton".into(), id: 0, on: false });
+    assert_eq!(names(&ed), vec!["x"]);
+    ed.browser.as_mut().unwrap().browse(dir.clone());
+    assert_eq!(names(&ed), vec!["a.wav", "b.wav"]);
+    // Name sorts; again reverses.
+    let header = at(&ed, "ListHeader");
+    let hw = ed.app.ctrl(&header).unwrap().rect.w as f32;
+    let click = |ed: &mut Editor, x: f32| ed.handle(&UiEvent::Mouse { path: header.clone(), overload: "BrowserListHeader".into(), kind: MouseKind::Down, x, y: 5.0 });
+    click(&mut ed, 5.0);
+    assert_eq!(names(&ed), vec!["b.wav", "a.wav"]);
+    // Columns ▸ Size: shown, saved, and its header sorts by size.
+    assert_eq!(ed.browser.as_ref().unwrap().test_columns(), (false, false));
+    let view = at(&ed, "ViewOptionsButton");
+    ed.handle(&UiEvent::Clicked { path: view.clone(), name: "ViewOptionsButton".into(), id: 0, on: false });
+    ed.handle(&UiEvent::MenuSelected { anchor: view.clone(), name: "ViewOptionsButton".into(), index: 0 });
+    ed.handle(&UiEvent::MenuSelected { anchor: view, name: "ViewOptionsButton".into(), index: 1 });
+    assert_eq!(ed.browser.as_ref().unwrap().test_columns(), (false, true));
+    assert!(crate::options::Options::load().bool("FileHeaderShowStateSize", false));
+    click(&mut ed, hw - 10.0);
+    assert_eq!(names(&ed), vec!["b.wav", "a.wav"], "smaller first");
+    click(&mut ed, hw - 10.0);
+    assert_eq!(names(&ed), vec!["a.wav", "b.wav"]);
+    // The chosen shortlist lists below; the folder's files stay.
+    let name = ed.browser.as_mut().unwrap().test_shortlist(vec![dir.join("b.wav"), dir.join("a.wav")]);
+    ed.browser.as_mut().unwrap().browse(std::path::PathBuf::from(format!("shortlist:{name}")));
+    assert_eq!(names(&ed), vec!["a.wav", "b.wav"]);
+    assert_eq!(ed.browser.as_ref().unwrap().current_dir(), Some(dir.as_path()), "the folder stays");
+    assert_eq!(ed.browser.as_ref().unwrap().test_short_names(), vec!["a.wav", "b.wav"]);
+    // Its menu: Remove selected.
+    let short = at(&ed, "ShortList");
+    ed.handle(&UiEvent::Mouse { path: short.clone(), overload: "BrowserShortList".into(), kind: MouseKind::RightDown, x: 5.0, y: 2.0 });
+    let items = ed.app.menu.as_ref().expect("shortlist menu").items.clone();
+    assert_eq!(
+        items.iter().filter(|t| !t.is_empty()).map(|t| t.trim_start_matches(dreist_gui::menu::DISABLED).to_string()).collect::<Vec<_>>()[..5],
+        ["Select all", "Remove selected", "Crop to selected", "Clear shortlist", "Save as shortlist file"]
+    );
+    ed.handle(&UiEvent::MenuSelected { anchor: short, name: "ShortList".into(), index: 2 });
+    assert_eq!(ed.browser.as_ref().unwrap().test_short_names(), vec!["b.wav"]);
+    let _ = std::fs::remove_dir_all(&root);
+}

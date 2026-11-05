@@ -517,6 +517,12 @@ def base_styles():
     st("BrowserIconSelectedStyle", "BrowserIconStyle")
     st("BrowserSplitStyle", "BasePanelStyle", colFill="BrowserSplit", colAltBorder="BrowserSplit")
     st("BrowserTreeBackStyle", "BasePanelStyle", colFill="BrowserTreeBack")
+    # The bar between the folder's list and the shortlist: light, with a
+    # grip (v1's divider bitmap, measured #BCC1CB / #7A8090).
+    st("BrowserListSplitStyle", "BasePanelStyle", colFill="#BCC1CB", colAltBorder="#7A8090")
+    # The list's column header (v1's BrowserHeader* colours).
+    st("BrowserListHeaderStyle", "BasePanelStyle", colFill="BrowserHeader", colBorder="BrowserHeaderDividerColour",
+       colText="BrowserHeaderTextColour", font=text_font(10))
     st("BrowserParentStyle", "BaseButtonStyle", colFill="LcdLight", colBorder="InkSoft", realCornerRounding="0", font=text_font(10))
     st("BrowserListStyle", "BaseTableStyle", font=text_font(10), colFill="BrowserList", colBorder="InkSoft", colRow="BrowserList", colSelectedText="Ink",
        colRowAlt="BrowserList", colSelection="BrowserSel", colHeaderFill="BrowserHeader", colHeaderDivider="InkMid",
