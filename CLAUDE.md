@@ -25,3 +25,8 @@ dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::pr
     cargo fmt --all --check
     scripts/build.sh          # target/bundled/Einst.{vst3,clap,app}
     python3 tools/plugincheck.py target/bundled/Einst.clap/Contents/MacOS/Einst target/bundled/Einst.vst3/Contents/MacOS/Einst
+    tools/editorhost.sh target/bundled/Einst.clap target/bundled/Einst.vst3 ../dreist/target/bundled/Dreist.clap
+
+Nothing may come to the front while the desktop is in use: tests and harnesses set
+`DREIST_BACKGROUND_GUI=1` (commons `vendor/baseview`), the standalone app is not run for
+tests, pluginval runs with `--skip-gui-tests`, and apps start with `open -g`.
