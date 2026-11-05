@@ -36,7 +36,7 @@ use dreist_gui::{Colour, Ctrl, Rect, Skin};
 use crate::options::Options;
 use crate::{EditorError, err};
 
-pub const TOGGLES: [(&str, &str, bool); 12] = [
+pub const TOGGLES: [(&str, &str, bool); 14] = [
     ("QuantizeREXButton", "AllocatorQuantizeREX", false),
     ("PreFadeButton", "AuxesArePreFade", false),
     ("MultiButton", "PatternEditorRightClickMode", false),
@@ -49,6 +49,9 @@ pub const TOGGLES: [(&str, &str, bool); 12] = [
     ("KeyboardButton", "RespondToKeyboard", true),
     ("ExtendedKeyboardButton", "RespondToExtendedKeyboard", false),
     ("AutoAssign", "AutoMIDICC", true),
+    // [re:079fd4]: wave displays' drag zoom / scroll directions.
+    ("InvertButton", "GuiDragDownToZoom", false),
+    ("InvertXButton", "GuiDragLeftToScrollRight", false),
 ];
 pub const SHADING: [&str; 4] = ["Fixed", "Adaptive", "Cyclic", "Off"];
 pub const REMOVE_BEHAVIOUR: [&str; 4] = ["Prompt", "AlwaysClear", "NeverClear", "ClearOnModifier"];

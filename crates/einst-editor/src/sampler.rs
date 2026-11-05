@@ -840,10 +840,11 @@ impl Sampler {
                 }
                 Some(Drag::View(x0, y0, v)) => {
                     let n = self.take().map(Take::frames).unwrap_or(1);
-                    let factor = (-(y - y0) / 100.0).exp2();
+                    let (zs, ss) = crate::zoomslider::drag_signs();
+                    let factor = (-(y - y0) * zs / 100.0).exp2();
                     let centre = (x0 / w.max(1.0)).clamp(0.0, 1.0);
                     let zoomed = crate::zoomslider::zoom_in(v, factor, centre, w, n);
-                    self.view = crate::zoomslider::clamp((zoomed.0 - (x - x0) / w.max(1.0) * zoomed.1, zoomed.1));
+                    self.view = crate::zoomslider::clamp((zoomed.0 + ss * (x - x0) / w.max(1.0) * zoomed.1, zoomed.1));
                     true
                 }
                 None => false,
