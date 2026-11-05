@@ -208,6 +208,8 @@ pub struct Editor {
     /// The open layer row menu: its anchor and (engine, pad, layer).
     layer_menu: Option<(Vec<usize>, (usize, usize, usize))>,
     pad_row_menu: Option<(Vec<usize>, (usize, usize))>,
+    /// The sampler's preview output menu is open on this control.
+    preview_out_menu: Option<Vec<usize>>,
     filefind: filefind::FileFind,
     /// Standalone audio / MIDI settings panels.
     pub devices: devices::Devices,
@@ -353,6 +355,7 @@ impl Editor {
             padmenu: padmenu::PadMenu::default(),
             layer_menu: None,
             pad_row_menu: None,
+            preview_out_menu: None,
             filefind,
             devices,
             midiconsole,

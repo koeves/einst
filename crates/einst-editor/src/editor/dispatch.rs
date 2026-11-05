@@ -186,6 +186,7 @@ impl Editor {
             changed |= self.front.handle(&mut self.app, &mut self.model, ev, &mut self.outbox);
             changed |= self.dropped(ev);
             changed |= self.drag_out(ev);
+            changed |= self.sampler_preview_menu(ev);
             changed |= self.pad_menu(ev);
             changed |= self.engine_menu(ev);
             self.patmenu.selection = self.pattern.as_ref().map(|p| p.selection.clone()).unwrap_or_default();

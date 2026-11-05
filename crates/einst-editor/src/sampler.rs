@@ -336,6 +336,11 @@ pub(crate) fn draw_wave(p: &mut Painter, area: RectF, buckets: &[(f32, f32)], pe
 }
 
 impl Sampler {
+    /// `path` is a control of the sampler page.
+    pub fn owns(&self, path: &[usize]) -> bool {
+        self.host.as_ref().is_some_and(|h| path.starts_with(h))
+    }
+
     /// Mount the page skin into `page` (in a `SamplerPanel` the meters
     /// feed from the sampler input).
     pub fn build(skin: &mut Skin, root: &mut Ctrl, page: &[usize]) -> Result<Sampler, EditorError> {

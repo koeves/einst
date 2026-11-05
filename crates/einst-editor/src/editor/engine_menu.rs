@@ -142,6 +142,30 @@ impl Editor {
         }
     }
 
+    /// [re:7941cb] / [re:0d824e]: a right click on the sampler's Preview
+    /// volume knob lists the preview output pairs (the browser's preview
+    /// output, one setting); a pick posts `e_setPreviewOutputLocation`.
+    pub(crate) fn sampler_preview_menu(&mut self, ev: &UiEvent) -> bool {
+        match ev {
+            UiEvent::RightClicked { path, name } if name == "PreviewVolume" && self.sampler.owns(path) => {
+                let cur = self.browser.as_ref().map_or(1, |b| b.preview_output);
+                self.app.open_menu(path, crate::mixer::preview_output_items(), cur.checked_sub(1));
+                self.preview_out_menu = Some(path.clone());
+                true
+            }
+            UiEvent::MenuSelected { anchor, index, .. } if self.preview_out_menu.as_ref() == Some(anchor) => {
+                self.preview_out_menu = None;
+                let v = (*index + 1).min(16);
+                if let Some(b) = self.browser.as_mut() {
+                    b.preview_output = v;
+                }
+                self.outbox.push(crate::command::msg(dreist_engine::binding::id::SET_PREVIEW_OUTPUT, &[], &[v as f32]));
+                true
+            }
+            _ => false,
+        }
+    }
+
     pub(crate) fn pad_menu(&mut self, ev: &UiEvent) -> bool {
         match ev {
             UiEvent::RightClicked { path, .. } | UiEvent::Mouse { path, kind: dreist_gui::app::MouseKind::RightDown, .. } if self.mixers.iter().any(|m| m.pad_strip_at(&self.app, path).is_some()) => {
