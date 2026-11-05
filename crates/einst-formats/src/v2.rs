@@ -170,6 +170,58 @@ fn track(n: &Node) -> Node {
     out
 }
 
+/// A layer as the original v1's `Layer` constructor and
+/// `ResetStateParameters` (ev_8eabad30) leave it, converted: parameters
+/// `GetDefaultLayerParameter` (ev_d1ec4c75), both envelopes
+/// `ConstructDefaultEnvelopes` (ev_f6924262, Hold −1: derived from the
+/// sample on load), cut mode Self, one shot, routings 2 → Cutoff and 3 →
+/// Pitch at depth 0.5 (none at 0/1), velocity amounts 0.5, no stretch
+/// (120 / 120 BPM), phase 1. Its name is `Layer<index>`.
+pub fn default_layer(index: usize) -> Node {
+    let mut n = Node::new("Layer", Some(&format!("Layer{index}")));
+    n.set("Ver", "3.2");
+    for (k, v) in [
+        ("LayerGain", "0.7937"),
+        ("LayerPan", "0.5"),
+        ("CoarseTune", "0.5"),
+        ("FineTune", "0.5"),
+        ("PreDelayTime", "0"),
+        ("Cutoff", "1"),
+        ("Resonance", "0"),
+        ("FilterType", "0"),
+        ("FilterDrive", "0.3"),
+        ("FilterAlgorithm", "0.3"),
+        ("FilterActive", "0"),
+        ("IsReversed", "false"),
+        ("PhasePosition", "1"),
+        ("UsesTimestretch", "false"),
+        ("TSTracksBPM", "false"),
+        ("SourceBPM", "120"),
+        ("DestinationBPM", "120"),
+        ("V2C", "0.5"),
+        ("V2P", "0.5"),
+        ("EnvTracksPitch", "false"),
+        ("CutMode", "Self"),
+        ("PlaybackMode", "One shot"),
+        ("TSMode", "Default"),
+        ("EnvelopeType0", "ADSR"),
+        ("EnvelopeType1", "ADSR"),
+    ] {
+        n.set(k, v);
+    }
+    for e in 0..2 {
+        for (i, v) in [0.0, 0.02, 1.0, -1.0, 0.001, 0.5, 0.5, 0.5].into_iter().enumerate() {
+            n.set(&format!("Envelope{e}Param{i}"), format_g16(v));
+        }
+    }
+    for (i, dest) in ["No destination", "No destination", "Cutoff", "Pitch"].into_iter().enumerate() {
+        let mut r = Node::new(ROUTING_ELEMENT, Some(&format!("ModRouting{i}")));
+        r.set("ModulationDestination", dest).set("ModulationDepth", "0.5");
+        n.children.push(r);
+    }
+    layer(&n)
+}
+
 /// The v1 layer `Ver` as v2 reads it: `round(Ver·1000)`, 3300 when absent.
 fn layer_version(n: &Node) -> u32 {
     n.attr("Ver").and_then(|v| v.parse::<f32>().ok()).map(|v| (v * 1000.0 + 0.5) as u32).unwrap_or(LAYER_VERSION)
@@ -361,6 +413,18 @@ mod tests {
 
     /// The layer keeps v1's routings slot by slot (for v1's voice), and
     /// steps and tracks keep the routing-depth lanes.
+    /// v1's default layer converts to its own values.
+    #[test]
+    fn default_layer_is_v1s() {
+        let l = default_layer(3);
+        assert_eq!(l.name.as_deref(), Some("Layer3"));
+        assert_eq!(l.f32("LayerGain"), Some(0.7937));
+        assert_eq!(l.f32("FilterDrive"), Some(0.3));
+        assert_eq!(l.f32("AmpEnvDecay"), Some(0.02));
+        assert_eq!(l.f32("FreeEnvHold"), Some(-1.0));
+        assert_eq!(dreist_formats::legacy::routing_slots(&l), Some([None, None, Some((1, 0.5)), Some((0, 0.5))]));
+    }
+
     #[test]
     fn routing_slots_and_depth_lanes_survive() {
         let n = Node::parse(

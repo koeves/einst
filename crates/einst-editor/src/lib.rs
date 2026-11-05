@@ -207,6 +207,7 @@ pub struct Editor {
     padmenu: padmenu::PadMenu,
     /// The open layer row menu: its anchor and (engine, pad, layer).
     layer_menu: Option<(Vec<usize>, (usize, usize, usize))>,
+    pad_row_menu: Option<(Vec<usize>, (usize, usize))>,
     filefind: filefind::FileFind,
     /// Standalone audio / MIDI settings panels.
     pub devices: devices::Devices,
@@ -345,6 +346,7 @@ impl Editor {
             popup_paths: Default::default(),
             padmenu: padmenu::PadMenu::default(),
             layer_menu: None,
+            pad_row_menu: None,
             filefind,
             devices,
             midiconsole,

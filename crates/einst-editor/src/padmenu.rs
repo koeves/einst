@@ -15,6 +15,8 @@ use std::path::PathBuf;
 use dreist_formats::{LayerParam, Node};
 use dreist_gui::app::App;
 
+use dreist_engine::binding::id;
+
 use crate::command::Command;
 use crate::model::Model;
 
@@ -532,6 +534,202 @@ impl PadMenu {
     }
 }
 
+/// The Pad / Layers selector's layer rows: the original v1's menu
+/// ([re:529567]): Cut, Copy, Paste, Select all layers, Clear layer,
+/// Reset layer, Reset envelopes, Tune loop to tempo.
+pub const LAYER_ITEMS: [&str; 11] = ["Cut", "Copy", "Paste", "", "Select all layers", "", "Clear layer", "Reset layer", "Reset envelopes", "", "Tune loop to tempo"];
+
+/// The selector's pad item: the original v1's menu ([re:17e95f]).
+pub const PAD_ROW_ITEMS: [&str; 8] = ["Cut", "Copy", "Paste", "", "Select all layers", "", "Reset all layers", "Reset all layers' envelopes"];
+
+/// Whether layer `l` (or its pad) is locked.
+pub fn layer_locked(model: &Model, e: usize, p: usize, l: usize) -> bool {
+    pad_locked(model, e, p) || model.layer_node(e, p, l).is_some_and(|n| n.locked())
+}
+
+/// The layer menu's items with their enable states.
+pub fn layer_items(model: &Model, clip: &Clipboard, e: usize, p: usize, l: usize) -> Vec<String> {
+    use dreist_gui::menu::item;
+    let valid = model.layer(e, p, l).valid;
+    let locked = layer_locked(model, e, p, l);
+    LAYER_ITEMS
+        .iter()
+        .enumerate()
+        .map(|(i, &t)| match i {
+            0 => item(t, !locked && valid),
+            1 => item(t, valid),
+            2 => item(t, clip.layer.is_some() && !locked),
+            6..=8 | 10 => item(t, !locked && valid),
+            _ => t.to_string(),
+        })
+        .collect()
+}
+
+/// The pad item's menu items with their enable states.
+pub fn pad_row_items(model: &Model, clip: &Clipboard, e: usize, p: usize) -> Vec<String> {
+    use dreist_gui::menu::item;
+    let locked = pad_locked(model, e, p);
+    PAD_ROW_ITEMS
+        .iter()
+        .enumerate()
+        .map(|(i, &t)| match i {
+            0 | 6 | 7 => item(t, !locked),
+            2 => item(t, clip.pad.is_some() && !locked),
+            _ => t.to_string(),
+        })
+        .collect()
+}
+
+/// The layers a layer-row action applies to: the pad's layer selection
+/// when it holds `l`, else `l` alone (as the original's engine does), and
+/// never locked ones.
+fn targets(model: &Model, e: usize, p: usize, l: usize) -> Vec<usize> {
+    let (_, mask) = crate::multipad::layer_selection(model, e, p);
+    let set: Vec<usize> = if mask & (1 << l.min(7)) != 0 { (0..crate::model::LAYERS).filter(|k| mask & (1 << k) != 0).collect() } else { vec![l] };
+    set.into_iter().filter(|&k| !layer_locked(model, e, p, k)).collect()
+}
+
+/// [re:ed6071] Reset layer: every setting back to the original v1's
+/// defaults ([`einst_formats::v2::default_layer`]), keeping the sample and
+/// the name; then the hold.
+fn reset_layer(model: &mut Model, e: usize, p: usize, l: usize) {
+    let old = model.layer_node(e, p, l).cloned();
+    let mut n = einst_formats::v2::default_layer(l);
+    if let Some(old) = old {
+        if let Some(f) = old.attr("AudioFileName") {
+            n.set("AudioFileName", f);
+        }
+        n.children.extend(old.children.into_iter().filter(|c| c.class == "FixedString" && c.name.as_deref() == Some("LayerName")));
+    }
+    *model.layer_mut(e, p, l) = n;
+    reset_hold(model, e, p, l);
+}
+
+/// [re:3f7861] Reset envelopes: both envelopes back to v1's defaults (their
+/// modulation depths stay), then the hold.
+fn reset_envelopes(model: &mut Model, e: usize, p: usize, l: usize) {
+    let d = einst_formats::v2::default_layer(l);
+    let n = model.layer_mut(e, p, l);
+    for (k, v) in d.attrs.iter().filter(|(k, _)| LayerParam::from_name(k).is_some() && (k.starts_with("AmpEnv") || k.starts_with("FreeEnv"))) {
+        n.set(k, v.clone());
+    }
+    reset_hold(model, e, p, l);
+}
+
+/// A pad item menu pick (indices into [`PAD_ROW_ITEMS`]), as the original
+/// v1 does them ([re:ce04ea]): Cut (copy, then clear the pad), Copy, Paste,
+/// Select all layers, Reset all layers, Reset all layers' envelopes (every
+/// unlocked layer of the pad). True when the document changed.
+pub fn pad_row_action(model: &mut Model, clip: &mut Clipboard, e: usize, p: usize, index: usize, out: &mut Vec<Command>) -> bool {
+    match index {
+        0 | 1 => {
+            clip.pad = Some(pad_or_empty(model, e, p));
+            if index == 1 {
+                return false;
+            }
+            reset_pad(model.pad_mut(e, p));
+        }
+        2 => {
+            let Some(n) = clip.pad.clone() else { return false };
+            put_pad(model, e, p, n);
+        }
+        4 => {
+            layer_action(model, clip, e, p, model.layer[e], 4, out);
+            return false;
+        }
+        6 | 7 => {
+            let ks: Vec<usize> = (0..crate::model::LAYERS).filter(|&k| !layer_locked(model, e, p, k)).collect();
+            for k in ks {
+                if index == 6 {
+                    reset_layer(model, e, p, k);
+                } else {
+                    reset_envelopes(model, e, p, k);
+                }
+            }
+        }
+        _ => return false,
+    }
+    out.push(model.rebuild_command());
+    true
+}
+
+/// [re:6c9ec4] on the edited layer (its region, no pitch
+/// compensation).
+fn reset_hold(model: &mut Model, e: usize, p: usize, l: usize) {
+    let Some((frames, sr)) = model.layer_sample(e, p, l).and_then(|f| dreist_engine::audio::info(&f)) else { return };
+    let m = crate::inspector::wave_markers(model, e, p, l, frames as u32);
+    let n = model.layer_mut(e, p, l);
+    let c = n.clone();
+    let get = |q: LayerParam| c.f32(q.name()).unwrap_or(q.default_value()).clamp(0.0, 1.0);
+    let bound = c.attr("PlaybackMode").map(dreist_dsp::voice::PlaybackMode::canonical) == Some("OneShotLengthBound");
+    let h = dreist_engine::hold::reset_hold_time(&get, bound, (m.end - m.start.min(m.end)) as f64, frames as f64, sr, false);
+    n.set("AmpEnvHold", h).set("FreeEnvHold", h);
+}
+
+/// A layer menu pick (indices into [`LAYER_ITEMS`]), as the original v1
+/// does them ([re:b05e68]):
+/// - Cut: copy, then clear the layer; Copy; Paste onto layer `l` (its
+///   lock stays).
+/// - Select all layers: every layer of the pad.
+/// - Clear layer / Reset layer / Reset envelopes: on the selected layers
+///   when `l` is one of them, else on `l`; locked layers are left alone.
+/// - Tune loop to tempo (`e_tuneLayer`), on the same layers as Clear.
+pub fn layer_action(model: &mut Model, clip: &mut Clipboard, e: usize, p: usize, l: usize, index: usize, out: &mut Vec<Command>) -> bool {
+    let mut changed = false;
+    let name = format!("Layer{l}");
+    match index {
+        0 | 1 => {
+            let Some(n) = model.layer_node(e, p, l).cloned() else { return false };
+            clip.layer = Some(n);
+            if index == 0 {
+                *model.layer_mut(e, p, l) = Node::new("Layer", Some(&name));
+                changed = true;
+            }
+        }
+        2 => {
+            let Some(mut n) = clip.layer.clone() else { return false };
+            n.name = Some(name);
+            let lock = model.layer_node(e, p, l).and_then(|c| c.attr("LockState")).map(str::to_string);
+            n.attrs.retain(|(k, _)| k != "LockState");
+            if let Some(v) = lock {
+                n.set("LockState", v);
+            }
+            *model.layer_mut(e, p, l) = n;
+            changed = true;
+        }
+        4 => {
+            let anchor = model.layer[e];
+            let st = model.engine_mut(e).child_mut_or_insert("EngineState", "EngineState");
+            let ps = st.child_mut_or_insert("PadState", &format!("PadState{p}"));
+            ps.set("layerSelAnchor", anchor);
+            ps.set("layerSelItems", 0xffu32);
+            out.push(crate::command::msg(id::SET_LAYER_SELECTIONS, &[e as i32, p as i32], &[model.layer[e] as f32, f32::from_bits(0xff)]));
+            return false;
+        }
+        6..=8 => {
+            for k in targets(model, e, p, l) {
+                match index {
+                    6 => *model.layer_mut(e, p, k) = Node::new("Layer", Some(&format!("Layer{k}"))),
+                    7 => reset_layer(model, e, p, k),
+                    _ => reset_envelopes(model, e, p, k),
+                }
+            }
+            changed = true;
+        }
+        10 => {
+            for k in targets(model, e, p, l) {
+                out.push(crate::command::msg(id::TUNE_LAYER, &[e as i32, p as i32, k as i32], &[0.0; 3]));
+            }
+            return false;
+        }
+        _ => {}
+    }
+    if changed {
+        out.push(model.rebuild_command());
+    }
+    changed
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -593,125 +791,4 @@ mod tests {
         assert!((tune + 4.0).abs() < 1e-4);
         assert!(m.pad_node(0, 5).is_none());
     }
-}
-
-/// [re:70c4bf] plus the inspector's
-/// "Edit meta data" ([re:a49bd9]): the layer row's right-click items.
-pub const LAYER_ITEMS: [&str; 13] = ["Cut", "Copy", "Paste", "", "Clear", "Reset", "Reset Envelopes", "", "Lock", "", "Send to slicer", "", "Edit meta data"];
-
-/// Whether layer `l` (or its pad) is locked.
-pub fn layer_locked(model: &Model, e: usize, p: usize, l: usize) -> bool {
-    pad_locked(model, e, p) || model.layer_node(e, p, l).is_some_and(|n| n.locked())
-}
-
-/// The layer menu's items with their enable / check states.
-pub fn layer_items(model: &Model, clip: &Clipboard, e: usize, p: usize, l: usize) -> Vec<String> {
-    use dreist_gui::menu::{CHECK, item};
-    let valid = model.layer(e, p, l).valid;
-    let locked = layer_locked(model, e, p, l);
-    let own_lock = model.layer_node(e, p, l).is_some_and(|n| n.locked());
-    LAYER_ITEMS
-        .iter()
-        .enumerate()
-        .map(|(i, &t)| match i {
-            0 => item(t, !locked && valid),
-            1 | 10 => item(t, valid),
-            2 => item(t, clip.layer.is_some() && !locked),
-            4..=6 => item(t, !locked && valid),
-            8 => item(if own_lock { format!("{CHECK}{t}") } else { t.to_string() }, valid || own_lock),
-            12 => item(t, valid),
-            _ => t.to_string(),
-        })
-        .collect()
-}
-
-/// What a layer menu pick asks of the editor.
-#[derive(Default)]
-pub struct LayerOutcome {
-    pub changed: bool,
-    /// "Send to slicer": the layer's sample.
-    pub slicer: Option<PathBuf>,
-    /// "Edit meta data": open the [re:823bc8].
-    pub meta: bool,
-}
-
-/// [re:6c9ec4] on the edited layer (its region, no pitch
-/// compensation).
-fn reset_hold(model: &mut Model, e: usize, p: usize, l: usize) {
-    let Some((frames, sr)) = model.layer_sample(e, p, l).and_then(|f| dreist_engine::audio::info(&f)) else { return };
-    let m = crate::inspector::wave_markers(model, e, p, l, frames as u32);
-    let n = model.layer_mut(e, p, l);
-    let c = n.clone();
-    let get = |q: LayerParam| c.f32(q.name()).unwrap_or(q.default_value()).clamp(0.0, 1.0);
-    let bound = c.attr("PlaybackMode").map(dreist_dsp::voice::PlaybackMode::canonical) == Some("OneShotLengthBound");
-    let h = dreist_engine::hold::reset_hold_time(&get, bound, (m.end - m.start.min(m.end)) as f64, frames as f64, sr, false);
-    n.set("AmpEnvHold", h).set("FreeEnvHold", h);
-}
-
-/// A layer menu pick (indices into [`LAYER_ITEMS`]):
-/// - Cut: copy, then `e_deallocateSample` (0xe1).
-/// - Copy / Paste (onto layer `l`, keeping its lock).
-/// - Clear (0xe2 `e_clearLayer`): sample and state.
-/// - Reset (0x85 [re:0c2c1d]): everything but the
-///   sample: parameters, depths, markers (back to the file), velocity
-///   split, sends, mix and lock, then the hold.
-/// - Reset Envelopes (0x86): the amp and free
-///   envelope parameters to their defaults, then the hold time.
-/// - Lock (0x73 `e_setLayerLock`).
-/// - Send to slicer.
-pub fn layer_action(model: &mut Model, clip: &mut Clipboard, e: usize, p: usize, l: usize, index: usize, out: &mut Vec<Command>) -> LayerOutcome {
-    let mut o = LayerOutcome::default();
-    let name = format!("Layer{l}");
-    let keep = |k: &str| matches!(k, "AudioFileName");
-    match index {
-        0 | 1 => {
-            let Some(n) = model.layer_node(e, p, l).cloned() else { return o };
-            clip.layer = Some(n);
-            if index == 0 {
-                clear_layer(model.layer_mut(e, p, l));
-                o.changed = true;
-            }
-        }
-        2 => {
-            let Some(mut n) = clip.layer.clone() else { return o };
-            n.name = Some(name);
-            let lock = model.layer_node(e, p, l).and_then(|c| c.attr("LockState")).map(str::to_string);
-            n.attrs.retain(|(k, _)| k != "LockState");
-            if let Some(v) = lock {
-                n.set("LockState", v);
-            }
-            *model.layer_mut(e, p, l) = n;
-            o.changed = true;
-        }
-        4 => {
-            *model.layer_mut(e, p, l) = Node::new("Layer", Some(&name));
-            o.changed = true;
-        }
-        5 => {
-            let n = model.layer_mut(e, p, l);
-            n.attrs.retain(|(k, _)| keep(k));
-            n.children.retain(|c| c.class == "FixedString" && c.name.as_deref() == Some("LayerName"));
-            reset_hold(model, e, p, l);
-            o.changed = true;
-        }
-        6 => {
-            let n = model.layer_mut(e, p, l);
-            // The values only; their modulation depths (`_Slot<n>`) stay.
-            n.attrs.retain(|(k, _)| !(LayerParam::from_name(k).is_some() && (k.starts_with("AmpEnv") || k.starts_with("FreeEnv"))));
-            reset_hold(model, e, p, l);
-            o.changed = true;
-        }
-        8 => {
-            let on = !model.layer_node(e, p, l).is_some_and(|n| n.locked());
-            set_lock(model.layer_mut(e, p, l), on);
-            o.changed = true;
-        }
-        10 => o.slicer = model.layer_sample(e, p, l),
-        12 => o.meta = true,
-        _ => {}
-    }
-    if o.changed {
-        out.push(model.rebuild_command());
-    }
-    o
 }

@@ -150,12 +150,18 @@ impl Editor {
                 self.padmenu.open(&mut self.app, &path, &self.model, &self.clipboard, k);
                 true
             }
-            // The Pad / Layers selector's pad item: the pad menu.
+            // The Pad / Layers selector's pad item: v1's pad item menu.
             UiEvent::Mouse { path, overload, kind: dreist_gui::app::MouseKind::RightDown, .. } if overload == "PadSelectionButton" => {
-                let path = path.clone();
-                let p = self.model.pad[self.model.engine];
-                self.padmenu.open(&mut self.app, &path, &self.model, &self.clipboard, p);
+                let e = self.model.engine;
+                let p = self.model.pad[e];
+                let items = padmenu::pad_row_items(&self.model, &self.clipboard, e, p);
+                self.pad_row_menu = Some((path.clone(), (e, p)));
+                self.app.open_menu(path, items, None);
                 true
+            }
+            UiEvent::MenuSelected { anchor, index, .. } if self.pad_row_menu.as_ref().is_some_and(|(a, _)| a == anchor) => {
+                let Some((_, (e, p))) = self.pad_row_menu.take() else { return false };
+                padmenu::pad_row_action(&mut self.model, &mut self.clipboard, e, p, *index, &mut self.outbox)
             }
             UiEvent::Mouse { path, overload, kind: dreist_gui::app::MouseKind::RightDown, .. } if overload == "LayerRow" => {
                 let Some(l) = self.app.ctrl(path).and_then(|r| r.attr("layer")).and_then(|v| v.parse::<usize>().ok()) else { return false };
@@ -168,15 +174,7 @@ impl Editor {
             }
             UiEvent::MenuSelected { anchor, index, .. } if self.layer_menu.as_ref().is_some_and(|(a, _)| a == anchor) => {
                 let Some((_, (e, p, l))) = self.layer_menu.take() else { return false };
-                let anchor = anchor.clone();
-                let o = padmenu::layer_action(&mut self.model, &mut self.clipboard, e, p, l, *index, &mut self.outbox);
-                if let Some(f) = o.slicer {
-                    self.open_slicer(&f);
-                }
-                if o.meta && self.metadata.show(&mut self.app, &self.model, &anchor) {
-                    return true;
-                }
-                o.changed
+                padmenu::layer_action(&mut self.model, &mut self.clipboard, e, p, l, *index, &mut self.outbox)
             }
             UiEvent::Mouse { path, overload, kind: dreist_gui::app::MouseKind::RightDown, .. } if overload == "EditorPad" => {
                 let Some(idx) = self.app.ctrl(path).and_then(|c| c.attr("padIndex")).and_then(|v| v.parse::<usize>().ok()) else { return false };
