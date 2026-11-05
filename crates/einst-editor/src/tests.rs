@@ -4414,3 +4414,26 @@ fn changed_samples_ask_to_reload() {
     assert!(ed.take_commands().iter().any(|c| matches!(c, Command::ReloadSamples(v) if v == &vec![f.clone()])));
     let _ = std::fs::remove_dir_all(&tmp);
 }
+
+/// v1 asks about samples removed from disk; No unloads them.
+#[test]
+fn removed_samples_ask_to_find_or_unload() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let tmp = std::env::temp_dir().join(format!("dreist-removed-{}", std::process::id()));
+    std::fs::create_dir_all(&tmp).unwrap();
+    ed.model.samples = Some(tmp.clone());
+    let f = tmp.join("gone.wav");
+    std::fs::write(&f, b"1").unwrap();
+    crate::browser::load_sample_into_layer(&mut ed.model, 0, 0, 0, &f);
+    ed.watch_samples();
+    std::fs::remove_file(&f).unwrap();
+    ed.watch.reset_timer();
+    ed.watch_samples();
+    let items = ed.app.menu.as_ref().expect("the question").items.clone();
+    assert!(items[0].contains("removed from the original location"), "{items:?}");
+    let no = items.iter().position(|s| s == "No").unwrap();
+    ed.handle(&UiEvent::MenuSelected { anchor: Vec::new(), name: String::new(), index: no });
+    assert!(!ed.model.layer(0, 0, 0).valid, "unloaded");
+    let _ = std::fs::remove_dir_all(&tmp);
+}
