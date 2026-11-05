@@ -229,7 +229,8 @@ impl Header {
             }
         };
         set_text(app, "BPMTextBox", format!("{tempo:.2}"));
-        set_text(app, "MemoryUsageBox", String::new());
+        // e_updateMemoryUsage ([re:91925c]): the engine's sample memory.
+        set_text(app, "MemoryUsageBox", model.memory.map(dreist_engine::memory::bytes_label).unwrap_or_default());
         let song = song_of(model);
         let gain = master_gain(model);
         let host_loop = model.host_loop;
