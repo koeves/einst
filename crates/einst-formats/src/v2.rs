@@ -9,16 +9,20 @@
 //! * layers go through v2's legacy branch ([re:0cef81]
 //!   for `Ver` < 3300, ev_5075e9a1): envelopes, modulation routings,
 //!   velocity amounts and timestretch switches become v2 parameters.
-//! * step lanes and track modifiers that v2 does not have are dropped
-//!   (v2's [re:9b6bed] reads only its own lane names).
+//! * step lanes and track modifiers that neither v2 nor v1's routing
+//!   depths use are dropped (v2's [re:9b6bed] reads only its own lane
+//!   names; the engine carries v1's four routing depths after them).
+//! * layers keep v1's routings next to the v2 depths they convert to.
 //! * output names and sample paths are rewritten to v2's forms.
 //! * MIDI/host bindings go through [`crate::bindings`]. v1's `MIDIMap`
 //!   holds nothing but its version (v1's serializer reads no items,
 //!   ev_93038a78): the note map is always v1's built-in default, as v2's
 //!   is, so it is dropped.
 
+use dreist_formats::legacy::ROUTING_ELEMENT;
 use dreist_formats::node::format_g16;
-use dreist_formats::{LayerParam, Node, STEP_LANES, TransmodSource};
+use dreist_formats::params::step_lane_index;
+use dreist_formats::{LayerParam, Node, TransmodSource};
 
 /// Layer version v2 writes ([re:87acba], 0xce4).
 const LAYER_VERSION: u32 = 3300;
@@ -123,12 +127,13 @@ fn audio_files(n: &Node) -> Node {
     out
 }
 
-/// [re:a71e0c] (v2): `State` plus lanes v2 knows. v1's
-/// `Ampenvdepth1/2`, `Freeenvdepth1/2` lanes have no v2 counterpart.
+/// [re:a71e0c] (v2): `State` plus the step lanes: v2's and v1's four
+/// routing depths, which the engine carries after them (v1 voices read
+/// them, v2's ignore them).
 fn step(n: &Node) -> Node {
     let mut out = Node { class: n.class.clone(), name: n.name.clone(), version: None, attrs: Vec::new(), children: Vec::new() };
     for (k, v) in &n.attrs {
-        if k == "State" || STEP_LANES.contains(&k.as_str()) {
+        if k == "State" || step_lane_index(k).is_some() {
             out.set(k, v);
         }
     }
@@ -142,7 +147,7 @@ fn step(n: &Node) -> Node {
 fn track(n: &Node) -> Node {
     let mut out = copy(n);
     out.attrs.retain(|(k, _)| match ["Rand", "Scal", "Comp"].iter().find_map(|s| k.strip_suffix(s)) {
-        Some(lane) => STEP_LANES.contains(&lane),
+        Some(lane) => step_lane_index(lane).is_some(),
         None => k != "TrackVersion",
     });
     let legacy = n.attr("Ver").and_then(|v| v.parse::<f32>().ok()).is_some_and(|v| (v - 2.1).abs() >= 1e-6);
@@ -225,7 +230,21 @@ fn layer(n: &Node) -> Node {
         envelopes(n, ver, &mut out);
         routings(n, &mut out);
     }
-    out.children = n.children.iter().filter(|c| c.class != "LayerModulationRouting").filter_map(convert).collect();
+    // The routings stay as v1 stores them too: v1's voice reads them slot
+    // by slot with the step's routing-depth lanes (`einst_dsp`).
+    out.children = n.children.iter().filter_map(|c| if c.class == ROUTING_ELEMENT { Some(routing(c)) } else { convert(c) }).collect();
+    out
+}
+
+/// A v1 routing as the engine reads it (`dreist_formats::legacy::routing_slots`):
+/// its destination and depth.
+fn routing(n: &Node) -> Node {
+    let mut out = Node::new(&n.class, n.name.as_deref());
+    for k in ["ModulationDestination", "ModulationDepth"] {
+        if let Some(v) = n.attr(k) {
+            out.set(k, v);
+        }
+    }
     out
 }
 
@@ -338,5 +357,27 @@ mod tests {
         assert!((out.f32(&k).unwrap() - 0.6).abs() < 1e-6);
         let k = TransmodSource::FreeEnvelope.attr(LayerParam::CoarseTune.name()).unwrap();
         assert!((out.f32(&k).unwrap() + 0.5).abs() < 1e-6);
+    }
+
+    /// The layer keeps v1's routings slot by slot (for v1's voice), and
+    /// steps and tracks keep the routing-depth lanes.
+    #[test]
+    fn routing_slots_and_depth_lanes_survive() {
+        let n = Node::parse(
+            r#"<Layer name="Layer0" Ver="3.2">
+                <LayerModulationRouting name="ModRouting0" Ver="1" ModulationDepth="0.9" ModulationDestination="Cutoff" />
+                <LayerModulationRouting name="ModRouting3" Ver="1" ModulationDepth="0.25" ModulationDestination="Pitch" />
+            </Layer>"#,
+        )
+        .unwrap();
+        let l = layer(&n);
+        assert_eq!(dreist_formats::legacy::routing_slots(&l), Some([Some((1, 0.9)), None, None, Some((0, 0.25))]));
+        assert!(l.children.iter().all(|c| c.attr("Ver").is_none()));
+        let t = Node::parse(r#"<Track name="Track0" Ver="2.2" Ampenvdepth1Rand="0.7" BogusRand="0.1"><Step name="S0" State="true" Freeenvdepth2="0.8" Bogus="1" /></Track>"#).unwrap();
+        let t = track(&t);
+        assert_eq!(t.attr("Ampenvdepth1Rand"), Some("0.7"));
+        assert!(t.attr("BogusRand").is_none());
+        let st = &t.children[0];
+        assert_eq!((st.attr("Freeenvdepth2"), st.attr("Bogus")), (Some("0.8"), None));
     }
 }

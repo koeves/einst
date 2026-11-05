@@ -40,6 +40,8 @@ fn setup(frames: u32) -> NoteSetup {
         reversed: false,
         file_bpm: 0.0,
         stretch_bpm: None,
+        routings: None,
+        routing_raw: [0.5; 4],
     }
 }
 
