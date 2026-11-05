@@ -336,6 +336,13 @@ pub(crate) fn draw_wave(p: &mut Painter, area: RectF, buckets: &[(f32, f32)], pe
 }
 
 impl Sampler {
+    /// A control of the sampler page by name.
+    pub fn path_in(&self, app: &App, name: &str) -> Option<Vec<usize>> {
+        let h = self.host.clone()?;
+        let rel = app.ctrl(&h)?.path_of(name)?;
+        Some([h, rel].concat())
+    }
+
     /// `path` is a control of the sampler page.
     pub fn owns(&self, path: &[usize]) -> bool {
         self.host.as_ref().is_some_and(|h| path.starts_with(h))
@@ -944,6 +951,11 @@ fn empty_pad(model: &Model, e: usize, p: usize) -> bool {
 }
 
 /// A layer that can take a sample: none loaded, not locked.
+/// Some layer plays file `f`.
+pub(crate) fn layers_use(model: &Model, f: &std::path::Path) -> bool {
+    (0..crate::model::ENGINES).any(|e| (0..64).any(|p| (0..LAYERS).any(|l| model.layer_sample(e, p, l).is_some_and(|x| x == f))))
+}
+
 fn free_layer(model: &Model, e: usize, p: usize, l: usize) -> bool {
     !model.layer(e, p, l).valid && !model.layer_node(e, p, l).is_some_and(|n| n.locked())
 }
@@ -986,6 +998,21 @@ impl crate::Editor {
 
     /// Run the sampler page's request; whether the editor changed.
     pub(crate) fn run_sampler_request(&mut self, r: Request) -> bool {
+        self.run_sampler_request_with(r, None)
+    }
+
+    /// [re:96dd0c]: a chosen file some layer already plays asks first; a
+    /// yes runs the request with it.
+    pub(crate) fn sampler_overwrite_menu(&mut self, ev: &dreist_gui::app::UiEvent) -> bool {
+        let dreist_gui::app::UiEvent::MenuSelected { anchor, index, .. } = ev else { return false };
+        if self.sampler_overwrite.as_ref().is_none_or(|(a, _, _)| a != anchor) {
+            return false;
+        }
+        let Some((_, r, f)) = self.sampler_overwrite.take() else { return false };
+        *index == 2 && self.run_sampler_request_with(r, Some(f))
+    }
+
+    fn run_sampler_request_with(&mut self, r: Request, chosen: Option<std::path::PathBuf>) -> bool {
         let e = self.model.engine;
         let (first, count) = self.model.visible_pads();
         let all: Vec<usize> = (0..self.sampler.takes.len()).collect();
@@ -994,7 +1021,15 @@ impl crate::Editor {
         let mut loaded = false;
         match r {
             Request::ExportTake | Request::Slice | Request::SendToPad => {
-                let Some(f) = self.sampler_file(cur) else { return false };
+                let confirmed = chosen.is_some();
+                let Some(f) = chosen.or_else(|| self.sampler_file(cur)) else { return false };
+                if !confirmed && layers_use(&self.model, &f) {
+                    let anchor = self.sampler.path_in(&self.app, "SaveButton").unwrap_or_default();
+                    let text = "The file you're about to overwrite is already assigned to layers - if you proceed, layers referencing the old sample will reference this new version.  Do you wish to proceed?";
+                    self.app.open_menu(&anchor, vec![text.into(), String::new(), "Yes".into(), "No".into()], None);
+                    self.sampler_overwrite = Some((anchor, r, f));
+                    return true;
+                }
                 if self.sampler.take().is_none_or(|t| t.save(&f, crop).is_err()) {
                     self.sampler.message = Some(format!("Could not save {}", f.display()));
                     return true;

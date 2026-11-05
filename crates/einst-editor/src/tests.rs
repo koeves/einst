@@ -4375,3 +4375,27 @@ fn sampler_take_drags_onto_a_pad() {
     assert!(file.starts_with(&tmp), "{file:?}");
     let _ = std::fs::remove_dir_all(&tmp);
 }
+
+/// v1 asks before a take overwrites a file layers already play; Yes
+/// writes the take there.
+#[test]
+fn sampler_asks_before_overwriting_a_used_file() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let tmp = std::env::temp_dir().join(format!("dreist-overwrite-{}", std::process::id()));
+    std::fs::create_dir_all(&tmp).unwrap();
+    ed.model.samples = Some(tmp.clone());
+    ed.model.editor_tab = crate::front::SAMPLER_PAGE;
+    ed.sync();
+    let tone: Vec<f32> = (0..4410).map(|i| (i as f32 * 0.05).sin() * 0.5).collect();
+    assert_eq!(ed.sampler_take(&tone, &tone, 44100.0), Some(0));
+    let f = tmp.join("used.wav");
+    std::fs::write(&f, b"").unwrap();
+    crate::browser::load_sample_into_layer(&mut ed.model, 0, 0, 0, &f);
+    assert!(crate::sampler::layers_use(&ed.model, &f));
+    let anchor = ed.sampler.path_in(&ed.app, "SaveButton").unwrap();
+    ed.sampler_overwrite = Some((anchor.clone(), crate::sampler::Request::ExportTake, f.clone()));
+    ed.handle(&UiEvent::MenuSelected { anchor, name: "SaveButton".into(), index: 2 });
+    assert!(std::fs::metadata(&f).unwrap().len() > 44, "the take was written");
+    let _ = std::fs::remove_dir_all(&tmp);
+}
