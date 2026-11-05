@@ -105,6 +105,49 @@ fn env_slot(name: &str, kind: &str) -> Option<(bool, usize)> {
     (1..=2).contains(&n).then_some((amp, n - 1))
 }
 
+/// The original v1's routing slot of an envelope's destination row (the
+/// amp envelope's rows are routings 0 and 1, the free envelope's 2 and 3).
+fn routing_index(amp: bool, slot: usize) -> usize {
+    if amp { slot } else { 2 + slot }
+}
+
+/// An [`ENV_DESTS`] choice (1-based, 0 none) as a routing destination (0
+/// pitch, 1 cutoff, 2 resonance, 3 drive), and back.
+fn routing_dest(choice: usize) -> Option<u8> {
+    match choice {
+        1..=3 => Some(choice as u8),
+        4 => Some(0),
+        _ => None,
+    }
+}
+
+fn dest_choice(dest: u8) -> usize {
+    if dest == 0 { 4 } else { dest as usize }
+}
+
+/// The layer's v1 routing slots, when it has them (converted v1 documents).
+fn layer_slots(model: &Model, e: usize, p: usize, l: usize) -> Option<[dreist_formats::legacy::RoutingSlot; 4]> {
+    model.layer_node(e, p, l).and_then(dreist_formats::legacy::routing_slots)
+}
+
+/// After a routing slot changed: each envelope's depth on every destination
+/// as the mean of its slots there (`2d − 1`, as the conversion writes it,
+/// for the v2 voice and the transmod view), then a rebuild so the voices
+/// read the slots.
+fn sync_slots(model: &Model, e: usize, p: usize, l: usize, out: &mut Vec<Command>) {
+    let Some(slots) = layer_slots(model, e, p, l) else { return };
+    let idx = [e as i32, p as i32, l as i32];
+    for amp in [true, false] {
+        for (k, (_, par)) in ENV_DESTS.iter().enumerate() {
+            let Some(id) = routing_dest(k + 1) else { continue };
+            let ds: Vec<f32> = [0, 1].iter().filter_map(|&s| slots[routing_index(amp, s)]).filter(|(d, v)| *d == id && (v - 0.5).abs() >= 1e-6).map(|(_, v)| v).collect();
+            let col = if ds.is_empty() { 0.0 } else { (2.0 * ds.iter().sum::<f32>() / ds.len() as f32 - 1.0).clamp(-1.0, 1.0) };
+            out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[*par as u8 as f32, col, env_source(amp) as u8 as f32]));
+        }
+    }
+    out.push(model.rebuild_command());
+}
+
 fn env_source(amp: bool) -> TransmodSource {
     if amp { TransmodSource::AmpEnvelope } else { TransmodSource::FreeEnvelope }
 }
@@ -538,6 +581,10 @@ impl Inspector {
     /// entry): the picked ones, else the parameters it modulates, then the
     /// defaults (the Free envelope's Cutoff and Pitch).
     fn env_dests(&self, model: &Model, e: usize, p: usize, l: usize, amp: bool) -> [usize; 2] {
+        // A v1 layer's own routings.
+        if let Some(slots) = layer_slots(model, e, p, l) {
+            return [0, 1].map(|s| slots[routing_index(amp, s)].map(|(d, _)| dest_choice(d)).unwrap_or(0));
+        }
         if let Some(d) = self.env_dests.get(&(e, p, l, amp)) {
             return *d;
         }
@@ -682,6 +729,7 @@ impl Inspector {
         // The layer view's controls.
         let node = model.layer_node(e, p, l);
         let dests = [self.env_dests(model, e, p, l, true), self.env_dests(model, e, p, l, false)];
+        let slots = layer_slots(model, e, p, l);
         let (src_bpm, dest_bpm) = self.stretch_bpm(model, e, p, l);
         let algorithm = ((model.layer_param(e, p, l, LayerParam::FilterAlgorithm) * 3.0).round() as usize).min(3);
         // The timestretch controls are inactive (tempos "N/A") while it is
@@ -714,7 +762,8 @@ impl Inspector {
                 }
                 if let Some((amp, slot)) = env_slot(name, "Depth") {
                     let d = dests[!amp as usize][slot];
-                    k.value = if d == 0 { 0.5 } else { depth_knob(node, ENV_DESTS[d - 1].1, env_source(amp)) };
+                    let own = slots.map(|s| s[routing_index(amp, slot)].map(|(_, v)| v).unwrap_or(0.5));
+                    k.value = own.unwrap_or_else(|| if d == 0 { 0.5 } else { depth_knob(node, ENV_DESTS[d - 1].1, env_source(amp)) });
                     k.enabled = d != 0;
                     return;
                 }
@@ -978,6 +1027,14 @@ impl Inspector {
                     }
                     Menu::StretchMode => out.push(param(LayerParam::TimestretchMode, (i == 1) as i32 as f32)),
                     // A new destination takes the slot's depth with it.
+                    // A v1 layer: the routing slot takes the destination
+                    // (its depth stays).
+                    Menu::EnvDest(amp, slot) if layer_slots(model, e, p, l).is_some() => {
+                        let r = routing_index(amp, slot);
+                        let depth = layer_slots(model, e, p, l).and_then(|s| s[r]).map(|(_, v)| v).unwrap_or(0.5);
+                        dreist_formats::legacy::set_routing_slot(model.layer_mut(e, p, l), r, routing_dest(i).map(|d| (d, depth)));
+                        sync_slots(model, e, p, l, out);
+                    }
                     Menu::EnvDest(amp, slot) => {
                         let mut dests = self.env_dests(model, e, p, l, amp);
                         let old = dests[slot];
@@ -1024,6 +1081,14 @@ impl Inspector {
                     return true;
                 }
                 if let Some((amp, slot)) = env_slot(name, "Depth") {
+                    let r = routing_index(amp, slot);
+                    if let Some(dest) = layer_slots(model, e, p, l).map(|s| s[r]) {
+                        if let Some((d, _)) = dest {
+                            dreist_formats::legacy::set_routing_slot(model.layer_mut(e, p, l), r, Some((d, v)));
+                            sync_slots(model, e, p, l, out);
+                        }
+                        return true;
+                    }
                     let d = self.env_dests(model, e, p, l, amp)[slot];
                     if d != 0 {
                         out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[ENV_DESTS[d - 1].1 as u8 as f32, v * 2.0 - 1.0, env_source(amp) as u8 as f32]));

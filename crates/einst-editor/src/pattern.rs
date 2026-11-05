@@ -471,6 +471,11 @@ const MARKER_H: f32 = 15.0;
 const CORE_LANES: usize = 39;
 
 fn lane_label(lane: usize) -> String {
+    // v1's routing-depth lanes, as its envelope rows name them.
+    const ROUTING: [&str; 4] = ["Amp Env Depth 1", "Amp Env Depth 2", "Free Env Depth 1", "Free Env Depth 2"];
+    if let Some(l) = ROUTING.get(lane.wrapping_sub(dreist_formats::params::V1_ROUTING_LANE)) {
+        return (*l).into();
+    }
     dreist_formats::STEP_LANES.get(lane).map(|s| crate::transmod::camel_words(s)).unwrap_or_default()
 }
 
@@ -1143,7 +1148,7 @@ impl PatternPanel {
         let (track, lane) = (model.pad[e], model.pattern_view[e].lane);
         let pat = model.pattern(e, model.current_pattern(e));
         let f = pat.tracks.get(track).and_then(|t| t.steps.get(step)).and_then(|s| s.lanes.get(lane).copied()).unwrap_or_else(|| dreist_formats::params::step_lane_default(lane));
-        let name = crate::transmod::camel_words(dreist_formats::params::STEP_LANES.get(lane)?);
+        let name = Some(lane_label(lane)).filter(|n| !n.is_empty())?;
         Some(format!("{name}: step {} to {}", step + 1, graph_value_text(model, track, lane, f)))
     }
 
