@@ -1350,7 +1350,6 @@ fn graph_menu_inserts_a_ramp() {
     for ev in ed.app.mouse_up(dreist_gui::app::MouseButton::Left) {
         ed.handle(&ev);
     }
-    ed.handle(&UiEvent::MenuSelected { anchor: ob.clone(), name: "InsertButton".into(), index: 17 });
     ed.handle(&UiEvent::MenuSelected { anchor: ob.clone(), name: "InsertButton".into(), index: 1 });
     let e = ed.model.engine;
     let pat = ed.model.pattern(e, ed.model.current_pattern(e));

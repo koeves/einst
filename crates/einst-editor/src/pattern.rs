@@ -1246,9 +1246,12 @@ impl PatternPanel {
             UiEvent::Clicked { path, name, .. }
                 if (name == "OptionsButton" || name == "InsertButton") && (app.root.path_of("SingleAutoControl").is_some_and(|p| path.starts_with(&p)) || self.auto_slot_of(app, path).is_some()) =>
             {
-                self.graph_menu = Some(false);
+                // [re:f35f8c]: Insert lists the shapes; Options the lane menu.
+                let insert = name == "InsertButton";
+                self.graph_menu = Some(insert);
                 self.graph_target = None;
-                app.open_menu(path, GRAPH_MENU.iter().map(|s| s.to_string()).collect(), None);
+                let items = if insert { GRAPH_INSERT.iter().map(|g| g.0.to_string()).collect() } else { GRAPH_MENU.iter().map(|s| s.to_string()).collect() };
+                app.open_menu(path, items, None);
                 true
             }
             // The tools panel's buttons.
