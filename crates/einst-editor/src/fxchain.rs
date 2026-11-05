@@ -98,6 +98,8 @@ fn new_effect(resources: &std::path::Path, kind: usize) -> Node {
 enum Action {
     None,
     Revert,
+    /// Rescan presets: the lists are read when each menu opens.
+    Rescan,
     Preset(std::path::PathBuf),
     Remove,
     Category(usize),
@@ -821,13 +823,16 @@ impl FxPanel {
         CATEGORIES.iter().enumerate().map(|(i, c)| (format!("{c} ▸"), Action::Category(i))).collect()
     }
 
-    /// The slot's preset menu ([re:ea87a2]): Save preset, Save as default,
-    /// Revert to default, the type's presets.
+    /// The slot's preset menu ([re:ea87a2], v1's [re:41a672]): Save preset,
+    /// Save as default; Revert to default, Rescan presets; the type's
+    /// presets.
     fn type_menu(&self, kind: usize, current: Option<&str>) -> Vec<(String, Action)> {
         let mut v = vec![
             ("Save preset".to_string(), Action::SavePreset),
             ("Save as default".to_string(), Action::SaveDefault),
+            (String::new(), Action::None),
             ("Revert to default".to_string(), Action::Revert),
+            ("Rescan presets".to_string(), Action::Rescan),
             (String::new(), Action::None),
         ];
         let ps = presets(&self.resources, kind);
