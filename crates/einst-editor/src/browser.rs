@@ -761,21 +761,23 @@ fn build_column(skin: &mut Skin, host: &mut Ctrl) -> Result<(), EditorError> {
     let mut split = panel("SplitView", "", Rect::new(0, top, w, body), "InvisibleStyle");
     split.class = "CtrlSplitterPanel".into();
     for (k, v) in [
-        ("SplitterPanelStyle", "InvisibleStyle"),
+        // v1 (measured): a 4 px navy bar between the tree and the list,
+        // at x 103 of the column.
+        ("SplitterPanelStyle", "BrowserSplitStyle"),
         ("intMinSize1", "100"),
-        ("intSplitPosition", "110"),
-        ("intSplitterDim", "3"),
+        ("intSplitPosition", "103"),
+        ("intSplitterDim", "4"),
         ("optIsVertical", "false"),
         ("optDbClkCollapse1", "false"),
         ("optSnapCollapse1", "false"),
     ] {
         split.set_attr(k, v.into());
     }
-    let mut sources = panel("SourceList", "BrowserSourceList", Rect::new(0, 0, 110, body), "InvisibleStyle");
+    let mut sources = panel("SourceList", "BrowserSourceList", Rect::new(0, 0, 103, body), "InvisibleStyle");
     sources.display_name = "SplitterPanel0".into();
-    let mut pane = panel("Browser", "", Rect::new(113, 0, w - 113, body), "InvisibleStyle");
+    let mut pane = panel("Browser", "", Rect::new(107, 0, w - 107, body), "InvisibleStyle");
     pane.display_name = "SplitterPanel1".into();
-    pane.children.push(panel("FileList", "BrowserFileList", Rect::new(0, 0, w - 113, body), "InvisibleStyle"));
+    pane.children.push(panel("FileList", "BrowserFileList", Rect::new(0, 0, w - 107, body), "InvisibleStyle"));
     split.children.push(sources);
     split.children.push(pane);
     host.children.push(split);
@@ -1941,13 +1943,17 @@ impl Browser {
         let (w, h) = (c.rect.w as f32, c.rect.h as f32);
         match c.overload.as_str() {
             "BrowserSourceList" => {
-                p.fill_rect(RectF::new(0.0, 0.0, w, h), crate::front::colour_or(s, "BrowserTreeStyle", "colFill", Colour::TRANSPARENT));
+                p.fill_rect(RectF::new(0.0, 0.0, w, h), crate::front::colour_or(s, "BrowserTreeBackStyle", "colFill", Colour::TRANSPARENT));
+                // v1's column is inset: a shadow fading over 10 px from the
+                // left edge (measured #6E -> #C0).
+                for i in 0..10 {
+                    let a = 0.42 * (1.0 - i as f32 / 10.0).powf(1.6);
+                    p.fill_rect(RectF::new(i as f32, 0.0, 1.0, h), Colour::rgba(0, 0, 20, (a * 255.0) as u8));
+                }
                 let font = s.font(SOURCE_STYLE);
                 let text = s.colour(SOURCE_STYLE, "colText", Colour::BLACK);
                 let sel = crate::front::colour_or(s, SOURCE_SELECTED_STYLE, "colFill", Colour::rgba(232, 204, 91, 255));
                 let sel_text = s.colour(SOURCE_SELECTED_STYLE, "colText", text);
-                let mut bold = s.font(SOURCE_HEAD_STYLE);
-                bold.bold = true;
                 for (i, src) in self.sources.iter().enumerate() {
                     let y = i as f32 * SOURCE_ROW;
                     if y > h {
@@ -1963,7 +1969,18 @@ impl Browser {
                         p.fill_rect(RectF::new(0.0, y, w, SOURCE_ROW), sel);
                     }
                     let col = if current { sel_text } else { text };
-                    let (x, f) = if src.header { (4.0, &bold) } else { (34.0, &font) };
+                    // v1's section heads (measured, ui-v1-style "browser
+                    // tree"): upper case at x 14, after a down triangle
+                    // (x 4-12) when the section has entries.
+                    if src.header {
+                        if self.sources.get(i + 1).is_some_and(|n| !n.header) {
+                            let cy = y + SOURCE_ROW / 2.0;
+                            p.fill_polygon(&[(4.0, cy - 3.0), (12.0, cy - 3.0), (8.0, cy + 2.0)], col);
+                        }
+                        p.text(RectF::new(14.0, y, w - 18.0, SOURCE_ROW), &src.label.to_uppercase(), col, &s.font(SOURCE_HEAD_STYLE), HAlign::Left, VAlign::Center);
+                        continue;
+                    }
+                    let (x, f) = (34.0, &font);
                     if !src.icon.is_empty() {
                         let st = if current { crate::browsericons::SELECTED_STYLE } else { crate::browsericons::STYLE };
                         crate::browsericons::draw(r, p, st, RectF::new(13.0, y + (SOURCE_ROW - 18.0) / 2.0, 18.0, 18.0), src.icon, "");

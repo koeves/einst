@@ -141,7 +141,13 @@ COLOURS = {
     "GridDash": (150, 158, 174),
     "StepOn": (98, 106, 136),
     "LaneAlt": (204, 211, 221),
-    "PartSelected": (229, 216, 158),
+    "PartSelected": (237, 224, 179),
+    # Song lanes (round 4, measured): the navy lane foot and its ticks, the
+    # selected part's checker, the dotted bar lines.
+    "LaneFoot": (44, 48, 77),
+    "LaneFootMark": (200, 206, 224),
+    "PartHatch": (213, 201, 154),
+    "BarDot": (40, 44, 70),
     "Crumb": (190, 195, 204),
     # Code-drawn LCD content after v1's colour table (the survey's
     # palette section): wave display, envelopes, velocity split, scenes,
@@ -186,7 +192,8 @@ COLOURS = {
     "BrowserTreeSel": (108, 122, 152),
     "BrowserList": (228, 231, 236),
     "BrowserHeader": (221, 226, 230),
-    "BrowserSplit": (10, 10, 50),
+    "BrowserSplit": (31, 34, 69),
+    "BrowserTreeBack": (222, 227, 233),
     "IconLine": (64, 68, 84),
     "IconFace": (204, 209, 218),
     "IconDark": (40, 46, 84),
@@ -485,10 +492,11 @@ def base_styles():
     st("SongLaneStyle", "BasePanelStyle", colFill="LcdLight")
     st("SongLaneAltStyle", "BasePanelStyle", colFill="LaneAlt")
     st("SongLaneSelectedStyle", "BasePanelStyle", colFill="RowSelected")
-    st("SongPartBodyStyle", "BaseLabelStyle", colFill="LcdLight", colBorder="Ink", optDrawBorder="true", realCornerRounding="2",
+    st("SongPartBodyStyle", "BaseLabelStyle", colFill="LcdLight", colBorder="LaneFoot", optDrawBorder="true", realCornerRounding="0",
        font=text_font(10, True), enumTextHorizontalAlign="center")
-    st("SongPartSelectedBodyStyle", "SongPartBodyStyle", colFill="PartSelected")
-    st("SongPartFootStyle", "BasePanelStyle", colFill="Ink")
+    st("SongPartSelectedBodyStyle", "SongPartBodyStyle", colFill="PartSelected", colAltFill="PartHatch")
+    st("SongPartFootStyle", "BasePanelStyle", colFill="LaneFoot", colText="LaneFootMark")
+    st("SongBarDotStyle", "BasePanelStyle", colFill="BarDot")
     st("TrackNameStyle", "BaseLabelStyle", colFill="LcdLight", colBorder="InkSoft", optDrawBorder="true", font=text_font(10), realTextOffset="3")
     st("TrackArrowStyle", "LcdFlatButtonStyle", colText="InkMid", font=text_font(9))
     st("TrackNumberStyle", "BaseLabelStyle", font=text_font(24), enumTextHorizontalAlign="center")
@@ -503,7 +511,8 @@ def base_styles():
     st("BrowserIconStyle", "BasePanelStyle", colBorder="IconLine", colFill="IconFace", colAltFill="IconDark", colText="Ink",
        font=text_font(7, True))
     st("BrowserIconSelectedStyle", "BrowserIconStyle")
-    st("BrowserSplitStyle", "BasePanelStyle", colFill="BrowserSplit")
+    st("BrowserSplitStyle", "BasePanelStyle", colFill="BrowserSplit", colAltBorder="BrowserSplit")
+    st("BrowserTreeBackStyle", "BasePanelStyle", colFill="BrowserTreeBack")
     st("BrowserParentStyle", "BaseButtonStyle", colFill="LcdLight", colBorder="InkSoft", realCornerRounding="0", font=text_font(10))
     st("BrowserListStyle", "BaseTableStyle", font=text_font(10), colFill="BrowserList", colBorder="InkSoft", colRow="BrowserList", colSelectedText="Ink",
        colRowAlt="BrowserList", colSelection="BrowserSel", colHeaderFill="BrowserHeader", colHeaderDivider="InkMid",

@@ -38,6 +38,22 @@ const SONG_TAB: usize = 2;
 /// v1 set's `SongLane*`, `SongPart*`, `Grid*` and `Timeline*` styles).
 const PART_STYLE: &str = "SongPartBodyStyle";
 const PART_SELECTED_STYLE: &str = "SongPartSelectedBodyStyle";
+const FOOT_STYLE: &str = "SongPartFootStyle";
+/// The navy strip closing each lane (v1, measured: 8 px).
+const FOOT_H: f32 = 8.0;
+
+/// Fine diagonal hatching over `r` (v1's selected part reads as a 2 px
+/// checker): 1 px lines at 45 degrees, 2 px apart.
+fn hatch(p: &mut Painter, r: RectF, c: Colour) {
+    let mut k = 0.0;
+    while k < r.w + r.h {
+        // From the top edge (or left edge) down-left to the bottom (or right).
+        let (sx, sy) = if k <= r.w { (r.x + k, r.y) } else { (r.x + r.w, r.y + k - r.w) };
+        let len = (sx - r.x).min(r.y + r.h - sy);
+        p.line(sx, sy, sx - len, sy + len, c, 1.0);
+        k += 2.0;
+    }
+}
 
 /// The song page's tools, in the toolbar's order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1223,7 +1239,6 @@ impl SongPanel {
             };
             let y = TIMELINE_H + e as f32 * rh;
             p.fill_rect(RectF::new(0.0, y, w, rh), colour(st, "colFill", Colour::WHITE));
-            p.line(0.0, y + rh - 0.5, w, y + rh - 0.5, line, 1.0);
         }
         // Timeline + grid.
         p.fill_rect(RectF::new(0.0, 0.0, w, TIMELINE_H), colour("TimelineStyle", "colFill", Colour::TRANSPARENT));
@@ -1234,16 +1249,24 @@ impl SongPanel {
         let first_bar = (self.scroll / bar_qn).floor() as usize;
         let bars = (w / (bar_qn * self.zoom)).ceil() as usize + 2;
         let label_every = ((48.0 / (bar_qn * self.zoom)).ceil() as usize).max(1);
+        // v1 dots the bar lines across the lanes (1 px on, 2 off; measured,
+        // ui-v1-style "song lanes"); the lane feet tick every other bar.
+        let dots = colour("SongBarDotStyle", "colFill", Colour::rgba(40, 44, 70, 255));
         for b in first_bar..first_bar + bars {
             let x = (b as f32 * bar_qn * self.zoom - off).round() + 0.5;
-            p.line(x, 0.0, x, h, bar, 1.0);
+            p.line(x, 0.0, x, TIMELINE_H, bar, 1.0);
+            let mut dy = TIMELINE_H;
+            while dy < h {
+                p.fill_rect(RectF::new(x - 0.5, dy, 1.0, 1.0), dots);
+                dy += 3.0;
+            }
             if b % label_every == 0 {
                 p.text(RectF::new(x + 2.0, 2.0, 50.0, 12.0), &format!("{}", b + 1), text, &font, HAlign::Left, VAlign::Center);
             }
             if self.zoom * bar_qn >= 32.0 {
                 for beat in 1..4 {
                     let bx = ((b as f32 * bar_qn + beat as f32) * self.zoom - off).round() + 0.5;
-                    p.line(bx, TIMELINE_H, bx, h, bar.with_alpha(bar.f_alpha() * 0.5), 1.0);
+                    p.line(bx, 0.0, bx, 4.0, bar.with_alpha(bar.f_alpha() * 0.5), 1.0);
                 }
             }
         }
@@ -1251,6 +1274,25 @@ impl SongPanel {
         if song.loop_enabled {
             let col = colour("SongLoopStyle", "colFill", position.with_alpha(0.5));
             p.fill_rect(RectF::new(song.loop_start as f32 * self.zoom - off, 0.0, ((song.loop_end - song.loop_start) as f32 * self.zoom).max(0.0), TIMELINE_H), col);
+        }
+        // Lane feet: v1 closes every lane with a navy strip carrying a dot
+        // at a bar line, four ticks at every other one.
+        let foot = colour(FOOT_STYLE, "colFill", Colour::rgba(44, 48, 77, 255));
+        let marks = colour(FOOT_STYLE, "colText", Colour::rgba(200, 206, 224, 255));
+        for e in 0..ENGINES {
+            let fy = TIMELINE_H + (e + 1) as f32 * rh - FOOT_H;
+            p.fill_rect(RectF::new(0.0, fy, w, FOOT_H), foot);
+            let my = fy + (FOOT_H / 2.0).floor() - 1.0;
+            for b in first_bar..first_bar + bars {
+                let x = (b as f32 * bar_qn * self.zoom - off).round();
+                if b % 2 == 1 {
+                    for k in 0..4 {
+                        p.fill_rect(RectF::new(x - 3.0 + k as f32 * 2.0, my, 1.0, 3.0), marks);
+                    }
+                } else {
+                    p.fill_rect(RectF::new(x, my + 1.0, 1.0, 1.0), marks);
+                }
+            }
         }
         // Parts.
         let fill = colour(PART_STYLE, "colFill", Colour::rgba(222, 229, 237, 255));
@@ -1268,12 +1310,18 @@ impl SongPanel {
                 if x1 < 0.0 || x0 > w {
                     continue;
                 }
-                let rect = RectF::new(x0.round() - 1.0, y + 1.0, (x1 - x0).round() + 1.0, rh - 2.0);
+                // v1: a flat face down to the lane foot, 2 px navy sides; a
+                // selected part is hatched.
+                let rect = RectF::new(x0.round(), y, (x1 - x0).round(), rh - FOOT_H);
                 let selected = self.selected.contains(&(e, key(part.start)));
                 let base = if selected { sel_col } else { fill };
                 let col = if part.mute { base.with_alpha(base.f_alpha() * 0.5) } else { base };
                 p.fill_rounded(rect, radius, [true; 4], col);
-                p.stroke_rounded(rect.inset(0.5), radius, [true; 4], border, 1.0);
+                if selected {
+                    hatch(p, rect, colour(PART_SELECTED_STYLE, "colAltFill", Colour::rgba(196, 170, 70, 255)));
+                }
+                p.fill_rect(RectF::new(rect.x, rect.y, 2.0, rect.h), border);
+                p.fill_rect(RectF::new(rect.x + rect.w - 2.0, rect.y, 2.0, rect.h), border);
                 // Pattern repeat dividers.
                 let plen = cycle_qn(model, e, part.pattern) as f32;
                 if plen > 0.0 {
@@ -1294,8 +1342,11 @@ impl SongPanel {
                     let n = model.pattern_name(e, part.pattern);
                     if n.is_empty() { format!("Pattern {}", part.pattern + 1) } else { n }
                 };
-                if rect.w > 14.0 {
-                    p.text(RectF::new(rect.x + 6.0, y + 4.0, rect.w - 10.0, 12.0), &name, ptext, &pfont, HAlign::Left, VAlign::Center);
+                // The pattern number over the name, centred.
+                if rect.w > 14.0 && part.pattern != STOP_PART {
+                    let tw = rect.w - 6.0;
+                    p.text(RectF::new(rect.x + 3.0, y + 5.0, tw, 12.0), &format!("{}", part.pattern + 1), ptext, &pfont, HAlign::Center, VAlign::Center);
+                    p.text(RectF::new(rect.x + 3.0, y + 17.0, tw, 12.0), &name, ptext, &pfont, HAlign::Center, VAlign::Center);
                 }
             }
         }

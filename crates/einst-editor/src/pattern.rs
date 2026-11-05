@@ -1109,6 +1109,7 @@ impl PatternPanel {
             if let Some(b) = row.find_mut("AutomateButton") {
                 b.on = is_open;
                 b.visible = multi;
+                b.text = if is_open { "▼" } else { "►" }.into();
             }
             let td = pat.tracks.get(track);
             row.set_attr("track", track.to_string());

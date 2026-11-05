@@ -157,7 +157,9 @@ BUTTONS = [
     (r"^SingleTrack", L("LcdButtonStyle", text="−", font=text_font(12), optRoundTopLeft="false", optRoundBottomLeft="false")),
     (r"^NudgeLeftButton", L("LcdIconButtonStyle", text=G["left"], font=icon_font(8))),
     (r"^NudgeRightButton", L("LcdIconButtonStyle", text=G["right"], font=icon_font(8))),
-    (r"^AutoButton", L("LcdButtonStyle", font=text_font(11, True))),
+    # v1's track graph toggle is a bare disclosure triangle (the reference
+    # screenshots): flat, ► closed and ▼ open (pattern.rs sets the text).
+    (r"^AutoButton", L("TrackArrowStyle", text="►", font=text_font(9))),
     (r"^Part(Prev)", L("LcdFlatIconButtonStyle", text=G["left"], font=icon_font(8))),
     (r"^Part(Next)", L("LcdFlatIconButtonStyle", text=G["right"], font=icon_font(8))),
     (r"^Part(Popup)", L("LcdFlatIconButtonStyle", text=G["chev_down"], font=icon_font(8))),
