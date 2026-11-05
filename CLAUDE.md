@@ -16,6 +16,8 @@ dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::pr
 - Out of scope: licensing / copy protection, updates and registration, RTAS, inter-plugin audio.
 - Keep the repository private. Git (Conventional Commits, no attribution lines, changelog,
   releases, submodule bumps): `.agents/git.md`.
+- Before touching commons, read `commons/.agents/coordination.md` (Dreist's agents change commons
+  too); after every commons push, append an entry there (see `.agents/git.md`, "Shared code").
 
 ## Build
 
