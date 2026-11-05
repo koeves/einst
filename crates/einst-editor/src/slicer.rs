@@ -982,6 +982,27 @@ fn clear_layer(model: &mut Model, e: usize, p: usize, l: usize) {
     layer.children.retain(|c| c.class != "AudioFileMarkers");
 }
 
+/// Load `file` with region (start, end) of (frames at sr) into (e, p, l)
+/// and reset its envelopes ([re:4220aa], AmpEnvAttack 0.1).
+fn load_region(model: &mut Model, e: usize, p: usize, l: usize, file: &Path, (s0, s1, frames, sr): (u32, u32, u32, f32), name: &str) -> bool {
+    if !crate::browser::load_sample_into_layer(model, e, p, l, file) {
+        return false;
+    }
+    let layer = model.layer_mut(e, p, l);
+    layer.children.retain(|c| c.class != "AudioFileMarkers");
+    for nm in ["StartEndMarkers", "LoopMarkers"] {
+        let mut m = Node::new("AudioFileMarkers", Some(nm));
+        m.set("StartSample", s0).set("EndSample", s1).set("SampleLength", frames);
+        layer.children.push(m);
+    }
+    reset_envelopes(layer, (s1 - s0) as f64, frames as f64, sr);
+    layer.set(dreist_formats::params::LayerParam::AmpEnvAttack.name(), 0.1);
+    if !name.is_empty() {
+        model.set_layer_name(e, p, l, name);
+    }
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1014,25 +1035,4 @@ mod tests {
         assert!(s.slices.iter().any(|p| p.start == 3000 && p.deleted));
         assert_eq!(s.slice_span(3500), Some((1000, 44100)), "deleted slices do not cut");
     }
-}
-
-/// Load `file` with region (start, end) of (frames at sr) into (e, p, l)
-/// and reset its envelopes ([re:4220aa], AmpEnvAttack 0.1).
-fn load_region(model: &mut Model, e: usize, p: usize, l: usize, file: &Path, (s0, s1, frames, sr): (u32, u32, u32, f32), name: &str) -> bool {
-    if !crate::browser::load_sample_into_layer(model, e, p, l, file) {
-        return false;
-    }
-    let layer = model.layer_mut(e, p, l);
-    layer.children.retain(|c| c.class != "AudioFileMarkers");
-    for nm in ["StartEndMarkers", "LoopMarkers"] {
-        let mut m = Node::new("AudioFileMarkers", Some(nm));
-        m.set("StartSample", s0).set("EndSample", s1).set("SampleLength", frames);
-        layer.children.push(m);
-    }
-    reset_envelopes(layer, (s1 - s0) as f64, frames as f64, sr);
-    layer.set(dreist_formats::params::LayerParam::AmpEnvAttack.name(), 0.1);
-    if !name.is_empty() {
-        model.set_layer_name(e, p, l, name);
-    }
-    true
 }
