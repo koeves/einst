@@ -31,3 +31,12 @@ The shared crates are the submodule at `commons` (Cargo uses them by path). Clon
 2. Here: `git add commons` and commit `build: dreist-commons <short sha or vX.Y.Z>`.
 3. Run this repository's checks; goldens must stay identical unless the change means to alter
    them (say why in the commit).
+
+## Worktrees and cleanup
+
+- Worktrees go next to the repository or in a scratch folder, never inside a checkout: the
+  bundler builds the outermost workspace it finds, so a nested worktree bundles the outer
+  checkout's code.
+- Remove a worktree and its local branch once the branch is merged.
+- When a task ends, delete what it built and no longer needs: `target/` directories
+  (`cargo clean`), scratch builds, test copies and downloads. Keep only what is still in use.
