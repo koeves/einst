@@ -2116,25 +2116,15 @@ fn pattern_and_track_menus() {
     let mut sa = rows.clone();
     sa.push(0);
     sa.push(row.children[0].children.iter().position(|c| c.name == "SelectArea").unwrap());
-    // Cut takes only the selected steps (into the clipboard pattern).
-    let cur = ed.model.current_pattern(e);
-    {
-        let sp = ed.model.engine_mut(e).child_mut_or_insert("StepPattern", &format!("StepPattern{cur}"));
-        sp.attrs.retain(|(k, _)| k != "LockState");
-        let tr = sp.child_mut_or_insert("Track", &format!("Track{t}"));
-        tr.child_mut_or_insert("Step", "S2").set("State", "true");
-        tr.child_mut_or_insert("Step", "S5").set("State", "true");
-    }
+    // v1's Cut is the pattern editor's: the selected steps go to its step
+    // clipboard and are switched off.
     ed.pattern.as_mut().unwrap().selection = [(t, 2)].into_iter().collect();
+    ed.take_commands();
     ed.handle(&UiEvent::Mouse { path: sa.clone(), overload: "TrackSelectArea".into(), kind: dreist_gui::app::MouseKind::RightDown, x: 2.0, y: 2.0 });
     pick(&mut ed, &sa, "Cut");
-    let steps_of = |n: &dreist_formats::Node| -> Vec<String> {
-        n.children.iter().filter(|c| c.name.as_deref() == Some(&format!("Track{t}"))).flat_map(|tr| tr.children.iter().filter_map(|s| s.name.clone())).collect()
-    };
-    let left = steps_of(ed.model.pattern_node(e, cur).unwrap());
-    assert!(left.contains(&"S5".to_string()) && !left.contains(&"S2".to_string()), "{left:?}");
-    assert_eq!(steps_of(ed.clipboard.pattern.as_ref().unwrap()), vec!["S2".to_string()]);
+    assert!(ed.pattern.as_ref().unwrap().has_copied_steps());
     assert!(ed.pattern.as_ref().unwrap().selection.is_empty());
+    assert!(!ed.take_commands().is_empty());
     ed.handle(&UiEvent::Mouse { path: sa.clone(), overload: "TrackSelectArea".into(), kind: dreist_gui::app::MouseKind::RightDown, x: 2.0, y: 2.0 });
     pick(&mut ed, &sa, "Lock track");
     assert!(padmenu::track_node(&ed.model, e, t).and_then(|n| n.attr("LockState")).is_some());
@@ -4121,16 +4111,27 @@ fn pen_tool_right_click_opens_the_track_menu() {
     ed.take_commands();
     ed.handle(&UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind: MouseKind::RightDown, x, y });
     let items = ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap_or_default();
-    assert!(items.first().is_some_and(|i| i.contains("Cut")), "{items:?}");
+    assert_eq!(items.first().map(String::as_str), Some("Pen Tool"), "{items:?}");
+    assert!(items.iter().any(|i| i == "Delete"), "the step under the mouse is on");
     assert!(items.iter().any(|i| i == "Clear track"));
     assert!(!ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == id::SET_STEP_OFF)), "no delete");
     assert_eq!(ed.model.pad[ed.model.engine], 3, "the track's pad is selected");
     // The menu acts on that track: Clear track.
     let clear = items.iter().position(|i| i == "Clear track").unwrap();
     ed.app.menu = None;
-    ed.handle(&UiEvent::MenuSelected { anchor: gp, name: "PatternGrid".into(), index: clear });
+    ed.handle(&UiEvent::MenuSelected { anchor: gp.clone(), name: "PatternGrid".into(), index: clear });
     let e = ed.model.engine;
     assert!(!ed.model.pattern(e, ed.model.current_pattern(e)).tracks[3].steps[2].on, "Clear track cleared it");
+    // Quantize track timing: the track's Shift lane back to its default.
+    ed.handle(&UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind: MouseKind::RightDown, x, y });
+    let q = ed.app.menu.as_ref().unwrap().items.iter().position(|i| i == "Quantize track timing").unwrap();
+    ed.take_commands();
+    ed.handle(&UiEvent::MenuSelected { anchor: gp.clone(), name: "PatternGrid".into(), index: q });
+    assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == id::CLEAR_TRACK_AUTOMATION && m.index[1] == 3)));
+    // Erase Tool switches the tool.
+    ed.handle(&UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind: MouseKind::RightDown, x, y });
+    ed.handle(&UiEvent::MenuSelected { anchor: gp, name: "PatternGrid".into(), index: 1 });
+    assert_eq!(ed.pattern.as_ref().unwrap().tool, crate::pattern::Tool::Erase);
 }
 
 /// The slicer's zoom scrollbar (added under the wave): dragging the

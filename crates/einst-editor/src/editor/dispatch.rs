@@ -189,11 +189,10 @@ impl Editor {
             changed |= self.pad_menu(ev);
             changed |= self.engine_menu(ev);
             self.patmenu.selection = self.pattern.as_ref().map(|p| p.selection.clone()).unwrap_or_default();
+            self.patmenu.steps_copied = self.pattern.as_ref().is_some_and(|p| p.has_copied_steps());
             changed |= self.patmenu.handle(&mut self.app, &mut self.model, &mut self.clipboard, ev, &mut self.outbox);
-            if std::mem::take(&mut self.patmenu.selection_cut) {
-                if let Some(p) = self.pattern.as_mut() {
-                    p.selection.clear();
-                }
+            if let (Some(r), Some(p)) = (self.patmenu.editor.take(), self.pattern.as_mut()) {
+                changed |= p.menu_request(&mut self.app, &mut self.model, r, &mut self.outbox);
             }
             if let Some(p) = self.patmenu.convert.take() {
                 self.convertor.show(p);
@@ -238,9 +237,10 @@ impl Editor {
             }
             if let Some(p) = &mut self.pattern {
                 changed |= p.handle(&mut self.app, &mut self.model, ev, &mut self.outbox);
-                if let Some((t, anchor)) = p.track_menu.take() {
+                if let Some((t, step, anchor)) = p.track_menu.take() {
                     self.patmenu.selection = p.selection.clone();
-                    self.patmenu.track_menu(&mut self.app, &anchor, &self.model, &self.clipboard, t);
+                    self.patmenu.steps_copied = p.has_copied_steps();
+                    self.patmenu.track_menu(&mut self.app, &anchor, &self.model, &self.clipboard, t, step);
                     changed = true;
                 }
             }
