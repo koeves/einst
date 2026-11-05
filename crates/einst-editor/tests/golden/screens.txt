@@ -2,7 +2,7 @@ chromatic-pads e30802e597b4bad2
 fx-newer-types 47e8a020bb205e8c
 main c370c98678c2689d
 main-menu fa94f0d0e4d87028
-mapping 28400cddb627c515
+mapping 9bd02694488df880
 modal-about e64f637e477af040
 modal-audio 8723bc6eeb2f3f60
 modal-console 234ccbe48458c168
