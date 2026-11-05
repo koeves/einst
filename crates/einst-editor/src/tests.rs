@@ -1350,8 +1350,8 @@ fn graph_menu_inserts_a_ramp() {
     for ev in ed.app.mouse_up(dreist_gui::app::MouseButton::Left) {
         ed.handle(&ev);
     }
-    ed.handle(&UiEvent::MenuSelected { anchor: ob.clone(), name: "InsertButton".into(), index: 12 });
-    ed.handle(&UiEvent::MenuSelected { anchor: ob.clone(), name: "InsertButton".into(), index: 0 });
+    ed.handle(&UiEvent::MenuSelected { anchor: ob.clone(), name: "InsertButton".into(), index: 17 });
+    ed.handle(&UiEvent::MenuSelected { anchor: ob.clone(), name: "InsertButton".into(), index: 1 });
     let e = ed.model.engine;
     let pat = ed.model.pattern(e, ed.model.current_pattern(e));
     let t = &pat.tracks[ed.model.pad[e]];
@@ -2374,8 +2374,8 @@ fn graph_line_fine_erase_and_menu_from_step() {
     ed.app.mods.alt = true;
     ed.handle(&ev(MouseKind::RightDown, f + 8, h));
     ed.app.mods.alt = false;
-    ed.handle(&UiEvent::MenuSelected { anchor: gp.clone(), name: "PatternGraph".into(), index: 12 });
-    ed.handle(&UiEvent::MenuSelected { anchor: gp.clone(), name: "PatternGraph".into(), index: 0 });
+    ed.handle(&UiEvent::MenuSelected { anchor: gp.clone(), name: "PatternGraph".into(), index: 17 });
+    ed.handle(&UiEvent::MenuSelected { anchor: gp.clone(), name: "PatternGraph".into(), index: 1 });
     assert!(vel(&ed, f + 8) < 0.01, "ramp starts at the clicked step");
     assert!((vel(&ed, f + 6) - 0.6).abs() < 0.02, "steps before it untouched");
 }
