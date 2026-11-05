@@ -309,6 +309,11 @@ pub struct Inspector {
     env_visible: (bool, bool),
     /// Envelope handle drag: (Amp?, handle 0..7).
     env_drag: Option<(bool, usize)>,
+    /// Decay / hold handles keep the sustain level (options `LockDecay` /
+    /// `LockRelease`, [re:269bca]).
+    env_lock: (bool, bool),
+    /// The envelope handle lock menu is open on this control (handle 1 or 3).
+    env_lock_menu: Option<(Vec<usize>, usize)>,
     /// Timeline in Beats mode (option `PadEditWaveDisplayTimelineMode`).
     timeline_beats: bool,
     /// The timeline's Time / Beats menu is open on this control.
@@ -389,6 +394,8 @@ impl Inspector {
             zoom_key: None,
             env_visible: (o.bool("AmpEnvVisible", true), o.bool("FreeEnvVisible", true)),
             env_drag: None,
+            env_lock: (o.bool("LockDecay", false), o.bool("LockRelease", false)),
+            env_lock_menu: None,
             timeline_beats: crate::timeline::beats_mode("PadEdit"),
             timeline_menu: None,
             menu: None,
@@ -1156,6 +1163,20 @@ impl Inspector {
                     self.timeline_menu = Some(path);
                     return true;
                 }
+                // [re:09f556]: a right click on a decay or hold handle
+                // offers its lock as one check item.
+                if *kind == dreist_gui::app::MouseKind::RightDown {
+                    if let Some((_, h @ (1 | 3))) = env_hit(model, e, p, l, self.env_visible, &geo, *x, y) {
+                        let (locked, what) = if h == 1 { (self.env_lock.0, "decay") } else { (self.env_lock.1, "hold") };
+                        let label = format!("{} {what} vertical positioning", if locked { "Unlock" } else { "Lock" });
+                        let item = if locked { format!("{}{label}", dreist_gui::menu::CHECK) } else { label };
+                        let path = path.clone();
+                        drop(cache);
+                        app.open_menu(&path, vec![item], None);
+                        self.env_lock_menu = Some((path, h));
+                        return true;
+                    }
+                }
                 match kind {
                     dreist_gui::app::MouseKind::Down => {
                         if let Some(hit) = env_hit(model, e, p, l, self.env_visible, &geo, *x, y) {
@@ -1165,7 +1186,7 @@ impl Inspector {
                     }
                     dreist_gui::app::MouseKind::Drag if self.env_drag.is_some() => {
                         let (amp, handle) = self.env_drag.unwrap();
-                        for (param, v) in env_drag_values(model, e, p, l, amp, handle, self.env_visible, &geo, *x, y, app.mods.shift) {
+                        for (param, v) in env_drag_values(model, e, p, l, amp, handle, self.env_visible, &geo, *x, y, self.env_lock) {
                             out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[param as f32, v, 0.0]));
                         }
                         return true;
@@ -1222,6 +1243,16 @@ impl Inspector {
                     }
                     dreist_gui::app::MouseKind::RightDown => false,
                 }
+            }
+            // [re:269bca]: toggle and store the lock.
+            UiEvent::MenuSelected { anchor, .. } if self.env_lock_menu.as_ref().is_some_and(|(a, _)| a == anchor) => {
+                let Some((_, h)) = self.env_lock_menu.take() else { return false };
+                let (flag, key) = if h == 1 { (&mut self.env_lock.0, "LockDecay") } else { (&mut self.env_lock.1, "LockRelease") };
+                *flag = !*flag;
+                let mut o = crate::options::Options::load();
+                o.set(key, *flag);
+                o.save();
+                true
             }
             UiEvent::MenuSelected { anchor, index, .. } if self.timeline_menu.as_ref() == Some(anchor) => {
                 self.timeline_menu = None;
@@ -1661,11 +1692,12 @@ fn env_hit(model: &Model, e: usize, p: usize, l: usize, vis: (bool, bool), g: &E
     None
 }
 
-/// Envelope drag [re:86bd9d]: the layer parameter values for a handle
+/// Envelope drag [re:874f6e]: the layer parameter values for a handle
 /// dragged to (x, y) — times from x (`((t − base)/range)^¼`, A / D 10 s, H
 /// 60 s, R 15 s), sustain / curves from y; dragging the decay or hold
-/// handle also sets the sustain from y unless shift is held.
-fn env_drag_values(model: &Model, e: usize, p: usize, l: usize, amp: bool, handle: usize, vis: (bool, bool), g: &EnvGeo, x: f32, y: f32, shift: bool) -> Vec<(u8, f32)> {
+/// handle also sets the sustain from y unless that handle is locked
+/// (`lock` = (decay, hold)).
+fn env_drag_values(model: &Model, e: usize, p: usize, l: usize, amp: bool, handle: usize, vis: (bool, bool), g: &EnvGeo, x: f32, y: f32, lock: (bool, bool)) -> Vec<(u8, f32)> {
     let Some((ay, ah)) = g.area(amp, vis) else { return Vec::new() };
     let mode = model.layer_node(e, p, l).and_then(|n| n.attr("PlaybackMode")).map_or("OneShot", dreist_dsp::voice::PlaybackMode::canonical).to_string();
     let gated = matches!(mode.as_str(), "Gated" | "Looping");
@@ -1679,14 +1711,14 @@ fn env_drag_values(model: &Model, e: usize, p: usize, l: usize, amp: bool, handl
     let value = match handle {
         0 => time(st, 10.0),
         1 => {
-            if !shift {
+            if !lock.0 {
                 out.push((env_param(amp, 2) as u8, sustain(y)));
             }
             time(st + p4(v(0)) * 10.0, 10.0)
         }
         2 | 5 => sustain(y),
         3 => {
-            if !shift {
+            if !lock.1 {
                 out.push((env_param(amp, 2) as u8, sustain(y)));
             }
             time(st + p4(v(0)) * 10.0 + p4(v(1)) * 10.0, 60.0)
@@ -1809,13 +1841,13 @@ mod tests {
         assert!((a.x + 5.0 - 31.25).abs() < 0.5, "{a:?}");
         assert_eq!(env_hit(&model, 0, 0, 0, (true, true), &g, a.x + 5.0, a.y + 5.0), Some((true, 0)));
         // Dragging it to 2.5 s gives (2.5/10)^¼.
-        let vals = env_drag_values(&model, 0, 0, 0, true, 0, (true, true), &g, 125.0, 0.0, false);
+        let vals = env_drag_values(&model, 0, 0, 0, true, 0, (true, true), &g, 125.0, 0.0, (false, false));
         let (pid, v) = *vals.last().unwrap();
         assert_eq!(pid, dreist_formats::LayerParam::AmpEnvAttack as u8);
         assert!((v - 0.25f32.powf(0.25)).abs() < 1e-3, "{v}");
         // The decay handle also sets the sustain from y (not with shift).
-        assert_eq!(env_drag_values(&model, 0, 0, 0, true, 1, (true, true), &g, 125.0, 25.0, false).len(), 2);
-        assert_eq!(env_drag_values(&model, 0, 0, 0, true, 1, (true, true), &g, 125.0, 25.0, true).len(), 1);
+        assert_eq!(env_drag_values(&model, 0, 0, 0, true, 1, (true, true), &g, 125.0, 25.0, (false, false)).len(), 2);
+        assert_eq!(env_drag_values(&model, 0, 0, 0, true, 1, (true, true), &g, 125.0, 25.0, (true, false)).len(), 1);
     }
 
     use super::*;

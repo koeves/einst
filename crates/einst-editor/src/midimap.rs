@@ -336,6 +336,24 @@ pub struct MidiMap {
     widths: [f32; 8],
     /// Header grip drag: (column, last x).
     col_drag: Option<(usize, f32)>,
+    /// The Host parameters panel under the table ([re:e999f3]).
+    host_panel: Option<Vec<usize>>,
+}
+
+/// Host parameter buttons on the panel (`Param0`..`Param31`).
+pub const HOST_BUTTONS: usize = 32;
+
+/// [re:e999f3] / [re:1a859f]: a host parameter button's text, "<name> (n)"
+/// with the bound control's name cut to 7 characters, "Multi (n)" for
+/// several bindings, "None (n)" for none.
+pub fn host_param_label(doc: &Node, p: usize) -> String {
+    let names: Vec<String> = rows(doc).into_iter().filter(|r| r.key == Key::Host(p)).map(|r| r.name).collect();
+    let name = match names.len() {
+        0 => "None".to_string(),
+        1 => names[0].chars().take(7).collect(),
+        _ => "Multi".to_string(),
+    };
+    format!("{name} ({})", p + 1)
 }
 
 /// Column x positions: the columns side by side at their widths (header
@@ -364,7 +382,62 @@ impl MidiMap {
         for &i in page {
             host = &mut host.children[i];
         }
-        skin.mount(host, "AutoMapPanel.skin").map_err(err)?;
+        // [re:ba1d32]: the map and the Host parameters panel share the tab
+        // in a top / bottom split (`MIDISplit`), the panel at its own
+        // height.
+        let (w, h) = (host.rect.w, host.rect.h);
+        let mut split = Ctrl {
+            class: "CtrlSplitterPanel".into(),
+            name: "MIDISplit".into(),
+            style: "InvisibleStyle".into(),
+            rect: dreist_gui::Rect::new(0, 0, w, h),
+            visible: true,
+            enabled: true,
+            ..Ctrl::default()
+        };
+        let hp = skin.load_skin("Automation/HostPanel.skin").map_err(err)?;
+        let hh = hp.rect.h;
+        const DIM: i32 = 5;
+        for (k, v) in [
+            ("intSplitPosition", (h - hh - DIM).max(82).to_string()),
+            ("intSplitterDim", DIM.to_string()),
+            ("intMinSize0", "82".into()),
+            ("intMinSize1", "18".into()),
+            ("optIsVertical", "true".into()),
+        ] {
+            split.set_attr(k, v);
+        }
+        let mut top = Ctrl {
+            class: "CtrlPanel".into(),
+            name: "MIDIMapPane".into(),
+            display_name: "SplitterPanel0".into(),
+            style: "InvisibleStyle".into(),
+            rect: dreist_gui::Rect::new(0, 0, w, h - hh - DIM),
+            visible: true,
+            enabled: true,
+            ..Ctrl::default()
+        };
+        skin.mount(&mut top, "AutoMapPanel.skin").map_err(err)?;
+        let mut bottom = Ctrl {
+            class: "CtrlPanel".into(),
+            name: "HostParamPane".into(),
+            display_name: "SplitterPanel1".into(),
+            style: "InvisibleStyle".into(),
+            rect: dreist_gui::Rect::new(0, h - hh, w, hh),
+            visible: true,
+            enabled: true,
+            ..Ctrl::default()
+        };
+        for mut c in hp.children {
+            c.overload = "HostParamPanel".into();
+            let r = c.rect;
+            c.set_rect(dreist_gui::Rect::new((w - r.w).max(0) / 2, 0, r.w, r.h));
+            bottom.children.push(c);
+        }
+        split.children.push(top);
+        split.children.push(bottom);
+        split.layout_splitter();
+        host.children.push(split);
         if let Some(t) = host.find_mut("TableView") {
             t.overload = "MIDIMapTable".into();
         }
@@ -372,6 +445,7 @@ impl MidiMap {
             a.visible = false;
         }
         let table = root.path_of("TableView").filter(|p| p.starts_with(page));
+        let host_panel = root.path_of("HostParamPane").filter(|p| p.starts_with(page));
         let o = crate::options::Options::load();
         Ok(MidiMap {
             page: page.to_vec(),
@@ -390,6 +464,7 @@ impl MidiMap {
             bar_drag: None,
             widths: COLUMNS.map(|c| c.1),
             col_drag: None,
+            host_panel,
         })
     }
 
@@ -398,7 +473,30 @@ impl MidiMap {
         crate::command::msg(dreist_engine::binding::id::REGISTRY_MIDI_OPTIONS_CHANGED, &[], &[self.send_notes as i32 as f32, self.send_cc as i32 as f32])
     }
 
-    pub fn sync(&mut self, app: &mut App, _model: &Model) {
+    /// The host parameter (0..32) whose panel button `path` is.
+    pub fn host_button(&self, app: &App, path: &[usize]) -> Option<usize> {
+        let hp = self.host_panel.as_ref()?;
+        if !path.starts_with(hp) {
+            return None;
+        }
+        app.ctrl(path)?.name.strip_prefix("Param")?.parse().ok().filter(|&n| n < HOST_BUTTONS)
+    }
+
+    pub fn sync(&mut self, app: &mut App, model: &Model) {
+        if let Some(hp) = self.host_panel.clone() {
+            let labels: Vec<String> = (0..HOST_BUTTONS).map(|p| host_param_label(&model.doc, p)).collect();
+            if let Some(c) = app.ctrl_mut(&hp) {
+                fn walk(c: &mut Ctrl, labels: &[String]) {
+                    for k in &mut c.children {
+                        if let Some(n) = k.name.strip_prefix("Param").and_then(|n| n.parse::<usize>().ok()).filter(|&n| n < labels.len()) {
+                            k.text = labels[n].clone();
+                        }
+                        walk(k, labels);
+                    }
+                }
+                walk(c, &labels);
+            }
+        }
         let states = [("Lock", self.locked), ("Select", self.auto_select), ("SendNotesButton", self.send_notes), ("SendCCButton", self.send_cc)];
         for (name, on) in states {
             if let Some(c) = self.named.path_in(app, &self.page, name).and_then(|p| app.ctrl_mut(&p)) {
@@ -786,5 +884,21 @@ mod tests {
         assert_eq!(grip_at(&w, 38.0, 5.0), None);
         assert_eq!(grip_at(&w, 208.0, 5.0), Some(1));
         assert_eq!(grip_at(&w, 208.0, HEADER + 1.0), None);
+    }
+}
+
+#[cfg(test)]
+mod host_panel_tests {
+    use super::*;
+
+    #[test]
+    fn host_param_labels() {
+        let mut doc = Node::new("Grid", None);
+        let proto = dreist_engine::binding::Message::new(0x66, &[0, 0, 0], &[1.0]);
+        assert_eq!(host_param_label(&doc, 2), "None (3)");
+        add_binding(&mut doc, false, 2, 0, &proto, 0, "Global", "Cutoff frequency", "Continuous");
+        assert_eq!(host_param_label(&doc, 2), "Cutoff  (3)");
+        add_binding(&mut doc, false, 2, 0, &proto, 0, "Global", "Gain", "Continuous");
+        assert_eq!(host_param_label(&doc, 2), "Multi (3)");
     }
 }
