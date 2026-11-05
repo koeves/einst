@@ -210,6 +210,8 @@ pub struct Editor {
     pad_row_menu: Option<(Vec<usize>, (usize, usize))>,
     /// The sampler's preview output menu is open on this control.
     preview_out_menu: Option<Vec<usize>>,
+    /// The sampler's overwrite question is open: anchor, request, file.
+    sampler_overwrite: Option<(Vec<usize>, sampler::Request, std::path::PathBuf)>,
     filefind: filefind::FileFind,
     /// Standalone audio / MIDI settings panels.
     pub devices: devices::Devices,
@@ -356,6 +358,7 @@ impl Editor {
             layer_menu: None,
             pad_row_menu: None,
             preview_out_menu: None,
+            sampler_overwrite: None,
             filefind,
             devices,
             midiconsole,
