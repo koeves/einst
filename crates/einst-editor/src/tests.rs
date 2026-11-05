@@ -1305,7 +1305,7 @@ fn header_options_menu() {
     open(&mut ed);
     assert!(pick(&mut ed, 14).is_empty());
     let outs = ed.app.menu.as_ref().unwrap().items.clone();
-    assert_eq!((outs.len(), outs[0].as_str(), outs[31].as_str()), (32, "✓ Master", "Sub output 31"));
+    assert_eq!((outs.len(), outs[0].as_str(), outs[14].as_str()), (15, "✓ Master", "Sub output 14"));
     assert_eq!(pick(&mut ed, 3), [(id::SET_METRONOME_OUTPUT_LOCATION, 4.0, 0.0)]);
     let metro = |ed: &Editor, k: &str| ed.model.doc.children.iter().find(|c| c.class == "Metronome").and_then(|n| n.attr(k)).map(str::to_string);
     assert_eq!(metro(&ed, "OutputLocation").as_deref(), Some("Sub output 3"));
@@ -1314,6 +1314,10 @@ fn header_options_menu() {
     ed.handle(&UiEvent::MenuSlider { anchor: ob.clone(), index: 13, value: 0.25 });
     assert_eq!(metro(&ed, "Gain").as_deref(), Some("0.25"));
     let mb = ed.app.root.path_of("MetroButton").unwrap();
+    // v1: a right click on Metro opens the output menu.
+    ed.handle(&UiEvent::RightClicked { path: mb.clone(), name: "MetroButton".into() });
+    assert_eq!(ed.app.menu.as_ref().map(|m| m.items.len()), Some(15));
+    ed.app.menu = None;
     ed.handle(&UiEvent::Clicked { path: mb, name: "MetroButton".into(), id: 0, on: true });
     assert_eq!(metro(&ed, "Mute").as_deref(), Some("false"));
     // Engine follow messages select.
