@@ -1708,7 +1708,7 @@ fn swing_menu_head_items_and_template_pick() {
     let Some(drop) = ed.app.root.path_of("SwingDrop") else { return };
     ed.handle(&UiEvent::Clicked { path: drop.clone(), name: "SwingDrop".into(), id: 0, on: false });
     let items = ed.app.menu.as_ref().expect("swing menu").items.clone();
-    assert_eq!(&items[..3], &["Extract timing from current pattern".to_string(), "Import MIDI template".into(), "Import Guru shuffle".into()]);
+    assert_eq!(&items[..3], &["Extract timing from current pattern".to_string(), "Import MIDI template".into(), "Import Guru swing/shuffle".into()]);
     if items.len() > 4 {
         ed.take_commands();
         ed.handle(&UiEvent::MenuSelected { anchor: drop.clone(), name: "SwingDrop".into(), index: 4 });
