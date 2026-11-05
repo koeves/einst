@@ -4308,3 +4308,19 @@ fn browser_show_hide_resizes_the_window() {
     assert_eq!(ed.app.size(), (1135, 640));
     assert_eq!(ed.app.ctrl(&mp).unwrap().rect.x, 306);
 }
+
+/// v1's sampler preview output menu (right click on Preview volume).
+#[test]
+fn sampler_preview_output_menu() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = crate::front::SAMPLER_PAGE;
+    ed.sync();
+    let Some(k) = ed.app.root.path_of("PreviewVolume") else { return };
+    ed.handle(&UiEvent::RightClicked { path: k.clone(), name: "PreviewVolume".into() });
+    let items = ed.app.menu.as_ref().expect("menu").items.clone();
+    assert_eq!(items.len(), 16, "{items:?}");
+    ed.take_commands();
+    ed.handle(&UiEvent::MenuSelected { anchor: k, name: "PreviewVolume".into(), index: 3 });
+    assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SET_PREVIEW_OUTPUT && m.value[0] == 4.0)));
+}
