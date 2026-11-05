@@ -60,6 +60,18 @@ pub fn shot(ed: &mut Editor) -> u64 {
     fnv_bytes(ed.render(1.0).data())
 }
 
+/// Check `ed`'s screen as `name`; with `SCREENS_DUMP=<dir>` also save it
+/// there as `<name>.png` (for comparing with reference screenshots).
+fn record(golden: &mut Golden, name: &str, ed: &mut Editor) {
+    let img = ed.render(1.0);
+    if let Some(dir) = std::env::var_os("SCREENS_DUMP") {
+        let dir = std::path::PathBuf::from(dir);
+        let _ = std::fs::create_dir_all(&dir);
+        img.save_png(dir.join(format!("{name}.png"))).expect("save screen");
+    }
+    golden.check(name, fnv_bytes(img.data()), &[]);
+}
+
 /// Render the fixed states and check them against the golden set `name`
 /// (in the calling crate's `tests/golden`; skipped without the content).
 pub fn check_screens(name: &str) {
@@ -68,47 +80,47 @@ pub fn check_screens(name: &str) {
     // Deterministic rendering first: the same state twice.
     let a = shot(&mut ed);
     assert_eq!(a, shot(&mut ed), "rendering is not deterministic");
-    golden.check("main", a, &[]);
+    record(&mut golden, "main", &mut ed);
     // Every LCD page (the page tabs, in order).
     for (tab, (page, _)) in crate::front::PAGES.iter().enumerate() {
         let mut ed = editor().unwrap();
         ed.model.editor_tab = tab;
         ed.sync();
-        golden.check(&format!("page-{}", page.to_ascii_lowercase().replace([' ', '/'], "")), shot(&mut ed), &[]);
+        record(&mut golden, &format!("page-{}", page.to_ascii_lowercase().replace([' ', '/'], "")), &mut ed);
     }
     // The browser column's mapping page.
     let mut ed = editor().unwrap();
     ed.model.utility_tab = crate::front::MAPPING_PAGE;
     ed.sync();
-    golden.check("mapping", shot(&mut ed), &[]);
+    record(&mut golden, "mapping", &mut ed);
     // A pad mode: the pads show semitones.
     let mut ed = editor().unwrap();
     let e = ed.model.engine;
     ed.model.engine_mut(e).set("EnginePadMode", "Chromatic");
     ed.sync();
-    golden.check("chromatic-pads", shot(&mut ed), &[]);
+    record(&mut golden, "chromatic-pads", &mut ed);
     for modal in ["about", "preferences", "export", "filefind", "audio", "midi", "console"] {
         let mut ed = editor().unwrap();
         ed.show_modal(modal);
         // Let the dialog slide in.
         std::thread::sleep(std::time::Duration::from_millis(600));
         ed.animate();
-        golden.check(&format!("modal-{modal}"), shot(&mut ed), &[]);
+        record(&mut golden, &format!("modal-{modal}"), &mut ed);
     }
     // The effect panels authored for the types v1 had no skin for, in the
     // engine mixer's chain.
     let mut ed = editor().unwrap();
     newer_effects(&mut ed);
-    golden.check("fx-newer-types", shot(&mut ed), &[]);
+    record(&mut golden, "fx-newer-types", &mut ed);
     // The slicer over the LCD (slid in) on a factory hit.
     let mut ed = editor().unwrap();
     if ed.open_slicer(&dreist_formats::legacy::demo("Hits/Cymbals/CY Cym Ar82 01 C2A St GB.wav")) {
         std::thread::sleep(std::time::Duration::from_millis(400));
         ed.animate();
-        golden.check("slicer", shot(&mut ed), &[]);
+        record(&mut golden, "slicer", &mut ed);
     }
     let mut ed = editor().unwrap();
     click(&mut ed, "UtilityControls/GridButton", dreist_gui::app::MouseButton::Left);
-    golden.check("main-menu", shot(&mut ed), &[]);
+    record(&mut golden, "main-menu", &mut ed);
     golden.finish();
 }
