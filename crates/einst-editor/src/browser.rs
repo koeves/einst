@@ -69,6 +69,11 @@ pub struct Entry {
 /// Back-button places kept.
 const HISTORY_KEPT: usize = 100;
 
+/// How long a preview click waits for the decode before handing it to the
+/// next frames (a local one-shot decodes in a few milliseconds; a file
+/// still to be downloaded must not stall the editor).
+const PREVIEW_WAIT: std::time::Duration = std::time::Duration::from_millis(8);
+
 pub struct Browser {
     page: Vec<usize>,
     sources: Vec<Source>,
@@ -120,6 +125,8 @@ pub struct Browser {
     header_menu: u8,
     /// Preview output pair (1-based).
     pub preview_output: usize,
+    /// Decodes previews off the editor thread and keeps the recent ones.
+    previews: dreist_engine::preview::PreviewLoader,
     /// "Pads track browser location" (option `PadsTrackBrowser`).
     pub pads_track: bool,
     /// Search box menu and the advanced search pane.
@@ -808,6 +815,7 @@ impl Browser {
             saved: false,
             pending_open: None,
             loading: None,
+            previews: Default::default(),
             collapse: None,
             scroll: 0,
             history: Vec::new(),
@@ -1482,12 +1490,31 @@ impl Browser {
         self.multi.clear();
     }
 
-    /// Preview an audio file ([re:8e7ba7]).
-    fn preview(&self, path: &Path, out: &mut Vec<Command>) {
-        let mut cache = dreist_engine::audio::SampleCache::default();
-        if let Some(d) = cache.get(path) {
+    /// Preview an audio file ([re:8e7ba7]): at once when it is cached or
+    /// decodes quickly, else from [`Browser::poll_preview`] once decoded.
+    fn preview(&mut self, path: &Path, out: &mut Vec<Command>) {
+        if let Some(d) = self.previews.request(path, PREVIEW_WAIT) {
             out.push(Command::Preview(Some(d)));
         }
+    }
+
+    /// A preview whose file finished decoding (called every frame).
+    pub fn poll_preview(&mut self, out: &mut Vec<Command>) {
+        if let Some(d) = self.previews.take_ready() {
+            out.push(Command::Preview(Some(d)));
+        }
+    }
+
+    /// Whether a press on this entry previews it (Preview on, Auto load
+    /// off, not a file the slicer takes; [re:8e7ba7]).
+    fn previews_on_press(&self, en: &Entry) -> bool {
+        let ext = en.path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+        !en.dir && self.preview_mode && !self.auto_load && matches!(ext.as_str(), "wav" | "aif" | "aiff") && !(self.slice_mode && en.path.parent().is_none_or(slicing_allowed))
+    }
+
+    #[cfg(test)]
+    pub fn set_preview_mode(&mut self, on: bool) {
+        self.preview_mode = on;
     }
 
     #[cfg(test)]
@@ -1780,7 +1807,9 @@ impl Browser {
                 // press turned into a drag.
                 if again || self.entries[i].dir {
                     self.pending_open = Some(i);
-                } else if self.auto_load {
+                } else if self.auto_load || self.previews_on_press(&self.entries[i]) {
+                    // Selecting a file loads (Auto load) or previews it
+                    // (Preview) on the press.
                     self.open(i, model, out);
                 }
                 true
@@ -1889,6 +1918,7 @@ impl Browser {
                     true
                 }
                 "StopButton" => {
+                    self.previews.cancel();
                     out.push(Command::Preview(None));
                     true
                 }

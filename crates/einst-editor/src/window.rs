@@ -14,8 +14,14 @@ impl WindowApp for Hosted {
     fn app(&mut self) -> &mut App {
         &mut self.0.app
     }
+    /// Commands an event produced go out at once, not with the next
+    /// frame (a preview or pad hit starts within the next audio block).
     fn event(&mut self, ev: &UiEvent) {
         self.0.handle(ev);
+        let cmds = self.0.take_commands();
+        if !cmds.is_empty() {
+            (self.1)(&mut self.0, cmds);
+        }
     }
     fn frame(&mut self) {
         let cmds = self.0.take_commands();
@@ -144,4 +150,32 @@ pub fn open_parented<P: dreist_gui::window::RawHandle>(parent: &P, mut ed: Edito
         ed.dialogs = Some(native_dialogs());
     }
     dreist_gui::window::open_parented(parent, Hosted(ed, link))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, Mutex};
+
+    /// A browser preview reaches the host link with the event that made
+    /// it, not with the next frame.
+    #[test]
+    fn event_commands_reach_the_link_at_once() {
+        crate::app::test_setup();
+        use dreist_gui::app::MouseKind;
+        let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), crate::model::Model::new(crate::project::new_document())) else { return };
+        let dir = crate::tests::preview_files("preview-link");
+        let Some(list) = crate::tests::browser_list(&mut ed, &dir) else { return };
+        ed.browser.as_mut().unwrap().set_preview_mode(true);
+        let got: Arc<Mutex<Vec<Command>>> = Default::default();
+        let sink = got.clone();
+        let mut h = Hosted(ed, Box::new(move |_, cmds| sink.lock().unwrap().extend(cmds)));
+        let t = std::time::Instant::now();
+        h.event(&UiEvent::Mouse { path: list, overload: "BrowserFileList".into(), kind: MouseKind::Down, x: 5.0, y: 2.0 });
+        let spent = t.elapsed();
+        assert!(got.lock().unwrap().iter().any(|c| matches!(c, Command::Preview(Some(_)))), "no frame needed");
+        // A local one-shot: decoded within the click's wait (generous for CI).
+        assert!(spent < std::time::Duration::from_millis(500), "{spent:?}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }
