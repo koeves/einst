@@ -128,9 +128,10 @@
     <CtrlStyle name="SongLaneStyle" colFill="LcdLight" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="SongLaneAltStyle" colFill="LaneAlt" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="SongLaneSelectedStyle" colFill="RowSelected" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="SongPartBodyStyle" colBorder="Ink" colFill="LcdLight" enumTextHorizontalAlign="center" font="Sans10Bold" optDrawBorder="true" parentStyle0="BaseLabelStyle" realCornerRounding="2" />
-    <CtrlStyle name="SongPartSelectedBodyStyle" colFill="PartSelected" parentStyle0="SongPartBodyStyle" />
-    <CtrlStyle name="SongPartFootStyle" colFill="Ink" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongPartBodyStyle" colBorder="LaneFoot" colFill="LcdLight" enumTextHorizontalAlign="center" font="Sans10Bold" optDrawBorder="true" parentStyle0="BaseLabelStyle" realCornerRounding="0" />
+    <CtrlStyle name="SongPartSelectedBodyStyle" colAltFill="PartHatch" colFill="PartSelected" parentStyle0="SongPartBodyStyle" />
+    <CtrlStyle name="SongPartFootStyle" colFill="LaneFoot" colText="LaneFootMark" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongBarDotStyle" colFill="BarDot" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="TrackNameStyle" colBorder="InkSoft" colFill="LcdLight" font="Sans10" optDrawBorder="true" parentStyle0="BaseLabelStyle" realTextOffset="3" />
     <CtrlStyle name="TrackArrowStyle" colText="InkMid" font="Sans9" parentStyle0="LcdFlatButtonStyle" />
     <CtrlStyle name="TrackNumberStyle" enumTextHorizontalAlign="center" font="Sans24" parentStyle0="BaseLabelStyle" />
@@ -141,7 +142,8 @@
     <CtrlStyle name="BrowserTreeIconStyle" colText="InkMid" font="Icons12" parentStyle0="GlyphLabelStyle" />
     <CtrlStyle name="BrowserIconStyle" colAltFill="IconDark" colBorder="IconLine" colFill="IconFace" colText="Ink" font="Sans7Bold" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="BrowserIconSelectedStyle" parentStyle0="BrowserIconStyle" />
-    <CtrlStyle name="BrowserSplitStyle" colFill="BrowserSplit" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="BrowserSplitStyle" colAltBorder="BrowserSplit" colFill="BrowserSplit" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="BrowserTreeBackStyle" colFill="BrowserTreeBack" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="BrowserParentStyle" colBorder="InkSoft" colFill="LcdLight" font="Sans10" parentStyle0="BaseButtonStyle" realCornerRounding="0" />
     <CtrlTableViewStyle name="BrowserListStyle" colBorder="InkSoft" colColumnDivider="InkSoft" colFill="BrowserList" colHeaderDivider="InkMid" colHeaderFill="BrowserHeader" colRow="BrowserList" colRowAlt="BrowserList" colRowDivider="InkSoft" colSelectedText="Ink" colSelection="BrowserSel" font="Sans10" intHeaderHeight="17" intRowHeight="25" optAltRowColours="true" optColumnDividers="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
     <CtrlStyle name="BrowserBadgeStyle" colBorder="InkMid" colFill="LcdLight" font="Sans7Bold" parentStyle0="BaseButtonStyle" realCornerRounding="2" />
@@ -423,7 +425,7 @@
     <CtrlStyle name="SingleTrackStyle" font="Sans12" optRoundBottomLeft="false" optRoundTopLeft="false" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="DragEditButtonStyle" enumTextHorizontalAlign="left" font="Sans10" parentStyle0="LcdMenuButtonStyle" realTextOffset="2" />
     <!-- From v1 Pattern Editor/TrackControls.skin -->
-    <CtrlStyle name="TrackControlAutoStyle" font="Sans11Bold" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="TrackControlAutoStyle" font="Sans9" parentStyle0="TrackArrowStyle" />
     <!-- From v1 Patterns/PatternSelectors.skin -->
     <CtrlStyle name="SelectorStyleNotAllocated" parentStyle0="PatternKeyStyle" />
     <CtrlStyle name="SelectorStyleAllocated" parentStyle0="PatternKeyAllocatedStyle" />
