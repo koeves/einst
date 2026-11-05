@@ -25,7 +25,7 @@ use crate::model::Model;
 use crate::{EditorError, err};
 
 pub const CATEGORIES: [&str; 6] = ["Content", "Places", "Drives", "Favourites", "Searches", "Shortlists"];
-const SOURCE_ROW: f32 = 25.0;
+pub(crate) const SOURCE_ROW: f32 = 25.0;
 const FILE_ROW: f32 = 18.0;
 
 /// v1's list pane ([re:fa4043], [re:ed8e61]): a "Parent folder" button
@@ -1480,6 +1480,76 @@ impl Browser {
             labels_set(&p, Some(Some(name)), None);
         }
         self.sources = sources(&self.favourites, &self.searches, &self.shortlists);
+    }
+
+    /// [re:7dd3b2] / [re:515934] / [re:5b43a5]: a drop on source list row
+    /// `row`: files (no folders) on a shortlist join it; folders only on the
+    /// Favourites category or one of its rows become favourites. True when
+    /// something changed.
+    pub fn drop_on_source(&mut self, row: usize, paths: &[PathBuf]) -> bool {
+        let Some(src) = self.sources.get(row).cloned() else { return false };
+        if paths.is_empty() {
+            return false;
+        }
+        match src.cat {
+            "Shortlists" if !src.header => {
+                if paths.iter().any(|p| p.is_dir()) {
+                    return false;
+                }
+                let name = src.path.as_ref().map(|p| p.to_string_lossy().trim_start_matches("shortlist:").to_string()).unwrap_or_default();
+                let Some((_, files)) = self.shortlists.iter_mut().find(|(n, _)| *n == name) else { return false };
+                for p in paths {
+                    if !files.contains(p) {
+                        files.push(p.clone());
+                    }
+                }
+                save_shortlists(&self.shortlists);
+                true
+            }
+            "Favourites" => {
+                if !paths.iter().all(|p| p.is_dir()) {
+                    return false;
+                }
+                for p in paths {
+                    if !self.favourites.contains(p) {
+                        self.favourites.push(p.clone());
+                    }
+                }
+                save_favourites(&self.favourites);
+                self.sources = sources(&self.favourites, &self.searches, &self.shortlists);
+                true
+            }
+            _ => false,
+        }
+    }
+
+    /// The source list rows as (category, header?).
+    pub fn source_rows(&self) -> Vec<(&'static str, bool)> {
+        self.sources.iter().map(|s| (s.cat, s.header)).collect()
+    }
+
+    /// Files dropped on the shortlist pane: added to the current shortlist
+    /// (a new one when there is none). True when the shortlist changed.
+    pub fn add_to_current_shortlist(&mut self, paths: Vec<PathBuf>) -> bool {
+        if paths.is_empty() {
+            return false;
+        }
+        let k = self.shortlist.as_ref().and_then(|n| self.shortlists.iter().position(|(s, _)| s == n));
+        let Some(k) = k else {
+            let k = self.new_shortlist(paths);
+            self.shortlist = self.shortlists.get(k).map(|s| s.0.clone());
+            return true;
+        };
+        let files = &mut self.shortlists[k].1;
+        let before = files.len();
+        for p in paths {
+            if !files.contains(&p) {
+                files.push(p);
+            }
+        }
+        let changed = files.len() != before;
+        save_shortlists(&self.shortlists);
+        changed
     }
 
     /// [re:6fa118]: "Shortlist n".
