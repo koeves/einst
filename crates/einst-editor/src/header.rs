@@ -36,7 +36,8 @@
 //!   recording" (stored under the same key, read with default off; 0x2a)
 //!   and "Wait for MIDI input when recording" (`WaitForMIDI`, off; 0x29);
 //!   the metronome volume slider (0x24) and the "Metronome output..." sub
-//!   menu (Master and Sub output 1–31, output locations 1..=32; 0x25).
+//!   menu (Master and Sub output 1–14, output locations 1..=15; 0x25), also on
+//!   a right click on the Metro button.
 //! - MetroButton follows the document's `Metronome Mute`.
 //! - Indicators (timer tick [re:8ae44a]): MIDIIndi lights for 10 ticks when a
 //!   block carried MIDI, VoiceIndi for 10 ticks
@@ -153,10 +154,11 @@ fn options_items(model: &Model) -> Vec<String> {
     items
 }
 
-/// The metronome output sub menu: output locations 1..=32 by long name.
+/// The metronome output menu as v1 lists it ([re:8dc275]): output
+/// locations 1..=15 (Master, Sub output 1..14) by long name.
 fn output_items(model: &Model) -> Vec<String> {
     let cur = metronome(model).and_then(|n| n.attr("OutputLocation")).map(dreist_engine::Route::from_name).unwrap_or(dreist_engine::Route::Master);
-    (1..=32)
+    (1..=15)
         .map(|i| {
             let r = dreist_engine::Route::from_index(i);
             let name = r.name();
@@ -329,6 +331,14 @@ impl Header {
 
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
         match ev {
+            // [re:29c1c3]: a right click on the Metro button opens the
+            // metronome output menu.
+            UiEvent::RightClicked { path, name } if name == "MetroButton" && self.scopes.iter().any(|s| path.starts_with(s)) => {
+                self.options = Some(path.clone());
+                self.menu = 2;
+                app.open_menu(path, output_items(model), None);
+                return true;
+            }
             UiEvent::ValueChanged { name, value, .. } if name == MASTER_GAIN => {
                 out.push(msg(id::SET_MASTER_CHANNEL_GAIN, &[], &[*value]));
                 return true;
