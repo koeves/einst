@@ -46,9 +46,13 @@ opt-level = 2
 baseview = { path = "commons/vendor/baseview" }
 
 # nih-plug whose CLAP state load survives corrupt state and asks the host
-# to rescan the parameter values (dreist-commons vendor/nih-plug).
+# to rescan the parameter values, and whose editor entry points catch
+# panics (dreist-commons vendor/nih-plug).
 [patch."https://github.com/robbert-vdh/nih-plug.git"]
 nih_plug = { path = "commons/vendor/nih-plug" }
 
+# softbuffer whose macOS observer class is unique to each plugin binary:
+# two plugins in one host aborted it (dreist-commons vendor/softbuffer).
 [patch.crates-io]
 signalsmith-stretch = { path = "commons/vendor/signalsmith-stretch" }
+softbuffer = { path = "commons/vendor/softbuffer" }

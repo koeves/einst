@@ -7,6 +7,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # Windows that tests open stay in the background (commons vendor/baseview).
+  DREIST_BACKGROUND_GUI: "1"
 
 jobs:
   macos:
