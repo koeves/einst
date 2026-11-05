@@ -210,6 +210,8 @@ pub struct Editor {
     pad_row_menu: Option<(Vec<usize>, (usize, usize))>,
     /// The sampler's preview output menu is open on this control.
     preview_out_menu: Option<Vec<usize>>,
+    /// Samples changed on disk.
+    watch: editor::changed::Watch,
     /// The sampler's overwrite question is open: anchor, request, file.
     sampler_overwrite: Option<(Vec<usize>, sampler::Request, std::path::PathBuf)>,
     filefind: filefind::FileFind,
@@ -358,6 +360,7 @@ impl Editor {
             layer_menu: None,
             pad_row_menu: None,
             preview_out_menu: None,
+            watch: Default::default(),
             sampler_overwrite: None,
             filefind,
             devices,
@@ -473,6 +476,7 @@ impl Editor {
         if self.modals.tick(&mut self.app) {
             self.app.dirty = true;
         }
+        self.watch_samples();
     }
 
     /// Open the slicer on an audio file ([re:b73f33]).

@@ -1034,6 +1034,13 @@ impl crate::Editor {
                     self.sampler.message = Some(format!("Could not save {}", f.display()));
                     return true;
                 }
+                // A file layers play, overwritten after the question: they
+                // read it again.
+                if confirmed {
+                    self.sample_written(&f);
+                    self.outbox.push(crate::command::Command::ReloadSamples(vec![f.clone()]));
+                    self.outbox.push(self.model.rebuild_command());
+                }
                 match r {
                     Request::Slice => {
                         self.open_slicer(&f);

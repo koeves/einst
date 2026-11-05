@@ -1,6 +1,7 @@
 //! `impl Editor`, by concern (the struct and its construction are in
 //! the crate root).
 
+pub(crate) mod changed;
 pub(crate) mod dispatch;
 pub(crate) mod engine_menu;
 pub(crate) mod feed;
