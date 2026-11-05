@@ -3,9 +3,9 @@
     <CtrlPanel name="CtrlPanel" rect="0, 0, 193, 150" id="0" style="EmptyPanelStyle">
         <CtrlPlot name="Plot" rect="43, 2, 107, 50" id="100000" style="EQGraphStyle" />
         <CtrlPopupButton name="Control1" rect="59, 54, 75, 17" id="100000" legacyClass="CtrlComboBox" optSingleClickEdit="true" style="LEDComboBoxStyle" />
-        <CtrlKnob name="Control2" rect="7, 78, 50, 46" id="100020" realDialThickness="0.14" style="LEDKnobLargeLR" />
-        <CtrlKnob name="Control4" rect="71, 78, 50, 46" id="100011" realDialThickness="0.14" style="LEDKnobLargeLR" />
-        <CtrlKnob name="Control3" rect="136, 78, 50, 46" id="100021" realDialThickness="0.14" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control2" rect="7, 78, 50, 46" id="100020" realDialThickness="0.10" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control4" rect="71, 78, 50, 46" id="100011" realDialThickness="0.10" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control3" rect="136, 78, 50, 46" id="100021" realDialThickness="0.10" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="-1, 128, 66, 15" id="100026" style="StandardLabelCenteredStyle" text="Frequency" />
         <CtrlLabel name="GainLabel" rect="63, 128, 66, 15" id="100014" style="StandardLabelCenteredStyle" text="Gain" />
         <CtrlLabel name="CtrlLabel" rect="128, 128, 66, 15" id="100027" style="StandardLabelCenteredStyle" text="Q" />

@@ -8,10 +8,10 @@
         <CtrlPanel name="Control5" rect="43, 42, 107, 15" id="100001" style="EmptyPanelStyle">
             <CtrlLabel name="CtrlLabel" rect="-8, 1, 123, 15" id="0" style="StandardLabelCenteredStyle" text="Low Cut" />
         </CtrlPanel>
-        <CtrlKnob name="Control1" rect="14, 80, 24, 26" id="100020" realDialThickness="0.22" style="LEDKnobSmallLR" />
-        <CtrlKnob name="Control6" rect="61, 80, 24, 26" id="100022" realDialThickness="0.22" style="LEDKnobSmallLR" />
-        <CtrlKnob name="Control2" rect="108, 80, 24, 26" id="100021" realDialThickness="0.22" style="LEDKnobSmallLR" />
-        <CtrlKnob name="Control3" rect="155, 80, 24, 26" id="100023" realDialThickness="0.22" style="LEDKnobSmallLR" />
+        <CtrlKnob name="Control1" rect="14, 80, 24, 26" id="100020" realDialThickness="0.13" style="LEDKnobSmallLR" />
+        <CtrlKnob name="Control6" rect="61, 80, 24, 26" id="100022" realDialThickness="0.13" style="LEDKnobSmallLR" />
+        <CtrlKnob name="Control2" rect="108, 80, 24, 26" id="100021" realDialThickness="0.13" style="LEDKnobSmallLR" />
+        <CtrlKnob name="Control3" rect="155, 80, 24, 26" id="100023" realDialThickness="0.13" style="LEDKnobSmallLR" />
         <CtrlLabel name="CtrlLabel" rect="1, 110, 51, 15" id="100026" style="StandardLabelCenteredStyle" text="Drive" />
         <CtrlLabel name="CtrlLabel" rect="39, 110, 66, 15" id="100028" style="StandardLabelCenteredStyle" text="Tone" />
         <CtrlLabel name="CtrlLabel" rect="85, 110, 66, 15" id="100027" style="StandardLabelCenteredStyle" text="Freq" />
