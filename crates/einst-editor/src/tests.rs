@@ -4343,3 +4343,35 @@ fn browser_shortlist_and_favourites_drops() {
     assert!(b.drop_on_source(fav, std::slice::from_ref(&dir)));
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// v1's sampler take dragged onto a pad: the take, saved, is that pad's
+/// first layer.
+#[test]
+fn sampler_take_drags_onto_a_pad() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let tmp = std::env::temp_dir().join(format!("dreist-takedrag-{}", std::process::id()));
+    ed.modals.options.set("SamplerRecordPath", tmp.to_string_lossy());
+    ed.model.samples = Some(tmp.clone());
+    ed.model.editor_tab = crate::front::SAMPLER_PAGE;
+    ed.sync();
+    let tone: Vec<f32> = (0..4410).map(|i| (i as f32 * 0.05).sin() * 0.5).collect();
+    assert_eq!(ed.sampler_take(&tone, &tone, 44100.0), Some(0));
+    fn find(c: &dreist_gui::Ctrl, f: &dyn Fn(&dreist_gui::Ctrl) -> bool, path: &mut Vec<usize>) -> bool {
+        for (i, k) in c.children.iter().enumerate() {
+            path.push(i);
+            if f(k) || find(k, f, path) {
+                return true;
+            }
+            path.pop();
+        }
+        false
+    }
+    let (mut wave, mut pad) = (Vec::new(), Vec::new());
+    assert!(find(&ed.app.root, &|c| c.overload == "SamplerWaveArea" && c.visible, &mut wave));
+    assert!(find(&ed.app.root, &|c| c.overload == "EditorPad" && c.attr("padIndex") == Some("2"), &mut pad));
+    ed.handle(&UiEvent::Dropped { from: wave, to: pad, x: 0.0, y: 0.0 });
+    let file = ed.model.layer_sample(0, 2, 0).expect("the take on pad 3");
+    assert!(file.starts_with(&tmp), "{file:?}");
+    let _ = std::fs::remove_dir_all(&tmp);
+}

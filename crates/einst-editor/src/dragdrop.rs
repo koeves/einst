@@ -54,10 +54,15 @@ pub(crate) struct DropHighlights {
 }
 
 /// What a drag started on.
+#[derive(PartialEq)]
 enum Source {
     Pad(usize),
     Pattern(usize),
     Files(Vec<PathBuf>),
+    /// The sampler's current take ([re:5eb723]).
+    Take,
+    /// The slicer's selected slice.
+    Slice,
 }
 
 /// What it was dropped on.
@@ -92,6 +97,8 @@ impl Editor {
         let c = self.app.ctrl(from)?;
         match c.overload.as_str() {
             "EditorPad" => c.attr("padIndex")?.parse().ok().map(Source::Pad),
+            "SamplerWaveArea" if !self.sampler.takes.is_empty() => Some(Source::Take),
+            "EditorPreviewWaveEditor" if self.slicer.open => Some(Source::Slice),
             "PatternSelector" => c.name.strip_prefix("Key")?.parse().ok().map(Source::Pattern),
             "BrowserFileList" => {
                 let b = self.browser.as_ref()?;
@@ -322,6 +329,31 @@ impl Editor {
                 self.outbox.push(msg(id::SELECT_PATTERN, &[e as i32, -1, -1, q as i32], &[0.0]));
                 crate::pattern::set_current_pattern(&mut self.model, e, q);
                 true
+            }
+            // [re:9580b2] / [re:8fe850]: a take or slice onto a pad: layer 0,
+            // with alt the first layer without a sample.
+            (src @ (Source::Take | Source::Slice), Target::Pad(q)) => {
+                if padmenu::pad_locked(&self.model, e, q) {
+                    return false;
+                }
+                let layer = if m.alt { (0..LAYERS).find(|&l| !self.model.layer(e, q, l).valid) } else { Some(0) };
+                let Some(l) = layer else {
+                    let anchor = to.clone();
+                    self.drop_alert(&anchor, "No available layers on selected pad!");
+                    return true;
+                };
+                let loaded = if src == Source::Take {
+                    let cur = self.sampler.current;
+                    let crop = self.sampler.auto_crop;
+                    let Some(f) = self.sampler_record_file(cur) else { return false };
+                    self.sampler.take().is_some_and(|t| t.save(&f, crop).is_ok()) && crate::browser::load_sample_into_layer(&mut self.model, e, q, l, &f)
+                } else {
+                    self.slicer.drop_on_pad(&mut self.model, e, q, l)
+                };
+                if loaded {
+                    self.rebuild();
+                }
+                loaded
             }
             (Source::Files(files), Target::Pad(q)) => {
                 if padmenu::pad_locked(&self.model, e, q) {
