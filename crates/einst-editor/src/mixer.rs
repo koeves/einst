@@ -65,46 +65,45 @@ pub(crate) enum Channel {
     Layer(usize),
 }
 
-/// OutputCombo items ([re:1123ca]: the 38 [re:0dccd3] names — subs in
-/// the short "S n" form).
+/// OutputCombo items, as the original v1 fills them ([re:eab727],
+/// [re:59154a] long names): Parent, Master, Sub output 1..15, Buss 1..4.
 pub fn output_items() -> Vec<String> {
-    (0..38)
+    (0..21)
         .map(|i| match i {
             0 => "Parent".to_string(),
             1 => "Master".to_string(),
-            2..=33 => format!("S {}", i - 1),
-            _ => format!("Aux {}", i - 33),
+            2..=16 => format!("Sub output {}", i - 1),
+            _ => format!("Buss {}", i - 16),
         })
         .collect()
 }
 
+/// Preview output pairs ([re:d51559]): Master, Sub output 1..15 (the
+/// preview output is the 1-based item).
+pub fn preview_output_items() -> Vec<String> {
+    (0..16).map(|k| if k == 0 { "Master".to_string() } else { format!("Sub output {k}") }).collect()
+}
+
+/// The engine's output location index of item `i` of [`output_items`]
+/// (v1's four busses are the global aux buses, 34..37).
+pub fn output_location(i: usize) -> f32 {
+    match i {
+        0..=16 => i as f32,
+        _ => (i.min(20) - 17 + 34) as f32,
+    }
+}
+
 /// Item index of a stored `OutputLocation` name (unknown → Parent).
-fn output_index(name: &str) -> usize {
+pub(crate) fn output_index(name: &str) -> usize {
     let num = |p: &str| name.strip_prefix(p).and_then(|n| n.trim().parse::<usize>().ok());
     match name {
         "Master" => 1,
         _ => match (num("Sub output "), num("Aux ")) {
-            (Some(k @ 1..=32), _) => k + 1,
-            (_, Some(k @ 1..=4)) => k + 33,
+            (Some(k @ 1..=15), _) => k + 1,
+            (_, Some(k @ 1..=4)) => k + 16,
             _ => 0,
         },
     }
-}
-
-/// Output locations used anywhere in the document (marked in the menu, the
-/// original's block image for used outputs above Master).
-fn used_outputs(doc: &Node) -> std::collections::BTreeSet<usize> {
-    fn walk(n: &Node, out: &mut std::collections::BTreeSet<usize>) {
-        if let Some(o) = n.attr("OutputLocation") {
-            out.insert(output_index(o));
-        }
-        for c in &n.children {
-            walk(c, out);
-        }
-    }
-    let mut s = std::collections::BTreeSet::new();
-    walk(doc, &mut s);
-    s
 }
 
 /// The aux send of a strip knob: `SendKnob<n>` (layer / engine strips) or
@@ -690,7 +689,7 @@ impl Mixer {
                 return true;
             }
             if let Some(ch) = self.output_menu.take() {
-                let v = (*index).min(37) as f32;
+                let v = output_location(if matches!(ch, Channel::Aux(_)) { *index + 1 } else { *index });
                 let cmd = match ch {
                     Channel::Engine(k) => msg(id::SET_ENGINE_OUTPUT, &[k as i32], &[v]),
                     Channel::Pad(k) => msg(id::SET_PAD_OUTPUT, &[e, Self::pad_of(model, k) as i32], &[v]),
@@ -729,12 +728,11 @@ impl Mixer {
         if let UiEvent::Clicked { path, name, .. } = ev {
             if name == "OutputCombo" {
                 let Some((ch, _)) = self.hit(app, path) else { return false };
-                let used = used_outputs(&model.doc);
                 let current = app.ctrl(path).map(|c| c.text.clone()).unwrap_or_default();
-                let items = output_items();
+                // [re:3ec96a]: an aux return offers Master and the subs.
+                let items: Vec<String> = if matches!(ch, Channel::Aux(_)) { output_items()[1..17].to_vec() } else { output_items() };
                 let checked = items.iter().position(|t| *t == current);
-                let labels = items.into_iter().enumerate().map(|(i, t)| if i > 1 && used.contains(&i) { format!("\u{25a0} {t}") } else { t }).collect();
-                app.open_menu(path, labels, checked);
+                app.open_menu(path, items, checked);
                 self.output_menu = Some(ch);
                 return true;
             }
