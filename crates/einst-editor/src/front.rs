@@ -151,13 +151,10 @@ pub(crate) fn root(skin: &mut Skin) -> Result<Ctrl, EditorError> {
     let mut root = skin.load_skin("RootSkin.skin").map_err(err)?;
     root.rect = Rect::new(0, 0, WINDOW.0, WINDOW.1);
     mount_all(skin, &mut root)?;
-    // The browser show / hide button and the debug FPS label are not
-    // ported.
-    for n in ["ShowHideButton", "FPSLabel"] {
-        if let Some(c) = root.find_mut(n) {
-            c.visible = false;
-            c.enabled = false;
-        }
+    // The debug FPS label is not ported.
+    if let Some(c) = root.find_mut("FPSLabel") {
+        c.visible = false;
+        c.enabled = false;
     }
     // The engine buttons carry their engine's art and number.
     if let Some(sels) = root.find_mut("EditorEngineSelectors") {
@@ -208,6 +205,34 @@ pub struct Front {
     /// Tap tempo: the last taps.
     taps: Vec<std::time::Instant>,
     named: dreist_gui::app::PathCache,
+    /// The browser is hidden (the small window).
+    pub browser_hidden: bool,
+}
+
+/// [re:8157fe]: show or hide the browser column. Hidden, the main panel
+/// moves to x 1 and the window shrinks to its width + 1 (`RootPanelSmallStyle`);
+/// shown, the window is back at full width (`RootPanelStyle`).
+pub fn set_browser_visible(app: &mut App, visible: bool) {
+    let Some(back) = app.root.path_of("BackPanel") else { return };
+    let (Some(bp), Some(mp)) = (app.root.path_of("BrowsePanel"), app.root.path_of("MovePanel")) else { return };
+    let browse_w = app.ctrl(&bp).map_or(0, |c| c.rect.w);
+    let main_w = app.ctrl(&mp).map_or(0, |c| c.rect.w);
+    let w = if visible { WINDOW.0 } else { main_w + 1 };
+    if let Some(c) = app.ctrl_mut(&bp) {
+        c.visible = visible;
+    }
+    if let Some(c) = app.ctrl_mut(&mp) {
+        c.rect.x = if visible { browse_w - 2 } else { 1 };
+    }
+    if let Some(c) = app.ctrl_mut(&back) {
+        c.rect.w = w;
+        c.style = if visible { "RootPanelStyle" } else { "RootPanelSmallStyle" }.into();
+    }
+    if app.size().0 != w {
+        app.resize(w, WINDOW.1);
+        app.resize_request = true;
+    }
+    app.dirty = true;
 }
 
 /// The master channel's `Pitch` (0..1, centre 0.5 = no transposition).
@@ -224,6 +249,10 @@ impl Front {
 
     pub fn sync(&self, app: &mut App, model: &Model) {
         let e = model.engine;
+        let hidden = self.browser_hidden;
+        if let Some(c) = self.named.path_in(app, &[], "ShowHideButton").and_then(|p| app.ctrl_mut(&p)) {
+            c.on = hidden;
+        }
         let mode = model.pad_mode(e);
         if let Some(g) = self.mode_path(app, "PadMode").and_then(|p| app.ctrl_mut(&p)) {
             for (i, b) in g.children.iter_mut().enumerate() {
@@ -248,6 +277,11 @@ impl Front {
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
         let e = model.engine;
         match ev {
+            UiEvent::Clicked { name, .. } if name == "ShowHideButton" => {
+                self.browser_hidden = !self.browser_hidden;
+                set_browser_visible(app, !self.browser_hidden);
+                true
+            }
             UiEvent::Clicked { path, .. } if self.mode_path(app, "PadMode").is_some_and(|g| path.len() == g.len() + 1 && path.starts_with(&g)) => {
                 let Some(&mode) = PAD_MODES.get(*path.last().unwrap()) else { return false };
                 out.push(Command::SetPadMode { engine: e, mode });

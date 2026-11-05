@@ -422,6 +422,16 @@ impl Editor for DreistEditor {
         let gui = match DreistGui::new(&self.theme, model) {
             Ok(mut g) => {
                 g.project_path = project_path;
+                // The window the host keeps from the last open: a small one
+                // had the browser hidden.
+                let px = self.size.load(std::sync::atomic::Ordering::Relaxed);
+                if px != 0 {
+                    let ui = g.app.ui_scale.max(0.25) as f64;
+                    if ((px >> 32) as f64 / ui) < SIZE.0 as f64 * 0.9 {
+                        g.set_browser_hidden(true);
+                        g.app.resize_request = false;
+                    }
+                }
                 g.menu_bar = cfg!(feature = "standalone");
                 #[cfg(feature = "standalone")]
                 {
