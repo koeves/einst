@@ -193,6 +193,17 @@ impl Editor {
         if !self.learn.active {
             return false;
         }
+        // [re:9b80b1]: a Host parameters button binds the learn target to
+        // that host parameter; the buttons are never learn targets
+        // themselves ([re:be689e]).
+        if let Some(path) = learn::event_path(ev) {
+            if let Some(n) = self.midimap.as_ref().and_then(|m| m.host_button(&self.app, path)) {
+                if matches!(ev, UiEvent::Pressed { .. }) && self.learn.target.is_some() {
+                    self.learn_bind(false, n, 0);
+                }
+                return true;
+            }
+        }
         if let UiEvent::MenuSelected { index, .. } = ev {
             let Some(stage) = self.learn.menu.take() else { return false };
             let anchor = self.learn.target.as_ref().map(|t| t.path.clone());
