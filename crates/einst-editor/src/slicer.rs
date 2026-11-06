@@ -722,10 +722,13 @@ impl Slicer {
                 }
                 true
             }
-            UiEvent::Wheel { path, overload, dy } if self.mine(path) && overload == "EditorPreviewWaveEditor" => {
-                let w = app.ctrl(path).map(|c| c.rect.w as f32).unwrap_or(1.0);
-                let mx = ((app.mouse_pos().0 - app.origin(path).0 as f32) / w.max(1.0)) as f64;
-                self.zoom(if *dy > 0.0 { 2.0 } else { 0.5 }, mx);
+            // v1: the wheel over the wave (and over the zoom bar) moves the
+            // zoom bar's thumb 5 px ([re:1a34bd] → [re:78e62a]).
+            UiEvent::Wheel { path, overload, dy } if self.mine(path) && (overload == "EditorPreviewWaveEditor" || overload == "WaveDisplayZoomSlider") => {
+                let tw = self.overlay.as_ref().and_then(|o| app.ctrl(o)).and_then(|c| c.find(ZOOM_BAR)).map(|c| c.rect.w as f32).unwrap_or(1.0);
+                let (s, z) = self.view_frac();
+                let px = if *dy > 0.0 { 5.0 } else { -5.0 };
+                self.set_view_frac((s + px / tw.max(1.0), z));
                 true
             }
             UiEvent::Mouse { path, overload, kind, x, y } if self.mine(path) && overload == "EditorPreviewWaveEditor" => {
