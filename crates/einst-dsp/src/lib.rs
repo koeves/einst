@@ -22,6 +22,7 @@
 
 pub mod audio_freeze;
 pub mod chorus;
+pub mod classify;
 pub mod comb;
 pub mod delay;
 pub mod envelope_shaper;

@@ -1088,6 +1088,7 @@ dependencies = [
  "dreist-gui",
  "dreist-testkit",
  "einst",
+ "einst-dsp",
  "einst-formats",
  "rfd",
 ]
