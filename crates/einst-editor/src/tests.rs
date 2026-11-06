@@ -993,40 +993,6 @@ fn keyboard_accelerators() {
 }
 
 #[test]
-fn pattern_select_copy_paste() {
-    crate::app::test_setup();
-    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
-    let e = ed.model.engine;
-    let cur = ed.model.current_pattern(e);
-    let on = |ed: &Editor| -> Vec<(usize, usize)> {
-        let pat = ed.model.pattern(e, cur);
-        (0..16).flat_map(|t| (0..pat.steps as usize).map(move |s| (t, s))).filter(|&(t, s)| pat.tracks[t].steps[s].on).collect()
-    };
-    let before = on(&ed);
-    assert!(!before.is_empty());
-    let key = |ed: &mut Editor, k: &str, cmd: bool| {
-        ed.app.mods.cmd = cmd;
-        for ev in ed.app.shortcut(k) {
-            ed.handle(&ev);
-        }
-        ed.app.mods.cmd = false;
-    };
-    key(&mut ed, "a", true);
-    key(&mut ed, "x", true);
-    assert!(on(&ed).is_empty(), "cut removes the steps");
-    ed.model.pad[e] = 0;
-    key(&mut ed, "v", true);
-    let after = on(&ed);
-    // Pasted relative to the top track, so the same set when the
-    // selection started at track 0 / step 0.
-    let (t0, s0) = (before.iter().map(|x| x.0).min().unwrap(), before.iter().map(|x| x.1).min().unwrap());
-    let expect: Vec<(usize, usize)> = before.iter().map(|&(t, s)| (t - t0, s - s0)).collect();
-    assert_eq!(after, expect);
-    key(&mut ed, "right", false);
-    assert_eq!(on(&ed).len(), after.len());
-}
-
-#[test]
 fn pattern_track_level_knob_sets_the_pad_gain() {
     crate::app::test_setup();
     let p = demo("Presets/Hollow.geist");
@@ -4573,12 +4539,11 @@ fn nudge_buttons_move_the_selection() {
     click_named(&mut ed, &next, false);
     let sent = |c: &[Command], k: u32| c.iter().any(|c| matches!(c, Command::Message(m) if m.kind == k));
     assert!(sent(&ed.take_commands(), id::NUDGE_PATTERN_FORWARD), "no selection: the pattern");
-    ed.app.mods.cmd = true;
-    for ev in ed.app.shortcut("a") {
-        ed.handle(&ev);
-    }
-    ed.app.mods.cmd = false;
-    assert!(ed.pattern.as_ref().unwrap().has_selection());
+    // Select the pattern's steps (as a box would).
+    let pat = ed.model.pattern(ed.model.engine, ed.model.current_pattern(ed.model.engine));
+    let on: std::collections::BTreeSet<(usize, usize)> = pat.tracks.iter().enumerate().flat_map(|(t, tr)| tr.steps.iter().enumerate().filter(|(_, d)| d.on).map(move |(s, _)| (t, s))).collect();
+    assert!(!on.is_empty());
+    ed.pattern.as_mut().unwrap().selection = on;
     ed.take_commands();
     click_named(&mut ed, &next, false);
     let c = ed.take_commands();
@@ -4727,4 +4692,19 @@ fn export_prompt_names_as_v1() {
     let pat = ed.model.pattern_name(e, ed.model.current_pattern(e));
     assert_eq!(ed.export_file_name(), (format!("{pat} Master"), false));
     assert_eq!(modal::last_save_location(), options::documents_dir());
+}
+
+/// v1's pattern and song editors take no keys: cmd-A does not select.
+#[test]
+fn pattern_keys_do_nothing_as_v1() {
+    crate::app::test_setup();
+    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    ed.model.editor_tab = 0;
+    ed.sync();
+    ed.app.mods.cmd = true;
+    for ev in ed.app.shortcut("a") {
+        ed.handle(&ev);
+    }
+    ed.app.mods.cmd = false;
+    assert!(ed.pattern.as_ref().unwrap().selection.is_empty());
 }
