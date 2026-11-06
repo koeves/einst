@@ -8,7 +8,7 @@ mod table;
 
 use table::{C, Fx, TABLE};
 
-/// `f2s` [re:288cb0]: N decimals, rounded half up (in double), '+' on
+/// `f2s` [re:4efe98]: N decimals, rounded half up (in double), '+' on
 /// request, no "-0".
 fn f2s(x: f64, n: usize, plus: bool) -> String {
     let k = (x * 10f64.powi(n as i32) + 0.5).floor() as i64;
@@ -56,7 +56,7 @@ fn round_away(x: f32) -> i32 {
     (x + if x < 0.0 { -0.5 } else { 0.5 }) as i32
 }
 
-/// Beat power text [re:729835] + " note" ([re:d4b3a1]).
+/// Beat power text [re:d9b6a2] + " note" ([re:d4b3a1]).
 fn beat_note(x: f32) -> String {
     if x <= -8.0 {
         return "0 note".into();

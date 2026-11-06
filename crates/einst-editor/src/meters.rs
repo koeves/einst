@@ -5,7 +5,7 @@
 //! The meter's source comes from its ancestors: mixer strips (`channel`
 //! attr: the mixer channel's output levels), inspector layer rows
 //! (`layer` attr), the pad header (`PadSelButton`) and the sampler page
-//! ([re:7fc93e]); the front panel's level strips by their `volEngine` /
+//! ([re:1b76ee]); the front panel's level strips by their `volEngine` /
 //! `masterSide` attrs.
 
 use dreist_engine::Meters;
@@ -62,7 +62,7 @@ pub fn update(root: &mut Ctrl, model: &Model, levels: &Meters) -> Vec<dreist_gui
                 _ => None,
             })
             .or(src);
-        // [re:7ebd1a]: the selector overlay
+        // [re:de6d20]: the selector overlay
         // follows |(L + R)/2| of the engine output, jumping up and falling
         // by (old − new)·0.8149 per tick; drawn as colAltFill at
         // min(level·0.75, 1) alpha.

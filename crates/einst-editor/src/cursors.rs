@@ -2,9 +2,9 @@
 //!
 //! - Hover: the layer wave display's markers and the zoom sliders' thumb
 //!   edges show the left / right cursor ([re:808270]
-//!   [re:b27152], [re:632a19]); elsewhere
+//!   [re:079fd4], [re:632a19]); elsewhere
 //!   the arrow (the app resets it on every move).
-//! - Pattern grid (multi tool, [re:e7cf89]):
+//! - Pattern grid (multi tool, [re:ab0350]):
 //!   NotAllowed / Selection / ResizeRightThin / Multi.
 //! - Song body ([re:01ad57]): the cursor of the
 //!   operation a press would start.

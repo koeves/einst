@@ -11,9 +11,9 @@
 //! equal v2's up to rounding; v1's ±1e−8 per-band denormal offset (about
 //! −160 dBFS) and its summation order are not transcribed.
 //!
-//! [re:deea98] (Parametric EQ, DJ EQ; `InitializePorts` [re:6fd56c],
-//! `Voice::UpdateCoeffs` [re:445da1], `Voice::ProcessBuffer` [re:36b9e6]) with
-//! [re:86c5ff] ([re:026f43]..[re:41d336]): four bands in series — LF shelf/bell,
+//! [re:deea98] (Parametric EQ, DJ EQ; `InitializePorts` [re:0c7159],
+//! `Voice::UpdateCoeffs` [re:a736a9], `Voice::ProcessBuffer` [re:5f7c89]) with
+//! [re:86c5ff] ([re:631307]..[re:8b82c8]): four bands in series — LF shelf/bell,
 //! two peaking mids (Orfanidis-style prescribed-Nyquist-gain design,
 //! `peqx`), HF shelf/bell — each switchable, plus a wet/dry mix.
 
@@ -195,7 +195,7 @@ impl Node for SslEq {
         &mut self.ports
     }
 
-    /// `Voice::Reset` [re:4f13fd]: every band cleared, recomputed next block.
+    /// `Voice::Reset` [re:f114d2]: every band cleared, recomputed next block.
     fn reset(&mut self) {
         self.first = true;
     }

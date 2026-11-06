@@ -173,7 +173,7 @@ impl Node for Chorus {
         }
     }
 
-    /// Reset [re:8c945e]: four new targets, then four new current offsets.
+    /// Reset [re:a569df]: four new targets, then four new current offsets.
     fn reset(&mut self) {
         self.depth = 0.0;
         self.idx = 0;

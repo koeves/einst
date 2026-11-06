@@ -2,7 +2,7 @@
 //! incoming MIDI as text in `OutputView`, filtered by the Notes / CCs /
 //! Other toggles, Clear empties it. Lines come from
 //! [re:e53b37] with
-//! [re:59f16c] note names.
+//! [re:9ad209] note names.
 
 use dreist_gui::app::{App, MouseKind, UiEvent};
 use dreist_gui::paint::{Painter, RectF};

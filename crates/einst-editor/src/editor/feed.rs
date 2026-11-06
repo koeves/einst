@@ -157,15 +157,15 @@ impl Editor {
         if left.is_empty() {
             return None;
         }
-        // Take stop [re:e602d2]: the display shows the finished take.
+        // Take stop [re:d17293]: the display shows the finished take.
         let i = self.sampler.add_take(left, right, sr);
         self.model.sampling = None;
         self.sync();
         Some(i)
     }
 
-    /// Live take display from the audio thread ([re:94c103] /
-    /// [re:eb0601]): `reset` starts a new take.
+    /// Live take display from the audio thread ([re:c67e70] /
+    /// [re:ba3087]): `reset` starts a new take.
     pub fn sampler_live(&mut self, reset: bool, buckets: &[(f32, f32)]) {
         if !reset && buckets.is_empty() {
             return;

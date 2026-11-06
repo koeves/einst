@@ -11,9 +11,9 @@
 //!   (stereo) and 1 − e^(−5π/sr) (mono) where v2 uses 1/32, and v1 has no
 //!   end-of-block snap of the swing.
 //!
-//! [re:c23a25] (Delay; `InitializePorts` [re:ae61ec], `SetMaxDelay`
-//! [re:71bddc], `Reset` [re:0322d7], `PrepareStream` [re:b8c3e6], `ProcessBuffer`
-//! [re:0fa774]): tempo-syncable stereo (or summed-mono) feedback delay. The
+//! [re:c23a25] (Delay; `InitializePorts` [re:98f914], `SetMaxDelay`
+//! [re:fdb0e7], `Reset` [re:772360], `PrepareStream` [re:b8c3e6], `ProcessBuffer`
+//! [re:fb4936]): tempo-syncable stereo (or summed-mono) feedback delay. The
 //! delay time glides tape-style toward its target, the feedback path is
 //! soft-saturated and band-limited (one-pole low-pass then high-pass), and
 //! Swing shortens one side's output tap.

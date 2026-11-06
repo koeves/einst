@@ -1,7 +1,7 @@
 //! Pattern Convertor ([re:c65c97], pattern key menu › Convert
 //! timing): NumStepsBox (1..1024, default 16), RezCombo (resolutions,
-//! default 1/16), ApplyToAll, Cancel / Apply ([re:cf7e00]
-//! → [re:4ec8dd] per pattern; port:
+//! default 1/16), ApplyToAll, Cancel / Apply ([re:b5f414]
+//! → [re:762f1f] per pattern; port:
 //! `PatternData::convert_timing`, sent as step count / length / clear /
 //! step messages).
 

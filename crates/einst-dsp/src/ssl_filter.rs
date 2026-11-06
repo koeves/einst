@@ -11,8 +11,8 @@
 //! applies at audio rates). v1's ±1e−8 denormal offset on the biquad
 //! history and its summation order are not transcribed.
 //!
-//! [re:fb882e] (Filter; `InitializePorts` [re:007df0],
-//! `Voice::UpdateCoeffs` [re:9c301b], `Voice::ProcessBuffer` [re:04067e]):
+//! [re:fb882e] (Filter; `InitializePorts` [re:59cd52],
+//! `Voice::UpdateCoeffs` [re:93bb36], `Voice::ProcessBuffer` [re:abe31e]):
 //! 3rd-order high-pass (one-pole + Chamberlin 2-pole) and a 12 dB/oct RBJ
 //! low-pass, each switchable, with a wet/dry mix.
 
@@ -75,7 +75,7 @@ impl Node for SslFilter {
         &mut self.ports
     }
 
-    /// `Voice::Reset` [re:2f591b]: coefficients, keys and filter history
+    /// `Voice::Reset` [re:609309]: coefficients, keys and filter history
     /// cleared, recomputed next block (the voice's denormal offset runs on).
     fn reset(&mut self) {
         self.first = true;
