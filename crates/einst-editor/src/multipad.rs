@@ -13,7 +13,7 @@
 //!
 //! Modifiers (`e_setModifiers` 0x26, the pad header's AllPads / AllLayers;
 //! [re:f3180c] / [re:2b5118], [re:cba339],
-//! ev_9aeeaaa0…, [re:7c4772]): with all pads on, pad
+//! ev_9aeeaaa0…, [re:a736bb]): with all pads on, pad
 //! messages go to all 64 pads. Layer messages from the editor whose layer
 //! is in its pad's layer selection (the port: the current layer) or with
 //! all layers on go to every existing layer of the selected layers (all 8
@@ -266,7 +266,7 @@ pub fn select_engine(model: &mut Model, k: usize, cmd: bool, shift: bool) -> usi
     anchor
 }
 
-/// [re:16aacd] (ev_5594bf7a…): editor messages for an
+/// [re:b2893c] (ev_5594bf7a…): editor messages for an
 /// engine in the selection apply to the other selected engines; parameter
 /// (0x90) and send (0x98) changes by the same delta, clamped 0..1.
 fn engine_fans_out(kind: u32) -> bool {
