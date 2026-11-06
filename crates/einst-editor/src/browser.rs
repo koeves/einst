@@ -27,6 +27,10 @@ use crate::{EditorError, err};
 pub const CATEGORIES: [&str; 6] = ["Content", "Places", "Drives", "Favourites", "Searches", "Shortlists"];
 pub(crate) const SOURCE_ROW: f32 = 25.0;
 const FILE_ROW: f32 = 18.0;
+/// The Preview play button's width (v1's 20 px icon).
+const PREVIEW_ICON: f32 = 20.0;
+/// Its red flash: 26 ticks of v1's 30 Hz timer.
+const PREVIEW_FLASH: std::time::Duration = std::time::Duration::from_millis(867);
 
 /// v1's list pane ([re:fa4043], [re:ed8e61]): a "Parent folder" button
 /// across the top (20 px), the column header 2 px below it (18 px, the
@@ -222,6 +226,9 @@ pub struct Browser {
     dir: Option<PathBuf>,
     entries: Vec<Entry>,
     selected: Option<usize>,
+    /// [re:b86812]: the Preview play button pressed on this file, and when
+    /// (its red triangle fades over 26 timer ticks).
+    preview_flash: Option<(PathBuf, std::time::Instant)>,
     /// Multiple selection (`CtrlTable` cmd / shift clicks); empty when
     /// only `selected` is.
     multi: Vec<usize>,
@@ -990,6 +997,7 @@ impl Browser {
             load_request: None,
             alt_click: false,
             preview_mode: false,
+            preview_flash: None,
             preview_volume: 0.793_700_5,
             search: None,
             searches: Vec::new(),
@@ -1709,11 +1717,24 @@ impl Browser {
         }
     }
 
-    /// A preview whose file finished decoding (called every frame).
-    pub fn poll_preview(&mut self, out: &mut Vec<Command>) {
+    /// A preview whose file finished decoding (called every frame);
+    /// whether the play button's flash still fades (repaint).
+    pub fn poll_preview(&mut self, out: &mut Vec<Command>) -> bool {
         if let Some(d) = self.previews.take_ready() {
             out.push(Command::Preview(Some(d)));
         }
+        if self.preview_flash.as_ref().is_some_and(|(_, t)| t.elapsed() > PREVIEW_FLASH) {
+            self.preview_flash = None;
+            return true;
+        }
+        self.preview_flash.is_some()
+    }
+
+    /// [re:b86812]: the selected row's Preview play button (an audio file,
+    /// Auto play off): its left edge in the row.
+    fn preview_button_x(&self, en: &Entry, selected: bool, name_w: f32) -> Option<f32> {
+        let ext = en.path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
+        (selected && !en.dir && !self.preview_mode && crate::search::is_audio(&ext)).then_some(name_w - PREVIEW_ICON - 2.0)
     }
 
     /// Whether a press on this entry previews it (Preview on, Auto load
@@ -2020,10 +2041,23 @@ impl Browser {
                 }
                 false
             }
-            UiEvent::Mouse { overload, kind: MouseKind::Down, y, .. } if overload == "BrowserFileList" => {
+            UiEvent::Mouse { path, overload, kind: MouseKind::Down, x, y } if overload == "BrowserFileList" => {
                 let i = self.scroll + (*y / FILE_ROW) as usize;
                 if i >= self.entries.len() {
                     return false;
+                }
+                // [re:b86812]: a press on the selected row's play button
+                // previews the file.
+                let w = app.ctrl(path).map(|c| c.rect.w as f32).unwrap_or(0.0);
+                let name_w = self.columns(w - SLIDER_W as f32).first().map(|c| c.2).unwrap_or(w);
+                let yr = *y - (i - self.scroll) as f32 * FILE_ROW;
+                if let Some(ix) = self.preview_button_x(&self.entries[i], self.selected == Some(i) && self.multi.is_empty(), name_w) {
+                    if (ix..ix + PREVIEW_ICON).contains(x) && yr > 1.0 && yr < FILE_ROW {
+                        let f = self.entries[i].path.clone();
+                        self.preview(&f, out);
+                        self.preview_flash = Some((f, std::time::Instant::now()));
+                        return true;
+                    }
                 }
                 // cmd toggles the row, shift extends from the anchor.
                 if app.mods.cmd || app.mods.shift {
@@ -2532,6 +2566,16 @@ impl Browser {
                 crate::browsericons::draw(r, p, st, icon, "file", &crate::browsericons::badge(&ext));
             }
             p.text(RectF::new(22.0, y, name_w - 24.0, FILE_ROW), &en.name, col, &font, HAlign::Left, VAlign::Center);
+            // [re:b86812]: the play button at the name column's right, and
+            // after a press a red triangle over it fading out.
+            if let Some(ix) = self.preview_button_x(en, on, name_w) {
+                p.fill_polygon(&[(ix + 5.0, y + 4.0), (ix + 12.0, y + 9.0), (ix + 5.0, y + 14.0)], col);
+                if let Some((_, t)) = self.preview_flash.as_ref().filter(|(f, _)| *f == en.path) {
+                    let ticks = (t.elapsed().as_secs_f32() * 30.0) as u32;
+                    let a = 255u32.saturating_sub(10 * ticks) as f32 / 255.0;
+                    p.fill_polygon(&[(ix + 5.0, y + 4.0), (ix + 12.0, y + 9.0), (ix + 5.0, y + 14.0)], Colour::rgba(255, 0, 0, 255).with_alpha(a));
+                }
+            }
             for &(c, x, cw) in cols.iter().skip(1) {
                 p.line(x + 0.5, y, x + 0.5, y + FILE_ROW, divider, 1.0);
                 let t = if c == Column::Type { type_label(&en.path, en.dir).to_string() } else { size_label(&en.path, en.dir) };
