@@ -1388,6 +1388,12 @@ impl Inspector {
         self.params.as_ref().filter(|pp| path.starts_with(pp)).and_then(|_| param_for_control(name))
     }
 
+    /// Whether `path` is in the layer controls or the pad controls (the
+    /// v1 providers' tooltips).
+    pub fn in_layer_or_pad_controls(&self, path: &[usize]) -> bool {
+        self.in_params(path) || self.in_pad_controls(path)
+    }
+
     /// The velocity split editor's tooltip.
     pub fn vsplit_tooltip(&self, model: &Model, c: &Ctrl) -> Option<String> {
         self.vsplit.tooltip(model, c)

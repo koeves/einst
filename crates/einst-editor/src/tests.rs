@@ -3336,9 +3336,10 @@ fn tooltips_follow_the_pointer() {
         ed.handle(&UiEvent::ToolTip { path: t });
         ed.app.tooltip.as_ref().map(|t| t.text.clone())
     };
-    assert_eq!(hover(&mut ed, "MasterSlider").map(|t| t.starts_with("Master Level: ")), Some(true));
+    // v1's DB15 / LongPercentage providers under the display names.
+    assert_eq!(hover(&mut ed, "MasterSlider").map(|t| t.starts_with("Master gain: ") && t.ends_with("dB")), Some(true));
     assert_eq!(hover(&mut ed, "StepLengthCombo").as_deref(), Some("Length of time each step lasts"));
-    assert_eq!(hover(&mut ed, "EngineSwingDepthKnob").map(|t| t.starts_with("Swing Depth: ")), Some(true));
+    assert_eq!(hover(&mut ed, "EngineSwingDepthKnob").map(|t| t.starts_with("Swing Template Depth: ") && t.ends_with('%')), Some(true));
     // Leaving the window hides it.
     ed.app.mouse_left();
     assert!(ed.app.tooltip.is_none());
