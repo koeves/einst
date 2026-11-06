@@ -276,7 +276,7 @@ pub fn copy_to_next(model: &mut Model, e: usize) -> Option<usize> {
     Some(to)
 }
 
-/// [re:e64ec5].
+/// [re:f35f8c].
 pub const INSERTABLE: [&str; 15] =
     ["Ramp Up", "Ramp Down", "Sine", "Cosine", "Triangle", "Square Up", "Square Down", "Alternate", "Even On", "Even Off", "Log Curve", "Exp Curve", "Pow2", "Pow3", "Randomise"];
 /// The graph lane menu as v1 builds it ([re:2eda04]): the tools, the lane
@@ -1327,7 +1327,7 @@ impl PatternPanel {
                 let (track, lane) = (model.pad[e], model.pattern_view[e].lane);
                 self.graph_edit(app, model, path, *kind, *x, *y, h, track, lane, &lay, out)
             }
-            // [re:ca3223] [re:c0f351]: a track
+            // [re:870cc8] [re:a3283e]: a track
             // row's level knob posts `e_setPadParameter` 0x4e [engine,
             // track] [value, Gain, 0] (the drag keeps an undo point).
             UiEvent::ValueChanged { path, name, value, .. } if name == TRACK_LEVEL && self.rows.as_ref().is_some_and(|r| path.starts_with(r)) => {
@@ -1988,6 +1988,12 @@ impl PatternPanel {
                         true
                     }
                     // [re:98fb4b]: with steps selected only those move.
+                    // v1: with Alt the nudge buttons move the selected track.
+                    "NudgeBack" | "NudgeNext" if app.mods.alt => {
+                        let k = if name == "NudgeNext" { id::NUDGE_TRACK_FORWARD } else { id::NUDGE_TRACK_BACKWARDS };
+                        out.push(msg(k, &[e as i32, -1, -1, cur, track], &[0.0]));
+                        true
+                    }
                     "NudgeBack" | "NudgeNext" if !self.selection.is_empty() => self.shortcut(model, if name == "NudgeNext" { "right" } else { "left" }, false, out),
                     "NudgePatternBackButton" | "NudgePatternForwardButton" | "NudgeBack" | "NudgeNext" => {
                         let k = if name == "NudgePatternForwardButton" || name == "NudgeNext" { id::NUDGE_PATTERN_FORWARD } else { id::NUDGE_PATTERN_BACKWARDS };
