@@ -1,12 +1,9 @@
 # Changelog
 
-## [0.1.1] - 2026-11-06
+## [0.1.0] - 2026-11-06
 
 First release: the original v1 (1.1.1.2) rebuilt natively for Apple Silicon (VST3, CLAP,
-standalone) as a thin app on dreist-commons v0.1.1. History was cleaned up before this
-release: `main` holds the initial import and one merge per release (`git log --first-parent
-main`), the work is on `dev`, and old commit subjects were reworded to Conventional Commits.
-GitHub Actions run only on release tags.
+standalone) as a thin app on dreist-commons v0.1.0, listed under the Dreist vendor.
 
 ### What was ported
 
@@ -22,6 +19,8 @@ GitHub Actions run only on release tags.
 - Editor: v1's layout and look, generated from v1's skin layouts; every page, dialog and menu
   checked against the original and its manual (pads and layers, pattern editor with graph
   lanes, scenes, song, mixers, sampler, slicer, browser, MIDI mapping, export, preferences).
+- Plays in hosts that leave the 16 sub outputs inactive (such as Live); app icon from the
+  in-app "einst." wordmark.
 - Known differences are logged in the private reverse-engineering ledger; Launchpad support
   is deliberately left out.
 
@@ -135,6 +134,8 @@ GitHub Actions run only on release tags.
 - **einst-editor:** Swing template import as v1
 - **einst-editor:** Alt on engine Mute / Solo / Pattern power sets all engines
 - **einst-editor:** A preset dropped on the window loads, as v1
+- List Einst under the Dreist vendor
+- New app icon from the in-app logo
 
 ### Fixes
 
@@ -226,6 +227,9 @@ GitHub Actions run only on release tags.
 - **einst:** Cite v1 evidence for effects, menus and file handling
 - **einst-editor:** Keyboard shortcuts cite v1 evidence
 - **readme:** Add screenshots of the demo songs
+- **readme:** Rewrite in Dreist's style
+- **readme:** Add AI usage note
+- **readme:** AI usage note in the owner's words
 
 ### Tests
 
@@ -284,6 +288,8 @@ GitHub Actions run only on release tags.
 - Changelog skips coordination log commits
 - dreist-commons v0.1.1
 - Build on the macos-15 runner
+- dreist-commons 4be0295 (agent notes removed; no code change)
+- dreist-commons df06666 (inactive sub outputs no longer silence the plugin)
 
 ### Other
 
@@ -292,3 +298,4 @@ GitHub Actions run only on release tags.
 - **einst-editor:** Slicer helper above the test module
 - Bump commons (SampleCache::forget)
 - Ignore the local test songs folder
+- Remove agent notes and unused files
