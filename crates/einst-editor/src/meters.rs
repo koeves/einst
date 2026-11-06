@@ -89,7 +89,18 @@ pub fn update(root: &mut Ctrl, model: &Model, levels: &Meters) -> Vec<dreist_gui
         } else {
             None
         };
-        if let Some(lv) = level_src {
+        // [re:de6d20]: an engine selector's strip takes
+        // the level curve of (L + R)/2 directly; the strip
+        // ([re:4580d8], the slot [re:de6d20] calls) falls by at most 0.1 per update.
+        let engine_vu = c.class == "CtrlLevelStrip" && c.attr("volEngine").is_some();
+        if let (true, Some(lv)) = (engine_vu, level_src) {
+            let target = crate::sampler::level_to_value(((lv[0] + lv[1]) * 0.5).abs()).min(1.0);
+            let next = target.max(c.value - 0.1).max(0.0);
+            if (c.value - next).abs() >= 1e-6 {
+                c.value = next;
+                changed = true;
+            }
+        } else if let Some(lv) = level_src {
             let target = ((lv[0] + lv[1]) * 0.5).abs();
             let cur = c.attr_f32("volLevel", 0.0);
             let next = if target > cur { target } else { (cur - target) * 0.814_929_4 + target };
