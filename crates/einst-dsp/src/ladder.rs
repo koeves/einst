@@ -13,14 +13,14 @@
 //! The rest is v2's; summation-order differences are not transcribed.
 //!
 //! The ladder-filter effects (all dual-mono, `ModIn` = own channel):
-//! [re:408b3e] (Three Oh! Three, kind 31; `ProcessBuffer` [re:9f5684],
-//! `process_tb303` [re:1ceba5]), [re:b3c4dd] (Hoover, kind 32;
-//! [re:393f55], `process` [re:492081]) and [re:5c35cf] (Grandad, kind 33;
-//! [re:4817d5]) and [re:96b293] (Child Genius, kind 35; [re:2b6fa1],
-//! `process_prodigy_asym` [re:da1055]). Four one-pole stages through [re:554bd9] lookup tables
+//! [re:5ea0a2] (Three Oh! Three, kind 31; `ProcessBuffer` [re:5ea0a2],
+//! `process_tb303` [re:5ea0a2]), [re:58327e] (Hoover, kind 32;
+//! [re:58327e], `process` [re:58327e]) and [re:5776c8] (Grandad, kind 33;
+//! [re:5776c8]) and [re:81f860] (Child Genius, kind 35; [re:81f860],
+//! `process_prodigy_asym` [re:81f860]). Four one-pole stages through [re:6d93d6] lookup tables
 //! (mooglim/transisterlim or otalim), resonance feedback through otalim1,
-//! a mode matrix mixing the input and stage outputs (`set_mode` [re:9409c2],
-//! `set_mode_juno106` [re:f4c7e8], `SetModeMoog4` [re:69cf3b]), an otalim output
+//! a mode matrix mixing the input and stage outputs (`set_mode` [re:58327e],
+//! `set_mode_juno106` [re:58327e], `SetModeMoog4` [re:5776c8]), an otalim output
 //! stage and a 10 Hz DC blocker.
 
 use crate::fast_exp2;
