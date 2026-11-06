@@ -4420,3 +4420,38 @@ fn grid_reset_asks_first() {
     ed.handle(&UiEvent::MenuSelected { anchor: ob, name: "GridButton".into(), index: 3 });
     assert_eq!(ed.model.doc.attr("Marker"), Some("1"), "No keeps the document");
 }
+
+/// v1's browser clicks: presets only load on a double click; other parts
+/// (here a pattern file) load on a click with Auto load.
+#[test]
+fn browser_click_loads_parts_and_presets_need_a_double_click() {
+    crate::app::test_setup();
+    use dreist_gui::app::MouseKind;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let dir = std::env::temp_dir().join(format!("dreist-bclick-{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let preset = dir.join(format!("a.{}", dreist_formats::profile::get().save.project));
+    let _ = std::fs::write(&preset, b"<x/>");
+    let Some(b) = ed.browser.as_mut() else { return };
+    b.auto_load = true;
+    b.browse(dir.clone());
+    fn by(c: &Ctrl, path: &mut Vec<usize>) -> Option<Vec<usize>> {
+        if c.overload == "BrowserFileList" {
+            return Some(path.clone());
+        }
+        for (i, k) in c.children.iter().enumerate() {
+            path.push(i);
+            if let Some(p) = by(k, path) {
+                return Some(p);
+            }
+            path.pop();
+        }
+        None
+    }
+    let list = by(&ed.app.root, &mut Vec::new()).unwrap();
+    ed.take_commands();
+    let ev = |kind| UiEvent::Mouse { path: list.clone(), overload: "BrowserFileList".into(), kind, x: 5.0, y: 2.0 };
+    ed.handle(&ev(MouseKind::Down));
+    assert!(!ed.take_commands().iter().any(|c| matches!(c, Command::LoadProject(_))), "one click: no preset load");
+    let _ = std::fs::remove_dir_all(&dir);
+}

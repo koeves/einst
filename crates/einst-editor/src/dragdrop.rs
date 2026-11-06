@@ -425,7 +425,7 @@ impl Editor {
     /// → the document's load call): presets replace the project, kits and
     /// engines the selected engine, pad files the target pad, pattern
     /// files the target (or current) pattern slot.
-    fn load_file_at(&mut self, f: &Path, pad: Option<usize>, slot: Option<usize>) -> bool {
+    pub(crate) fn load_file_at(&mut self, f: &Path, pad: Option<usize>, slot: Option<usize>) -> bool {
         use crate::project::Part;
         let e = self.model.engine;
         let x = ext(f);

@@ -239,11 +239,14 @@ pub struct Browser {
     scroll: usize,
     history: Vec<PathBuf>,
     future: Vec<PathBuf>,
-    auto_load: bool,
+    pub(crate) auto_load: bool,
     /// `SliceModeButton`: audio files open the slicer instead of loading.
     slice_mode: bool,
     /// Audio file the slicer should open (taken by the editor).
     pub slice_request: Option<PathBuf>,
+    /// An engine / pad / pattern / bank / MIDI file to load where the
+    /// editor's selection is (v1's file click load, [re:4f89be]).
+    pub load_request: Option<PathBuf>,
     /// `PreviewButton`: audio files preview when clicked.
     preview_mode: bool,
     preview_volume: f32,
@@ -1006,6 +1009,7 @@ impl Browser {
             auto_load: false,
             slice_mode: false,
             slice_request: None,
+            load_request: None,
             preview_mode: false,
             preview_volume: 0.793_700_5,
             search: None,
@@ -1895,11 +1899,14 @@ impl Browser {
                 }
             }
             "wav" | "aif" | "aiff" if self.slice_mode && en.path.parent().is_none_or(slicing_allowed) => self.slice_request = Some(en.path),
-            "wav" | "aif" | "aiff" if self.preview_mode && !self.auto_load => self.preview(&en.path, out),
-            "wav" | "aif" | "aiff" => {
+            e if crate::search::is_audio(e) && self.preview_mode && !self.auto_load => self.preview(&en.path, out),
+            e if crate::search::is_audio(e) => {
                 load_sample_into_doc(model, &en.path);
                 out.push(model.rebuild_command());
             }
+            // v1 loads every supported part on a click ([re:4f89be]): engines,
+            // pads, patterns, banks and MIDI patterns where the selection is.
+            _ if kind.is_some() || matches!(ext.as_str(), "mid" | "midi") => self.load_request = Some(en.path),
             _ => return false,
         }
         true
@@ -2072,7 +2079,9 @@ impl Browser {
                 // press turned into a drag.
                 if again || self.entries[i].dir {
                     self.pending_open = Some(i);
-                } else if self.auto_load || self.previews_on_press(&self.entries[i]) {
+                } else if (self.auto_load || self.previews_on_press(&self.entries[i])) && !is_preset(&self.entries[i].path) {
+                    // v1 ([re:8eb19f] / [re:c33e1a]): presets load on a double
+                    // click only.
                     // Selecting a file loads (Auto load) or previews it
                     // (Preview) on the press.
                     self.open(i, model, out);
@@ -2589,6 +2598,11 @@ impl Browser {
         let max = self.entries.len().saturating_sub(1);
         self.scroll = (self.scroll as i32 + rows).clamp(0, max as i32) as usize;
     }
+}
+
+/// A preset (project) file: v1 loads these on a double click only.
+fn is_preset(p: &Path) -> bool {
+    p.extension().map(|e| e.to_string_lossy().to_lowercase()).and_then(|e| dreist_formats::profile::doc_kind(&e)) == Some(dreist_formats::profile::DocKind::Project)
 }
 
 #[cfg(test)]
