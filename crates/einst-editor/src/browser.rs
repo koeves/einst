@@ -1017,7 +1017,9 @@ impl Browser {
                 c.enabled = false;
             }
         }
-        let start = subdirs(&content_dir()).into_iter().next();
+        // v1 opens where it was ([re:c78fbe], option `BrowserLastPath`).
+        let last = PathBuf::from(crate::options::Options::load().string("BrowserLastPath", ""));
+        let start = if last.is_dir() { Some(last) } else { subdirs(&content_dir()).into_iter().next() };
         let mut b = Browser {
             page: page.to_vec(),
             sources: Vec::new(),
@@ -1159,6 +1161,14 @@ impl Browser {
         let show = self.show;
         self.entries.retain(|e| visible(&show, e));
         sort_entries(&mut self.entries, self.sort.0, self.sort.1);
+        // [re:d3e4cc]: every folder visited is remembered.
+        if !cfg!(test) && dir.is_dir() {
+            let mut o = crate::options::Options::load();
+            if o.string("BrowserLastPath", "") != dir.to_string_lossy() {
+                o.set("BrowserLastPath", dir.display());
+                o.save();
+            }
+        }
         self.dir = Some(dir);
         self.search = None;
         self.selected = select.and_then(|s| self.entries.iter().position(|e| e.path == s));

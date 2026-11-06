@@ -195,8 +195,15 @@ impl Editor {
             // [re:bb75bc] → the export job; the panel stays
             // open with its progress ([re:ece5dd]).
             Request::ExportAudio => {
-                if let Some(p) = self.dialog(Dialog::ExportAudio) {
-                    let p = if p.extension().is_none() { p.with_extension("wav") } else { p };
+                let (name, folder) = self.export_file_name();
+                if let Some(p) = self.dialog(Dialog::ExportAudio { name, folder, start: modal::last_save_location() }) {
+                    // [re:eefbd7]: the next export starts here.
+                    let mut o = options::Options::load();
+                    o.set("LastSavePath", if folder { p.parent().unwrap_or(&p) } else { &p }.display());
+                    if !cfg!(test) {
+                        o.save();
+                    }
+                    let p = if folder || p.extension().is_some() { p } else { p.with_extension("wav") };
                     let options = modal::export_options(&self.modals.options, self.model.engine);
                     let status = command::ExportProgress::default();
                     self.modals.export_job = Some(status.clone());
@@ -208,6 +215,25 @@ impl Editor {
             }
             Request::OpenProject(path) => self.open_project(&path),
             Request::Sampler(r) => self.run_sampler_request(r),
+        }
+    }
+
+    /// The export prompt's file name ([re:bb75bc]): "All ", the current
+    /// pattern's name and a space, or "Song ", then "Mixdown" or the single
+    /// output's name; with all outputs, the prefix alone and a folder
+    /// prompt (each file adds its output's name).
+    pub(crate) fn export_file_name(&self) -> (String, bool) {
+        let o = &self.modals.options;
+        let e = self.model.engine;
+        let prefix = match o.int("ExportSource", 0).clamp(0, 2) {
+            0 => "All ".to_string(),
+            1 => format!("{} ", self.model.pattern_name(e, self.model.current_pattern(e))),
+            _ => "Song ".to_string(),
+        };
+        match o.int("ExportOutputType", 0).clamp(0, 2) {
+            0 => (format!("{prefix}Mixdown"), false),
+            1 => (format!("{prefix}{}", modal::export_output_name(modal::export_single_output(o, &self.modals.export_outputs))), false),
+            _ => (prefix, true),
         }
     }
 

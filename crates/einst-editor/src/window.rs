@@ -58,7 +58,15 @@ pub fn native_dialogs() -> crate::DialogFn {
             let ext = dreist_formats::profile::get().save.project;
             rfd::FileDialog::new().add_filter(format!("{} project", crate::product()), &[ext]).set_file_name(format!("Untitled.{ext}")).save_file()
         }
-        crate::Dialog::ExportAudio => rfd::FileDialog::new().add_filter("WAV audio", &["wav"]).set_file_name("Export.wav").save_file(),
+        crate::Dialog::ExportAudio { name, folder: true, start } => {
+            rfd::FileDialog::new().set_title("Please select the location to export the audio to").set_directory(start).pick_folder().map(|d| d.join(name))
+        }
+        crate::Dialog::ExportAudio { name, folder: false, start } => rfd::FileDialog::new()
+            .set_title("Please select the location to export to")
+            .add_filter(format!("{} sample files", crate::product()), &["wav"])
+            .set_directory(start)
+            .set_file_name(format!("{name}.wav"))
+            .save_file(),
         crate::Dialog::SaveSample(name) => rfd::FileDialog::new()
             .set_title("Please select the location to save to")
             .add_filter("Sample files", &["wav"])
