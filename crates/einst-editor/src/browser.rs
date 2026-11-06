@@ -310,8 +310,8 @@ pub struct Browser {
     show: [bool; 13],
 }
 
-/// [re:2717b8] /
-/// [re:970ae8]: lock everything unless everything is locked, then unlock.
+/// [re:504f4e] /
+/// [re:b164ed]: lock everything unless everything is locked, then unlock.
 pub fn toggle_lock_all(model: &mut Model, class: &str, count: usize) {
     let e = model.engine;
     let name = |i: usize| format!("{class}{i}");
@@ -342,8 +342,8 @@ pub fn all_locked(model: &Model, class: &str, count: usize) -> bool {
 
 const HEADER_MENU: [&str; 9] = ["New shortlist", "New shortlist from selection", "", "Preview output ▸", "", "(Un)Lock all pads", "(Un)Lock all patterns", "", "Pads track browser location"];
 
-/// File list context menu items ([re:05c1d3]
-/// [re:9dbfe6]).
+/// File list context menu items ([re:351450]
+/// [re:351450]).
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum FileAction {
     SelectAll,
@@ -360,7 +360,7 @@ enum FileAction {
     None,
 }
 
-/// [re:5e37a7]: a [re:233db2] file
+/// [re:e24e01]: a [re:b277e3] file
 /// ("No slice") in a folder stops browser slicing there.
 pub fn slicing_allowed(dir: &Path) -> bool {
     !dir.join(dreist_formats::legacy::NOSLICE_FILE).exists()
@@ -433,34 +433,6 @@ fn save_shortlists(v: &[(String, Vec<PathBuf>)]) {
     let _ = dreist_formats::file::write_atomic(p, text);
 }
 
-/// Up to 64 random audio files under `dir` ([re:64ec65],
-/// "Load random sounds to pads").
-pub fn random_sounds(dir: &Path, seed: u64) -> Vec<PathBuf> {
-    let mut files = Vec::new();
-    let mut stack = vec![dir.to_path_buf()];
-    while let Some(d) = stack.pop() {
-        for e in list(&d) {
-            if e.dir {
-                stack.push(e.path);
-            } else if e.path.extension().is_some_and(|x| ["wav", "aif", "aiff"].iter().any(|a| x.eq_ignore_ascii_case(a))) {
-                files.push(e.path);
-            }
-        }
-        if files.len() > 20000 {
-            break;
-        }
-    }
-    let mut r = seed | 1;
-    let mut out = Vec::new();
-    while !files.is_empty() && out.len() < 64 {
-        r ^= r << 13;
-        r ^= r >> 7;
-        r ^= r << 17;
-        out.push(files.swap_remove((r % files.len() as u64) as usize));
-    }
-    out
-}
-
 /// Favourites file (the port's own; the original keeps
 /// `<UserLocalSystem>/Favourites.xml`).
 fn favourites_path() -> Option<PathBuf> {
@@ -480,7 +452,7 @@ fn save_favourites(v: &[PathBuf]) {
     let _ = dreist_formats::file::write_atomic(p, text);
 }
 
-/// Source list item names and colour labels ([re:15ef1c];
+/// Source list item names and colour labels ([re:8d3031];
 /// the original keeps them in its Favourites / Searches /
 /// Shortlists XML): the port's `SourceLabels.txt`, one
 /// `key<TAB>name<TAB>colour index` line per item (key = its path).
@@ -628,8 +600,8 @@ enum NavAction {
     None,
 }
 
-/// Source list item menu actions ([re:4b8b2d]
-/// [re:eee232]).
+/// Source list item menu actions ([re:c80d01]
+/// [re:c80d01]).
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum SourceAction {
     Remove,
@@ -639,7 +611,6 @@ enum SourceAction {
     ColourMenu,
     Colour(usize),
     Refresh,
-    Export { favourite: bool },
     None,
 }
 
@@ -809,7 +780,7 @@ pub fn sample_stem(file: &Path) -> String {
 }
 
 /// Point layer (`e`, `p`, `l`) at an audio file
-/// ([re:24af02]): nothing when the pad
+/// ([re:3c4465]): nothing when the pad
 /// or the layer is locked; the layer keeps its parameters unless the
 /// `AllocatorClearLayersOnLoad` preference is on (then a fresh layer);
 /// both envelope holds are set from the sample's length; the
@@ -821,7 +792,7 @@ pub fn load_sample_into_layer(model: &mut Model, e: usize, p: usize, l: usize, f
     if locked(model.pad_node(e, p)) || locked(model.layer_node(e, p, l)) {
         return false;
     }
-    // [re:c5d89e]: a REX file loads as
+    // [re:b277e3]: a REX file loads as
     // "<file>.truncated" (slices at their musical positions, see
     // `dreist_engine::rex`).
     let rex_path;
@@ -984,7 +955,7 @@ impl Browser {
         }
         build_column(skin, host)?;
         crate::search::SearchPane::mount(skin, host).map_err(err)?;
-        // [re:9c477d]..[re:af9e3a]: the Spinner shows only while an
+        // [re:ddb121]..[re:ddb121]: the Spinner shows only while an
         // asynchronous search runs (the port's search is synchronous).
         for panel in ["BrowserHeader", "Search"] {
             if let Some(c) = host.find_mut(panel).and_then(|p| p.find_mut("Spinner")) {
@@ -1289,7 +1260,7 @@ impl Browser {
         }
     }
 
-    /// The item menu [re:eee232] for source row `i` (category items only):
+    /// The item menu [re:c80d01] for source row `i` (category items only):
     /// Content — Remove, Reveal, colour; Places / Drives — Reveal;
     /// Favourites — Remove, Reveal, Set name, colour; Searches / Shortlists
     /// — Remove, Set name, colour, then Refresh search / Export to folder
@@ -1316,17 +1287,10 @@ impl Browser {
         if remove {
             v.push(("Set colour label... ▸".into(), SourceAction::ColourMenu));
         }
-        match cat {
-            "Searches" => {
-                v.push((String::new(), SourceAction::None));
-                v.push(("Refresh search".into(), SourceAction::Refresh));
-            }
-            "Shortlists" => {
-                v.push((String::new(), SourceAction::None));
-                v.push(("Export to folder".into(), SourceAction::Export { favourite: false }));
-                v.push(("Export to folder and add as favourite".into(), SourceAction::Export { favourite: true }));
-            }
-            _ => {}
+        // v1 offers no shortlist export (a v2 addition).
+        if cat == "Searches" {
+            v.push((String::new(), SourceAction::None));
+            v.push(("Refresh search".into(), SourceAction::Refresh));
         }
         v
     }
@@ -1340,7 +1304,7 @@ impl Browser {
             app.open_menu(anchor, labels, None);
         };
         match a {
-            // Removing [re:95bd08] asks (Yes / No) first.
+            // Removing [re:4472d0] asks (Yes / No) first.
             SourceAction::Remove => {
                 let q = format!("Are you sure you want to remove \"{}\". This action cannot be undone...", src.label);
                 open(
@@ -1401,7 +1365,7 @@ impl Browser {
                 app.open_menu(anchor, vec![crate::padmenu::colour_grid_item()], None);
                 false
             }
-            // Colour label [re:86689a] (cell 0 = none).
+            // Colour label [re:ede7fd] (cell 0 = none).
             SourceAction::Colour(k) => {
                 labels_set(&path, None, Some(k));
                 self.sources = sources(&self.favourites, &self.searches, &self.shortlists);
@@ -1418,11 +1382,6 @@ impl Browser {
                     None => self.go(path, true),
                 }
                 true
-            }
-            SourceAction::Export { favourite } => {
-                let key = path.to_string_lossy().into_owned();
-                self.export_request = key.strip_prefix("shortlist:").map(|n| (n.to_string(), favourite));
-                false
             }
             SourceAction::None => false,
         }
@@ -1452,7 +1411,7 @@ impl Browser {
     }
 
     /// The rename commit ([re:16e4b7] →
-    /// [re:b5847b]): shortlists take the new name,
+    /// [re:a2fc7f]): shortlists take the new name,
     /// other items show it.
     fn commit_source_name(&mut self, app: &mut App, path: &[usize], text: &str) {
         let parent = path[..path.len() - 1].to_vec();
@@ -1565,7 +1524,7 @@ impl Browser {
         self.shortlists.len() - 1
     }
 
-    /// The file list context menu for entry `i` ([re:9dbfe6]; v1's order
+    /// The file list context menu for entry `i` ([re:351450]; v1's order
     /// [re:351450]): with two or
     /// more rows selected the reveal / shortlist / favourite items act on
     /// the whole selection.
@@ -1983,7 +1942,7 @@ impl Browser {
                 let anchor = anchor.clone();
                 self.nav_action(app, &anchor, dir, a)
             }
-            // Source list item menu ([re:4b8b2d]).
+            // Source list item menu ([re:c80d01]).
             UiEvent::Mouse { path, overload, kind: MouseKind::RightDown, y, .. } if overload == "BrowserSourceList" => {
                 let i = (*y / SOURCE_ROW) as usize;
                 let items = self.source_items(i);
@@ -2265,7 +2224,7 @@ impl Browser {
                         }
                         return false;
                     }
-                    5 => toggle_lock_all(model, "Pad", 64),
+                    5 => toggle_lock_all(model, "Pad", crate::model::V1_PADS),
                     6 => toggle_lock_all(model, "StepPattern", 24),
                     8 => {
                         self.pads_track = !self.pads_track;
@@ -2288,7 +2247,7 @@ impl Browser {
                     false
                 }
                 "LockPadsButton" => {
-                    toggle_lock_all(model, "Pad", 64);
+                    toggle_lock_all(model, "Pad", crate::model::V1_PADS);
                     true
                 }
                 "LockPatternsButton" => {
@@ -2704,20 +2663,6 @@ mod search_tests {
     }
 
     #[test]
-    fn random_sounds_are_distinct_audio_files() {
-        crate::app::test_setup();
-        let dir = content_dir();
-        if !dir.is_dir() {
-            return;
-        }
-        let v = random_sounds(&dir, 42);
-        assert!(!v.is_empty() && v.len() <= 64);
-        let set: std::collections::HashSet<_> = v.iter().collect();
-        assert_eq!(set.len(), v.len());
-        assert!(v.iter().all(|p| p.extension().is_some_and(|e| ["wav", "aif", "aiff"].iter().any(|x| e.eq_ignore_ascii_case(x)))));
-    }
-
-    #[test]
     fn noslice_file_blocks_slicing() {
         crate::app::test_setup();
         let d = std::env::temp_dir().join(format!("dreist-noslice-{}", std::process::id()));
@@ -2732,11 +2677,11 @@ mod search_tests {
     fn lock_all_toggles_like_globally_lock() {
         crate::app::test_setup();
         let mut m = Model::new(crate::project::new_document());
-        assert!(!all_locked(&m, "Pad", 64));
-        toggle_lock_all(&mut m, "Pad", 64);
-        assert!(all_locked(&m, "Pad", 64));
-        toggle_lock_all(&mut m, "Pad", 64);
-        assert!(!all_locked(&m, "Pad", 64));
+        assert!(!all_locked(&m, "Pad", crate::model::V1_PADS));
+        toggle_lock_all(&mut m, "Pad", crate::model::V1_PADS);
+        assert!(all_locked(&m, "Pad", crate::model::V1_PADS));
+        toggle_lock_all(&mut m, "Pad", crate::model::V1_PADS);
+        assert!(!all_locked(&m, "Pad", crate::model::V1_PADS));
         // One unlocked pad: the toggle locks all.
         toggle_lock_all(&mut m, "StepPattern", 24);
         let e = m.engine;

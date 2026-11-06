@@ -3296,18 +3296,7 @@ fn browser_source_list_item_menu() {
     };
     let (r, _) = row(&ed, &name).unwrap();
     let items = menu(&mut ed, r, "Set colour label... ▸");
-    assert_eq!(
-        items,
-        vec![
-            format!("Remove \"{name}\""),
-            String::new(),
-            "Set name...".into(),
-            "Set colour label... ▸".into(),
-            String::new(),
-            "Export to folder".into(),
-            "Export to folder and add as favourite".into()
-        ]
-    );
+    assert_eq!(items, vec![format!("Remove \"{name}\""), String::new(), "Set name...".into(), "Set colour label... ▸".into()]);
     ed.handle(&UiEvent::MenuSelected { anchor: list.clone(), name: String::new(), index: 5 });
     assert_eq!(row(&ed, &name).map(|r| r.1), Some(5));
     // Rename: the shortlist takes the name and keeps its colour.
