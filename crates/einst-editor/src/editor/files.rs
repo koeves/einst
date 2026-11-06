@@ -3,6 +3,20 @@
 
 use crate::*;
 
+/// A swing template import in progress.
+pub(crate) struct SwingImport {
+    guru: bool,
+    files: std::collections::VecDeque<std::path::PathBuf>,
+    question: Option<Question>,
+}
+
+enum Question {
+    /// The file's template exists: overwrite it?
+    Overwrite(std::path::PathBuf),
+    /// A file failed: go on with the rest?
+    Continue,
+}
+
 impl Editor {
     /// The master section's LOAD and SAVE menus ([re:be6692]
     /// [re:d52ca7]): LOAD has Load preset, engine, kit, pad, pattern bank,
@@ -263,40 +277,110 @@ impl Editor {
         true
     }
 
-    /// [re:736dd8] into
+    /// Where an imported swing template goes:
     /// `<user swing folder>/<file stem>.swingtemplate`.
+    fn swing_target(file: &std::path::Path) -> Option<std::path::PathBuf> {
+        Some(swing::user_dir()?.join(format!("{}.swingtemplate", file.file_stem()?.to_string_lossy())))
+    }
+
+    /// [re:736dd8] into the user swing folder.
     pub fn import_midi_template(&mut self, file: &std::path::Path) -> Option<std::path::PathBuf> {
         let bytes = std::fs::read(file).ok()?;
         let name = file.file_stem()?.to_string_lossy().into_owned();
         let sp = dreist_engine::midifile::import(&bytes, &name, &|_| Vec::new())?;
         let pat = dreist_engine::pattern::PatternData::from_node(&sp);
         let t = swing::from_pattern(&pat, &name);
-        let dir = swing::user_dir()?;
-        let _ = std::fs::create_dir_all(&dir);
-        let out = dir.join(format!("{name}.swingtemplate"));
+        let out = Self::swing_target(file)?;
+        let _ = std::fs::create_dir_all(out.parent()?);
         swing::save(&out, &t).ok()?;
         Some(out)
     }
 
-    /// A Guru 1 swing template converted to a grid swing template and
-    /// saved as `<user swing folder>/<file stem>.swingtemplate`; failures
-    /// alert.
-    pub fn import_guru_swing(&mut self, file: &std::path::Path) -> Option<std::path::PathBuf> {
+    /// A Guru 1 swing template converted to a grid swing template in the
+    /// user swing folder; a failure alerts when it is the last file.
+    pub fn import_guru_swing(&mut self, file: &std::path::Path, alert: bool) -> Option<std::path::PathBuf> {
         let t = match guru::convert_swing_text(file) {
             Ok(t) => t,
             Err(e) => {
-                if let Some(a) = self.app.root.path_of("SwingDrop") {
+                if let (true, Some(a)) = (alert, self.app.root.path_of("SwingDrop")) {
                     self.app.open_menu(&a, vec![e], None);
                 }
                 return None;
             }
         };
-        let name = file.file_stem()?.to_string_lossy().into_owned();
-        let dir = swing::user_dir()?;
-        let _ = std::fs::create_dir_all(&dir);
-        let out = dir.join(format!("{name}.swingtemplate"));
+        let out = Self::swing_target(file)?;
+        let _ = std::fs::create_dir_all(out.parent()?);
         swing::save(&out, &t).ok()?;
         Some(out)
+    }
+
+    /// The swing import ([re:44230b] MIDI, [re:bdda3c] Guru): each chosen
+    /// file in turn; an existing template asks "A file named %s already
+    /// exists in your swing template folder. Do you want to overwrite it?"
+    /// (No skips it), and a failed file before the last asks "Do you want
+    /// to continue trying to import the other files?".
+    pub(crate) fn start_swing_import(&mut self, guru: bool, files: Vec<std::path::PathBuf>) {
+        self.swing_import = Some(SwingImport { guru, files: files.into(), question: None });
+        self.next_swing_import(None);
+    }
+
+    /// Carry on with the import: `answer` is the open question's (true
+    /// Yes).
+    pub(crate) fn next_swing_import(&mut self, answer: Option<bool>) {
+        let Some(mut job) = self.swing_import.take() else { return };
+        let mut convert_now = match (job.question.take(), answer) {
+            (Some(Question::Overwrite(f)), Some(true)) => Some(f),
+            (Some(Question::Continue), Some(false)) => return,
+            _ => None,
+        };
+        loop {
+            let file = match convert_now.take() {
+                Some(f) => f,
+                None => {
+                    let Some(f) = job.files.pop_front() else { return };
+                    if Self::swing_target(&f).is_some_and(|t| t.exists()) {
+                        let name = f.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+                        let text = format!("A file named {name} already exists in your swing template folder. Do you want to overwrite it?");
+                        job.question = Some(Question::Overwrite(f));
+                        self.ask_swing_import(job, text);
+                        return;
+                    }
+                    f
+                }
+            };
+            let last = job.files.is_empty();
+            let ok = if job.guru { self.import_guru_swing(&file, last).is_some() } else { self.import_midi_template(&file).is_some() };
+            if !ok && !last {
+                job.question = Some(Question::Continue);
+                self.ask_swing_import(job, "Do you want to continue trying to import the other files?".into());
+                return;
+            }
+        }
+    }
+
+    fn ask_swing_import(&mut self, job: SwingImport, text: String) {
+        let anchor = self.app.root.path_of("SwingDrop").unwrap_or_default();
+        self.app.open_menu(&anchor, vec![dreist_gui::menu::item(text, false), String::new(), "Yes".into(), "No".into()], None);
+        self.swing_import = Some(job);
+    }
+
+    /// A pick in the import's question menu (Yes 2, No 3); dismissing the
+    /// question ends the import.
+    pub(crate) fn swing_import_event(&mut self, ev: &UiEvent) -> bool {
+        if self.swing_import.as_ref().is_none_or(|j| j.question.is_none()) {
+            return false;
+        }
+        match ev {
+            UiEvent::MenuSelected { index, .. } => {
+                self.next_swing_import(Some(*index == 2));
+                true
+            }
+            _ if self.app.menu.is_none() => {
+                self.swing_import = None;
+                false
+            }
+            _ => false,
+        }
     }
 
     pub(crate) fn show_file_menu(&mut self, anchor: &[usize], items: Vec<(String, FileAction)>) {
