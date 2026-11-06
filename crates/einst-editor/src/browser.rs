@@ -1060,6 +1060,11 @@ impl Browser {
         self.go(dir, true);
     }
 
+    /// A folder dropped on the file list from outside: show its contents.
+    pub(crate) fn show_folder(&mut self, dir: PathBuf) {
+        self.go(dir, true);
+    }
+
     fn go(&mut self, dir: PathBuf, record: bool) {
         // A shortlist becomes the current one; the folder stays.
         if let Some(n) = dir.to_str().and_then(|s| s.strip_prefix("shortlist:")) {

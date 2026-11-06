@@ -4611,3 +4611,17 @@ fn automation_live_mode_sets_track_amounts() {
     assert_eq!(t.f32(&format!("{lane}Scal")), Some(0.8));
     assert!(!ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SET_STEP_GRAPH_STATE)), "no step rewrite");
 }
+
+/// The manual (2:4): a folder dropped from Finder onto the browser's file
+/// list shows its contents.
+#[test]
+fn finder_folder_drop_opens_it_in_the_browser() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let Some(list) = ed.app.root.path_of("FileList") else { return };
+    let dir = std::env::temp_dir().join(format!("einst-drop-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    ed.handle(&UiEvent::Files { to: list, files: vec![dir.clone()], x: 5.0, y: 5.0, dropped: true });
+    assert_eq!(ed.browser.as_ref().and_then(|b| b.current_dir().map(|p| p.to_path_buf())), Some(dir.clone()));
+    let _ = std::fs::remove_dir_all(&dir);
+}
