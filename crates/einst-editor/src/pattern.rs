@@ -132,6 +132,9 @@ pub struct PatternPanel {
     /// the knob, and the last offset.
     graph_snap: Option<(String, Vec<f32>, f32)>,
     rng: u32,
+    /// The automation controls' Edit / Live mode ([re:97ddc6]): Live keeps
+    /// the knobs as the track lane's scale / compression / randomisation.
+    graph_live: bool,
     /// Selected steps (track, step) and the rubber band being dragged.
     pub(crate) selection: std::collections::BTreeSet<(usize, usize)>,
     band: Option<((usize, usize), (usize, usize))>,
@@ -820,10 +823,9 @@ impl PatternPanel {
                 if ac.children.is_empty() {
                     crate::front::mount_into(skin, ac, "Pattern Editor/AutomationControls.skin")?;
                 }
-                for n in ["LearnButton", "ModeGroup"] {
-                    if let Some(b) = ac.find_mut(n) {
-                        b.visible = false;
-                    }
+                // Lane MIDI learn is not ported.
+                if let Some(b) = ac.find_mut("LearnButton") {
+                    b.visible = false;
                 }
             }
             if let Some(gv) = host.find_mut("SingleScrollView") {
@@ -851,11 +853,9 @@ impl PatternPanel {
             }
         }
         let auto_template = crate::front::load(skin, "Pattern Editor/AutomationControls.skin").ok().map(|mut t| {
-            // Lane MIDI learn and the edit / live switch are not ported.
-            for n in ["LearnButton", "ModeGroup"] {
-                if let Some(b) = t.find_mut(n) {
-                    b.visible = false;
-                }
+            // Lane MIDI learn is not ported.
+            if let Some(b) = t.find_mut("LearnButton") {
+                b.visible = false;
             }
             t
         });
@@ -889,6 +889,7 @@ impl PatternPanel {
             lane_menu: Vec::new(),
             graph_snap: None,
             rng: 0x9e37_79b9,
+            graph_live: false,
             selection: Default::default(),
             band: None,
             clipboard: Vec::new(),
@@ -1137,6 +1138,28 @@ impl PatternPanel {
         set(app, "LengthBox", &|c| c.text = pat.steps.to_string());
         let lane = lane_label(model.pattern_view[e].lane);
         set(app, "GraphCombo", &|c| c.text = lane.clone());
+        // Live: the knobs show the lane's track amounts; the switch its mode.
+        if let Some(ac) = app.root.path_of("SingleAutoControl") {
+            let live = self.graph_live;
+            let lane_name = dreist_formats::params::STEP_LANES.get(model.pattern_view[e].lane).copied().unwrap_or("");
+            let tn = crate::padmenu::track_node(model, e, model.pad[e]);
+            let amount = |suffix: &str| tn.and_then(|n| n.f32(&format!("{lane_name}{suffix}"))).unwrap_or(0.5);
+            let vals = [("ScaleKnob", amount("Scal")), ("CompKnob", amount("Comp")), ("RandKnob", amount("Rand"))];
+            if let Some(c) = app.ctrl_mut(&ac) {
+                if let Some(g) = c.find_mut("ModeGroup") {
+                    for (i, b) in g.children.iter_mut().enumerate() {
+                        b.on = (i == 1) == live;
+                    }
+                }
+                if live {
+                    for (n, v) in vals {
+                        if let Some(k) = c.find_mut(n) {
+                            k.value = v;
+                        }
+                    }
+                }
+            }
+        }
         let res = RESOLUTION_NAMES.get(pat.resolution).copied().unwrap_or("1/16").to_string();
         set(app, "StepLengthCombo", &|c| c.text = res.clone());
         let name = model.pattern_name(e, cur);
@@ -1317,8 +1340,8 @@ impl PatternPanel {
                     None => false,
                 }
             }
-            // Scale [re:23318b] / compress [re:f1235c] /
-            // randomise [re:2a1033]: applied to the lane values copied
+            // Scale [re:214828] / compress [re:17ef9f] /
+            // randomise [re:625a7d]: applied to the lane values copied
             // when the knob started moving, posted as 0xd6 per step.
             UiEvent::ValueChanged { name, value, .. } if matches!(name.as_str(), "ScaleKnob" | "CompKnob" | "RandKnob" | "VarianceKnob") => {
                 let track = model.pad[e];
@@ -1327,8 +1350,24 @@ impl PatternPanel {
                     out.push(msg(id::SET_GRAPH_RANDOMISATION, &[e as i32, track as i32, -1, cur, track as i32], &[*value, lane as f32]));
                     return true;
                 }
+                // Live ([re:214828]): the knob is the lane's track amount
+                // (`<Lane>Scal` / `Comp` / `Rand`), applied at playback.
+                if self.graph_live {
+                    let suffix = match name.as_str() {
+                        "ScaleKnob" => "Scal",
+                        "CompKnob" => "Comp",
+                        _ => "Rand",
+                    };
+                    if let Some(l) = dreist_formats::params::STEP_LANES.get(lane) {
+                        crate::padmenu::track_mut(model, e, track).set(&format!("{l}{suffix}"), *value);
+                        out.push(model.rebuild_command());
+                    }
+                    return true;
+                }
                 let pat = model.pattern(e, cur as usize);
                 let Some(t) = pat.tracks.get(track) else { return false };
+                // Edit: only the selected steps when the track has any.
+                let only: Vec<usize> = self.selection.iter().filter(|(t, _)| *t == track).map(|(_, s)| *s).collect();
                 if self.graph_snap.as_ref().map(|s| s.0.as_str()) != Some(name.as_str()) {
                     let vals = t.steps.iter().take(pat.steps as usize).map(|s| s.lanes.get(lane).copied().unwrap_or(0.0)).collect();
                     self.graph_snap = Some((name.clone(), vals, 0.0));
@@ -1351,7 +1390,9 @@ impl PatternPanel {
                             randomised(*base, *value, (rng >> 8) as f32 / (1u32 << 24) as f32)
                         }
                     };
-                    out.push(msg(id::SET_STEP_GRAPH_STATE, &[e as i32, track as i32, -1, cur, track as i32, st as i32], &[lane as f32, v.clamp(0.0, 1.0), 0.0]));
+                    if only.is_empty() || only.contains(&st) {
+                        out.push(msg(id::SET_STEP_GRAPH_STATE, &[e as i32, track as i32, -1, cur, track as i32, st as i32], &[lane as f32, v.clamp(0.0, 1.0), 0.0]));
+                    }
                 }
                 if name == "ScaleKnob" {
                     *prev = off;
@@ -1909,6 +1950,11 @@ impl PatternPanel {
                     // Toolbar view mode: multi track / multi graph ("Show a
                     // Single Global Graph", lambda [re:ec3067]): writes
                     // `PatternEditorViewMode`.
+                    // The automation controls' Edit / Live switch.
+                    "CtrlButton" if path.len() > 1 && app.ctrl(&path[..path.len() - 1]).is_some_and(|g| g.name == "ModeGroup") => {
+                        self.graph_live = path.last() == Some(&1);
+                        true
+                    }
                     "MultiButton" | "SingleButton" if path.len() > 1 && app.ctrl(&path[..path.len() - 1]).is_some_and(|g| g.name == "ModeGroup") => {
                         self.set_view(name == "MultiButton", model);
                         true
