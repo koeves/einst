@@ -26,6 +26,7 @@ pub mod classify;
 pub mod comb;
 pub mod delay;
 pub mod envelope_shaper;
+pub mod eq_display;
 pub mod flanger;
 pub mod gain;
 pub mod ladder;

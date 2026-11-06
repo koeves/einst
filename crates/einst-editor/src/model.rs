@@ -51,6 +51,10 @@ pub struct Model {
     /// Decoded sample bytes the engine holds (the memory readout), once
     /// the plugin has built an engine.
     pub memory: Option<u64>,
+    /// The engine's sample rate, once the plugin knows it (the effect
+    /// editors' response plots; [`crate::fxplot::DEFAULT_SAMPLE_RATE`]
+    /// until then).
+    pub sample_rate: Option<f32>,
     /// Option `PatternEditorFollow`: the pattern editor and the song
     /// scroll to keep the playback position in view.
     pub follow_playback: bool,
@@ -294,6 +298,7 @@ impl Model {
             song_pos: None,
             host_loop: false,
             memory: None,
+            sample_rate: None,
             follow_playback: crate::options::Options::load().bool("PatternEditorFollow", false),
             all_layers: false,
             all_pads: false,

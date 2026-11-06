@@ -578,6 +578,12 @@ impl Editor for DreistEditor {
                 ed.load_progress(f);
             }
             ed.model.memory = Some(bridge.sample_bytes.load(Ordering::Acquire));
+            let sr = f32::from_bits(bridge.sample_rate.load(Ordering::Relaxed));
+            if sr > 0.0 && ed.model.sample_rate != Some(sr) {
+                // The effect plots follow the rate.
+                ed.model.sample_rate = Some(sr);
+                ed.sync();
+            }
             ed.set_playback(inbox.playing, inbox.steps, inbox.song_pos);
             // The preview volume is editor-side.
             if let Some(view) = inbox.sampler.take() {
