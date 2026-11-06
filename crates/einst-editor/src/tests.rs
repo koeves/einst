@@ -4772,3 +4772,21 @@ fn alt_mute_reaches_every_engine() {
     ed.app.mods.alt = false;
     assert_eq!(count(&mut ed), 8);
 }
+
+/// v1: one preset file dropped on the window (no other target) loads it.
+#[test]
+fn preset_dropped_on_the_window_loads() {
+    crate::app::test_setup();
+    let f = demo("Presets/Hollow.geist");
+    if !f.exists() {
+        return;
+    }
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    // Two files: nothing.
+    ed.external_drag = Some(vec![f.clone(), f.clone()]);
+    ed.handle(&UiEvent::Dropped { from: Vec::new(), to: Vec::new(), x: 1.0, y: 1.0 });
+    assert_ne!(ed.model.name.as_deref(), Some("Hollow"));
+    ed.external_drag = Some(vec![f]);
+    ed.handle(&UiEvent::Dropped { from: Vec::new(), to: Vec::new(), x: 1.0, y: 1.0 });
+    assert_eq!(ed.model.name.as_deref(), Some("Hollow"));
+}

@@ -332,7 +332,19 @@ impl Editor {
             let row = ((*y - self.app.origin(&to[..n]).1 as f32) / crate::browser::SOURCE_ROW).max(0.0) as usize;
             return self.browser.as_mut().is_some_and(|b| b.drop_on_source(row, &files));
         }
-        let (Some(src), Some(dst)) = (self.drag_source(from), self.drop_target(to)) else { return false };
+        let src = self.drag_source(from);
+        // The window itself ([re:bfe523] [re:714082]): one preset file loads.
+        if self.drop_target(to).is_none() {
+            if let Some(Source::Files(f)) = &src {
+                if let [one] = f.as_slice() {
+                    if doc_kind(&ext(one)) == Some(DocKind::Project) {
+                        self.outbox.push(Command::LoadProject(one.clone()));
+                        return true;
+                    }
+                }
+            }
+        }
+        let (Some(src), Some(dst)) = (src, self.drop_target(to)) else { return false };
         if let Some(b) = self.browser.as_mut() {
             b.drag_started();
         }
