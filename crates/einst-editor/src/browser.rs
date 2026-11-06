@@ -516,6 +516,27 @@ fn hidden_content() -> Vec<PathBuf> {
     crate::options::settings_dir().and_then(|d| std::fs::read_to_string(d.join("HiddenContent.txt")).ok()).map(|t| t.lines().filter(|l| !l.is_empty()).map(PathBuf::from).collect()).unwrap_or_default()
 }
 
+/// Content packs added by dropping their folder on the source list
+/// ([re:7dd3b2]); kept in the settings folder.
+fn added_content() -> Vec<PathBuf> {
+    crate::options::settings_dir().and_then(|d| std::fs::read_to_string(d.join("AddedContent.txt")).ok()).map(|t| t.lines().filter(|l| !l.is_empty()).map(PathBuf::from).collect()).unwrap_or_default()
+}
+
+fn add_content(p: &Path) {
+    let Some(d) = crate::options::settings_dir() else { return };
+    let _ = std::fs::create_dir_all(&d);
+    let mut v = added_content();
+    if !v.iter().any(|q| q == p) {
+        v.push(p.to_path_buf());
+        let text: String = v.iter().map(|p| format!("{}\n", p.display())).collect();
+        let _ = dreist_formats::file::write_atomic(d.join("AddedContent.txt"), text);
+    }
+    // A pack removed before shows again.
+    let hidden: Vec<PathBuf> = hidden_content().into_iter().filter(|q| q != p).collect();
+    let text: String = hidden.iter().map(|p| format!("{}\n", p.display())).collect();
+    let _ = dreist_formats::file::write_atomic(d.join("HiddenContent.txt"), text);
+}
+
 fn hide_content(p: &Path) {
     let Some(d) = crate::options::settings_dir() else { return };
     let mut v = hidden_content();
@@ -676,6 +697,18 @@ fn content_pack_paths(xml: &str) -> Vec<PathBuf> {
     v
 }
 
+/// [re:1f6f6b]: what removing a source row does, by its section.
+fn remove_description(cat: &str) -> &'static str {
+    match cat {
+        "Content" => {
+            "This will only remove the link from the source list, no data is removed from your hard disk. If you wish to readd the Content pack at a later date, simply drag it from Finder to this location"
+        }
+        "Searches" => "This will remove both the link from the source list, and the associated search data file from your hard disk. This action cannot be undone",
+        "Shortlists" => "This will remove both the link from the source list, and the associated shortlist data file from your hard disk. This action cannot be undone",
+        _ => "This will only remove the link from the source list, no data is removed from your hard disk",
+    }
+}
+
 fn subdirs(p: &Path) -> Vec<PathBuf> {
     let mut v: Vec<PathBuf> = std::fs::read_dir(p).map(|rd| rd.flatten().map(|e| e.path()).filter(|p| p.is_dir() && !hidden(p)).collect()).unwrap_or_default();
     v.sort();
@@ -701,7 +734,7 @@ fn sources_with(favourites: &[PathBuf], searches: &[String], shortlists: &[(Stri
             // The current format's content packs, then v1's.
             "Content" => {
                 let mut dirs = subdirs(&content_dir());
-                for d in v1 {
+                for d in v1.iter().chain(added_content().iter()) {
                     if !dirs.contains(d) {
                         dirs.push(d.clone());
                     }
@@ -1060,6 +1093,12 @@ impl Browser {
         self.go(dir, true);
     }
 
+    /// The source rows' folders (tests).
+    #[cfg(test)]
+    pub fn source_paths(&self) -> Vec<PathBuf> {
+        self.sources.iter().filter_map(|s| s.path.clone()).collect()
+    }
+
     /// A folder dropped on the file list from outside: show its contents.
     pub(crate) fn show_folder(&mut self, dir: PathBuf) {
         self.go(dir, true);
@@ -1324,7 +1363,7 @@ impl Browser {
         match a {
             // Removing [re:4472d0] asks (Yes / No) first.
             SourceAction::Remove => {
-                let q = format!("Are you sure you want to remove \"{}\". This action cannot be undone...", src.label);
+                let q = format!("{}\n\nAre you sure you want to remove \"{}\" from your {}?", remove_description(src.cat), src.label, src.cat);
                 open(
                     self,
                     app,
@@ -1485,6 +1524,16 @@ impl Browser {
                     }
                 }
                 save_shortlists(&self.shortlists);
+                true
+            }
+            // Folders on Content become content packs (v1 asks to be
+            // dragged back there after a removal).
+            "Content" => {
+                if !paths.iter().all(|p| p.is_dir()) {
+                    return false;
+                }
+                paths.iter().for_each(|p| add_content(p));
+                self.sources = sources(&self.favourites, &self.searches, &self.shortlists);
                 true
             }
             "Favourites" => {
