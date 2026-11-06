@@ -1083,41 +1083,14 @@ fn knob_double_click_resets() {
     o.save();
 }
 
+/// v1's knobs have no right-click menu.
 #[test]
-fn knob_right_click_menu() {
+fn knob_right_click_has_no_menu() {
     crate::app::test_setup();
-    use dreist_engine::binding::id;
     let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
     let cutoff = ed.app.root.path_of("CutoffKnob").unwrap();
-    let open = |ed: &mut Editor| {
-        ed.handle(&UiEvent::RightClicked { path: cutoff.clone(), name: "CutoffKnob".into() });
-        ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap_or_default()
-    };
-    let pick = |ed: &mut Editor, index: usize| {
-        ed.take_commands();
-        ed.handle(&UiEvent::MenuSelected { anchor: cutoff.clone(), name: "CutoffKnob".into(), index });
-        ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m) } else { None }).collect::<Vec<_>>()
-    };
-    // v1's layer knobs have no modulation sources of their own to remove.
-    assert_eq!(open(&mut ed), ["Reset", "Edit"]);
-    let cut = dreist_formats::LayerParam::FilterCutoff as u8 as f32;
-    let m = pick(&mut ed, 0);
-    assert!(m.iter().any(|m| m.kind == id::SET_LAYER_PARAMETER && m.value[..3] == [cut, 1.0, 0.0]));
-    // Edit: typed in Hz.
-    open(&mut ed);
-    pick(&mut ed, 1);
-    let edit = ed.app.root.path_of(KNOB_EDIT).unwrap();
-    assert!(ed.app.ctrl(&edit).unwrap().text.ends_with("Hz"));
-    ed.take_commands();
-    ed.handle(&UiEvent::TextCommitted { path: edit, name: KNOB_EDIT.into(), text: "440 Hz".into() });
-    let v = dreist_formats::params::Curve::Cutoff.from_units(440.0);
-    let m: Vec<_> = ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m) } else { None }).collect();
-    assert!(m.iter().any(|m| m.kind == id::SET_LAYER_PARAMETER && m.value[0] == cut && (m.value[1] - v).abs() < 1e-5), "{m:?}");
-    assert!(ed.app.root.path_of(KNOB_EDIT).is_none());
-    // The tune knob adds "Tune loop to tempo".
-    let tune = ed.app.root.path_of("TuneKnob").unwrap();
-    ed.handle(&UiEvent::RightClicked { path: tune, name: "TuneKnob".into() });
-    assert!(ed.app.menu.as_ref().unwrap().items.iter().any(|i| i == "Tune loop to tempo"));
+    ed.handle(&UiEvent::RightClicked { path: cutoff, name: "CutoffKnob".into() });
+    assert!(ed.app.menu.is_none());
 }
 
 #[test]

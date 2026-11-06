@@ -662,36 +662,6 @@ impl FxPanel {
         path.starts_with(&self.host) && self.slot_of(app, path).is_some()
     }
 
-    /// "Remove all modulation from this control" ([re:5d3162],
-    /// [re:de6d9f]): the value 0 for sources 1..=28.
-    pub fn remove_modulation(&self, app: &App, model: &Model, path: &[usize]) -> Vec<Command> {
-        let Some(c) = app.ctrl(path) else { return Vec::new() };
-        if c.class.ends_with("Button") || !self.contains(app, path) {
-            return Vec::new();
-        }
-        let Some((slot, _)) = self.slot_of(app, path) else { return Vec::new() };
-        let Some((t, _)) = self.built.as_ref() else { return Vec::new() };
-        let _ = model;
-        let [e, p, l] = t.index();
-        let index = [e, p, l, slot as i32];
-        let name = c.name.clone();
-        (1..=28)
-            .filter_map(|s| {
-                let s = s as f32;
-                if let Some(n) = name.strip_prefix("Control").and_then(|n| n.parse::<usize>().ok()) {
-                    return Some(msg(id::SET_FX_PARAMETER, &index, &[(n - 1) as f32, s, 0.0]));
-                }
-                let kind = match name.as_str() {
-                    "TrimKnob" => id::SET_FX_TRIM,
-                    "MixKnob" => id::SET_FX_MIX,
-                    "OutputKnob" => id::SET_FX_LEVEL,
-                    _ => return None,
-                };
-                Some(msg(kind, &index, &[0.0, 0.0, s]))
-            })
-            .collect()
-    }
-
     /// Sources modulating the effect parameter knob at `path`
     /// ([re:2f9e16], [re:a50db4]).
     pub fn modulation_mask(&self, app: &App, model: &Model, path: &[usize]) -> Option<u32> {

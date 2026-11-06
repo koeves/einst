@@ -414,9 +414,6 @@ impl Editor {
         if self.double_click_reset(ev) {
             return;
         }
-        if self.knob_right_click(ev) {
-            return;
-        }
         // Pointer feedback (cursors, drop-target highlights) changes no
         // document state: no undo bookkeeping.
         // [re:ed3c05] (enter / leave a layer

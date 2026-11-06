@@ -428,18 +428,6 @@ impl Transmod {
         !changed.is_empty()
     }
 
-    /// "Remove all modulation from this control" on a modulator
-    /// parameter ([re:8bc6f5]): depth 0 for sources
-    /// 1..=28.
-    pub fn remove_modulation(&self, app: &App, path: &[usize]) -> Vec<Command> {
-        let Some(c) = app.ctrl(path) else { return Vec::new() };
-        if c.class != "CtrlTransmodKnob" {
-            return Vec::new();
-        }
-        let (Some(slot), Some(i)) = (Self::slot_of(app, path), c.name.strip_prefix("Control").and_then(|v| v.parse::<usize>().ok())) else { return Vec::new() };
-        (1..=28).map(|s| msg(id::SET_MODULATION_SOURCE_PARAMETER, &[slot as i32], &[0.0, i as f32, s as f32, 0.0])).collect()
-    }
-
     /// A knob double click's reset value: macros 0
     /// ([re:ce19fc] [re:69ec5c]), modulator
     /// parameters their default ([re:e5c3c3] [re:69fc2e],

@@ -520,18 +520,6 @@ impl Mixer {
         })
     }
 
-    /// "Remove all modulation from this control" for the strip's effects
-    /// (v1 strip knobs carry no modulation).
-    pub fn remove_modulation(&self, app: &App, model: &Model, path: &[usize]) -> Vec<Command> {
-        if let Some(f) = &self.fx {
-            let v = f.remove_modulation(app, model, path);
-            if !v.is_empty() {
-                return v;
-            }
-        }
-        Vec::new()
-    }
-
     /// Sources modulating the strip knob at `path` (engine / pad / layer
     /// parameters and aux sends), and effect parameters in the chain.
     pub fn modulation_mask(&self, app: &App, model: &Model, path: &[usize]) -> Option<u32> {
