@@ -245,8 +245,9 @@ impl Scenes {
         true
     }
 
-    /// [re:04e91a] into the `DetailsTable` (columns Engine, Pattern,
-    /// Power; rows 1..8): for a used scene "n: name" and On/Off per engine.
+    /// [re:04e91a] into the `DetailsTable` (columns "Engine" 40 px centred,
+    /// "Patt." 200 px, "Power" 50 px centred, [re:0474d8]; rows 1..8): for a
+    /// used scene "n: name" and On/Off per engine.
     fn draw_details(&self, model: &Model, r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) {
         use dreist_gui::paint::RectF;
         use dreist_gui::style::{HAlign, VAlign};
@@ -258,15 +259,15 @@ impl Scenes {
         let ink = s.colour(st, "colBorder", Colour::rgba(18, 25, 60, 255));
         p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour(st, "colFill", Colour::rgba(222, 229, 237, 255)));
         let row_h = (h / 9.0).floor().max(12.0);
-        let cols = [(0.0, 50.0), (50.0, 180.0), (230.0, w - 230.0)];
+        let cols = [(0.0, 40.0, HAlign::Center), (40.0, 200.0, HAlign::Left), (240.0, 50.0, HAlign::Center)];
         p.fill_rect(RectF::new(0.0, 0.0, w, row_h), s.colour(st, "colHeaderFill", Colour::rgba(169, 176, 191, 255)));
         p.line(0.0, row_h - 0.5, w, row_h - 0.5, s.colour(st, "colHeaderDivider", ink), 1.0);
         let font = s.font(st);
         let text = s.colour(st, "colText", ink);
         let htext = s.colour(st, "colHeaderText", text);
         let (row, alt) = (s.colour(st, "colRow", Colour::TRANSPARENT), s.colour(st, "colRowAlt", Colour::rgba(199, 206, 217, 100)));
-        for ((x, cw), name) in cols.iter().zip(["Engine", "Pattern", "Power"]) {
-            p.text(RectF::new(x + 3.0, 0.0, cw - 6.0, row_h), name, htext, &font, HAlign::Left, VAlign::Center);
+        for ((x, cw, al), name) in cols.iter().zip(["Engine", "Patt.", "Power"]) {
+            p.text(RectF::new(x + 3.0, 0.0, cw - 6.0, row_h), name, htext, &font, *al, VAlign::Center);
         }
         let sc = manager(model).scenes.get(self.selected).cloned().unwrap_or_default();
         for e in 0..8 {
@@ -279,12 +280,12 @@ impl Scenes {
             } else {
                 (String::new(), String::new())
             };
-            for ((x, cw), t) in cols.iter().zip([(e + 1).to_string(), pat, pow]) {
-                p.text(RectF::new(x + 3.0, y, cw - 6.0, row_h), &t, text, &font, HAlign::Left, VAlign::Center);
+            for ((x, cw, al), t) in cols.iter().zip([(e + 1).to_string(), pat, pow]) {
+                p.text(RectF::new(x + 3.0, y, cw - 6.0, row_h), &t, text, &font, *al, VAlign::Center);
             }
         }
         let div = s.colour(st, "colColumnDivider", ink);
-        for (x, _) in cols.iter().skip(1) {
+        for (x, ..) in cols.iter().skip(1) {
             p.line(x + 0.5, 0.0, x + 0.5, h, div, 1.0);
         }
         p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), ink, 1.0);
