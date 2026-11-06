@@ -182,6 +182,7 @@ mod tests {
         let dir = crate::tests::preview_files("preview-link");
         let Some(list) = crate::tests::browser_list(&mut ed, &dir) else { return };
         ed.browser.as_mut().unwrap().set_preview_mode(true);
+        ed.browser.as_mut().unwrap().set_slice_mode(false);
         let got: Arc<Mutex<Vec<Command>>> = Default::default();
         let sink = got.clone();
         let mut h = Hosted(ed, Box::new(move |_, cmds| sink.lock().unwrap().extend(cmds)));

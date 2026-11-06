@@ -982,6 +982,15 @@ fn build_column(skin: &mut Skin, host: &mut Ctrl) -> Result<(), EditorError> {
     Ok(())
 }
 
+/// Remember a footer state.
+fn save_flag(key: &str, on: bool) {
+    let mut o = crate::options::Options::load();
+    o.set(key, on);
+    if !cfg!(test) {
+        o.save();
+    }
+}
+
 impl Browser {
     /// The footer's Auto load is on.
     pub fn auto_load(&self) -> bool {
@@ -1024,12 +1033,15 @@ impl Browser {
             scroll: 0,
             history: Vec::new(),
             future: Vec::new(),
-            auto_load: false,
-            slice_mode: false,
+            // v1's footer states ([re:c28f9b] [re:8aad4c]): Auto load
+            // `AllocatorPreviewInPlace` (off), Slice `AllocatorAutoSlice` (on),
+            // AUTO preview `AllocatorPlayPreview` (on).
+            auto_load: crate::options::Options::load().bool("AllocatorPreviewInPlace", false),
+            slice_mode: crate::options::Options::load().bool("AllocatorAutoSlice", true),
             slice_request: None,
             load_request: None,
             alt_click: false,
-            preview_mode: false,
+            preview_mode: crate::options::Options::load().bool("AllocatorPlayPreview", true),
             preview_flash: None,
             preview_volume: 0.793_700_5,
             search: None,
@@ -1803,6 +1815,11 @@ impl Browser {
         self.preview_mode = on;
     }
 
+    /// Footer Slice (audio files open the slicer).
+    pub fn set_slice_mode(&mut self, on: bool) {
+        self.slice_mode = on;
+    }
+
     #[cfg(test)]
     pub fn pane_sub_folders(&self) -> bool {
         self.pane.sub_folders
@@ -2408,8 +2425,10 @@ impl Browser {
                     }
                     true
                 }
+                // [re:1c0d11]: each toggle is remembered.
                 "PreviewButton" => {
                     self.preview_mode = !self.preview_mode;
+                    save_flag("AllocatorPlayPreview", self.preview_mode);
                     true
                 }
                 "StopButton" => {
@@ -2419,10 +2438,12 @@ impl Browser {
                 }
                 "InteractionModeButton" => {
                     self.auto_load = !self.auto_load;
+                    save_flag("AllocatorPreviewInPlace", self.auto_load);
                     true
                 }
                 "HitLoopModeButton" => {
                     self.slice_mode = !self.slice_mode;
+                    save_flag("AllocatorAutoSlice", self.slice_mode);
                     true
                 }
                 _ => false,

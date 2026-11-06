@@ -2494,6 +2494,8 @@ fn slicer_slides_over_the_lcd() {
     if !ed.open_slicer(&f) {
         return;
     }
+    // Unclassified slices go to the pads in order.
+    ed.slicer.classify = false;
     // The preview panel covers the LCD's page area.
     let ov = ed.app.root.path_of("SlicerOverlay").unwrap();
     let main = ed.app.root.path_of("MainTabs").unwrap();
@@ -3198,6 +3200,7 @@ fn browser_preview_starts_on_the_press_and_reuses_decoded_files() {
     let dir = preview_files("preview-press");
     let Some(list) = browser_list(&mut ed, &dir) else { return };
     ed.browser.as_mut().unwrap().set_preview_mode(true);
+    ed.browser.as_mut().unwrap().set_slice_mode(false);
     let ev = |kind, row: f32| UiEvent::Mouse { path: list.clone(), overload: "BrowserFileList".into(), kind, x: 5.0, y: row * 18.0 + 2.0 };
     let preview = |cmds: Vec<Command>| {
         cmds.into_iter().find_map(|c| match c {
