@@ -1,25 +1,24 @@
 //! Pattern panel: `PatternPanel.skin` with the toolbar (`Toolbar.skin`,
 //! [re:bca08c]) and the pattern editor ([re:677fc4]).
 //! The step grid, track rows and timeline are code-drawn as in
-//! [re:f3c26a] / [re:f32484] /
+//! [re:38cc40] / [re:9392a2] /
 //! [re:477245] (see the dreist-re GUI notes):
 //!
 //! - background: groups of a beat's steps alternate `colFill` /
-//!   `colAltFill` ([re:ac984a]);
-//! - the selected track's row in `colSelectedTrack` ([re:5a68a7]);
+//!   `colAltFill` (v1 tiles an image over the shaded groups; [re:1c3ee7]);
+//! - the selected track's row in `colSelectedTrack` ([re:24ea32]);
 //! - grid lines: one per step, every 4th in `colGridBar`, and track
-//!   separators ([re:60f2b5], [re:ecd2fe] in the later version); v1 dashes
+//!   separators ([re:8648cb], [re:3bdd12]); v1 dashes
 //!   the step lines and the track separators (`GridDashStyle`, 2 on, 2
 //!   off) and draws the bar lines solid (measured from v1 screenshots,
 //!   dreist-re ui-v1-style round 5);
-//! - steps ([re:cef393], [re:b3cfd7] in the later version: rounded and
-//!   inset 2/1/4/3); v1 fills the cell but for a 2 px gap with a square
+//! - steps ([re:a3dd97], [re:d66abb]); v1 fills the cell but for a 2 px gap with a square
 //!   hit in `colStep` and a 1 px `StepOnStyle` edge, at alpha
 //!   `vel·0.85 + 0.15`; repeats subdivide one-shot steps;
 //! - beyond the track length: `colOverlay` (track drawing);
-//! - the current step column in `colPosition` ([re:bfe463]);
+//! - the current step column in `colPosition` ([re:398f99]);
 //! - pattern power off: `colPowerOverlay` α0.3 and "Pattern power off"
-//!   ([re:33022b]);
+//!   ([re:abf693]);
 //! - timeline: a line and the step number every 4 steps (every 16 when
 //!   steps are ≤ 7 px wide) ([re:34ab57]).
 //!
@@ -516,7 +515,7 @@ impl PatternView {
 /// Per-track lengths (their markers): a v2 addition v1 does not have.
 const TRACK_LENGTHS: bool = false;
 
-/// Track length marker size ([re:f32484] ctor [re:74d707]).
+/// Track length marker size ([re:9392a2] ctor [re:74d707]).
 const MARKER_W: f32 = 10.0;
 const MARKER_H: f32 = 15.0;
 
@@ -1003,7 +1002,7 @@ impl PatternPanel {
         x.round().min(w - MARKER_W).max(0.0)
     }
 
-    /// The track length markers ([re:f32484] ctor: a 10 × 15
+    /// The track length markers ([re:9392a2] ctor: a 10 × 15
     /// button at the top of each track row): a press starts a drag
     /// ([re:82fafd]: clamped to the steps, shift / cmd move every track's
     /// marker), the release snaps to the step under it and posts
@@ -1787,7 +1786,7 @@ impl PatternPanel {
                     return true;
                 }
                 let drag_lane = model.pattern_view[e].drag_lane;
-                // [re:f32484] multi tool (tool 3).
+                // [re:9392a2] multi tool (tool 3).
                 let ctx = StepCtx { e, cur, drag_lane, pat: &pat, lay: &lay };
                 match kind {
                     // Left press [re:f07c25] / multi-tool press [re:1fec54]:
@@ -2552,7 +2551,7 @@ impl PatternPanel {
         let (w, h) = ((lay.step_range().end as f32 - lay.first_step as f32) * lay.step_w, c.rect.h as f32);
         let fill = grid_colour(s, "colFill");
         let alt = grid_colour(s, "colAltFill");
-        // Background stripes by the shading mode ([re:ac984a]).
+        // Background stripes by the shading mode ([re:1c3ee7]).
         for st in lay.step_range() {
             let col = if shaded(pat.resolution, st) { alt } else { fill };
             p.fill_rect(RectF::new(lay.step_x(st), 0.0, lay.step_w.ceil(), h), col);
@@ -2680,7 +2679,7 @@ impl PatternPanel {
         }
     }
 
-    /// [re:4a55a4] / step graph drawing [re:8b937e] for
+    /// [re:caa658] / step graph drawing [re:5831e4] for
     /// the selected track's lane.
     fn draw_graph(&self, model: &Model, r: &Renderer, p: &mut Painter, c: &Ctrl) {
         let e = model.engine;
@@ -2925,8 +2924,8 @@ impl StepCtx<'_> {
     }
 }
 
-/// [re:7a5608] (option
-/// `PatternEditorShadingMode`, [re:c192c5]: Fixed 0,
+/// [re:be6941] (option
+/// `PatternEditorShadingMode`, [re:e192ef]: Fixed 0,
 /// Adaptive 1, Cyclic 2, Off 3).
 static SHADING_MODE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
 
@@ -2935,7 +2934,7 @@ pub fn set_shading_mode(name: &str) {
     SHADING_MODE.store(m, std::sync::atomic::Ordering::Relaxed);
 }
 
-/// Repeat time per shading mode [re:83c623]: steps per shading
+/// Repeat time per shading mode [re:be6941]: steps per shading
 /// group — Fixed 4, Adaptive the resolution's steps per beat, Cyclic its
 /// cycle table; `None` (−1, no alternation) for Off and coarse
 /// resolutions.
