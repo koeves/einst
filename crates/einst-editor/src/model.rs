@@ -306,7 +306,10 @@ impl Model {
             mod_alt: false,
             mod_shift: false,
             engine_sel: 0,
-            pattern_view: Default::default(),
+            pattern_view: {
+                let l = crate::pattern::saved_drag_lane();
+                std::array::from_fn(|_| crate::pattern::PatternView { drag_lane: l, ..Default::default() })
+            },
             sampling: None,
             pattern_grown: false,
         }

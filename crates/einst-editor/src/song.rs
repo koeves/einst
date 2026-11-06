@@ -69,6 +69,27 @@ pub(crate) enum SongTool {
 }
 
 const SONG_TOOLS: [SongTool; 4] = [SongTool::Draw, SongTool::Erase, SongTool::Select, SongTool::Multi];
+
+/// v1's tool values (the tool buttons' ids): Select 0, Draw 1, Erase 2,
+/// Multi 3 ([re:4e6b67]).
+fn tool_id(t: SongTool) -> i64 {
+    match t {
+        SongTool::Select => 0,
+        SongTool::Draw => 1,
+        SongTool::Erase => 2,
+        SongTool::Multi => 3,
+    }
+}
+
+/// Option `SongLastTool` (default 1, Draw; [re:7fdc18] [re:9bf684]).
+fn saved_tool() -> SongTool {
+    match crate::options::Options::load().int("SongLastTool", 1) {
+        0 => SongTool::Select,
+        2 => SongTool::Erase,
+        3 => SongTool::Multi,
+        _ => SongTool::Draw,
+    }
+}
 /// The pattern popup's name on the page.
 const POPUP: &str = "SongPatternPopup";
 
@@ -250,6 +271,9 @@ pub struct SongPanel {
     popup_tpl: Option<Ctrl>,
     /// The left-button tool (the toolbar's tool group, manual §11:3).
     pub(crate) tool: SongTool,
+    /// FollowButton: scroll to the playback position (option
+    /// `SongLastFollowMode`, the song page's own; [re:cacf78] [re:1f0ef0]).
+    pub(crate) follow_on: bool,
     /// First visible quarter note.
     scroll: f32,
     /// Selected parts (track, start in 1/960 QN).
@@ -369,7 +393,8 @@ impl SongPanel {
             anchor: None,
             pattern_menu: None,
             popup_tpl,
-            tool: SongTool::Multi,
+            tool: saved_tool(),
+            follow_on: crate::options::Options::load().bool("SongLastFollowMode", false),
             scroll: 0.0,
             selected: BTreeSet::new(),
             op: None,
@@ -958,7 +983,7 @@ impl SongPanel {
                 b.on = t == tool;
             }
         }
-        let follow = model.follow_playback;
+        let follow = self.follow_on;
         if let Some(b) = page.find_mut("FollowButton") {
             b.on = follow;
         }
@@ -1281,7 +1306,7 @@ impl SongPanel {
                 true
             }
             UiEvent::Clicked { path, .. } if path.len() > 1 && path.starts_with(&self.page) && app.ctrl(&path[..path.len() - 1]).is_some_and(|g| g.name == "ToolButtonGroup") => {
-                self.tool = SONG_TOOLS[path[path.len() - 1].min(3)];
+                self.select_tool(SONG_TOOLS[path[path.len() - 1].min(3)]);
                 true
             }
             UiEvent::Clicked { path, name, .. } if path.starts_with(&self.page) => {
@@ -1291,16 +1316,14 @@ impl SongPanel {
                     "PrevPatternButton" => self.change_patterns(model, Some(-1), None, out),
                     // The blackout's Activate: song mode on (`e_songSetActive`).
                     "PowerButton" => out.push(msg(id::SONG_SET_ACTIVE, &[], &[1.0, 0.0])),
-                    // Scroll to follow (`PatternEditorFollow`, shared with the
-                    // pattern page).
+                    // Scroll to follow (`SongLastFollowMode`).
                     "FollowButton" => {
-                        let on = !model.follow_playback;
+                        self.follow_on = !self.follow_on;
                         let mut o = crate::options::Options::load();
-                        o.set("PatternEditorFollow", on);
+                        o.set("SongLastFollowMode", self.follow_on);
                         if !cfg!(test) {
                             o.save();
                         }
-                        model.follow_playback = on;
                     }
                     "SelectPatternButton" => self.open_pattern_menu(app, model, path, false),
                     // The draw tool's pattern.
@@ -1349,7 +1372,7 @@ impl SongPanel {
         };
         match a {
             MenuAction::Tool(k) => {
-                self.tool = SONG_TOOLS[k.min(3)];
+                self.select_tool(SONG_TOOLS[k.min(3)]);
                 return true;
             }
             MenuAction::None => return false,
@@ -1543,8 +1566,18 @@ impl SongPanel {
     }
 
     /// [re:1f0ef0] with
-    /// `PatternEditorFollow`: a new playback position outside the visible
+    /// FollowButton on: a new playback position outside the visible
     /// body (no drag going on) scrolls it to the middle. True when it moved.
+    /// A new tool, remembered as `SongLastTool` ([re:9bf684]).
+    fn select_tool(&mut self, t: SongTool) {
+        self.tool = t;
+        let mut o = crate::options::Options::load();
+        o.set("SongLastTool", tool_id(t));
+        if !cfg!(test) {
+            o.save();
+        }
+    }
+
     pub fn follow(&mut self, pos: f64) -> bool {
         if self.op.is_some() || self.band.is_some() {
             return false;
@@ -1759,6 +1792,9 @@ mod tool_tests {
         ed.sync();
         let p = ed.app.root.path_of("PowerButton")?;
         ed.handle(&UiEvent::Clicked { path: p, name: "PowerButton".into(), id: 0, on: false });
+        // v1 starts on Draw ([re:7fdc18]); the tests start on Multi.
+        assert_eq!(ed.song.as_ref()?.tool, SongTool::Draw);
+        ed.song.as_mut()?.tool = SongTool::Multi;
         Some(ed)
     }
 

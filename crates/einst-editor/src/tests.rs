@@ -51,6 +51,8 @@ fn grid_multi_tool_draws_erases_and_chains() {
     crate::app::test_setup();
     use dreist_gui::app::MouseButton;
     let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    // The Multi tool's gestures (v1 starts on Pen).
+    ed.pattern.as_mut().unwrap().tool = crate::pattern::Tool::Multi;
     let gp = ed.app.root.path_of("PatternGrid").unwrap();
     let (gx, gy) = ed.app.origin(&gp);
     let e = ed.model.engine;
@@ -840,6 +842,8 @@ fn song_part_select_move_duplicate() {
     ed.model.editor_tab = 2;
     ed.sync();
     song_mode_on(&mut ed);
+    // These gestures are the Multi tool's (v1 starts on Draw).
+    ed.song.as_mut().unwrap().tool = crate::song::SongTool::Multi;
     let body = ed.app.root.path_of("SongBody").unwrap();
     let (bx, by) = ed.app.origin(&body);
     let press = |ed: &mut Editor, x: f32, y: f32, drag_to: Option<f32>| {
@@ -1532,8 +1536,10 @@ fn sampler_page_modes_arm_record_and_preview() {
     let items = ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap();
     assert_eq!((items[0].as_str(), items[2].as_str(), items.len()), ("Export take...", "Send take to current pad...", 8));
     ed.app.menu = None;
-    ed.handle(&UiEvent::MenuSelected { anchor: sb, name: "SaveButton".into(), index: 7 });
+    // Auto-crop starts on (`SamplerLastAutoCrop`) and is remembered.
     assert!(ed.sampler.auto_crop);
+    ed.handle(&UiEvent::MenuSelected { anchor: sb, name: "SaveButton".into(), index: 7 });
+    assert!(!ed.sampler.auto_crop);
 }
 
 #[test]
@@ -2112,6 +2118,8 @@ fn song_resize_start_phase_band_quantize() {
     ed.model.editor_tab = 2;
     ed.sync();
     song_mode_on(&mut ed);
+    // These gestures are the Multi tool's (v1 starts on Draw).
+    ed.song.as_mut().unwrap().tool = crate::song::SongTool::Multi;
     let body = ed.app.root.path_of("SongBody").unwrap();
     let (bx, by) = ed.app.origin(&body);
     let drag = |ed: &mut Editor, x: f32, y: f32, x2: f32, y2: f32, shift: bool| {
@@ -2323,6 +2331,8 @@ fn graph_line_fine_erase_and_menu_from_step() {
     crate::app::test_setup();
     use dreist_gui::app::MouseKind;
     let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    // The Multi tool's gestures (v1 starts on Pen).
+    ed.pattern.as_mut().unwrap().tool = crate::pattern::Tool::Multi;
     if let Some(pp) = ed.pattern.as_mut() {
         pp.multi = false;
     }
@@ -2723,6 +2733,8 @@ fn song_pattern_buttons_change_the_selection() {
     ed.model.editor_tab = 2;
     ed.sync();
     song_mode_on(&mut ed);
+    // These gestures are the Multi tool's (v1 starts on Draw).
+    ed.song.as_mut().unwrap().tool = crate::song::SongTool::Multi;
     let body = ed.app.root.path_of("SongBody").unwrap();
     let (bx, by) = ed.app.origin(&body);
     let click = |ed: &mut Editor, x: f32, y: f32| {
