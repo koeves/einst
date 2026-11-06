@@ -1,31 +1,34 @@
-//! Slicer ([re:c241a0], v1's `Preview/PreviewPanel.skin` 820×395): the
+//! Slicer ([re:d78e56], v1's `Preview/PreviewPanel.skin` 820×395): the
 //! LCD panel for cutting an audio file into slices and extracting them to
 //! pads and a pattern. It has no page tab: it covers the LCD (the page tabs
 //! are off) while slicing.
 //!
-//! - Opened by [re:bff97e] (the browser's Slice mode on an audio file, a
+//! - Opened by [re:401f49] (the browser's Slice mode on an audio file, a
 //!   layer's "Send to slicer", the sampler's Slice); the wave editor resets
-//!   its zoom and the analysis (a `.gsa` sidecar, else [re:c5ff4b]) fills
+//!   its zoom and the analysis (a `.gsa` sidecar, else [re:29a10f]) fills
 //!   the slices. With the browser's Auto load on, the slices and the
 //!   pattern are extracted at once and again after every edit; otherwise
 //!   the Extract buttons (Audio+Ptn / Audio / Pattern) do it.
-//! - Slicing [re:77d1da]: Transient mode keeps the slices usable at the
+//! - Slicing [re:29a10f]: Transient mode keeps the slices usable at the
 //!   sensitivity, Divide cuts equal divisions; locked and deleted slices
 //!   are carried over.
-//! - Controls per slicing mode [re:cc20ff]: Transient shows the
-//!   Sensitivity knob, Divide the division count.
-//! - Meta data changes [re:168d6a]: BPM 20..1000, Bars 0..1000, Beats
-//!   0..100; beats ≥ 4 carry into bars and tempo ↔ bars/beats follow the
-//!   region length.
-//! - Allocation [re:90734a] / job [re:f09ec6]: the pattern is extracted from the analysis,
+//! - Controls per slicing mode [re:54d289]: Transient shows the
+//!   Sensitivity knob and the Analyze button, Divide the division count.
+//! - Meta data changes [re:334765]: the three boxes are read again; BPM
+//!   20..1000, bars and beats at least 0; beats ≥ 4 carry into bars and
+//!   tempo ↔ bars/beats follow the region length (fractional beats).
+//! - While slicing the engine selectors (but the selected one), pattern
+//!   keys, Load / Save / main menu and Undo / Redo / Learn are disabled;
+//!   leaving the browser's Loop mode cancels, its Auto load follows.
+//! - Allocation [re:f5229e] / job [re:f5229e]: the pattern is extracted from the analysis,
 //!   then the allocation manager assigns slices to pads (and the pattern).
-//! - Revert [re:db19a5] (Cancel) restores the engine saved when the
+//! - Revert [re:f65139] (Cancel) restores the engine saved when the
 //!   panel opened.
 //! - The wave editor: a click on the ruler adds a locked slice (Transient),
 //!   markers drag left / right (alt-click deletes), a click in the upper
 //!   wave auditions the slice, a drag in the middle zooms (up / down) and
 //!   scrolls (left / right); right click: the slice menu (Lock / Unlock,
-//!   Delete / Restore). Markers [re:b13346] / [re:be5846]: a line per slice
+//!   Delete / Restore). Markers [re:da2093] / [re:e92ecc]: a line per slice
 //!   with a head in the marker strip (a box when locked, else a triangle,
 //!   amber when selected).
 
@@ -65,9 +68,32 @@ struct Audio {
     buckets: Vec<(f32, f32)>,
 }
 
-/// Slide animation tags.
-const SLIDE_IN: u32 = 0x51c1;
-const SLIDE_OUT: u32 = 0x51c0;
+/// [re:401f49]: the controls slicing disables (re-enabled after).
+fn lock_for_slicing(app: &mut App, slicing: bool) {
+    let on = !slicing;
+    for (section, names) in [("UtilityControls", &["LoadButton", "SaveButton", "GridButton"][..]), ("Transport", &["UndoButton", "RedoButton", "UndoHistory", "RedoHistory", "LearnButton"][..])] {
+        for n in names {
+            if let Some(c) = crate::front::path_in(&app.root, section, n).and_then(|p| app.ctrl_mut(&p)) {
+                c.enabled = on;
+            }
+        }
+    }
+    if let Some(c) = app.root.find_mut("PatternSelectors") {
+        c.walk_mut(&mut |k: &mut Ctrl| {
+            if k.name.strip_prefix("Key").is_some_and(|n| n.parse::<usize>().is_ok()) {
+                k.enabled = on;
+            }
+        });
+    }
+    // The selected engine's button stays enabled.
+    if let Some(c) = app.root.find_mut("EditorEngineSelectors") {
+        c.walk_mut(&mut |k: &mut Ctrl| {
+            if k.name == "EngineSelectionButton" {
+                k.enabled = on || k.on;
+            }
+        });
+    }
+}
 
 /// The slice context menu (Transient mode).
 const SLICE_MENU: [&str; 7] = ["Lock slice", "Delete slice", "", "Kick", "Snare", "Hihat", "Percussion"];
@@ -77,9 +103,6 @@ pub struct Slicer {
     overlay: Option<Vec<usize>>,
     /// The LCD's page panel (`MainTabs`, which the slicer covers).
     main: Option<Vec<usize>>,
-    /// On screen (sliding in, shown or sliding out) / sliding out.
-    shown: bool,
-    closing: bool,
     pub open: bool,
     file: Option<PathBuf>,
     audio: Option<Audio>,
@@ -96,6 +119,8 @@ pub struct Slicer {
     pub classify: bool,
     /// The browser's Auto load when the panel opened.
     pub auto_load: bool,
+    /// The browser's (Auto load, Loop mode) last seen (by the editor).
+    pub browser_modes: Option<(bool, bool)>,
     /// The file's tempo when it opened (File BPM).
     file_bpm: f32,
     selected: Option<usize>,
@@ -117,13 +142,13 @@ pub struct Slicer {
     extracted: bool,
     pub pattern: SlicedPattern,
     /// A REX file: its own slices and tempo (Sensitivity and BPM disabled,
-    /// [re:4cb63d] / meta data from the file
-    /// [re:17c579]).
+    /// [re:dce0b9] / meta data from the file
+    /// [re:7ecc7d]).
     rex: bool,
 }
 
 /// Preference "Quantize REX" (`AllocatorQuantizeREX`): extracted steps get
-/// no timing offset (pattern extraction [re:150941] sets lane 3 to
+/// no timing offset (pattern extraction [re:5f0bcb] sets lane 3 to
 /// 0.5 instead of the slice's distance from the step) — for every slicing,
 /// not only REX files.
 fn quantize_rex() -> bool {
@@ -135,8 +160,6 @@ impl Slicer {
         Slicer {
             overlay: None,
             main,
-            shown: false,
-            closing: false,
             open: false,
             file: None,
             audio: None,
@@ -149,6 +172,7 @@ impl Slicer {
             multi_layer: false,
             classify: false,
             auto_load: false,
+            browser_modes: None,
             file_bpm: 0.0,
             selected: None,
             drag: None,
@@ -211,7 +235,7 @@ impl Slicer {
     /// Slicing started: load `file` and its analysis, remember the
     /// document for Cancel.
     pub fn start(&mut self, model: &Model, file: &Path) -> bool {
-        // Loop load [re:660edf]: a REX ".truncated" path does not
+        // Loop load [re:ff4364]: a REX ".truncated" path does not
         // slice; a REX file loads its slices end to end with the file's
         // own slice points.
         let (_, truncated) = dreist_engine::rex::strip_truncated(file);
@@ -339,53 +363,59 @@ impl Slicer {
         }
     }
 
-    /// Tempo from bars and beats.
+    /// Tempo from bars and beats ([re:773cdd]: 60000 / (ms / beats), not
+    /// held to a range; no beats leave it).
     fn tempo_from_bars(&mut self) {
         let (start, end) = self.region();
         let Some(sr) = self.audio.as_ref().map(|a| a.data.sample_rate) else { return };
-        let secs = (end - start) as f32 / sr;
+        let ms = (end - start) as f32 / sr * 1000.0;
         let beats = self.analysis.bars * 4.0 + self.analysis.beats;
-        if secs > 0.0 && beats > 0.0 {
-            self.analysis.bpm = (beats * 60.0 / secs).clamp(20.0, 1000.0);
+        if ms > 0.0 && beats > 0.0 {
+            self.analysis.bpm = 60000.0 / (ms / beats);
         }
     }
 
-    /// Bars and beats from the tempo.
+    /// Bars and beats from the tempo ([re:a2df40]: whole bars, the rest
+    /// as (fractional) beats).
     fn bars_from_tempo(&mut self) {
         let (start, end) = self.region();
         let Some(sr) = self.audio.as_ref().map(|a| a.data.sample_rate) else { return };
-        let beats = ((end - start) as f32 / sr * self.analysis.bpm / 60.0).round();
-        self.analysis.bars = (beats / 4.0).floor();
-        self.analysis.beats = beats - self.analysis.bars * 4.0;
+        let mut beats = self.analysis.bpm / 60.0 * ((end - start) as f32 / sr);
+        let mut bars = 0.0;
+        while beats >= 4.0 {
+            bars += 1.0;
+            beats -= 4.0;
+        }
+        self.analysis.bars = bars;
+        self.analysis.beats = beats;
     }
 
     pub fn sync(&mut self, app: &mut App) {
         let Some(op) = self.overlay.clone() else { return };
         let editing = app.is_editing();
-        // [re:695294] 0x13a / 0x145: slides down over the LCD (350 ms
-        // exponential), back up on close (350 ms logarithmic, then
-        // [re:5e9662]).
+        // [re:401f49] 0x114 / 0x11d: the panel covers the page area at
+        // once ([re:c944e4]: at (0, 0), the page tabs disabled); while it is
+        // up the engine selectors (but the selected one), the pattern keys,
+        // Load / Save / the main menu and Undo / Redo / their histories /
+        // Learn are disabled ([re:ee4407], [re:abdceb], [re:720950],
+        // [re:ace24f]).
         let panel = [op.clone(), vec![0]].concat();
-        if let Some(r) = app.ctrl(&op).map(|c| c.rect) {
-            let up = Rect::new(0, -r.h, r.w, r.h);
-            let down = Rect::new(0, 0, r.w, r.h);
-            if self.open && !self.shown {
-                app.animate_rect(&panel, up, down, 350.0, dreist_gui::collapse::exponential, SLIDE_IN);
-                self.shown = true;
-                self.closing = false;
-            } else if !self.open && self.shown && !self.closing {
-                let from = app.ctrl(&panel).map(|c| c.rect).unwrap_or(down);
-                app.animate_rect(&panel, from, up, 350.0, dreist_gui::collapse::curve, SLIDE_OUT);
-                self.closing = true;
+        if self.open {
+            if let Some(r) = app.ctrl(&panel).map(|c| c.rect) {
+                if (r.x, r.y) != (0, 0) {
+                    if let Some(c) = app.ctrl_mut(&panel) {
+                        c.set_rect(Rect::new(0, 0, r.w, r.h));
+                    }
+                }
             }
         }
-        // The other pages are off while slicing.
-        let open = self.shown;
+        let open = self.open;
         if let Some(g) = app.root.find_mut("MainTabButtons") {
             for b in &mut g.children {
-                b.enabled = !self.open;
+                b.enabled = !open;
             }
         }
+        lock_for_slicing(app, open);
         let (mode, multi, classify, auto) = (self.mode, self.multi_layer, self.classify, self.auto_load);
         let (sens, bpm, bars, beats, rex, file_bpm, div) = (self.sensitivity, self.analysis.bpm, self.analysis.bars, self.analysis.beats, self.rex, self.file_bpm, self.divisions);
         let Some(o) = app.ctrl_mut(&op) else { return };
@@ -409,9 +439,10 @@ impl Slicer {
                 c.text = div.to_string();
             }
             "SenseLabel" => c.text = if mode == 0 { "Sensitivity" } else { "Divisions" }.into(),
+            // [re:54d289]: only in Transient mode.
             "AnalyzeButton" => {
                 c.on = classify && mode == 0;
-                c.enabled = mode == 0;
+                c.visible = mode == 0;
             }
             "MultiLayersButton" => c.on = multi,
             // The Extract buttons are for slicing without Auto load.
@@ -425,8 +456,9 @@ impl Slicer {
                 c.enabled = true;
                 c.text = format!("{bpm:.2}");
             }
-            "BarsBox" if !editing => c.text = format!("{bars}"),
-            "BeatsBox" if !editing => c.text = format!("{beats}"),
+            // [re:7ecc7d]: "%0.02f" each.
+            "BarsBox" if !editing => c.text = format!("{bars:.2}"),
+            "BeatsBox" if !editing => c.text = format!("{beats:.2}"),
             _ => {}
         });
     }
@@ -440,6 +472,13 @@ impl Slicer {
         Some(if self.marker_at(x, w).is_some() { dreist_gui::cursor::Cursor::LeftRight } else { dreist_gui::cursor::Cursor::Arrow })
     }
 
+    /// A control's text in the panel.
+    fn box_text(&self, app: &App, name: &str) -> Option<String> {
+        let o = self.overlay.as_ref()?;
+        let p = app.ctrl(o)?.path_of(name)?;
+        app.ctrl(&[o.clone(), p].concat()).map(|k| k.text.clone())
+    }
+
     fn mine(&self, path: &[usize]) -> bool {
         self.open && self.overlay.as_ref().is_some_and(|o| path.starts_with(o))
     }
@@ -448,7 +487,7 @@ impl Slicer {
         out.push(model.rebuild_command());
     }
 
-    /// Preview frames `start..end` ([re:e80b43] with the
+    /// Preview frames `start..end` ([re:b0f236] with the
     /// region markers).
     fn preview(&self, start: u32, end: u32, looping: bool, out: &mut Vec<Command>) {
         if let Some(a) = &self.audio {
@@ -456,7 +495,7 @@ impl Slicer {
         }
     }
 
-    /// Slice preview at the click [re:e50ea1]: the last slice starting
+    /// Slice preview at the click [re:b0f236]: the last slice starting
     /// at or before `frame`, up to the next slice, clamped to the region;
     /// the whole region when there are no slices.
     pub fn slice_span(&self, frame: u32) -> Option<(u32, u32)> {
@@ -507,6 +546,40 @@ impl Slicer {
     /// The slice a frame lies in (the last one starting at or before it).
     fn slice_of(&self, frame: u32) -> Option<usize> {
         self.slices.iter().rposition(|s| s.start <= frame)
+    }
+
+    /// [re:b1b88e]: the engine as it was when slicing started, and close.
+    pub fn cancel(&mut self, model: &mut Model, out: &mut Vec<Command>) {
+        out.push(crate::command::msg(dreist_engine::binding::id::STOP_PREVIEW, &[], &[]));
+        self.revert(model, out);
+        self.close();
+    }
+
+    /// [re:f65139]: back to the engine saved when slicing started (the
+    /// panel stays).
+    fn revert(&mut self, model: &mut Model, out: &mut Vec<Command>) {
+        if self.extracted {
+            if let Some(d) = self.snapshot.clone() {
+                model.doc = d;
+                Self::rebuild(model, out);
+            }
+            self.extracted = false;
+        }
+    }
+
+    /// [re:ba5e19] 0x176: the browser's Auto load changed while slicing —
+    /// on extracts the slices and pattern at once, off reverts the engine.
+    pub fn set_auto_load(&mut self, model: &mut Model, on: bool, out: &mut Vec<Command>) {
+        if !self.open || on == self.auto_load {
+            self.auto_load = on;
+            return;
+        }
+        self.auto_load = on;
+        if on {
+            self.extract(model, Extract::Both, out);
+        } else {
+            self.revert(model, out);
+        }
     }
 
     fn close(&mut self) {
@@ -568,16 +641,6 @@ impl Slicer {
     }
 
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
-        if let (UiEvent::Animated { path, tag: SLIDE_OUT }, Some(op)) = (ev, self.overlay.as_ref()) {
-            if self.closing && path.starts_with(op) {
-                self.closing = false;
-                self.shown = false;
-                if let Some(o) = app.ctrl_mut(op) {
-                    o.visible = false;
-                }
-                return true;
-            }
-        }
         match ev {
             UiEvent::Clicked { path, name, on, .. } if self.mine(path) => {
                 let parent = app.ctrl(&path[..path.len() - 1]).map(|c| c.name.clone()).unwrap_or_default();
@@ -605,16 +668,7 @@ impl Slicer {
                     "AudioButton" => self.extract(model, Extract::Audio, out),
                     "PatternButton" => self.extract(model, Extract::Pattern, out),
                     "ZoomInButton" | "ZoomOutButton" => self.zoom(if name == "ZoomInButton" { 2.0 } else { 0.5 }, 0.5),
-                    "CancelButton" => {
-                        out.push(crate::command::msg(dreist_engine::binding::id::STOP_PREVIEW, &[], &[]));
-                        if self.extracted {
-                            if let Some(d) = self.snapshot.take() {
-                                model.doc = d;
-                                Self::rebuild(model, out);
-                            }
-                        }
-                        self.close();
-                    }
+                    "CancelButton" => self.cancel(model, out),
                     "DoneButton" => {
                         out.push(crate::command::msg(dreist_engine::binding::id::STOP_PREVIEW, &[], &[]));
                         if let Some(f) = &self.file {
@@ -654,33 +708,35 @@ impl Slicer {
                 true
             }
             UiEvent::TextCommitted { path, name, text } if self.mine(path) => {
-                let v: f32 = text.trim().parse().unwrap_or(f32::NAN);
-                if v.is_nan() {
-                    return true;
-                }
                 match name.as_str() {
                     "ChopDivisionBox" => {
+                        let v: f32 = text.trim().parse().unwrap_or(f32::NAN);
+                        if v.is_nan() {
+                            return true;
+                        }
                         self.divisions = (v.round() as i64).clamp(1, 256) as u32;
                         self.reslice();
                     }
-                    "BPMBox" => {
-                        self.analysis.bpm = v.clamp(20.0, 1000.0);
-                        if self.auto_tempo {
-                            self.bars_from_tempo();
+                    // [re:334765]: the three boxes are read again (`atof`):
+                    // BPM held to 20..1000, bars and beats at least 0,
+                    // whole bars carried out of the beats; then the tempo
+                    // follows bars / beats, or bars / beats the tempo.
+                    "BPMBox" | "BarsBox" | "BeatsBox" => {
+                        let read = |n: &str| if n == name.as_str() { crate::search::atof(text) } else { self.box_text(app, n).map(|t| crate::search::atof(&t)).unwrap_or(0.0) };
+                        let (bpm, mut bars, mut beats) = (read("BPMBox").clamp(20.0, 1000.0), read("BarsBox").max(0.0), read("BeatsBox").max(0.0));
+                        while beats >= 4.0 {
+                            bars += 1.0;
+                            beats -= 4.0;
                         }
-                    }
-                    "BarsBox" | "BeatsBox" => {
-                        if name == "BarsBox" {
-                            self.analysis.bars = v.clamp(0.0, 1000.0).floor();
-                        } else {
-                            self.analysis.beats = v.clamp(0.0, 100.0);
-                        }
+                        self.analysis.bpm = bpm;
+                        self.analysis.bars = bars;
+                        self.analysis.beats = beats;
                         if self.auto_tempo {
-                            while self.analysis.beats >= 4.0 {
-                                self.analysis.bars += 1.0;
-                                self.analysis.beats -= 4.0;
+                            if name == "BPMBox" {
+                                self.bars_from_tempo();
+                            } else {
+                                self.tempo_from_bars();
                             }
-                            self.tempo_from_bars();
                         }
                     }
                     _ => return false,
@@ -837,15 +893,15 @@ impl Slicer {
 
     /// Extract slices to the selected engine's pads and/or current pattern
     /// (from the document as it was when the panel opened):
-    /// [re:dd2b54] with the engine's locks,
-    /// then [re:cb6b75]:
+    /// [re:5f0bcb] with the engine's locks,
+    /// then [re:fbb02d]:
     /// - fewer than two slices: the whole file into the current pad's first
     ///   layer;
     /// - else every (pad, layer) of the engine: a slice → the layer gets the
     ///   file with the slice's region; none → the layer's sample is removed
-    ///   (layer clear [re:7d1e9f], 0xe1, unless pad or layer is locked);
+    ///   (layer clear [re:37d03f], 0xe1, unless pad or layer is locked);
     /// - each loaded layer: `e_resetLayerEnvelopes` (0x86,
-    ///   [re:4220aa]) then AmpEnvAttack 0.1;
+    ///   [re:3f7861]) then AmpEnvAttack 0.1;
     /// - pattern (unless the current pattern is locked): a new pattern
     ///   (0xa7) with the hits, the old `MonoModeActive` and the old locked
     ///   tracks.
@@ -1065,7 +1121,7 @@ impl Slicer {
     }
 }
 
-/// [re:4220aa]: amp and free envelopes to attack 0,
+/// [re:3f7861]: amp and free envelopes to attack 0,
 /// decay 0.02, sustain 1, release 0.001, curves 0.5, then the hold reset
 /// (no pitch compensation) for both holds.
 fn reset_envelopes(layer: &mut Node, region: f64, total: f64, sr: f32) {
@@ -1084,7 +1140,7 @@ fn reset_envelopes(layer: &mut Node, region: f64, total: f64, sr: f32) {
     layer.set(P::AmpEnvHold.name(), h).set(P::FreeEnvHold.name(), h);
 }
 
-/// [re:b30133] → 0xe1 `e_deallocateSample`:
+/// [re:37d03f] → 0xe1 `e_deallocateSample`:
 /// the layer loses its sample unless the pad or the layer is locked.
 fn clear_layer(model: &mut Model, e: usize, p: usize, l: usize) {
     if model.layer_node(e, p, l).is_none() || model.pad_node(e, p).is_some_and(|n| n.locked()) || model.layer_node(e, p, l).is_some_and(|n| n.locked()) {
@@ -1096,7 +1152,7 @@ fn clear_layer(model: &mut Model, e: usize, p: usize, l: usize) {
 }
 
 /// Load `file` with region (start, end) of (frames at sr) into (e, p, l)
-/// and reset its envelopes ([re:4220aa], AmpEnvAttack 0.1).
+/// and reset its envelopes ([re:3f7861], AmpEnvAttack 0.1).
 fn load_region(model: &mut Model, e: usize, p: usize, l: usize, file: &Path, (s0, s1, frames, sr): (u32, u32, u32, f32), name: &str) -> bool {
     if !crate::browser::load_sample_into_layer(model, e, p, l, file) {
         return false;

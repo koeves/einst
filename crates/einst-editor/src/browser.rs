@@ -948,6 +948,11 @@ impl Browser {
         self.auto_load
     }
 
+    /// The Hit / Loop mode button is in Loop (slice) mode.
+    pub fn slice_mode(&self) -> bool {
+        self.slice_mode
+    }
+
     pub fn build(skin: &mut Skin, root: &mut Ctrl, page: &[usize]) -> Result<Browser, EditorError> {
         let mut host = &mut *root;
         for &i in page {

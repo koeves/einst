@@ -292,6 +292,22 @@ impl Editor {
             if let Some(f) = self.browser.as_mut().and_then(|b| b.slice_request.take()) {
                 changed |= self.open_slicer_from_browser(&f);
             }
+            // [re:ba5e19]: the browser leaving Loop mode cancels slicing
+            // (0x175); its Auto load follows into the slicer (0x176).
+            if let Some(now) = self.browser.as_ref().map(|b| (b.auto_load(), b.slice_mode())) {
+                let before = self.slicer.browser_modes.replace(now);
+                if self.slicer.open {
+                    if let Some((auto, slice)) = before {
+                        if slice && !now.1 {
+                            self.slicer.cancel(&mut self.model, &mut self.outbox);
+                            changed = true;
+                        } else if auto != now.0 {
+                            self.slicer.set_auto_load(&mut self.model, now.0, &mut self.outbox);
+                            changed = true;
+                        }
+                    }
+                }
+            }
             if let Some((name, fav)) = self.browser.as_mut().and_then(|b| b.export_request.take()) {
                 if let Some(dir) = self.dialog(Dialog::ExportFolder) {
                     if let Some(b) = self.browser.as_mut() {
