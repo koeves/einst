@@ -1,8 +1,8 @@
 //! Browser (`Browser.skin` with `Header.skin` and `FileList.skin`): source
 //! list, path navigator and file list.
 //!
-//! - Source list ([re:ab066b]):
-//!   the categories of [re:74962a] (Content,
+//! - Source list ([re:f32dc0]):
+//!   the categories of [re:f32dc0] (Content,
 //!   Places, Drives, Favourites, Searches, Shortlists), 25 px rows in
 //!   `BrowserSourceListItemStyle`.
 //! - File list rows in `BrowserListItemStyle`.
@@ -193,7 +193,7 @@ struct Source {
     label: String,
     path: Option<PathBuf>,
     header: bool,
-    /// Its category ([re:1624e1]).
+    /// Its category ([re:f32dc0]).
     cat: &'static str,
     /// Colour label index (0 = none).
     colour: usize,
@@ -227,9 +227,9 @@ pub struct Browser {
     multi: Vec<usize>,
     /// Row to open when the press is released (second click, folders).
     pending_open: Option<usize>,
-    /// The file being loaded and its progress ([re:1ae459]
-    ///  [re:04782c], [re:60e1b2]
-    ///  [re:12f2f4]).
+    /// The file being loaded and its progress ([re:4513c6]
+    ///  [re:4513c6], [re:176532]
+    ///  [re:176532]).
     pub loading: Option<(std::path::PathBuf, f32)>,
     /// The listing is saved search results.
     saved: bool,
@@ -388,7 +388,7 @@ fn parse_shortlists(text: &str) -> Vec<(String, Vec<PathBuf>)> {
     v
 }
 
-/// Saved search results ([re:5b9e85]): one
+/// Saved search results ([re:565392]): one
 /// `<term>[ n].searchcache` per search, the result paths one per line.
 fn searches_dir() -> Option<PathBuf> {
     crate::options::settings_dir().map(|d| d.join("Searches"))
@@ -401,7 +401,7 @@ fn load_saved_searches() -> Vec<String> {
     v.into_iter().map(|p| format!("cache:{}", p.display())).collect()
 }
 
-/// [re:c0f70d]: the first free
+/// [re:97abc7]: the first free
 /// "<term>.searchcache" / "<term> <n>.searchcache".
 fn save_search(term: &str, files: &[PathBuf]) -> Option<PathBuf> {
     let d = searches_dir()?;
@@ -502,7 +502,7 @@ fn labels_set(path: &Path, name: Option<Option<&str>>, colour: Option<usize>) {
     let _ = dreist_formats::file::write_atomic(f, text);
 }
 
-/// Content packs removed from the source list ([re:3b2adc]
+/// Content packs removed from the source list ([re:4ad7b9]
 /// drops them from the content list; the folders
 /// stay): `HiddenContent.txt`.
 fn hidden_content() -> Vec<PathBuf> {
@@ -518,8 +518,8 @@ fn hide_content(p: &Path) {
     let _ = dreist_formats::file::write_atomic(d.join("HiddenContent.txt"), text);
 }
 
-/// A path navigator segment button ([re:68bb96]
-/// [re:ef9964] / [re:22723d]).
+/// A path navigator segment button ([re:76849c]
+/// [re:76849c] / [re:c2aa99]).
 #[derive(Clone, Debug, PartialEq)]
 pub struct NavButton {
     pub x: f32,
@@ -535,7 +535,7 @@ pub struct NavButton {
 
 /// Lay out the navigator for `parts` (path components, or one label for
 /// search results / a shortlist when `path` is false) in `width`:
-/// - Widths [re:b77cf0]: each part text width + 10, the last + 20 when
+/// - Widths [re:491500]: each part text width + 10, the last + 20 when
 ///   slicing is disallowed there.
 /// - Fitting (total < width − 15): every part left to right.
 /// - Else a ".." button (text width; "Navigate to parent folder", index
@@ -588,7 +588,7 @@ pub fn nav_layout(measure: &mut dyn FnMut(&str) -> f32, parts: &[String], path: 
     out
 }
 
-/// Path navigator segment menu ([re:1edecf]).
+/// Path navigator segment menu ([re:c2aa99]).
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum NavAction {
     DeleteSliceInfo,
@@ -848,7 +848,7 @@ fn load_kit_inner(model: &mut Model, kit: &Path) -> bool {
     absolutise(&mut root, &dreist_formats::model::samples_dir(kit));
     let e = model.engine;
     let eng = model.doc.child_mut_or_insert("Engine", &format!("Engine{e}"));
-    // [re:69fc26]: locked pads stay.
+    // [re:118dc5]: locked pads stay.
     let locked = |c: &Node| c.class == "Pad" && c.locked();
     let keep: Vec<String> = eng.children.iter().filter(|c| locked(c)).filter_map(|c| c.name.clone()).collect();
     eng.children.retain(|c| c.class != "Pad" || locked(c));
@@ -1032,12 +1032,12 @@ impl Browser {
         }
     }
 
-    /// [re:971a71].
+    /// [re:10d1a4].
     pub fn previous_location(&self) -> Option<&Path> {
         self.history.last().map(PathBuf::as_path)
     }
 
-    /// [re:ee28a0].
+    /// [re:5e8f4c].
     pub fn next_location(&self) -> Option<&Path> {
         self.future.last().map(PathBuf::as_path)
     }
@@ -1097,7 +1097,7 @@ impl Browser {
         self.multi.clear();
     }
 
-    /// [re:4f921b]; in v1 the chosen shortlist becomes the current one,
+    /// [re:1f1658]; in v1 the chosen shortlist becomes the current one,
     /// listed under the folder's files ([re:dbf248]).
     fn show_shortlist(&mut self, name: String) {
         self.shortlist = Some(name);
@@ -1190,7 +1190,7 @@ impl Browser {
         self.nav_hit(x).and_then(|i| self.nav.borrow().get(i).cloned())
     }
 
-    /// [re:1edecf]: the segment's folder menu.
+    /// [re:c2aa99]: the segment's folder menu.
     fn nav_items(&self, dir: &Path) -> Vec<(String, NavAction)> {
         let allowed = slicing_allowed(dir);
         let name = dir.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "/".into());
@@ -1314,7 +1314,7 @@ impl Browser {
                 );
                 false
             }
-            // [re:3b2adc]: favourites
+            // [re:4ad7b9]: favourites
             // leave the list, saved searches and shortlists lose their
             // files, content packs leave the content list.
             SourceAction::ConfirmRemove => {
@@ -1351,7 +1351,7 @@ impl Browser {
                 let _ = std::process::Command::new("open").arg("-R").arg(&path).spawn();
                 false
             }
-            // [re:ecaf90]: an edit box over the row.
+            // [re:a2fc7f]: an edit box over the row.
             SourceAction::SetName => {
                 let Some(c) = app.ctrl(anchor).cloned() else { return false };
                 let y = c.rect.y + (i as f32 * SOURCE_ROW) as i32 + 2;
@@ -1371,7 +1371,7 @@ impl Browser {
                 self.sources = sources(&self.favourites, &self.searches, &self.shortlists);
                 true
             }
-            // [re:51bf3d]: run it again.
+            // [re:0c9d4a]: run it again.
             SourceAction::Refresh => {
                 let key = path.to_string_lossy().into_owned();
                 match key.strip_prefix("search:") {
@@ -1410,7 +1410,7 @@ impl Browser {
         Ok(to)
     }
 
-    /// The rename commit ([re:16e4b7] →
+    /// The rename commit ([re:a2fc7f] →
     /// [re:a2fc7f]): shortlists take the new name,
     /// other items show it.
     fn commit_source_name(&mut self, app: &mut App, path: &[usize], text: &str) {
@@ -1584,8 +1584,8 @@ impl Browser {
                 }
                 true
             }
-            // [re:d4b4cd] → [re:edf64c]
-            // [re:fa659c]: the saved search joins the Searches category.
+            // [re:a3462e] → [re:4473cd]
+            // [re:4473cd]: the saved search joins the Searches category.
             FileAction::SaveSearch => {
                 let files: Vec<PathBuf> = self.entries.iter().map(|e| e.path.clone()).collect();
                 let term = self.search.clone().unwrap_or_default();
@@ -1595,7 +1595,7 @@ impl Browser {
                 }
                 true
             }
-            // Deleting the slice analysis [re:0b8b32] asks first.
+            // Deleting the slice analysis [re:18f4de] asks first.
             FileAction::DeleteSliceInfo | FileAction::DeleteAllSliceInfo => {
                 let all = a == FileAction::DeleteAllSliceInfo;
                 let q = if all { "Remove the slice information for all the files in this folder?" } else { "Remove the slice information for all the selected files?" };
@@ -1612,7 +1612,7 @@ impl Browser {
                 );
                 false
             }
-            // [re:0b8b32]: every selected row's `.gsa`.
+            // [re:18f4de]: every selected row's `.gsa`.
             FileAction::ConfirmDelete { all } => {
                 let files: Vec<PathBuf> = if all { self.entries.iter().filter(|e| !e.dir).map(|e| e.path.clone()).collect() } else { self.menu_targets().into_iter().map(|e| e.path).collect() };
                 for f in files {
@@ -1656,7 +1656,7 @@ impl Browser {
         }
     }
 
-    /// Quick search ([re:111944]): one
+    /// Quick search ([re:b9443a]): one
     /// "File name Contains <text>" option over the current folder (sub
     /// folders and favourites as the search box menu sets them).
     fn run_search(&mut self, terms: &str) {
@@ -1672,7 +1672,7 @@ impl Browser {
         self.multi.clear();
     }
 
-    /// Search locations ([re:b4f753]): the last folder
+    /// Search locations ([re:a88f89]): the last folder
     /// shown, plus the favourites when "Search within favourites" is on.
     fn scan(&self, opts: &[crate::search::SearchOption], match_all: bool) -> Vec<Entry> {
         let deep = self.pane.sub_folders;
@@ -1696,7 +1696,7 @@ impl Browser {
         self.multi.clear();
     }
 
-    /// Preview an audio file ([re:8e7ba7]): at once when it is cached or
+    /// Preview an audio file ([re:aeb0c0]): at once when it is cached or
     /// decodes quickly, else from [`Browser::poll_preview`] once decoded.
     fn preview(&mut self, path: &Path, out: &mut Vec<Command>) {
         if let Some(d) = self.previews.request(path, PREVIEW_WAIT) {
@@ -1712,7 +1712,7 @@ impl Browser {
     }
 
     /// Whether a press on this entry previews it (Preview on, Auto load
-    /// off, not a file the slicer takes; [re:8e7ba7]).
+    /// off, not a file the slicer takes; [re:aeb0c0]).
     fn previews_on_press(&self, en: &Entry) -> bool {
         let ext = en.path.extension().map(|e| e.to_string_lossy().to_lowercase()).unwrap_or_default();
         !en.dir && self.preview_mode && !self.auto_load && matches!(ext.as_str(), "wav" | "aif" | "aiff") && !(self.slice_mode && en.path.parent().is_none_or(slicing_allowed))
@@ -1759,12 +1759,12 @@ impl Browser {
         self.entries.iter().map(|e| e.path.clone()).collect()
     }
 
-    /// Selected rows ([re:bfc142]).
+    /// Selected rows ([re:e4d468]).
     pub fn selection(&self) -> Vec<usize> {
         if self.multi.is_empty() { self.selected.into_iter().collect() } else { self.multi.clone() }
     }
 
-    /// [re:fb6b2b]: the selected entries'
+    /// [re:fd547d]: the selected entries'
     /// paths. A drag ends any pending collapse of the selection.
     pub fn drag_items(&self) -> Vec<PathBuf> {
         self.selection().into_iter().filter_map(|i| self.entries.get(i)).map(|e| e.path.clone()).collect()
@@ -1910,7 +1910,7 @@ impl Browser {
                 true
             }
             // Path navigator buttons: a click navigates
-            // ([re:0bd1bd] → [re:77c628]),
+            // ([re:2876c2] → [re:2aae14]),
             // a right press opens the folder menu.
             UiEvent::Mouse { overload, kind: MouseKind::Down, x, .. } if overload == "BrowserPathNavigator" => {
                 self.nav_pressed = self.nav_hit(*x);
@@ -2360,7 +2360,7 @@ impl Browser {
                         break;
                     }
                     let current = src.path.is_some() && src.path == self.dir;
-                    // [re:305087]: a colour label
+                    // [re:f32dc0]: a colour label
                     // fills the row.
                     if let Some(c) = src.colour.checked_sub(1).and_then(|k| crate::padmenu::COLOURS.get(k)).and_then(|c| u32::from_str_radix(&c[1..], 16).ok()) {
                         p.fill_rect(RectF::new(0.0, y, w, SOURCE_ROW), Colour::rgba((c >> 16) as u8, (c >> 8) as u8, c as u8, 255));
@@ -2430,7 +2430,7 @@ impl Browser {
                 true
             }
             "BrowserPathNavigator" => {
-                // [re:312200]: text at (2, 0,
+                // [re:0565d9]: text at (2, 0,
                 // w − 4, h); a chevron (w − 10, 0) → (w, h/2) → (w − 10, h)
                 // after every button but the last, which gets a right edge
                 // line and, for "(No slice)", a 10 point star at
@@ -2511,7 +2511,7 @@ impl Browser {
             if on {
                 p.fill_rect(RectF::new(0.0, y, w, FILE_ROW), sel);
             }
-            // The loading bar ([re:68977d]): colAltFill,
+            // The loading bar ([re:ef4a8d]): colAltFill,
             // (2, 2, (w − 4)·p, h − 2) while 0 < p ≤ 1.
             if let Some((_, pr)) = self.loading.as_ref().filter(|(lp, pr)| *lp == en.path && *pr > 0.0 && *pr <= 1.0) {
                 p.fill_rect(RectF::new(2.0, y + 2.0, (w - 4.0) * pr, FILE_ROW - 2.0), sel.with_alpha(0.6));
