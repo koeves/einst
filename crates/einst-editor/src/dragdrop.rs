@@ -7,8 +7,8 @@
 //!
 //! - [re:dd2ce9]: nothing on a locked pad.
 //!   Pad onto pad: alt copies ([re:669193], 0x56
-//!   `e_setPad`), alt+shift moves (the copy then 0xe3 clears the source),
-//!   otherwise swaps ([re:206406], 0x54); the target is selected.
+//!   `e_setPad`), otherwise swaps ([re:206406], 0x54); the target is
+//!   selected. v1 has no alt+shift move.
 //!   Browser files: one file → [re:3448d7]
 //!   [re:def93d] mode 9 (layer 0) / 10 with alt (the first layer without a
 //!   sample, "No available layers on selected pad!" when there is none);
@@ -18,8 +18,8 @@
 //!   [re:c38770]: audio files onto the selected pad from that layer on (when
 //!   they fit in 8 layers); not when the pad or layer is locked.
 //!   [re:b203da]: the same from layer 0.
-//! - [re:2bfb64]: key onto key — alt+shift
-//!   moves, alt copies, otherwise swaps, then selects the target; one
+//! - [re:2bfb64]: key onto key — alt copies, otherwise
+//!   swaps (v1: no move), then selects the target; one
 //!   pattern file loads into that slot.
 //! - [re:9ddda2]: one .geistengine /
 //!   .geistkit file loads into the engine under the pointer, which is
@@ -288,17 +288,11 @@ impl Editor {
                 if padmenu::pad_locked(&self.model, e, q) || p == q {
                     return false;
                 }
-                self.drop_label = if m.alt {
-                    format!("{} pad {} to pad {} on engine {}", if m.shift { "Moving" } else { "Copying" }, p + 1, q + 1, e + 1)
-                } else {
-                    format!("Swapping pads {} and {} on engine {}", p + 1, q + 1, e + 1)
-                };
+                // v1 ([re:3d06b7]): alt copies (`e_copyPadTo`), else swap.
+                self.drop_label = if m.alt { format!("Copying pad {} to pad {} on engine {}", p + 1, q + 1, e + 1) } else { format!("Swapping pads {} and {} on engine {}", p + 1, q + 1, e + 1) };
                 if m.alt {
                     let node = padmenu::pad_or_empty(&self.model, e, p);
                     padmenu::put_pad(&mut self.model, e, q, node);
-                    if m.shift {
-                        padmenu::reset_pad(self.model.pad_mut(e, p));
-                    }
                 } else {
                     let (a, b) = (padmenu::pad_or_empty(&self.model, e, p), padmenu::pad_or_empty(&self.model, e, q));
                     padmenu::put_pad(&mut self.model, e, q, a);
@@ -313,13 +307,10 @@ impl Editor {
                 if p == q {
                     return false;
                 }
+                // v1 ([re:561273]): alt copies, else swap.
                 if m.alt {
                     let node = patmenu::pattern_or_empty(&self.model, e, p);
                     patmenu::put_pattern(&mut self.model, e, q, node);
-                    if m.shift {
-                        let sp = self.model.engine_mut(e).child_mut_or_insert("StepPattern", &format!("StepPattern{p}"));
-                        patmenu::clear_pattern(sp);
-                    }
                 } else {
                     let (a, b) = (patmenu::pattern_or_empty(&self.model, e, p), patmenu::pattern_or_empty(&self.model, e, q));
                     patmenu::put_pattern(&mut self.model, e, q, a);
