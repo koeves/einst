@@ -1,4 +1,4 @@
-//! The original v1's Flanger: Dreist's node (Geist2's, [re:6695a0]) with
+//! The original v1's Flanger: Dreist's node (Geist2's, [re:3df4ae]) with
 //! v1's floating-point order, from v1's `ProcessBuffer` (ev_0503858b),
 //! transcribed and render-compared sample by sample
 //! (`tests/v1_flanger_transcribed.rs`): the LFO table read adds the 0.5

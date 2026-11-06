@@ -6,8 +6,8 @@
 //! the back buffer ([re:24683e]). Engine selection
 //! changes and preset loads clear both ([re:d35ddc]).
 //!
-//! The header Retro button with the song off ([re:fc4a20]
-//!  [re:667221]) copies the back buffer's steps into the
+//! The header Retro button with the song off ([re:0391b8]
+//!  [re:0391b8]) copies the back buffer's steps into the
 //! current pattern ([re:da2cf2]: steps below the pattern's
 //! step count; undo "Retro recorded") and clears the buffers. The original
 //! replaces the pattern (0xa7); the port posts the steps.

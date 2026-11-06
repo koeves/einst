@@ -6,8 +6,8 @@
 //! at the input and the output. The tunings, damping, freeze, allpasses and
 //! reset are v2's.
 //!
-//! [re:97750e] (Tin Can Verb; `InitializePorts` [re:f77283],
-//! `Voice::PrepareStream` [re:cec0ec], `Voice::ProcessBuffer` [re:1a12b9]):
+//! [re:1a12b9] (Tin Can Verb; `InitializePorts` [re:f77283],
+//! `Voice::PrepareStream` [re:1a12b9], `Voice::ProcessBuffer` [re:1a12b9]):
 //! Freeverb-style reverb — 8 damped combs and 4 allpasses per channel,
 //! crossfed 80/20 input, Pinch/Squeeze reshape the delay lengths.
 

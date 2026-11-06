@@ -11,7 +11,7 @@
 //! applies at audio rates). v1's ±1e−8 denormal offset on the biquad
 //! history and its summation order are not transcribed.
 //!
-//! [re:fb882e] (Filter; `InitializePorts` [re:59cd52],
+//! [re:abe31e] (Filter; `InitializePorts` [re:59cd52],
 //! `Voice::UpdateCoeffs` [re:93bb36], `Voice::ProcessBuffer` [re:abe31e]):
 //! 3rd-order high-pass (one-pole + Chamberlin 2-pole) and a 12 dB/oct RBJ
 //! low-pass, each switchable, with a wet/dry mix.
@@ -20,7 +20,7 @@ use crate::fast_exp2;
 use dreist_dsp::fx::nodes::biquad::Biquad;
 use dreist_dsp::fx::{Ctx, Node, Port, ports, ports_from};
 
-/// [re:f2c879] voices start their anti-denormal offset at 1e-8 (`CreateVoice`).
+/// [re:abe31e] voices start their anti-denormal offset at 1e-8 (`CreateVoice`).
 pub const DENORMAL: f32 = 1e-8;
 
 pub struct SslFilter {

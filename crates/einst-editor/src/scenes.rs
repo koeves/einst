@@ -245,7 +245,7 @@ impl Scenes {
         true
     }
 
-    /// [re:02f079] into the `DetailsTable` (columns Engine, Pattern,
+    /// [re:04e91a] into the `DetailsTable` (columns Engine, Pattern,
     /// Power; rows 1..8): for a used scene "n: name" and On/Off per engine.
     fn draw_details(&self, model: &Model, r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) {
         use dreist_gui::paint::RectF;

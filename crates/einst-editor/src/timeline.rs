@@ -1,4 +1,4 @@
-//! The wave display's timeline strip ([re:a2cbaa]
+//! The wave display's timeline strip ([re:02b73a]
 //! [re:ad103f], layout [re:d9085e], right click
 //! [re:a4b4e4], timeline mode [re:180629]). See the dreist-re GUI notes (Wave
 //! display timeline).

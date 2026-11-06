@@ -2,7 +2,7 @@
 //! swing menu ([re:86142f]: user
 //! folder then factory folder, recursive; [re:c0a2f3]
 //!  [re:031034] loads one and posts 0x96) and "Extract
-//! groove from pattern" ([re:e2e0a3]
+//! groove from pattern" ([re:e5efc2]
 //! [re:e5efc2]).
 
 use std::path::{Path, PathBuf};
