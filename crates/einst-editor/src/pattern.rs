@@ -1702,7 +1702,6 @@ impl PatternPanel {
                 }
                 true
             }
-            UiEvent::Shortcut { key, cmd, .. } if model.editor_tab == 0 => self.shortcut(model, key, *cmd, out),
             UiEvent::Wheel { overload, dy, .. } if overload == "PatternGrid" => {
                 let v = &mut model.pattern_view[e];
                 v.v_scroll = (v.v_scroll as i32 - dy.signum() as i32).max(0) as usize;
@@ -2507,14 +2506,6 @@ impl PatternPanel {
         }
     }
 
-    /// Selection keys: cmd-A select all, cmd-C copy, cmd-X cut, cmd-V paste
-    /// at the selected track (step of the first selected cell, else 0),
-    /// Delete removes, Left / Right move the selection by a step.
-    /// Steps are selected (the arrow keys nudge them).
-    pub fn has_selection(&self) -> bool {
-        !self.selection.is_empty()
-    }
-
     /// The step clipboard holds steps.
     pub fn has_copied_steps(&self) -> bool {
         !self.clipboard.is_empty()
@@ -2556,6 +2547,9 @@ impl PatternPanel {
         }
     }
 
+    /// The track menu's Cut / Copy / Paste and the nudge buttons on a
+    /// selection (v1 has no keys for them): "a" all, "c" / "x" copy / cut,
+    /// "v" paste at the selected track, "delete", "left" / "right" by a step.
     fn shortcut(&mut self, model: &mut Model, key: &str, cmd: bool, out: &mut Vec<Command>) -> bool {
         let e = model.engine;
         let cur = model.current_pattern(e);

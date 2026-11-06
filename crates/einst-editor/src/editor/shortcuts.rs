@@ -11,14 +11,12 @@ pub(crate) const MENU_MIDI: isize = 1002;
 
 impl Editor {
     /// [re:ed265e] (see `accel`): run the key's
-    /// function. Keys a panel uses first (pattern step nudges, delete in
-    /// the pattern / song editors) are left to the panels.
+    /// function. v1's pattern and song editors take no keys of their own
+    /// (the pattern panel swallows them, [re:8a87e6]; the song panel only
+    /// re-runs a drag, [re:313afa]).
     pub(crate) fn accelerator(&mut self, key: &str, mods: accel::Mods) -> bool {
         let o = &self.modals.options;
         let Some(e) = accel::lookup(key, mods, o.bool("RespondToKeyboard", true), o.bool("RespondToExtendedKeyboard", false), self.menu_bar) else { return false };
-        if (matches!(key, "left" | "right") && self.model.editor_tab == 0 && self.pattern.as_ref().is_some_and(|p| p.has_selection())) {
-            return false;
-        }
         self.run_action(e.action);
         true
     }
@@ -132,8 +130,6 @@ impl Editor {
             0x176 => file(self, FileAction::SavePreset { as_new: true }),
             0x178 => file(self, FileAction::Save { part: Part::Kit(e), as_new: false }),
             0x179 => file(self, FileAction::Save { part: Part::Kit(e), as_new: true }),
-            // e_updateDelete: the pattern / song editors delete their selection.
-            0x18f => self.handle(&UiEvent::Shortcut { key: "delete".into(), cmd: false, shift: false, alt: false, ctrl: false }),
             // Reset UI size: the window has one size.
             0x152 => {}
             0x153 => {

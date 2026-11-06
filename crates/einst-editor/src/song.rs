@@ -33,6 +33,7 @@ use crate::{EditorError, err};
 
 const TIMELINE_H: f32 = 20.0;
 /// Editor tab page id of the song panel.
+#[cfg(test)]
 const SONG_TAB: usize = 2;
 /// The theme's content styles for the code-drawn lanes and parts (the
 /// v1 set's `SongLane*`, `SongPart*`, `Grid*` and `Timeline*` styles).
@@ -1280,19 +1281,6 @@ impl SongPanel {
                 let (actions, qn) = self.menu.take().unwrap();
                 let a = actions.get(*index).copied().unwrap_or(MenuAction::None);
                 self.menu_action(app, model, a, qn, out)
-            }
-            UiEvent::Shortcut { key: k, cmd, .. } if model.editor_tab == SONG_TAB => {
-                let a = match (k.as_str(), *cmd) {
-                    ("delete", _) => MenuAction::Delete,
-                    ("x", true) => MenuAction::Cut,
-                    ("c", true) => MenuAction::Copy,
-                    ("v", true) => MenuAction::Paste,
-                    ("d", true) => MenuAction::Duplicate,
-                    ("a", true) => MenuAction::SelectAll,
-                    _ => return false,
-                };
-                let at = self.selected.iter().next().map(|s| s.1 as f64 / 960.0).unwrap_or(0.0);
-                self.menu_action(app, model, a, at, out)
             }
             UiEvent::Wheel { overload, dy, .. } if overload == "SongBody" => {
                 self.scroll = (self.scroll - dy * 4.0).max(0.0);
