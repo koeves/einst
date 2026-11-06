@@ -2574,25 +2574,25 @@ fn modulator_retrigger_flashes_its_source_button() {
 }
 
 #[test]
-fn dialogs_slide_in_from_the_top_and_out() {
+fn dialogs_show_at_once_centred_and_titled() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
     let Some(ov) = ed.app.root.path_of("PreferencesOverlay") else { return };
     let dialog = [ov.clone(), vec![0]].concat();
     ed.show_modal("preferences");
     assert!(ed.app.ctrl(&ov).unwrap().visible);
-    assert!(ed.app.ctrl(&dialog).unwrap().rect.y < 0, "starts above the window");
-    std::thread::sleep(std::time::Duration::from_millis(520));
-    ed.animate();
+    let (w, h) = (ed.app.ctrl(&ov).unwrap().rect.w, ed.app.ctrl(&ov).unwrap().rect.h);
     let r = ed.app.ctrl(&dialog).unwrap().rect;
-    assert_eq!(r.y, 0);
-    assert_eq!(r.x, ed.app.ctrl(&ov).unwrap().rect.w / 2 - r.w / 2);
-    // v1's preferences close with Confirm (there is no Cancel).
+    assert_eq!((r.x, r.y), (w / 2 - r.w / 2, h / 2 - r.h / 2), "centred, no slide");
+    // The title frame: 10 px wider, 35 px taller, the panel at (5, 29).
+    let d = ed.app.ctrl(&dialog).unwrap();
+    assert_eq!(d.style, "ModalPanelBackgroundStyle");
+    let (panel, title) = (&d.children[0], &d.children[1]);
+    assert_eq!((d.rect.w - panel.rect.w, d.rect.h - panel.rect.h), (10, 35));
+    assert_eq!(title.text, format!("{} Preferences", crate::product()));
+    // v1's preferences close with Finished (there is no Cancel), at once.
     let confirm = (ed.app.ctrl(&ov).unwrap()).path_of("ConfirmButton").map(|p| [ov.clone(), p].concat()).expect("confirm");
     ed.handle(&UiEvent::Clicked { path: confirm, name: "ConfirmButton".into(), id: 0, on: false });
-    assert!(ed.app.ctrl(&ov).unwrap().visible, "visible while sliding out");
-    std::thread::sleep(std::time::Duration::from_millis(520));
-    ed.animate();
     assert!(!ed.app.ctrl(&ov).unwrap().visible);
 }
 
@@ -3064,33 +3064,30 @@ fn ui_style_applies_at_once() {
 }
 
 #[test]
-fn documents_path_is_written_at_once_with_one_restart_alert() {
+fn documents_path_reset_writes_at_once_and_alerts() {
     crate::app::test_setup();
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
     ed.modals.show(&mut ed.app, modal::Kind::Preferences);
     let Some(p) = ed.modals.prefs_path() else { return };
     let find = |ed: &Editor, n: &str| ed.app.ctrl(&p).and_then(|c| c.path_of(n)).map(|q| [p.clone(), q].concat()).unwrap();
+    // v1 ignores typing in the path box.
     let tb = find(&ed, "DocumentsPath");
-    // Not a folder: reverted, nothing written.
-    let before = ed.modals.documents_path();
-    ed.handle(&UiEvent::TextCommitted { path: tb.clone(), name: "DocumentsPath".into(), text: "/no/such/folder".into() });
-    assert_eq!(ed.app.ctrl(&tb).unwrap().text, before);
-    assert!(ed.app.menu.is_none());
-    // An existing folder: written straight away, the alert once.
+    let before = ed.modals.options.string("LocalDocumentsPath", "<unset>");
     let dir = std::env::temp_dir().to_string_lossy().trim_end_matches('/').to_string();
-    ed.handle(&UiEvent::TextCommitted { path: tb.clone(), name: "DocumentsPath".into(), text: dir.clone() });
-    assert_eq!(ed.modals.options.string("LocalDocumentsPath", ""), dir);
-    assert_eq!(ed.app.menu.as_ref().map(|m| m.items[0].clone()), Some(modal::docs_restart()));
-    ed.app.menu = None;
-    ed.handle(&UiEvent::MenuSelected { anchor: tb.clone(), name: "DocumentsPath".into(), index: 0 });
-    // Reset asks; Yes writes the default without another alert.
+    ed.handle(&UiEvent::TextCommitted { path: tb.clone(), name: "DocumentsPath".into(), text: dir });
+    assert_eq!(ed.modals.options.string("LocalDocumentsPath", "<unset>"), before);
+    // Reset asks; Yes writes the default and alerts every time.
     let rb = find(&ed, "ResetPathButton");
-    ed.handle(&UiEvent::Clicked { path: rb.clone(), name: "ResetPathButton".into(), id: 0, on: false });
-    assert!(ed.app.menu.as_ref().is_some_and(|m| m.items[0].starts_with("Are you sure you want to reset the Documents path to ")));
-    ed.app.menu = None;
-    ed.handle(&UiEvent::MenuSelected { anchor: rb, name: "ResetPathButton".into(), index: 2 });
-    assert_eq!(ed.modals.options.string("LocalDocumentsPath", ""), modal::default_documents());
-    assert!(ed.app.menu.is_none());
+    for _ in 0..2 {
+        ed.handle(&UiEvent::Clicked { path: rb.clone(), name: "ResetPathButton".into(), id: 0, on: false });
+        assert!(ed.app.menu.as_ref().is_some_and(|m| m.items[0].starts_with("Are you sure you want to reset the Documents path to ")));
+        ed.app.menu = None;
+        ed.handle(&UiEvent::MenuSelected { anchor: rb.clone(), name: "ResetPathButton".into(), index: 2 });
+        assert_eq!(ed.modals.options.string("LocalDocumentsPath", ""), modal::default_documents());
+        assert_eq!(ed.app.menu.as_ref().map(|m| m.items[0].clone()), Some(modal::docs_restart()));
+        ed.app.menu = None;
+        ed.handle(&UiEvent::MenuSelected { anchor: rb.clone(), name: "ResetPathButton".into(), index: 0 });
+    }
     // Browse hands the folder dialog to the editor.
     let bb = find(&ed, "BrowseButton");
     ed.handle(&UiEvent::Clicked { path: bb, name: "BrowseButton".into(), id: 0, on: false });

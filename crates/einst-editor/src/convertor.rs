@@ -48,8 +48,7 @@ impl Convertor {
     }
 
     pub fn sync(&mut self, app: &mut App) {
-        // [re:6abcdc]: slides in
-        // from the top (500 ms Exponential); closing slides out.
+        // Shown and removed at once, centred ([re:24b9de]).
         let shown = self.overlay.clone().map(|p| self.slide.sync(app, &p, self.open)).unwrap_or(false);
         let (open, steps, res, all) = (shown, self.steps, self.resolution, self.all);
         if let Some(o) = self.overlay.clone().and_then(|p| app.ctrl_mut(&p)) {
@@ -73,11 +72,6 @@ impl Convertor {
 
     /// Returns whether the event was the panel's.
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
-        if let Some(p) = self.overlay.clone() {
-            if self.slide.animated(app, &p, ev) {
-                return true;
-            }
-        }
         if !self.open {
             return false;
         }

@@ -115,7 +115,7 @@ pub fn native_dialogs() -> crate::DialogFn {
             let desktop = dreist_formats::paths::home().join("Desktop");
             rfd::FileDialog::new().set_title("Please choose a location to export to").set_directory(desktop).pick_folder()
         }
-        crate::Dialog::ChooseDocuments(start) => rfd::FileDialog::new().set_title(crate::modal::DOCS_BROWSE_TITLE).set_directory(start).pick_folder(),
+        crate::Dialog::ChooseDocuments(start) => rfd::FileDialog::new().set_title(crate::modal::docs_browse_title()).set_directory(start).pick_folder(),
         crate::Dialog::LocateFile => rfd::FileDialog::new().add_filter("Audio", &["wav", "aif", "aiff"]).pick_file(),
         crate::Dialog::SaveSwingTemplate => {
             let mut d = rfd::FileDialog::new().set_title("Please select the location to save to").add_filter("Swing template files", &["swingtemplate"]).set_file_name("Groove.swingtemplate");
