@@ -162,7 +162,7 @@ impl Editor {
     /// Run an event through the panels (modal panels first).
     pub(crate) fn route(&mut self, ev: &UiEvent) -> bool {
         // The slicer is modal: events aimed at it go nowhere else.
-        let (ff_hit, ff_rebuild) = self.filefind.handle(&mut self.app, &mut self.model, ev);
+        let (ff_hit, ff_rebuild) = self.filefind.handle(&mut self.app, ev);
         if ff_rebuild {
             self.outbox.push(self.model.rebuild_command());
         }

@@ -71,12 +71,15 @@ pub enum Dialog {
     SaveProject,
     ExportAudio,
     /// Missing files: Auto Find start folder.
-    ChooseFolder,
+    ChooseFolder(Option<std::path::PathBuf>),
     /// Source list › Export to folder ([re:24982a]): the
     /// folder to copy the shortlist into (from the desktop).
     ExportFolder,
-    /// Missing files: Find Selected.
-    LocateFile,
+    /// Missing files: Manual, "Please locate <file>" from a folder.
+    LocateFile {
+        title: String,
+        start: Option<std::path::PathBuf>,
+    },
     /// Extract groove: where to save the `.swingtemplate`.
     SaveSwingTemplate,
     /// Pad menu › Save layer sample...: where to write the copy.
