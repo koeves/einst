@@ -432,7 +432,7 @@ impl SearchPane {
                     check(self.favourites, "Search within favourites"),
                     check(self.open, "Advanced search..."),
                     String::new(),
-                    "Recent items... ▸".to_string(),
+                    "Recent searches ▸".to_string(),
                 ];
                 app.open_menu(path, items, None);
                 self.menu = Some(PaneMenu::Box);
