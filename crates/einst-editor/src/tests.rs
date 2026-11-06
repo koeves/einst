@@ -1573,7 +1573,7 @@ fn layer_trigger_plays_the_layer() {
 }
 
 #[test]
-fn v2a_knob_reset_and_edit() {
+fn v2a_knob_resets_on_double_click_without_a_menu() {
     crate::app::test_setup();
     let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
     // The pad view (the pad item of the selector).
@@ -1588,25 +1588,11 @@ fn v2a_knob_reset_and_edit() {
         })
     };
     ed.take_commands();
+    // v1's pad controls ignore right clicks.
     ed.handle(&UiEvent::RightClicked { path: knob.clone(), name: "V2A".into() });
-    assert_eq!(ed.app.menu.as_ref().unwrap().items, vec!["Reset".to_string(), "Edit".to_string()]);
-    ed.handle(&UiEvent::MenuSelected { anchor: knob.clone(), name: "V2A".into(), index: 0 });
+    assert!(ed.app.menu.is_none());
+    ed.handle(&UiEvent::DoubleClicked { path: knob, name: "V2A".into() });
     assert_eq!(v2a(&ed.take_commands()), Some(1.0));
-    ed.app.menu = None;
-    ed.handle(&UiEvent::RightClicked { path: knob.clone(), name: "V2A".into() });
-    ed.handle(&UiEvent::MenuSelected { anchor: knob.clone(), name: "V2A".into(), index: 1 });
-    assert!(ed.app.is_editing());
-    for _ in 0..5 {
-        ed.app.key_named("Backspace");
-    }
-    ed.app.key_text("40");
-    let (evs, _) = ed.app.key_named("Enter");
-    for ev in evs {
-        ed.handle(&ev);
-    }
-    let got = v2a(&ed.take_commands()).expect("edit posts 0x4e");
-    assert!((got - 0.4).abs() < 1e-6, "{got}");
-    assert!(ed.app.root.path_of("V2AValueEdit").is_none(), "edit box removed");
 }
 
 #[test]

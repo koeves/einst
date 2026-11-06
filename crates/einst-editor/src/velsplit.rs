@@ -1,32 +1,31 @@
 //! The pad view of the Pad / Layers page (`PadControls.skin`, manual
 //! §5:2): layer play mode, Vel-Amp and the velocity split lanes.
 //!
-//! - `SelModeCombo`: the five [re:9500d6] modes →
+//! - `SelModeCombo`: the five [re:1cbdd2] modes →
 //!   `e_setPadLayerMode` 0x51 [e, p] [mode].
 //! - `V2A` knob: `e_setPadParameter` 0x4e [e, p] [v, 2 (V2A), 0].
 //! - "Auto" (enabled in velocity-split mode only, update
-//!   [re:ae10bc]): "Auto split velocity graphs" → 0x57, "Auto overlap velocity
-//!   graphs 10/20/25/50%" → 0x58 [e, p] [0.1 ...] ([re:4d9d0b] and its
-//!   lambdas [re:284606].., undo "Engine %d Pad %d auto velocity split" /
-//!   "... auto velocity overlap N%").
-//! - Eight [re:1582ce]s (`Split0..7`), one per layer, shown in
+//!   [re:f8c41d]) posts `e_autoVelocitySplitPad` at once ([re:ab11a3];
+//!   v1 has no overlap choices).
+//! - No right-click menu on the knobs (v1's panel ignores right clicks).
+//! - Eight [re:924f85]s (`Split0..7`), one per layer, shown in
 //!   velocity-split mode (the manual: "only visible when the Layer mode is
 //!   set to Velocity split"), enabled when the layer has audio and is not
 //!   locked. Releasing a drag posts min 0x7e, min turnover 0x7f, max
-//!   turnover 0x81, max 0x80 [e, p, l] ([re:57f001], undo "Engine %d Pad
+//!   turnover 0x81, max 0x80 [e, p, l] ([re:b8fa20], undo "Engine %d Pad
 //!   %d velocity split" from a second callback).
 //!
-//! [re:1582ce] ([re:f2232e]..): velocity v sits at x = v·(w−8)/127
-//! ([re:245576]; back with +0.5 truncation,
-//! [re:925e3b]). Four 8×8 handles: lowest at the
+//! [re:924f85] ([re:924f85]..): velocity v sits at x = v·(w−8)/127
+//! ([re:355118]; back with +0.5 truncation,
+//! [re:dcdd9d]). Four 8×8 handles: lowest at the
 //! bottom, the turnovers at the top, highest at the bottom (layout
-//! [re:007f2d]). Drawing [re:648037]: 126 grid lines at floor(i·w/127) in colBorder
+//! [re:924f85]). Drawing [re:272fc5]: 126 grid lines at floor(i·w/127) in colBorder
 //! (colAltBorder every 8th), the bounds in colBorder; enabled, the
 //! trapezoid (lowest, h) → (low turn, 0) → (high turn + 8, 0) → (highest + 8,
 //! h) filled colFill α0.4 and stroked colFill, then the handles: dragged
 //! colAltFill, others colAltFill darker 0.4 at α0.5 (hover lighter 0.4 is not
-//! tracked). A left press [re:155142] grabs a handle, or the whole
-//! split when none is hit; a mouse move [re:98a9bc] applies the clamps of
+//! tracked). A left press [re:4e003f] grabs a handle, or the whole
+//! split when none is hit; a mouse move [re:64a9e4] applies the clamps of
 //! [`drag`].
 
 use dreist_engine::binding::id;
@@ -73,7 +72,6 @@ fn draw_ruler(r: &Renderer, p: &mut Painter, c: &Ctrl) {
     }
 }
 pub const OVERLOAD: &str = "VelocitySplitEditor";
-const OVERLAPS: [f32; 4] = [0.1, 0.2, 0.25, 0.5];
 
 /// Split → handle x positions.
 pub fn to_px(s: Split, w: f32) -> [f32; 4] {
@@ -93,7 +91,7 @@ pub fn hit(px: [f32; 4], h: f32, x: f32, y: f32) -> Option<usize> {
     (0..4).find(|&k| (ys[k]..ys[k] + HANDLE).contains(&y) && (px[k]..px[k] + HANDLE).contains(&x))
 }
 
-/// Mouse move [re:98a9bc]: move `handle` (or everything) by `dx` pixels.
+/// Mouse move [re:64a9e4]: move `handle` (or everything) by `dx` pixels.
 pub fn drag(px: &mut [f32; 4], handle: Option<usize>, dx: f32, w: f32) {
     let max = w - HANDLE;
     let [p0, p1, p2, p3] = px;
@@ -187,12 +185,7 @@ struct Drag {
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Menu {
     Mode,
-    Auto,
-    V2a,
 }
-
-/// Name of the temporary text box `Edit` puts over the v2a knob.
-const V2A_EDIT: &str = "V2AValueEdit";
 
 #[derive(Default)]
 pub struct VelSplit {
@@ -255,8 +248,8 @@ impl VelSplit {
         });
     }
 
-    /// [re:fe83c5] [re:29de0f]: a double click on Vel-Amp resets it
-    /// ([re:d6dc6f]).
+    /// [re:fe83c5] [re:b8fa20]: a double click on Vel-Amp resets it
+    /// ([re:b8fa20]).
     pub fn reset_value(&self, path: &[usize], name: &str) -> Option<f32> {
         (is_v2a(name) && self.panel.as_ref().is_some_and(|pp| path.starts_with(pp))).then(|| dreist_formats::PadParam::V2A.default_value())
     }
@@ -273,31 +266,9 @@ impl VelSplit {
                 self.menu = Some(Menu::Mode);
                 true
             }
+            // [re:ab11a3]: Auto splits the pad's layers at once.
             UiEvent::Clicked { path, name, .. } if in_panel(path) && matches!(name.as_str(), "Auto" | "Insert") => {
-                let mut items = vec!["Auto split velocity graphs".to_string()];
-                items.extend(OVERLAPS.iter().map(|f| format!("Auto overlap velocity graphs {}%", (f * 100.0).round())));
-                app.open_menu(path, items, None);
-                self.menu = Some(Menu::Auto);
-                true
-            }
-            // [re:411697]: right-click → Reset (0x4e with
-            // [re:e79ca7]) / Edit
-            // ([re:c8b896]: type the value in its units).
-            UiEvent::RightClicked { path, name } if in_panel(path) && is_v2a(name) => {
-                app.open_menu(path, vec!["Reset".into(), "Edit".into()], None);
-                self.menu = Some(Menu::V2a);
-                true
-            }
-            UiEvent::TextCommitted { path, name, text } if name == V2A_EDIT => {
-                let parent = path[..path.len() - 1].to_vec();
-                if let Some(c) = app.ctrl_mut(&parent) {
-                    c.children.retain(|k| k.name != V2A_EDIT);
-                }
-                // Percent (the V2A conversion); a bare 0..1 value is taken as is.
-                if let Some(v) = crate::conv::number(text.trim().trim_end_matches('%')) {
-                    let v = if text.contains('%') || v > 1.0 { v / 100.0 } else { v };
-                    out.push(msg(id::SET_PAD_PARAMETER, &ep, &[v.clamp(0.0, 1.0), dreist_formats::PadParam::V2A as u8 as f32, 0.0]));
-                }
+                out.push(msg(id::AUTO_VELOCITY_SPLIT_PAD, &ep, &[]));
                 true
             }
             UiEvent::ValueChanged { path, name, value, .. } if in_panel(path) && is_v2a(name) => {
@@ -306,30 +277,7 @@ impl VelSplit {
             }
             UiEvent::MenuSelected { anchor, index, .. } if self.menu.is_some() && in_panel(anchor) => {
                 match self.menu.take() {
-                    Some(Menu::V2a) if *index == 0 => out.push(msg(id::SET_PAD_PARAMETER, &ep, &[dreist_formats::PadParam::V2A.default_value(), dreist_formats::PadParam::V2A as u8 as f32, 0.0])),
-                    Some(Menu::V2a) => {
-                        let v = model.pad_node(e, p).and_then(|n| n.f32(dreist_formats::PadParam::V2A.name())).unwrap_or(dreist_formats::PadParam::V2A.default_value());
-                        let Some(knob) = app.ctrl(anchor).cloned() else { return true };
-                        let rect = dreist_gui::Rect::new(knob.rect.x - 10, knob.rect.y + knob.rect.h / 2 - 9, knob.rect.w + 20, 18);
-                        app.open_edit_box(&anchor[..anchor.len() - 1], V2A_EDIT, rect, format!("{:.0}%", v * 100.0));
-                    }
                     Some(Menu::Mode) => out.push(msg(id::SET_PAD_LAYER_MODE, &ep, &[(*index).min(4) as f32])),
-                    Some(Menu::Auto) => {
-                        // Undo label as the original's lambdas.
-                        let label = match index.checked_sub(1).and_then(|k| OVERLAPS.get(k)) {
-                            None => {
-                                out.push(msg(id::AUTO_VELOCITY_SPLIT_PAD, &ep, &[]));
-                                format!("Engine {} Pad {} auto velocity split", e + 1, p + 1)
-                            }
-                            Some(f) => {
-                                out.push(msg(id::AUTO_VELOCITY_CROSS, &ep, &[*f]));
-                                format!("Engine {} Pad {} auto velocity overlap {}%", e + 1, p + 1, (f * 100.0).round())
-                            }
-                        };
-                        if let Some(c) = app.ctrl_mut(anchor) {
-                            c.display_name = label;
-                        }
-                    }
                     None => {}
                 }
                 true
@@ -366,7 +314,7 @@ impl VelSplit {
         }
     }
 
-    /// [re:e6741a]: the four
+    /// [re:55d929]: the four
     /// velocities (`%03d`), "N: low | low fade | high fade | high", or the
     /// dragged handle's "N: Low velocity 012" and so on.
     pub fn tooltip(&self, model: &Model, c: &Ctrl) -> Option<String> {
