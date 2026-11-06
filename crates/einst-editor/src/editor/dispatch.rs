@@ -235,6 +235,11 @@ impl Editor {
                 changed = true;
             }
             if let Some(id) = self.utility_tabs.as_ref().and_then(|t| t.clicked(&self.app, ev)) {
+                // [re:a29595]: showing the mapping page turns MIDI learn on,
+                // leaving it turns it off.
+                if (id == front::MAPPING_PAGE) != (self.model.utility_tab == front::MAPPING_PAGE) {
+                    self.set_learn(id == front::MAPPING_PAGE);
+                }
                 self.model.utility_tab = id;
                 changed = true;
             }

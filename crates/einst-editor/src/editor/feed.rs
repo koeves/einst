@@ -12,10 +12,45 @@ impl Editor {
         for r in meters::update(&mut self.app.root, &self.model, levels) {
             self.app.invalidate_rect(r);
         }
+        self.update_gr_meters(levels);
         if self.header.tick_indicators(levels.midi_received, levels.voice_stolen) {
             let before = self.app.marks();
             self.header.sync(&mut self.app, &self.model, self.learn.active);
             self.app.invalidate_changes(&before);
+        }
+    }
+
+    /// [re:c5d9d9] / [re:47461f]: a compressor panel's meter (`DasMeter`)
+    /// shows the effect's control output ([re:414b35]); while the reading
+    /// stays the same the meter rises by 0.01 a tick, up to 1. The last
+    /// reading and the shown value live on the meter (`grRaw`).
+    fn update_gr_meters(&mut self, levels: &dreist_engine::Meters) {
+        let mut dirty = Vec::new();
+        for mx in &self.mixers {
+            let Some((t, slots)) = mx.fx_panel().and_then(|f| f.shown()) else { continue };
+            let at = t.index().map(|v| v as i8);
+            for (k, path) in slots.iter().enumerate() {
+                let raw = levels.fx_output(at, k);
+                let Some(m) = self.app.ctrl(path).and_then(|c| c.path_of("DasMeter")).map(|p| [&path[..], &p[..]].concat()) else { continue };
+                let Some(c) = self.app.ctrl_mut(&m) else { continue };
+                let last = c.attr("grRaw").and_then(|v| v.parse::<f32>().ok());
+                let v = match (raw, last) {
+                    (Some(r), l) if l.is_none_or(|l| (r - l).abs() >= 1e-6 || r.is_nan()) => {
+                        c.set_attr("grRaw", r.to_string());
+                        r
+                    }
+                    (_, Some(_)) => (c.value + 0.01).min(1.0),
+                    _ => continue,
+                };
+                if (c.value - v).abs() >= 1e-6 {
+                    c.value = v;
+                    dirty.push(m);
+                }
+            }
+        }
+        for m in dirty {
+            let r = self.app.abs_rect(&m);
+            self.app.invalidate_rect(r);
         }
     }
 

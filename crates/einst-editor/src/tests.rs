@@ -200,8 +200,32 @@ fn typing_a_tempo() {
     let bp = ed.app.root.path_of("BPMTextBox").unwrap();
     let (x, y) = ed.app.origin(&bp);
     ed.app.mouse_move(x as f32 + 5.0, y as f32 + 5.0);
+    // v1: a press drags the tempo (the whole number at the left) ...
+    ed.take_commands();
     for ev in ed.app.mouse_down(dreist_gui::app::MouseButton::Left) {
         ed.handle(&ev);
+    }
+    assert!(!ed.app.is_editing());
+    for ev in ed.app.mouse_move(x as f32 + 5.0, y as f32 - 25.0) {
+        ed.handle(&ev);
+    }
+    for ev in ed.app.mouse_up(dreist_gui::app::MouseButton::Left) {
+        ed.handle(&ev);
+    }
+    let set = ed.take_commands().into_iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SET_TEMPO));
+    assert!(set, "dragging sets the tempo");
+    // ... and a double click types it.
+    ed.app.mouse_move(x as f32 + 5.0, y as f32 + 5.0);
+    for _ in 0..2 {
+        for ev in ed.app.mouse_down(dreist_gui::app::MouseButton::Left) {
+            ed.handle(&ev);
+        }
+        if ed.app.is_editing() {
+            break;
+        }
+        for ev in ed.app.mouse_up(dreist_gui::app::MouseButton::Left) {
+            ed.handle(&ev);
+        }
     }
     assert!(ed.app.is_editing());
     for _ in 0..8 {
@@ -4049,6 +4073,36 @@ fn newer_effect_types_show_working_panels() {
     }
 }
 
+/// A compressor's meter shows its gain reduction and, while the reading
+/// does not change, rises by 0.01 a tick (v1).
+#[test]
+fn compressor_meter_follows_gain_reduction() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = front::ENGINE_MIXER_PAGE;
+    let e = ed.model.engine;
+    let chain = ed.model.engine_mut(e).child_mut_or_insert("EffectChain", "EffectChain");
+    chain.children.retain(|c| c.class != "Effect");
+    let mut fx = dreist_formats::Node::new("Effect", Some("Effect0"));
+    fx.set("EffectType", dreist_formats::params::EFFECT_TYPES[9]).set("IsActive", "true");
+    chain.children.push(fx);
+    ed.sync();
+    let page = ed.mixers.iter().find(|m| m.kind == mixer::Kind::Engine).unwrap().page.clone();
+    let row = [page.clone(), ed.app.ctrl(&page).unwrap().path_of("ChainPanelScroll").unwrap()].concat();
+    let slot = [row, vec![0]].concat();
+    let meter = |ed: &Editor| ed.app.ctrl(&slot).and_then(|c| c.find("DasMeter")).map(|c| c.value);
+    assert!(meter(&ed).is_some(), "the bus compressor panel has its meter");
+    let mut m = dreist_engine::Meters::default();
+    m.fx_out.push(dreist_engine::FxOut { at: [e as i8, -1, -1], slot: 0, value: 0.5 });
+    ed.update_meters(&m);
+    assert_eq!(meter(&ed), Some(0.5));
+    ed.update_meters(&m);
+    assert!((meter(&ed).unwrap() - 0.51).abs() < 1e-6, "unchanged: rises");
+    m.fx_out[0].value = 0.3;
+    ed.update_meters(&m);
+    assert_eq!(meter(&ed), Some(0.3));
+}
+
 /// The pen tool's right button opens the track's menu (as the track name
 /// area does) instead of deleting the step.
 #[test]
@@ -4504,4 +4558,51 @@ fn step_selection_drags() {
     ed.app.mods.alt = false;
     let pat = ed.model.pattern(e, ed.model.current_pattern(e));
     assert!(pat.tracks[3].steps[5].on && pat.tracks[3].steps[7].on, "copied");
+}
+
+/// With steps selected the nudge buttons move only those (v1); without, the
+/// whole pattern.
+#[test]
+fn nudge_buttons_move_the_selection() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    ed.model.editor_tab = 0;
+    ed.sync();
+    let next = ed.app.root.path_of("NudgeNext").expect("nudge button");
+    ed.take_commands();
+    click_named(&mut ed, &next, false);
+    let sent = |c: &[Command], k: u32| c.iter().any(|c| matches!(c, Command::Message(m) if m.kind == k));
+    assert!(sent(&ed.take_commands(), id::NUDGE_PATTERN_FORWARD), "no selection: the pattern");
+    ed.app.mods.cmd = true;
+    for ev in ed.app.shortcut("a") {
+        ed.handle(&ev);
+    }
+    ed.app.mods.cmd = false;
+    assert!(ed.pattern.as_ref().unwrap().has_selection());
+    ed.take_commands();
+    click_named(&mut ed, &next, false);
+    let c = ed.take_commands();
+    assert!(!sent(&c, id::NUDGE_PATTERN_FORWARD) && !c.is_empty(), "only the selected steps move");
+}
+
+/// Showing the Mapping page turns MIDI learn on and leaving it turns it off
+/// (v1's mapping panel sets the learn state with its own visibility).
+#[test]
+fn mapping_page_turns_learn_on() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let bp = ed.app.root.path_of("BrowserTabButtons").expect("tab buttons");
+    let n = ed.app.ctrl(&bp).unwrap().children.len();
+    let tab = |ed: &Editor, page: usize| {
+        (0..n)
+            .map(|i| [bp.clone(), vec![i]].concat())
+            .find(|p| ed.utility_tabs.as_ref().unwrap().clicked(&ed.app, &UiEvent::Clicked { path: p.clone(), name: String::new(), id: 0, on: false }) == Some(page))
+            .expect("tab")
+    };
+    let (map, browse) = (tab(&ed, front::MAPPING_PAGE), tab(&ed, front::BROWSER_PAGE));
+    ed.handle(&UiEvent::Clicked { path: map, name: String::new(), id: 0, on: true });
+    assert!(ed.learn.active && ed.model.utility_tab == front::MAPPING_PAGE);
+    ed.handle(&UiEvent::Clicked { path: browse, name: String::new(), id: 0, on: true });
+    assert!(!ed.learn.active);
 }
