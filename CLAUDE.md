@@ -1,7 +1,7 @@
 # Einst
 
 Rebuild of the original v1 instrument as a thin app on **dreist-commons** (a git submodule at
-`commons`, used by path; see `.agents/git.md` for changing it). Einst plugs in through
+`commons`, used by path; see `CONTRIBUTING.md` for changing it). Einst plugs in through
 dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::profile`) and installs v1's effect nodes
 (`dreist_dsp::fx::install_factory`). Shared behaviour belongs in dreist-commons, v1 specifics here.
 
@@ -14,10 +14,8 @@ dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::pr
 - Goldens (`crates/einst/tests/golden`) must stay identical unless a change is meant to alter
   them; explain every change. Porting bugs found in dreist-commons get their own commit there.
 - Out of scope: licensing / copy protection, updates and registration, RTAS, inter-plugin audio.
-- Keep the repository private. Git (Conventional Commits, no attribution lines, changelog,
-  releases, submodule bumps): `.agents/git.md`.
-- Before touching commons, read `commons/.agents/coordination.md` (Dreist's agents change commons
-  too); after every commons push, append an entry there (see `.agents/git.md`, "Shared code").
+- Keep the repository private. Git (Conventional Commits, changelog, releases, branches,
+  submodule bumps): `CONTRIBUTING.md`; agent workflow notes: dreist-re `agents.md`.
 
 ## Build
 
