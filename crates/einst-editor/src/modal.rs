@@ -8,7 +8,7 @@
 //! ResetLayersButton `AllocatorClearLayersOnLoad`, ActiveSensingButton
 //! `SendActiveSensing`, RetardButton `SequencerRetardation`,
 //! RestoreOutputsButton `AllocatorRestoreOutputs` (default on),
-//! YAxisPadVelocityButton `PadVelocityBehaviour`, KeyboardButton
+//! KeyboardButton
 //! `RespondToKeyboard` (on), ExtendedKeyboardButton
 //! `RespondToExtendedKeyboard`, AutoAssign `AutoMIDICC` (on); MIDIModeGroup
 //! `MIDINumbering` (child ids, default 1); MetroType `MetronomeSound`
@@ -36,7 +36,7 @@ use dreist_gui::{Colour, Ctrl, Rect, Skin};
 use crate::options::Options;
 use crate::{EditorError, err};
 
-pub const TOGGLES: [(&str, &str, bool); 14] = [
+pub const TOGGLES: [(&str, &str, bool); 13] = [
     ("QuantizeREXButton", "AllocatorQuantizeREX", false),
     ("PreFadeButton", "AuxesArePreFade", false),
     ("MultiButton", "PatternEditorRightClickMode", false),
@@ -45,7 +45,6 @@ pub const TOGGLES: [(&str, &str, bool); 14] = [
     ("ActiveSensingButton", "SendActiveSensing", false),
     ("RetardButton", "SequencerRetardation", false),
     ("RestoreOutputsButton", "AllocatorRestoreOutputs", true),
-    ("YAxisPadVelocityButton", "PadVelocityBehaviour", false),
     ("KeyboardButton", "RespondToKeyboard", true),
     ("ExtendedKeyboardButton", "RespondToExtendedKeyboard", false),
     ("AutoAssign", "AutoMIDICC", true),

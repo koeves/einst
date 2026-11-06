@@ -3,15 +3,14 @@
 //! mode column (`PadModeControlsPanel.skin`: erase, repeat and its timing,
 //! full level).
 //!
-//! - Pad states ([re:ff2d9a] / pad update [re:bc1ce0] / layer indicators
-//!   [re:535995]): the face in `PadStyle` / `PadSelectedStyle`, the name
+//! - Pad states ([re:1b4b02] / pad update [re:e70baa] / layer indicators
+//!   [re:e70baa]): the face in `PadStyle` / `PadSelectedStyle`, the name
 //!   (per pad mode) in `PadNameStyle`, one status LED per layer:
 //!   `PadLedStyle` when empty, `PadLed2Style` muted, `PadLed3Style` soloed,
 //!   else the pad's colour (`PadLed1Style`, or `PadLed1..4Style` for pad
 //!   colours 1..4).
-//! - [re:b99f7e]: velocity from the click's
-//!   x position (peak at the centre), or with option `PadVelocityBehaviour`
-//!   1 − y/height; triggering [re:069c0a] posts `e_playSound` (0x3b).
+//! - [re:22e2d5]: velocity from the click's x position (peak at the
+//!   centre); triggering [re:bf992d] posts `e_playSound` (0x3b).
 
 use dreist_engine::live::PadMode;
 use dreist_gui::app::{App, MouseKind, UiEvent};
@@ -34,14 +33,14 @@ pub struct Pads {
     held: Option<usize>,
     /// Path of the pad mode column (erase, repeat, full level).
     control: Option<Vec<usize>>,
-    /// Note repeat base per engine ([re:6e9d2e], not
+    /// Note repeat base per engine ([re:a3ad60], not
     /// saved, default 8 = 1/16) for the RepeatCount label and menu.
     repeat_base: [usize; crate::model::ENGINES],
     /// Open menu: 1 repeat timing (RepeatCount), 2 collapsed options.
     menu: u8,
     /// Collapsed options menu actions.
     options: Vec<OptAction>,
-    /// Flash overlay per pad slot ([re:2b39ea] pad array).
+    /// Flash overlay per pad slot ([re:0f85d7] pad array).
     flash: [Flash; 64],
     /// Last flash timer tick.
     flash_tick: Option<std::time::Instant>,
@@ -49,16 +48,16 @@ pub struct Pads {
     press: (f32, f32),
 }
 
-/// [re:2d30eb] flash overlay.
+/// [re:e70baa] flash overlay.
 ///
-/// - Flash [re:870ce8]: on, alpha 0.65, colour = the
+/// - Flash [re:944417]: on, alpha 0.65, colour = the
 ///   style's colAltFill (default Pink).
-/// - Flash unless flashing [re:c6c89e]: the same at 0.85 when off.
-/// - Flash loop [re:74ec67]: a flash and the loop flag unless
-///   looping; ending the loop [re:5b24df] clears it unless the pad is being
+/// - Flash unless flashing [re:944417]: the same at 0.85 when off.
+/// - Flash loop [re:ae689e]: a flash and the loop flag unless
+///   looping; ending the loop [re:ae89c2] clears it unless the pad is being
 ///   dragged (set when its drag starts, cleared when the drag ends /
 ///   mouse up).
-/// - Timer tick [re:33a0c6] (every 1/30 s): rising (falling flag clear)
+/// - Timer tick [re:0e98f4] (every 1/30 s): rising (falling flag clear)
 ///   alpha += 0.1 up to 0.65, then falling; falling −0.2 down to 0, then
 ///   off, or rising again while looping. The falling flag is never reset
 ///   by a flash, so later flashes start falling.
@@ -121,7 +120,7 @@ impl Flash {
     }
 }
 
-/// What is dragged over the pads ([re:2a11ae]).
+/// What is dragged over the pads ([re:2a90bf]).
 pub(crate) enum DragFlash {
     /// A pad (or alt held): the pad under the pointer.
     AtPosition,
@@ -167,7 +166,7 @@ pub(crate) fn matrix_cells(m: &Ctrl, cols: i32, rows: i32) -> Vec<Rect> {
     out
 }
 
-/// [re:114e61]: the bounds filled in the flash
+/// [re:e70baa]: the bounds filled in the flash
 /// colour (style colAltFill, default Pink) at the flash alpha, rounded by
 /// the style's corner rounding. Drawn over the pad's children.
 pub(crate) fn draw_flash(r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) {
@@ -251,7 +250,7 @@ impl Pads {
         Some(c)
     }
 
-    /// [re:ca55ac]: one pad per cell.
+    /// [re:0f85d7]: one pad per cell.
     fn layout(&mut self, root: &mut Ctrl, model: &Model) {
         let vis = model.visible_pads();
         if vis == self.shown {
@@ -342,17 +341,17 @@ impl Pads {
         &self.matrix
     }
 
-    /// Whether `path` is inside the pads matrix ([re:1ab7d3] drag target).
+    /// Whether `path` is inside the pads matrix ([re:2a90bf] drag target).
     pub fn in_matrix(&self, path: &[usize]) -> bool {
         path.starts_with(&self.matrix)
     }
 
-    /// [re:4288a6]: flash the pads a drop at (`x`, `y`) (window
+    /// [re:2a90bf]: flash the pads a drop at (`x`, `y`) (window
     /// coordinates) would fill. Nothing changes over a locked pad.
     pub(crate) fn drag_flash(&mut self, app: &App, model: &Model, what: DragFlash, x: f32, y: f32) {
         let (ox, oy) = app.origin(&self.matrix);
         let Some(m) = app.ctrl(&self.matrix) else { return };
-        // Pad rects shrunk by 2 px (flashing pads at a position [re:288c64]).
+        // Pad rects shrunk by 2 px (flashing pads at a position [re:8cc902]).
         let inside = |c: &Ctrl| {
             let (px, py) = (x as i32 - ox, y as i32 - oy);
             let r = c.rect;
@@ -391,7 +390,7 @@ impl Pads {
         }
     }
 
-    /// [re:8d9b8a] / drag end: every loop ends.
+    /// [re:0e1c32] / drag end: every loop ends.
     pub fn end_drag_flash(&mut self) {
         for f in &mut self.flash {
             f.dragged = false;
@@ -399,8 +398,8 @@ impl Pads {
         }
     }
 
-    /// Per-frame flash timer ([re:ba3c9b]), and
-    /// [re:bd4d75]: in x0x mode, while the pattern
+    /// Per-frame flash timer ([re:0e98f4]), and
+    /// [re:8135df]: in x0x mode, while the pattern
     /// plays with its power on, the current step's pad flashes
     /// (unless already flashing). Returns whether a pad changed.
     pub fn animate(&mut self, app: &mut App, model: &Model) -> bool {
@@ -461,13 +460,7 @@ impl Pads {
                 let e = model.engine;
                 match kind {
                     MouseKind::Down => {
-                        // Option `PadVelocityBehaviour` ([re:a95e11]):
-                        // the height instead, loudest at the top.
-                        let vel = if crate::options::Options::load().bool("PadVelocityBehaviour", false) {
-                            1.0 - (*y / pad.rect.h.max(1) as f32).clamp(0.0, 1.0)
-                        } else {
-                            velocity_from_click(*x, pad.rect.w as f32)
-                        };
+                        let vel = velocity_from_click(*x, pad.rect.w as f32);
                         // `DoMouseDown*Mode`: every press flashes the pad.
                         if let Some(f) = path.last().and_then(|&i| self.flash.get_mut(i)) {
                             f.flash();
@@ -484,18 +477,16 @@ impl Pads {
                             out.push(Command::PadHit { engine: e, pad: idx, velocity: (vel * 127.0) as u32 });
                             self.held = Some(idx);
                         }
-                        // [re:e066f0]: cmd toggles, shift extends.
+                        // [re:20c941]: cmd toggles, shift extends.
                         if normal || alt {
                             out.push(crate::multipad::select(model, e, idx, app.mods.cmd, app.mods.shift));
                         }
                         true
                     }
                     MouseKind::Drag => {
-                        // Mouse move, normal mode [re:10ff5a]: past 10 px (or
-                        // outside the pad) the drag starts and the pad loops.
-                        let (w, h) = (pad.rect.w as f32, pad.rect.h as f32);
-                        let out_of = *x < 0.0 || *y < 0.0 || *x >= w || *y >= h;
-                        if self.held.is_some() && ((x - self.press.0).abs() > 10.0 || (y - self.press.1).abs() > 10.0 || out_of) {
+                        // Mouse move, normal mode [re:c526c7]: from 6 px the
+                        // drag starts and the pad loops.
+                        if self.held.is_some() && ((x - self.press.0).abs() >= 6.0 || (y - self.press.1).abs() >= 6.0) {
                             if let Some(f) = path.last().and_then(|&i| self.flash.get_mut(i)) {
                                 f.dragged = true;
                                 f.flash_loop();
@@ -557,7 +548,7 @@ impl Pads {
         }
     }
 
-    /// [re:a04671]: the 14 resolution names (current base
+    /// [re:0f85d7]: the 14 resolution names (current base
     /// checked) then "Sync to next division".
     fn repeat_items(&self, model: &Model) -> Vec<(String, OptAction)> {
         let e = model.engine;
@@ -629,7 +620,7 @@ impl Pads {
                     app.open_menu(path, labels, None);
                     false
                 }
-                // [re:48766b]: the hidden controls as menu items.
+                // [re:0f85d7]: the hidden controls as menu items.
                 "Options" => {
                     let hidden = |n: &str| self.ctrl_path(app, n).and_then(|p| app.ctrl(&p).map(|c| !c.visible)).unwrap_or(false);
                     let check = |on: bool, t: &str| if on { format!("✓ {t}") } else { t.to_string() };
