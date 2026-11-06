@@ -162,6 +162,9 @@ pub fn add_recent_preset(path: &std::path::Path) {
 
 pub type DialogFn = Box<dyn FnMut(Dialog) -> Option<std::path::PathBuf> + Send>;
 
+/// File dialogs that take several files (v1's "Please choose the file(s)").
+pub type FilesDialogFn = Box<dyn FnMut(Dialog) -> Vec<std::path::PathBuf> + Send>;
+
 pub struct Editor {
     /// The standalone app: its menu bar carries the keyboard shortcuts, so
     /// they work whatever the keyboard options say (`accel`).
@@ -178,6 +181,10 @@ pub struct Editor {
     pub app: App,
     /// Native file dialogs (set by the window host; `None` in tests).
     pub dialogs: Option<DialogFn>,
+    /// Several-file dialogs (`None`: the single-file ones stand in).
+    pub files_dialogs: Option<FilesDialogFn>,
+    /// Swing template imports in progress (files left, open question).
+    pub(crate) swing_import: Option<editor::files::SwingImport>,
     /// Where the project was last opened/saved.
     pub project_path: Option<std::path::PathBuf>,
     /// Undo / redo steps (document snapshots).
@@ -338,6 +345,8 @@ impl Editor {
             closing: false,
             app: App::new(skin, root),
             dialogs: None,
+            files_dialogs: None,
+            swing_import: None,
             project_path: None,
             history: undo::History::default(),
             history_menu: None,

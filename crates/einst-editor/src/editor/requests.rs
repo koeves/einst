@@ -91,6 +91,14 @@ impl Editor {
         self.dialogs.as_mut().and_then(|f| f(d))
     }
 
+    /// A several-file dialog (the single-file one when the host has none).
+    pub(crate) fn files_dialog(&mut self, d: Dialog) -> Vec<PathBuf> {
+        match self.files_dialogs.as_mut() {
+            Some(f) => f(d),
+            None => self.dialog(d).into_iter().collect(),
+        }
+    }
+
     /// Run one request; whether the editor changed.
     pub(crate) fn run_request(&mut self, r: Request) -> bool {
         match r {
@@ -129,17 +137,15 @@ impl Editor {
             // 1 text template into the user swing folder as
             // `<file stem>.swingtemplate`.
             Request::ImportGuruSwing => {
-                if let Some(f) = self.dialog(Dialog::OpenGuruSwing) {
-                    self.import_guru_swing(&f);
-                }
+                let files = self.files_dialog(Dialog::OpenGuruSwing);
+                self.start_swing_import(true, files);
                 true
             }
             // The file's pattern as a groove
             // (swing template) in the user swing folder.
             Request::ImportMidiTemplate => {
-                if let Some(f) = self.dialog(Dialog::OpenMidiTemplate) {
-                    self.import_midi_template(&f);
-                }
+                let files = self.files_dialog(Dialog::OpenMidiTemplate);
+                self.start_swing_import(false, files);
                 true
             }
             Request::ExtractGroove(n) => {

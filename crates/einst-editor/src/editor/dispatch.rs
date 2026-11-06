@@ -431,6 +431,10 @@ impl Editor {
     }
 
     pub fn handle(&mut self, ev: &UiEvent) {
+        if self.swing_import_event(ev) {
+            self.app.dirty = true;
+            return;
+        }
         if let UiEvent::ToolTip { path } = ev {
             self.update_tooltip(path);
             return;

@@ -4727,3 +4727,30 @@ fn project_sampler_settings_are_adopted() {
     assert!(!o.bool("SamplerLastSyncMode", true));
     assert_eq!(ed.model.sampler.start_mode, 1);
 }
+
+/// v1's swing import: several files; an existing template asks before it
+/// is overwritten (No skips it).
+#[test]
+fn swing_import_asks_before_overwriting() {
+    crate::app::test_setup();
+    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    let dir = std::env::temp_dir().join(format!("dreist-swing-many-{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let (a, b) = (dir.join("Groove A.mid"), dir.join("Groove B.mid"));
+    assert!(ed.save_pattern_midi(&a) && ed.save_pattern_midi(&b));
+    let user = crate::swing::user_dir().unwrap();
+    std::fs::create_dir_all(&user).unwrap();
+    std::fs::write(user.join("Groove A.swingtemplate"), b"old").unwrap();
+    let files = vec![a.clone(), b.clone()];
+    ed.files_dialogs = Some(Box::new(move |_| files.clone()));
+    let chosen = ed.files_dialog(Dialog::OpenMidiTemplate);
+    ed.start_swing_import(false, chosen);
+    let items = ed.app.menu.as_ref().expect("overwrite question").items.clone();
+    assert!(items[0].contains("A file named Groove A already exists in your swing template folder. Do you want to overwrite it?"), "{items:?}");
+    assert_eq!(&items[2..], &["Yes".to_string(), "No".into()]);
+    let anchor = ed.app.menu.take().unwrap().anchor;
+    ed.handle(&UiEvent::MenuSelected { anchor, name: "SwingDrop".into(), index: 3 });
+    assert_eq!(std::fs::read(user.join("Groove A.swingtemplate")).unwrap(), b"old", "No keeps the old file");
+    assert!(user.join("Groove B.swingtemplate").exists(), "the next file imports");
+    let _ = std::fs::remove_dir_all(&dir);
+}

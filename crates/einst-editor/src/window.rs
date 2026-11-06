@@ -44,6 +44,20 @@ impl Drop for Hosted {
     }
 }
 
+/// Native several-file dialogs (rfd): the swing template imports
+/// ([re:44230b] [re:bdda3c]), from the documents folder.
+pub fn native_files_dialogs() -> crate::FilesDialogFn {
+    Box::new(|d| {
+        let d0 = rfd::FileDialog::new().set_title("Please choose the file(s) you wish to import").set_directory(crate::options::documents_dir());
+        match d {
+            crate::Dialog::OpenGuruSwing => d0.add_filter("GURU swing template files", &["txt"]).pick_files(),
+            crate::Dialog::OpenMidiTemplate => d0.add_filter("MIDI files", &["mid"]).pick_files(),
+            _ => None,
+        }
+        .unwrap_or_default()
+    })
+}
+
 /// Native open/save dialogs (rfd).
 pub fn native_dialogs() -> crate::DialogFn {
     Box::new(|d| match d {
@@ -114,8 +128,7 @@ pub fn native_dialogs() -> crate::DialogFn {
             };
             rfd::FileDialog::new().set_title(format!("Please choose the {noun} to load")).add_filter(desc, &[ext, &ext.to_ascii_lowercase()]).pick_file()
         }
-        crate::Dialog::OpenGuruSwing => rfd::FileDialog::new().set_title("Please choose the file(s) you wish to import").add_filter("GURU swing template files", &["txt"]).pick_file(),
-        crate::Dialog::OpenMidiTemplate => rfd::FileDialog::new().set_title("Please choose the file(s) you wish to import").add_filter("MIDI files", &["mid"]).pick_file(),
+        crate::Dialog::OpenGuruSwing | crate::Dialog::OpenMidiTemplate => native_files_dialogs()(d).into_iter().next(),
         crate::Dialog::OpenMidi => rfd::FileDialog::new().set_title("Please choose the MIDI file to load").add_filter("Pattern MIDI files", &["mid", "midi"]).pick_file(),
         crate::Dialog::SaveMidi => rfd::FileDialog::new().set_title("Please select the location to save to").add_filter("Pattern MIDI files", &["mid"]).set_file_name("Pattern.mid").save_file(),
         // [re:513f9b]: titled "Please choose a search location", from the last folder.
@@ -154,6 +167,7 @@ pub fn native_dialogs() -> crate::DialogFn {
 pub fn open_blocking(mut ed: Editor, mut on_commands: impl FnMut(Vec<Command>) + Send + 'static) {
     if ed.dialogs.is_none() {
         ed.dialogs = Some(native_dialogs());
+        ed.files_dialogs = Some(native_files_dialogs());
     }
     dreist_gui::window::open_blocking(
         Hosted(
@@ -171,6 +185,7 @@ pub fn open_blocking(mut ed: Editor, mut on_commands: impl FnMut(Vec<Command>) +
 pub fn open_parented<P: dreist_gui::window::RawHandle>(parent: &P, mut ed: Editor, link: Link) -> dreist_gui::window::WindowHandle {
     if ed.dialogs.is_none() {
         ed.dialogs = Some(native_dialogs());
+        ed.files_dialogs = Some(native_files_dialogs());
     }
     dreist_gui::window::open_parented(parent, Hosted(ed, link))
 }
