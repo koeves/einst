@@ -8,7 +8,7 @@ modal-audio 0f52268baeb647f8
 modal-console 67e1f9ce2dcf8e42
 modal-export a344d16433c16b4e
 modal-filefind 660dccdef40164ba
-modal-midi 3e64b4c23369e0b0
+modal-midi 4207b725d6832ec5
 modal-preferences 5a77fcd0bebe799a
 page-enginemixer 8e0efa88f119720b
 page-globalmixer cd165f800ed1dba9
