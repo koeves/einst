@@ -21,8 +21,8 @@
 //! - [re:2bfb64]: key onto key — alt copies, otherwise
 //!   swaps (v1: no move), then selects the target; one
 //!   pattern file loads into that slot.
-//! - [re:9ddda2]: one .geistengine /
-//!   .geistkit file loads into the engine under the pointer, which is
+//! - [re:9ddda2]: one engine file (v1 takes no kits) loads into the
+//!   engine under the pointer, which is
 //!   selected.
 
 use dreist_formats::profile::{DocKind, doc_kind};
@@ -397,14 +397,15 @@ impl Editor {
                 self.load_file_at(&files[0], None, Some(q))
             }
             (Source::Files(files), Target::Engine(t)) => {
+                // v1 ([re:0fbd59]): one engine file.
                 let x = files.first().and_then(|f| doc_kind(&ext(f)));
-                if files.len() != 1 || !matches!(x, Some(DocKind::Engine | DocKind::Kit)) || t >= crate::model::ENGINES {
+                if files.len() != 1 || x != Some(DocKind::Engine) || t >= crate::model::ENGINES {
                     return false;
                 }
                 self.model.engine = t;
                 self.model.doc.set("CurrentEngine", t);
                 self.outbox.push(Command::SelectEngine(t));
-                let part = if x == Some(DocKind::Kit) { crate::project::Part::Kit(t) } else { crate::project::Part::Engine(t) };
+                let part = crate::project::Part::Engine(t);
                 self.open_part(part, &files[0])
             }
             // [re:d5abda] / [re:13bdb0]: files only, from elsewhere than the
