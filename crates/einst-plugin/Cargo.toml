@@ -1,0 +1,41 @@
+[package]
+name = "einst-plugin"
+edition.workspace = true
+version.workspace = true
+# The VST3 export links nih-plug's VST3 bindings (GPLv3), so this crate and
+# the plugins and app built from it are GPL-3.0-or-later (as Dreist's
+# dreist-plugin, which this is a copy of).
+license = "GPL-3.0-or-later"
+description = "Einst CLAP/VST3 plugin and standalone (nih-plug)"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[[bin]]
+name = "einst-standalone"
+path = "src/main.rs"
+required-features = ["standalone"]
+
+[features]
+standalone = ["nih_plug/standalone", "dep:cpal", "dep:midir"]
+
+[dependencies]
+einst-formats = { path = "../einst-formats" }
+dreist-dsp.workspace = true
+dreist-engine.workspace = true
+dreist-gui = { workspace = true, features = ["window"] }
+einst-editor = { workspace = true, features = ["window"] }
+einst = { path = "../einst" }
+dreist-formats.workspace = true
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+cpal = { version = "=0.15.3", optional = true }
+midir = { version = "=0.9.1", optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+# nih-plug's CLAP bindings (the same revision), to host the plugin in tests.
+clap-sys = { git = "https://github.com/micahrj/clap-sys.git", rev = "25d7f53fdb6363ad63fbd80049cb7a42a97ac156" }
+
+[lints]
+workspace = true

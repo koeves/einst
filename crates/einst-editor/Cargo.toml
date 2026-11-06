@@ -1,0 +1,28 @@
+[package]
+name = "einst-editor"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+description = "Einst's editor panels on top of dreist-gui, driving dreist-engine through commands"
+
+[dependencies]
+dreist-testkit.workspace = true
+dreist-formats.workspace = true
+dreist-engine.workspace = true
+dreist-dsp.workspace = true
+dreist-gui.workspace = true
+einst = { path = "../einst" }
+einst-dsp = { path = "../einst-dsp" }
+einst-formats = { path = "../einst-formats" }
+rfd = { version = "0.16", optional = true }
+
+[features]
+window = ["dreist-gui/window", "dep:rfd"]
+
+[[example]]
+name = "editor"
+required-features = ["window"]
+
+
+[lints]
+workspace = true

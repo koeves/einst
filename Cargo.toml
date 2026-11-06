@@ -1,0 +1,58 @@
+[workspace]
+resolver = "2"
+members = ["crates/einst-formats", "crates/einst-dsp", "crates/einst", "crates/einst-editor", "crates/einst-plugin", "xtask"]
+# The commons submodule is its own workspace; its crates are dependencies here.
+exclude = ["commons"]
+
+[workspace.package]
+edition = "2024"
+version = "0.1.1"
+license = "MIT OR Apache-2.0"
+
+# Same lint policy as Dreist: DSP and parsers follow the decompiled original.
+[workspace.lints.clippy]
+approx_constant = "allow"
+excessive_precision = "allow"
+assign_op_pattern = "allow"
+manual_clamp = "allow"
+needless_range_loop = "allow"
+collapsible_if = "allow"
+collapsible_else_if = "allow"
+too_many_arguments = "allow"
+neg_cmp_op_on_partial_ord = "allow"
+type_complexity = "allow"
+manual_range_contains = "allow"
+
+[workspace.dependencies]
+# The shared crates: the dreist-commons submodule at `commons`.
+dreist-formats = { path = "commons/crates/dreist-formats" }
+dreist-dsp = { path = "commons/crates/dreist-dsp" }
+dreist-engine = { path = "commons/crates/dreist-engine" }
+dreist-gui = { path = "commons/crates/dreist-gui" }
+einst-editor = { path = "crates/einst-editor" }
+dreist-testkit = { path = "commons/crates/dreist-testkit" }
+roxmltree = "0.20"
+thiserror = "2"
+
+[profile.release]
+strip = false
+
+[profile.test]
+opt-level = 2
+
+# dreist-commons' vendored patches: baseview with a re-entrancy guard for
+# modal dialogs, signalsmith-stretch with a fixed phase-randomisation seed.
+[patch."https://github.com/RustAudio/baseview.git"]
+baseview = { path = "commons/vendor/baseview" }
+
+# nih-plug whose CLAP state load survives corrupt state and asks the host
+# to rescan the parameter values, and whose editor entry points catch
+# panics (dreist-commons vendor/nih-plug).
+[patch."https://github.com/robbert-vdh/nih-plug.git"]
+nih_plug = { path = "commons/vendor/nih-plug" }
+
+# softbuffer whose macOS observer class is unique to each plugin binary:
+# two plugins in one host aborted it (dreist-commons vendor/softbuffer).
+[patch.crates-io]
+signalsmith-stretch = { path = "commons/vendor/signalsmith-stretch" }
+softbuffer = { path = "commons/vendor/softbuffer" }

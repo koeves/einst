@@ -1,0 +1,21 @@
+[package]
+name = "einst"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+description = "Einst's app profile on dreist-commons: v1 documents, effect nodes, menu, resources and names"
+
+[dependencies]
+dreist-formats.workspace = true
+dreist-dsp.workspace = true
+dreist-engine.workspace = true
+dreist-gui.workspace = true
+einst-formats = { path = "../einst-formats" }
+einst-dsp = { path = "../einst-dsp" }
+
+[dev-dependencies]
+einst-editor.workspace = true
+dreist-testkit.workspace = true
+
+[lints]
+workspace = true

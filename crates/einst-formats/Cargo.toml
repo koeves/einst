@@ -1,0 +1,17 @@
+[package]
+name = "einst-formats"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+description = "Readers for v1 (1.1.1.2) files, mapped onto the v2 document model"
+
+[dependencies]
+dreist-formats.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+dreist-engine.workspace = true
+dreist-dsp.workspace = true
+
+[lints]
+workspace = true

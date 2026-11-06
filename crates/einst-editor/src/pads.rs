@@ -1,0 +1,720 @@
+//! The front panel's pads: `EditorPads` (`Pads.skin`, 16 pads `Pad0..15`
+//! of the selected engine in a 4 × 4 grid, bottom row first) and the pad
+//! mode column (`PadModeControlsPanel.skin`: erase, repeat and its timing,
+//! full level).
+//!
+//! - Pad states ([re:1b4b02] / pad update [re:e70baa] / layer indicators
+//!   [re:e70baa]): the face in `PadStyle` / `PadSelectedStyle`, the name
+//!   (per pad mode) in `PadNameStyle`, one status LED per layer:
+//!   `PadLedStyle` when empty, `PadLed2Style` muted, `PadLed3Style` soloed,
+//!   else the pad's colour (`PadLed1Style`, or `PadLed1..4Style` for pad
+//!   colours 1..4).
+//! - [re:22e2d5]: velocity from the click's x position (peak at the
+//!   centre); triggering [re:bf992d] posts `e_playSound` (0x3b).
+
+use dreist_engine::live::PadMode;
+use dreist_gui::app::{App, MouseKind, UiEvent};
+use dreist_gui::{Ctrl, Rect};
+
+use crate::command::Command;
+use crate::model::{LAYERS, Model};
+use crate::{EditorError, err};
+
+pub struct Pads {
+    /// Path of the `EditorPads` panel.
+    matrix: Vec<usize>,
+    /// Template pad control (the skin's `Pad0`, its children named).
+    template: Ctrl,
+    /// The pad cells, by pad index (the skin's `Pad<n>` rects).
+    cells: Vec<Rect>,
+    /// Which pads are currently instantiated (first, count).
+    shown: (usize, usize),
+    /// Pad held down by the mouse.
+    held: Option<usize>,
+    /// Path of the pad mode column (erase, repeat, full level).
+    control: Option<Vec<usize>>,
+    /// Note repeat base per engine ([re:a3ad60], not
+    /// saved, default 8 = 1/16) for the RepeatCount label and menu.
+    repeat_base: [usize; crate::model::ENGINES],
+    /// Open menu: 1 repeat timing (RepeatCount), 2 collapsed options.
+    menu: u8,
+    /// Collapsed options menu actions.
+    options: Vec<OptAction>,
+    /// Flash overlay per pad slot ([re:0f85d7] pad array).
+    flash: [Flash; 64],
+    /// Last flash timer tick.
+    flash_tick: Option<std::time::Instant>,
+    /// Where the held pad was pressed (pad coordinates).
+    press: (f32, f32),
+}
+
+/// [re:e70baa] flash overlay.
+///
+/// - Flash [re:944417]: on, alpha 0.65, colour = the
+///   style's colAltFill (default Pink).
+/// - Flash unless flashing [re:944417]: the same at 0.85 when off.
+/// - Flash loop [re:ae689e]: a flash and the loop flag unless
+///   looping; ending the loop [re:ae89c2] clears it unless the pad is being
+///   dragged (set when its drag starts, cleared when the drag ends /
+///   mouse up).
+/// - Timer tick [re:0e98f4] (every 1/30 s): rising (falling flag clear)
+///   alpha += 0.1 up to 0.65, then falling; falling −0.2 down to 0, then
+///   off, or rising again while looping. The falling flag is never reset
+///   by a flash, so later flashes start falling.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub(crate) struct Flash {
+    pub on: bool,
+    pub looping: bool,
+    pub falling: bool,
+    pub dragged: bool,
+    pub alpha: f32,
+}
+
+impl Flash {
+    pub fn flash(&mut self) {
+        self.on = true;
+        self.alpha = 0.65;
+    }
+
+    pub fn flash_if_idle(&mut self) {
+        if !self.on {
+            self.on = true;
+            self.alpha = 0.85;
+        }
+    }
+
+    pub fn flash_loop(&mut self) {
+        if !self.looping {
+            self.flash();
+            self.looping = true;
+        }
+    }
+
+    pub fn end_loop(&mut self) {
+        if !self.dragged {
+            self.looping = false;
+        }
+    }
+
+    /// One timer tick; whether the overlay changed.
+    pub fn tick(&mut self) -> bool {
+        if !self.on {
+            return false;
+        }
+        if !self.falling {
+            self.alpha = (self.alpha + 0.1).min(0.65);
+            if (self.alpha - 0.65).abs() <= 1e-6 {
+                self.falling = true;
+            }
+        } else {
+            self.alpha = (self.alpha - 0.2).max(0.0);
+            if self.alpha.abs() <= 1e-6 {
+                if self.looping {
+                    self.falling = false;
+                } else {
+                    self.on = false;
+                }
+            }
+        }
+        true
+    }
+}
+
+/// What is dragged over the pads ([re:2a90bf]).
+pub(crate) enum DragFlash {
+    /// A pad (or alt held): the pad under the pointer.
+    AtPosition,
+    /// `n` files from the browser or Finder: pads from the one under the
+    /// pointer on.
+    Files(usize),
+    /// Kit files: every pad.
+    All,
+}
+
+/// Flash timer period ([re:6556de], 1/30 s).
+const FLASH_TICK: f32 = 1.0 / 30.0;
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum OptAction {
+    Erase,
+    Repeat,
+    RepeatBase(usize),
+    RepeatSync,
+    FullLevel,
+    /// The Full Level slider row ([re:2b6ca2]).
+    FullLevelSlider,
+    None,
+}
+
+/// [re:853d6d] layout of `n` cells (cols × rows) inside `r`, bottom-up.
+pub(crate) fn matrix_cells(m: &Ctrl, cols: i32, rows: i32) -> Vec<Rect> {
+    let sp = m.attr_i32("intIntraSpacing", 0);
+    let (l, rgt, t, b) = (m.attr_i32("intLeftSpacing", 0), m.attr_i32("intRightSpacing", 0), m.attr_i32("intTopSpacing", 0), m.attr_i32("intBottomSpacing", 0));
+    let from_top = m.attr_bool("optLayoutFromTop", true);
+    let w = (m.rect.w - l - rgt - (cols - 1) * sp) as f32 / cols as f32;
+    let h = (m.rect.h - t - b - (rows - 1) * sp) as f32 / rows as f32;
+    let mut out = Vec::new();
+    for i in 0..cols * rows {
+        let (c, r) = (i % cols, i / cols);
+        let row = if from_top { r } else { rows - 1 - r };
+        let x0 = (l as f32 + c as f32 * (w + sp as f32)).round() as i32;
+        let y0 = (t as f32 + row as f32 * (h + sp as f32)).round() as i32;
+        let x1 = (l as f32 + c as f32 * (w + sp as f32) + w).round() as i32;
+        let y1 = (t as f32 + row as f32 * (h + sp as f32) + h).round() as i32;
+        out.push(Rect::new(x0, y0, x1 - x0, y1 - y0));
+    }
+    out
+}
+
+/// [re:e70baa]: the bounds filled in the flash
+/// colour (style colAltFill, default Pink) at the flash alpha, rounded by
+/// the style's corner rounding. Drawn over the pad's children.
+pub(crate) fn draw_flash(r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) {
+    let Some(a) = c.attr("flashAlpha").and_then(|v| v.parse::<f32>().ok()) else { return };
+    let st = r.style(c);
+    let col = r.styles.colour(st, "colAltFill", dreist_gui::Colour::rgba(255, 200, 200, 255));
+    let radius = r.styles.float(st, "realCornerRounding", 0.0).max(0.0);
+    let rect = dreist_gui::paint::RectF::new(0.0, 0.0, c.rect.w as f32, c.rect.h as f32);
+    p.fill_rounded(rect, radius, [true; 4], col.with_alpha(a));
+}
+
+fn velocity_from_click(x: f32, w: f32) -> f32 {
+    let half = (w as i32 / 2) as f32;
+    if half <= 0.0 {
+        return 1.0;
+    }
+    if x <= half { (x / half).clamp(0.0, 1.0) } else { 1.0 - ((x - half) / half).clamp(0.0, 1.0) }
+}
+
+impl Pads {
+    pub fn build(root: &mut Ctrl, model: &Model) -> Result<Pads, EditorError> {
+        let matrix = root.path_of("EditorPads").ok_or_else(|| EditorError("RootSkin has no EditorPads".into()))?;
+        let host = root.find_mut("EditorPads").ok_or_else(|| err("no EditorPads"))?;
+        let mut cells = Vec::new();
+        for i in 0..16 {
+            let r = host.children.iter().find(|c| c.name == format!("Pad{i}")).map(|c| c.rect).ok_or_else(|| EditorError(format!("Pads.skin has no Pad{i}")))?;
+            cells.push(r);
+        }
+        let mut template = host.children.iter().find(|c| c.name == "Pad0").cloned().ok_or_else(|| err("no Pad0"))?;
+        template.overload = "EditorPad".into();
+        // The face, then one status LED per layer.
+        for (i, c) in template.children.iter_mut().enumerate() {
+            c.name = if i == 0 { "Face".into() } else { format!("LI{}", i - 1) };
+        }
+        let face = template.children.first().map(|c| c.rect).unwrap_or(Rect::new(0, 0, template.rect.w, template.rect.h));
+        template.children.push(Ctrl {
+            class: "CtrlLabel".into(),
+            name: "NameLabel".into(),
+            style: "PadNameStyle".into(),
+            // Long names are cut to the pad's face with an ellipsis.
+            overload: "AutoShorteningLabel".into(),
+            rect: Rect::new(face.x, face.y + 10, face.w, 18),
+            zorder: 1,
+            visible: true,
+            enabled: true,
+            ..Ctrl::default()
+        });
+        // The indicators are display-only; clicks go to the pad.
+        for ch in &mut template.children {
+            ch.passive = true;
+        }
+        let control = root.path_of("PadModePanel");
+        let mut pads = Pads {
+            matrix,
+            template,
+            cells,
+            shown: (0, 0),
+            held: None,
+            control,
+            repeat_base: [8; crate::model::ENGINES],
+            menu: 0,
+            options: Vec::new(),
+            flash: [Flash::default(); 64],
+            flash_tick: None,
+            press: (0.0, 0.0),
+        };
+        pads.layout(root, model);
+        Ok(pads)
+    }
+
+    /// Force the next `sync` to lay the matrix out again.
+    pub fn invalidate(&mut self) {
+        self.shown = (usize::MAX, 0);
+    }
+
+    fn matrix_mut<'a>(&self, root: &'a mut Ctrl) -> Option<&'a mut Ctrl> {
+        let mut c = root;
+        for &i in &self.matrix {
+            c = c.children.get_mut(i)?;
+        }
+        Some(c)
+    }
+
+    /// [re:0f85d7]: one pad per cell.
+    fn layout(&mut self, root: &mut Ctrl, model: &Model) {
+        let vis = model.visible_pads();
+        if vis == self.shown {
+            return;
+        }
+        self.shown = vis;
+        let template = self.template.clone();
+        let cells = self.cells.clone();
+        let Some(m) = self.matrix_mut(root) else { return };
+        m.children.clear();
+        for (i, cell) in cells.into_iter().enumerate().take(vis.1) {
+            let mut p = template.clone();
+            p.name = format!("Pad{i}");
+            p.set_attr("padIndex", (vis.0 + i).to_string());
+            p.set_rect(cell);
+            m.children.push(p);
+        }
+    }
+
+    fn pad_paths(&self, app: &App) -> Vec<(usize, Vec<usize>)> {
+        let Some(m) = app.ctrl(&self.matrix) else { return Vec::new() };
+        m.children
+            .iter()
+            .enumerate()
+            .filter_map(|(i, c)| {
+                let idx = c.attr("padIndex")?.parse().ok()?;
+                let mut p = self.matrix.clone();
+                p.push(i);
+                Some((idx, p))
+            })
+            .collect()
+    }
+
+    pub fn sync(&mut self, app: &mut App, model: &Model) {
+        self.layout(&mut app.root, model);
+        self.sync_controls(app, model);
+        let e = model.engine;
+        let mode = model.pad_mode(e);
+        let selected = model.pad[e];
+        let sel_mask = crate::multipad::selection(model, e).1;
+        let (_, count) = model.visible_pads();
+        for (idx, path) in self.pad_paths(app) {
+            let name = model.pad_name(e, idx);
+            let label = match mode {
+                PadMode::Chromatic => format!("{:+03} st", (idx as i64 - selected as i64).clamp(-48, 48)),
+                PadMode::Velocity => format!("{:03}", ((idx % count) + 1) * 127 / count),
+                PadMode::MuteAndSolo => match idx {
+                    0..8 => format!("{} Mute", idx + 1),
+                    8..16 => format!("{} Solo", idx - 7),
+                    _ => String::new(),
+                },
+                // [re:1cc6fe]: the default name ("Pad n") shows as the number.
+                _ => name.filter(|n| *n != format!("Pad {}", idx + 1)).unwrap_or_else(|| format!("{}", idx + 1)),
+            };
+            let sel = idx == selected || sel_mask & (1u64 << idx.min(63)) != 0;
+            let layers: Vec<_> = (0..LAYERS).map(|l| model.layer(e, idx, l)).collect();
+            // The pad's colour LED (pad colours 1..4, else the first).
+            let colour = model.pad_node(e, idx).and_then(|n| n.attr("PadColour")).and_then(|v| v.trim().parse::<usize>().ok()).filter(|c| (1..=4).contains(c)).unwrap_or(1);
+            let Some(pad) = app.ctrl_mut(&path) else { continue };
+            pad.enabled = true;
+            for c in pad.children.iter_mut() {
+                match c.name.as_str() {
+                    "Face" => c.style = if sel { "PadSelectedStyle" } else { "PadStyle" }.into(),
+                    "NameLabel" => c.text = label.clone(),
+                    n => {
+                        let Some(l) = n.strip_prefix("LI").and_then(|n| n.parse::<usize>().ok()) else { continue };
+                        let f = &layers[l.min(LAYERS - 1)];
+                        c.style = if !f.present {
+                            "PadLedStyle".to_string()
+                        } else if f.mute {
+                            "PadLed2Style".into()
+                        } else if f.solo {
+                            "PadLed3Style".into()
+                        } else if f.valid {
+                            format!("PadLed{colour}Style")
+                        } else {
+                            "PadLedStyle".into()
+                        };
+                        c.on = f.present && (f.valid || f.mute || f.solo);
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(test)]
+    pub fn matrix(&self) -> &[usize] {
+        &self.matrix
+    }
+
+    /// Whether `path` is inside the pads matrix ([re:2a90bf] drag target).
+    pub fn in_matrix(&self, path: &[usize]) -> bool {
+        path.starts_with(&self.matrix)
+    }
+
+    /// [re:2a90bf]: flash the pads a drop at (`x`, `y`) (window
+    /// coordinates) would fill. Nothing changes over a locked pad.
+    pub(crate) fn drag_flash(&mut self, app: &App, model: &Model, what: DragFlash, x: f32, y: f32) {
+        let (ox, oy) = app.origin(&self.matrix);
+        let Some(m) = app.ctrl(&self.matrix) else { return };
+        // Pad rects shrunk by 2 px (flashing pads at a position [re:8cc902]).
+        let inside = |c: &Ctrl| {
+            let (px, py) = (x as i32 - ox, y as i32 - oy);
+            let r = c.rect;
+            c.visible && py >= r.y && py < r.y + (r.h - 2).max(0) && px >= r.x && px < r.x + (r.w - 2).max(0)
+        };
+        let hit = m.children.iter().position(inside);
+        let e = model.engine;
+        if let Some(i) = hit {
+            let idx = m.children[i].attr("padIndex").and_then(|v| v.parse().ok()).unwrap_or(i);
+            if crate::padmenu::pad_locked(model, e, idx) {
+                return;
+            }
+        }
+        for (i, c) in m.children.iter().enumerate().take(64) {
+            if !c.visible {
+                continue;
+            }
+            let f = &mut self.flash[i];
+            let on = match what {
+                DragFlash::All => {
+                    f.flash_loop();
+                    continue;
+                }
+                DragFlash::AtPosition => hit == Some(i),
+                // A miss (−1) still covers [−1, n − 1) as the original does.
+                DragFlash::Files(n) => {
+                    let h = hit.map_or(-1, |h| h as i64);
+                    (i as i64) >= h && (i as i64) < h + n as i64
+                }
+            };
+            if on {
+                f.flash_loop();
+            } else {
+                f.end_loop();
+            }
+        }
+    }
+
+    /// [re:0e1c32] / drag end: every loop ends.
+    pub fn end_drag_flash(&mut self) {
+        for f in &mut self.flash {
+            f.dragged = false;
+            f.end_loop();
+        }
+    }
+
+    /// Per-frame flash timer ([re:0e98f4]), and
+    /// [re:8135df]: in x0x mode, while the pattern
+    /// plays with its power on, the current step's pad flashes
+    /// (unless already flashing). Returns whether a pad changed.
+    pub fn animate(&mut self, app: &mut App, model: &Model) -> bool {
+        let e = model.engine;
+        if model.pad_mode(e) == PadMode::X0x && model.pattern_power(e) {
+            if let Some(pos) = model.steps[e] {
+                let pat = model.pattern(e, model.current_pattern(e));
+                let len = pat.tracks.get(model.pad[e]).map(|t| t.length.max(1)).unwrap_or(pat.steps).max(1) as usize;
+                let step = pos as usize % len;
+                if let Some(f) = self.flash.get_mut(step) {
+                    f.flash_if_idle();
+                }
+            }
+        }
+        let now = std::time::Instant::now();
+        if !self.flash.iter().any(|f| f.on) {
+            self.flash_tick = None;
+            return self.write_flash(app);
+        }
+        let last = *self.flash_tick.get_or_insert(now);
+        let ticks = (now.duration_since(last).as_secs_f32() / FLASH_TICK).floor() as u32;
+        if ticks > 0 {
+            self.flash_tick = Some(now);
+            for f in &mut self.flash {
+                for _ in 0..ticks.min(30) {
+                    f.tick();
+                }
+            }
+        }
+        self.write_flash(app)
+    }
+
+    /// Mirror the flash alphas into the pad controls (`flashAlpha`, drawn by
+    /// `draw_flash`).
+    fn write_flash(&self, app: &mut App) -> bool {
+        let Some(m) = self.matrix_mut(&mut app.root) else { return false };
+        let mut changed = false;
+        for (i, c) in m.children.iter_mut().enumerate() {
+            let a = self.flash.get(i).filter(|f| f.on).map(|f| f.alpha);
+            let old = c.attr("flashAlpha").and_then(|v| v.parse::<f32>().ok());
+            if a != old {
+                changed = true;
+                match a {
+                    Some(a) => c.set_attr("flashAlpha", a.to_string()),
+                    None => c.remove_attr("flashAlpha"),
+                };
+            }
+        }
+        changed
+    }
+
+    /// Returns true when the model changed (needs `sync`).
+    pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
+        match ev {
+            UiEvent::Mouse { path, overload, kind, x, y } if overload == "EditorPad" => {
+                let Some(pad) = app.ctrl(path) else { return false };
+                let Some(idx) = pad.attr("padIndex").and_then(|v| v.parse::<usize>().ok()) else { return false };
+                let e = model.engine;
+                match kind {
+                    MouseKind::Down => {
+                        let vel = velocity_from_click(*x, pad.rect.w as f32);
+                        // `DoMouseDown*Mode`: every press flashes the pad.
+                        if let Some(f) = path.last().and_then(|&i| self.flash.get_mut(i)) {
+                            f.flash();
+                        }
+                        self.press = (*x, *y);
+                        // v1: Normal mode selects and plays (alt selects
+                        // only, [re:e30edf]); Chromatic and Velocity
+                        // play and select with alt only ([re:5f4599],
+                        // [re:be4957]).
+                        use dreist_engine::live::PadMode;
+                        let normal = !matches!(model.pad_mode(e), PadMode::Chromatic | PadMode::Velocity);
+                        let alt = app.mods.alt;
+                        if !(normal && alt) {
+                            out.push(Command::PadHit { engine: e, pad: idx, velocity: (vel * 127.0) as u32 });
+                            self.held = Some(idx);
+                        }
+                        // [re:20c941]: one pad is selected (v1 has no
+                        // multi-pad selection).
+                        if normal || alt {
+                            out.push(crate::multipad::select(model, e, idx, false, false));
+                        }
+                        true
+                    }
+                    MouseKind::Drag => {
+                        // Mouse move, normal mode [re:c526c7]: from 6 px the
+                        // drag starts and the pad loops.
+                        if self.held.is_some() && ((x - self.press.0).abs() >= 6.0 || (y - self.press.1).abs() >= 6.0) {
+                            if let Some(f) = path.last().and_then(|&i| self.flash.get_mut(i)) {
+                                f.dragged = true;
+                                f.flash_loop();
+                            }
+                        }
+                        false
+                    }
+                    MouseKind::Up => {
+                        if let Some(f) = path.last().and_then(|&i| self.flash.get_mut(i)) {
+                            f.dragged = false;
+                        }
+                        if let Some(p) = self.held.take() {
+                            out.push(Command::PadRelease { engine: e, pad: p });
+                        }
+                        false
+                    }
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
+    }
+}
+
+/// `EngineState` flag from the document.
+fn state_flag(model: &Model, e: usize, key: &str, default: bool) -> bool {
+    model.engine_node(e).and_then(|n| n.children.iter().find(|c| c.class == "EngineState")).and_then(|s| s.bool(key)).unwrap_or(default)
+}
+
+impl Pads {
+    fn ctrl_path(&self, app: &App, name: &str) -> Option<Vec<usize>> {
+        let base = self.control.clone()?;
+        let c = app.ctrl(&base)?;
+        let i = c.children.iter().position(|k| k.name == name)?;
+        Some([base, vec![i]].concat())
+    }
+
+    /// [re:032c62]: the erase, repeat and full level states and the repeat
+    /// timing.
+    fn sync_controls(&mut self, app: &mut App, model: &Model) {
+        let e = model.engine;
+        let erase = state_flag(model, e, "NoteEraseEnabled", false);
+        let repeat = state_flag(model, e, "NoteRepeatEnabled", false);
+        let full = state_flag(model, e, "FullLevelEnabled", false);
+        let levels =
+            model.engine_node(e).and_then(|n| n.children.iter().find(|c| c.class == "EngineState")).and_then(|s| s.attr("FullLevels")).and_then(|v| v.trim().parse::<f32>().ok()).unwrap_or(127.0);
+        let base = self.repeat_base[e.min(crate::model::ENGINES - 1)];
+        let Some(cp) = self.control.clone() else { return };
+        let Some(c) = app.ctrl_mut(&cp) else { return };
+        for k in &mut c.children {
+            match k.name.as_str() {
+                "EraseButton" => k.on = erase,
+                "RepeatButton" => k.on = repeat,
+                "RepeatCount" => k.text = dreist_engine::pattern::RESOLUTION_NAMES.get(base).copied().unwrap_or("1/16").to_string(),
+                "FullLevelButton" => k.on = full,
+                "FullLevelKnob" => k.value = levels * 0.007874016,
+                _ => {}
+            }
+        }
+    }
+
+    /// [re:0f85d7]: the 14 resolution names (current base
+    /// checked) then "Sync to next division".
+    fn repeat_items(&self, model: &Model) -> Vec<(String, OptAction)> {
+        let e = model.engine;
+        let base = self.repeat_base[e.min(crate::model::ENGINES - 1)];
+        let check = |on: bool, t: &str| if on { format!("✓ {t}") } else { t.to_string() };
+        let mut v: Vec<(String, OptAction)> = dreist_engine::pattern::RESOLUTION_NAMES.iter().enumerate().map(|(i, n)| (check(i == base, n), OptAction::RepeatBase(i))).collect();
+        v.push((String::new(), OptAction::None));
+        v.push((check(state_flag(model, e, "NoteRepeatSynced", true), "Sync to next division"), OptAction::RepeatSync));
+        v
+    }
+
+    /// The strip's buttons, knob and menus (skin lambdas 0x1e
+    /// `e_setNoteEraseState`, 0x1f `e_setNoteRepeatState`, the
+    /// timing menu (0x20 `e_setNoteRepeatBase` [e] [i]; sync writes the
+    /// engine state directly), 0x22 `e_setFullLevelLevel` [e] [knob],
+    /// 0x21 `e_setFullLevelState`, the collapsed options menu).
+    pub fn handle_controls(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
+        use dreist_engine::binding::id;
+        let e = model.engine;
+        let Some(cp) = self.control.clone() else { return false };
+        let msg1 = |kind: u32, v: f32| crate::command::msg(kind, &[e as i32], &[v]);
+        let set_state = |model: &mut Model, key: &str, v: String| {
+            model.engine_mut(e).child_mut_or_insert("EngineState", "EngineState").set(key, v);
+        };
+        let run = |me: &mut Self, model: &mut Model, a: OptAction, out: &mut Vec<Command>| match a {
+            OptAction::Erase => {
+                let on = !state_flag(model, e, "NoteEraseEnabled", false);
+                out.push(msg1(id::SET_NOTE_ERASE_STATE, on as i32 as f32));
+            }
+            OptAction::Repeat => {
+                let on = !state_flag(model, e, "NoteRepeatEnabled", false);
+                out.push(msg1(id::SET_NOTE_REPEAT_STATE, on as i32 as f32));
+            }
+            OptAction::FullLevel => {
+                let on = !state_flag(model, e, "FullLevelEnabled", false);
+                out.push(msg1(id::SET_FULL_LEVEL_STATE, on as i32 as f32));
+            }
+            OptAction::RepeatBase(i) => {
+                me.repeat_base[e.min(crate::model::ENGINES - 1)] = i;
+                // The engine reads round(v·13).
+                out.push(msg1(id::SET_NOTE_REPEAT_BASE, i as f32 / 13.0));
+            }
+            OptAction::RepeatSync => {
+                let on = !state_flag(model, e, "NoteRepeatSynced", true);
+                set_state(model, "NoteRepeatSynced", on.to_string());
+                out.push(Command::NoteRepeatSync(e, on));
+            }
+            OptAction::FullLevelSlider | OptAction::None => {}
+        };
+        match ev {
+            UiEvent::Clicked { path, name, on, .. } if path.starts_with(&cp) => match name.as_str() {
+                "EraseButton" => {
+                    out.push(msg1(id::SET_NOTE_ERASE_STATE, *on as i32 as f32));
+                    true
+                }
+                "RepeatButton" => {
+                    out.push(msg1(id::SET_NOTE_REPEAT_STATE, *on as i32 as f32));
+                    true
+                }
+                "FullLevelButton" => {
+                    out.push(msg1(id::SET_FULL_LEVEL_STATE, *on as i32 as f32));
+                    true
+                }
+                "RepeatCount" => {
+                    let items = self.repeat_items(model);
+                    let (labels, acts): (Vec<String>, Vec<OptAction>) = items.into_iter().unzip();
+                    self.options = acts;
+                    self.menu = 1;
+                    app.open_menu(path, labels, None);
+                    false
+                }
+                // [re:0f85d7]: the hidden controls as menu items.
+                "Options" => {
+                    let hidden = |n: &str| self.ctrl_path(app, n).and_then(|p| app.ctrl(&p).map(|c| !c.visible)).unwrap_or(false);
+                    let check = |on: bool, t: &str| if on { format!("✓ {t}") } else { t.to_string() };
+                    let mut items: Vec<(String, OptAction)> = Vec::new();
+                    if hidden("EraseButton") {
+                        items.push((check(state_flag(model, e, "NoteEraseEnabled", false), "Erase"), OptAction::Erase));
+                    }
+                    if hidden("RepeatButton") {
+                        if !items.is_empty() {
+                            items.push((String::new(), OptAction::None));
+                        }
+                        items.push((check(state_flag(model, e, "NoteRepeatEnabled", false), "Repeat"), OptAction::Repeat));
+                        items.extend(self.repeat_items(model).into_iter().map(|(t, a)| (if t.is_empty() { t } else { format!("    {t}") }, a)));
+                    }
+                    if hidden("FullLevelKnob") {
+                        if !items.is_empty() {
+                            items.push((String::new(), OptAction::None));
+                        }
+                        items.push((check(state_flag(model, e, "FullLevelEnabled", false), "Full Level"), OptAction::FullLevel));
+                        // [re:2b6ca2] 120 × 15, SliderStyle,
+                        // value = the knob's.
+                        let v = self.ctrl_path(app, "FullLevelKnob").and_then(|p| app.ctrl(&p).map(|c| c.value)).unwrap_or(1.0);
+                        items.push((dreist_gui::menu::slider_item(v), OptAction::FullLevelSlider));
+                    }
+                    let (labels, acts): (Vec<String>, Vec<OptAction>) = items.into_iter().unzip();
+                    self.options = acts;
+                    self.menu = 2;
+                    app.open_menu(path, labels, None);
+                    false
+                }
+                _ => false,
+            },
+            UiEvent::ValueChanged { path, name, value, .. } if name == "FullLevelKnob" && path.starts_with(&cp) => {
+                out.push(msg1(id::SET_FULL_LEVEL_LEVEL, *value));
+                true
+            }
+            UiEvent::MenuSlider { anchor, index, value } if self.menu == 2 && anchor.starts_with(&cp) => {
+                if self.options.get(*index) == Some(&OptAction::FullLevelSlider) {
+                    if let Some(k) = self.ctrl_path(app, "FullLevelKnob").and_then(|p| app.ctrl_mut(&p)) {
+                        k.value = *value;
+                    }
+                    out.push(msg1(id::SET_FULL_LEVEL_LEVEL, *value));
+                }
+                true
+            }
+            UiEvent::MenuSelected { anchor, index, .. } if self.menu != 0 && anchor.starts_with(&cp) => {
+                self.menu = 0;
+                let a = self.options.get(*index).copied().unwrap_or(OptAction::None);
+                run(self, model, a, out);
+                true
+            }
+            _ => false,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn flash_rises_falls_and_loops() {
+        crate::app::test_setup();
+        let mut f = Flash::default();
+        f.flash();
+        assert!(f.tick() && f.falling && (f.alpha - 0.65).abs() < 1e-6);
+        for _ in 0..4 {
+            f.tick();
+        }
+        assert!(!f.on);
+        f.flash_loop();
+        for _ in 0..4 {
+            f.tick();
+        }
+        assert!(f.on && !f.falling && f.alpha.abs() < 1e-6);
+        f.tick();
+        assert!((f.alpha - 0.1).abs() < 1e-6);
+        f.dragged = true;
+        f.end_loop();
+        assert!(f.looping);
+        f.dragged = false;
+        f.end_loop();
+        assert!(!f.looping);
+        let mut g = Flash::default();
+        g.flash_if_idle();
+        assert!((g.alpha - 0.85).abs() < 1e-6);
+    }
+
+    use super::*;
+
+    #[test]
+    fn click_velocity_peaks_in_the_middle() {
+        crate::app::test_setup();
+        assert_eq!(velocity_from_click(0.0, 80.0), 0.0);
+        assert_eq!(velocity_from_click(40.0, 80.0), 1.0);
+        assert!((velocity_from_click(60.0, 80.0) - 0.5).abs() < 1e-6);
+    }
+}

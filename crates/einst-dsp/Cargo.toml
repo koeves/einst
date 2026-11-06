@@ -1,0 +1,12 @@
+[package]
+name = "einst-dsp"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+description = "v1's own effect DSP (Gain, Vari-EQ, Envelope Shaper and the shared effects whose v1 build differs) as dreist_dsp nodes"
+
+[dependencies]
+dreist-dsp.workspace = true
+
+[lints]
+workspace = true
