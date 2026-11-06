@@ -7,9 +7,9 @@
 //! envelope panels, the wave display with both envelopes, the zoom bar)
 //! when a layer is (manual §5:1–5:9).
 //!
-//! - The wave display draws the waveform with its markers ([re:335a01]:
+//! - The wave display draws the waveform with its markers ([re:68305f]:
 //!   start/end 2 px lines with a round handle), the timeline and the Amp /
-//!   Free envelopes over it ([re:c29608]).
+//!   Free envelopes over it ([re:18fbfe]).
 //! - Layer controls post `e_setLayerParameter` 0x66 [param, value, source];
 //!   Vel-Pitch / Vel-Cutoff are the Velocity depths of CoarseTune / Cutoff
 //!   and the envelope destination depths the Amp / Free envelope depths of
@@ -252,7 +252,7 @@ pub struct WaveMarkers {
     pub looping: bool,
 }
 
-/// The layer's [re:f79f64] (whole file when absent).
+/// The layer's [re:0d952f] (whole file when absent).
 pub fn wave_markers(model: &Model, e: usize, p: usize, l: usize, frames: u32) -> WaveMarkers {
     let n = model.layer_node(e, p, l);
     let mk = |name: &str| n.and_then(|n| n.child("AudioFileMarkers", name)).map(|m| (m.u32("StartSample").unwrap_or(0), m.u32("EndSample").unwrap_or(frames)));
@@ -262,11 +262,12 @@ pub fn wave_markers(model: &Model, e: usize, p: usize, l: usize, frames: u32) ->
     WaveMarkers { frames, start: start.min(frames), end: end.min(frames), loop_start: loop_start.min(frames), loop_end: loop_end.min(frames), looping }
 }
 
-/// [re:808270] snapping: the nearest zero crossing within
+/// [re:2bd5e0] snapping: the nearest zero crossing within
 /// `range` frames.
 pub fn snap_zero(zeros: &[u32], f: u32, range: u32) -> u32 {
     let i = zeros.partition_point(|&z| z < f);
-    let best = [i.checked_sub(1), Some(i)].into_iter().flatten().filter_map(|k| zeros.get(k)).min_by_key(|&&z| (z as i64 - f as i64).abs());
+    // v1 takes the later crossing on a tie.
+    let best = [Some(i), i.checked_sub(1)].into_iter().flatten().filter_map(|k| zeros.get(k)).min_by_key(|&&z| (z as i64 - f as i64).abs());
     match best {
         Some(&z) if (z as i64 - f as i64).unsigned_abs() < range as u64 => z,
         _ => f,
@@ -484,8 +485,8 @@ impl Inspector {
         }
     }
 
-    /// The wave display's tooltip at (x, y) ([re:583792]
-    ///  [re:49ff99]): an envelope handle — "Amp Envelope " /
+    /// The wave display's tooltip at (x, y) ([re:1392a4]
+    ///  [re:1392a4]): an envelope handle — "Amp Envelope " /
     /// "Free Envelope " and its stage ("Attack: 0.25 sec", "Decay: … sec,
     /// Sustain: 050%" when the sustain handle is hidden, curves "Attack
     /// Curve: +20%") — else the marker under the pointer.
@@ -623,7 +624,7 @@ impl Inspector {
 
     pub fn sync(&mut self, app: &mut App, model: &Model) {
         self.vsplit.sync(app, model);
-        // [re:87b7a3]: a new layer / file gets the auto zoom
+        // [re:bca59e]: a new layer / file gets the auto zoom
         // (or the whole file when the mode is off).
         {
             let e = model.engine;
@@ -1138,8 +1139,8 @@ impl Inspector {
                 let (v0, vl) = self.view;
                 let to_frame = |x: f32| (((x / w.max(1.0)) * vl + v0).clamp(0.0, 1.0) * frames as f32) as u32;
                 let to_x = |f: u32| ((f as f32 / frames.max(1) as f32) - v0) / vl * w;
-                // Envelope handles ([re:b4faea],
-                // [re:86bd9d]) come first.
+                // Envelope handles ([re:b2fe1b],
+                // [re:874f6e]) come first.
                 let h = app.ctrl(path).map(|c| c.rect.h as f32).unwrap_or(0.0) - crate::timeline::WAVE_TOP;
                 let geo = EnvGeo {
                     w,
@@ -1156,7 +1157,7 @@ impl Inspector {
                     UiEvent::Mouse { y, .. } => *y,
                     _ => 0.0,
                 };
-                // [re:f61cab]: on the timeline
+                // [re:a4b4e4]: on the timeline
                 // strip, the Time / Beats check items.
                 if *kind == dreist_gui::app::MouseKind::RightDown && y < crate::timeline::STRIP {
                     let items = ["Time", "Beats"].iter().enumerate().map(|(i, t)| if (i == 1) == self.timeline_beats { format!("✓ {t}") } else { t.to_string() }).collect();
@@ -1263,7 +1264,7 @@ impl Inspector {
                         }
                         true
                     }
-                    // Release [re:9718db]: the auto zoom follows the markers.
+                    // Release [re:29efd4]: the auto zoom follows the markers.
                     dreist_gui::app::MouseKind::Up => {
                         let was = self.drag.take().is_some();
                         if was {
@@ -1293,15 +1294,12 @@ impl Inspector {
                 crate::timeline::save_mode("PadEdit", self.timeline_beats);
                 true
             }
-            // [re:7197ba]: ZoomIn ×2 / ×0.5 about the
-            // sample under the mouse (its fraction of the file).
+            // [re:1a34bd]: the wheel goes to the zoom slider, whose thumb
+            // moves 5 px.
             UiEvent::Wheel { path, overload, dy } if overload == "LayerWaveDisplay" => {
                 let Some(w) = app.ctrl(path).map(|c| c.rect.w as f32) else { return false };
-                let Some((_, frames)) = self.layer_frames(model) else { return false };
-                let mx = (app.mouse_pos().0 - app.origin(path).0 as f32) / w.max(1.0);
-                let at = (self.view.0 + mx * self.view.1).clamp(0.0, 1.0);
                 let tw = find_tagged(&app.root, "WaveZoomSlider").map(|c| c.rect.w as f32).unwrap_or(w);
-                self.view = crate::zoomslider::zoom_in(self.view, if *dy > 0.0 { 2.0 } else { 0.5 }, at, tw, frames);
+                self.view = wheel_thumb(self.view, *dy, tw);
                 true
             }
             // Zoom bar (zoom in by 2 / 0.5 around 0.5).
@@ -1311,7 +1309,7 @@ impl Inspector {
                 self.view = crate::zoomslider::zoom_in(self.view, if name == "ZoomInButton" { 2.0 } else { 0.5 }, 0.5, tw, frames);
                 true
             }
-            // A / F: [re:682bc8] reads `AmpEnvVisible` /
+            // A / F: [re:7a2a22] reads `AmpEnvVisible` /
             // `FreeEnvVisible` (default on).
             UiEvent::Clicked { path, name, on, .. } if (name == "AmpButton" || name == "FreeButton") && app.ctrl(path).is_some_and(|c| c.attr("layerZoom").is_some()) => {
                 let key = if name == "AmpButton" { "AmpEnvVisible" } else { "FreeEnvVisible" };
@@ -1352,15 +1350,15 @@ impl Inspector {
                     dreist_gui::app::MouseKind::RightDown => false,
                 }
             }
-            // Double click [re:009295]: the whole file.
+            // Double click [re:e3eb0c]: the whole file.
             UiEvent::DoubleClicked { path, .. } if app.ctrl(path).is_some_and(|c| c.overload == "WaveDisplayZoomSlider" && c.attr("layerZoom").is_some()) => {
                 self.view = (0.0, 1.0);
                 true
             }
-            // Wheel [re:207f1c]: the thumb moves 5 px.
+            // Wheel [re:78e62a]: the thumb moves 5 px.
             UiEvent::Wheel { path, overload, dy } if overload == "WaveDisplayZoomSlider" && app.ctrl(path).is_some_and(|c| c.attr("layerZoom").is_some()) => {
                 let Some(tw) = app.ctrl(path).map(|c| c.rect.w as f32) else { return false };
-                self.view = crate::zoomslider::clamp((self.view.0 + if *dy > 0.0 { 5.0 } else { -5.0 } / tw.max(1.0), self.view.1));
+                self.view = wheel_thumb(self.view, *dy, tw);
                 true
             }
             _ => false,
@@ -1424,7 +1422,7 @@ impl Inspector {
     }
 
     /// A knob double click's reset value ([re:ed3c05]
-    /// [re:f0ac00]: [re:6b28ff], the parameter's default; depths to
+    /// [re:f0ac00]: [re:7529a0], the parameter's default; depths to
     /// none, sends to 0; the pad view's gain / pan / sends and Vel-Amp).
     pub fn reset_value(&self, path: &[usize], name: &str) -> Option<f32> {
         if self.in_params(path) {
@@ -1485,7 +1483,7 @@ impl Inspector {
             draw_sampling(sm, r, p, w, h);
             return;
         }
-        // Areas [re:d9085e]: timeline 0..15, marker strip
+        // Areas [re:5a3754]: timeline 0..15, marker strip
         // 15..30, the waveform below.
         let (wy, full_h) = (crate::timeline::WAVE_TOP, h);
         let h = (full_h - wy).max(1.0);
@@ -1523,7 +1521,7 @@ impl Inspector {
             let y1 = wy + h / 2.0 - lo.clamp(-1.0, 1.0) * h / 2.0;
             p.fill_rect(RectF::new(x as f32, y0, 1.0, (y1 - y0).max(1.0)), line);
         }
-        // Timeline ([re:ad103f]) and the marker strip.
+        // Timeline ([re:02b73a]) and the marker strip.
         let frames = pk.frames.max(1) as f32;
         {
             let rate = pk.rate.max(1.0) as f64;
@@ -1532,7 +1530,7 @@ impl Inspector {
             crate::timeline::draw(p, s, WAVE_STYLE, w, h, start_s, len_s, m.start as f64 / rate, self.timeline_beats, model.tempo(), &x_of);
         }
         // Markers (start / end and loop markers →
-        // [re:25235f]): a 2 px line from the marker strip down and
+        // [re:68305f]): a 2 px line from the marker strip down and
         // a 12 px disc (15·0.75 rounded up to even) with a black inset at
         // the top of the strip.
         let hole = wave_colour(s, "colMarkerHole", Colour::BLACK);
@@ -1553,7 +1551,7 @@ impl Inspector {
             marker(p, m.loop_start, wave_colour(s, "colLoopStartMarker", purple));
             marker(p, m.loop_end.min(pk.frames as u32 - 1), wave_colour(s, "colLoopEndMarker", purple));
         }
-        // [re:c29608]: Amp (top half when both
+        // [re:18fbfe]: Amp (top half when both
         // show) and Free envelopes over the waveform.
         let (amp, free) = self.env_visible;
         let mode = model.layer_node(e, pad, l).and_then(|n| n.attr("PlaybackMode")).map_or("OneShot", dreist_dsp::voice::PlaybackMode::canonical).to_string();
@@ -1646,7 +1644,7 @@ fn env_param(amp: bool, k: usize) -> dreist_formats::LayerParam {
     dreist_formats::LayerParam::ALL[14 + if amp { 0 } else { 8 } + k]
 }
 
-/// Envelope positions [re:b1431d]: x of start, A, D, H / note-off, R end
+/// Envelope positions [re:f00247]: x of start, A, D, H / note-off, R end
 /// and the sustain level.
 fn env_xs(model: &Model, e: usize, p: usize, l: usize, amp: bool, gated: bool, g: &EnvGeo) -> ([f32; 5], f32) {
     let v = |k: usize| model.layer_param(e, p, l, env_param(amp, k));
@@ -1659,8 +1657,8 @@ fn env_xs(model: &Model, e: usize, p: usize, l: usize, amp: bool, gated: bool, g
     ([g.x_of(st), g.x_of(ta), g.x_of(td), g.x_of(th), g.x_of(tr)], v(2))
 }
 
-/// Envelope handles [re:be46a1] + curve visibility
-/// [re:0f85ea]: the visible 10 × 10 handles — 0 attack peak, 1 decay end, 2
+/// Envelope handles [re:30873e] + curve visibility
+/// [re:466986]: the visible 10 × 10 handles — 0 attack peak, 1 decay end, 2
 /// sustain (mid of the sustain line), 3 hold end (one-shot modes), 4
 /// release end, 5 / 6 / 7 the attack / decay / release curves.
 fn env_handles(model: &Model, e: usize, p: usize, l: usize, amp: bool, mode: &str, g: &EnvGeo, ay: f32, ah: f32) -> Vec<(usize, RectF)> {
@@ -1762,8 +1760,8 @@ fn env_drag_values(model: &Model, e: usize, p: usize, l: usize, amp: bool, handl
 }
 
 /// Envelope curve points (time in seconds, level) for the layer's Amp or
-/// Free envelope, run through the engine's `Envelope` ([re:a4c7b1] /
-/// [re:b1431d]: A, D to sustain, then hold
+/// Free envelope, run through the engine's `Envelope` ([re:50f14d] /
+/// [re:f00247]: A, D to sustain, then hold
 /// in one-shot modes or sustain until the end marker in gated / looping
 /// modes, then the release), starting at the start marker.
 fn envelope_points(model: &Model, e: usize, p: usize, l: usize, amp: bool, mode: &str, start_t: f32, end_t: f32) -> Vec<(f32, f32)> {
@@ -1816,7 +1814,7 @@ fn envelope_points(model: &Model, e: usize, p: usize, l: usize, amp: bool, mode:
 }
 
 /// Sampling mode: the whole take fills the display (the take's start and
-/// end markers sit at its edges, [re:05551e]).
+/// end markers sit at its edges, [re:6b3a28]).
 fn draw_sampling(sm: &crate::model::Sampling, r: &Renderer, p: &mut Painter, w: f32, h: f32) {
     let s = r.styles;
     let purple = Colour::rgba(128, 0, 128, 255);
@@ -1856,6 +1854,13 @@ pub(crate) fn guess_bpm(frames: f32, sample_rate: f32) -> f32 {
             return 0.0;
         }
     }
+}
+
+/// [re:78e62a]: a wheel step moves the zoom slider's thumb 5 px (of a
+/// `track_w` px track).
+fn wheel_thumb(view: (f32, f32), dy: f32, track_w: f32) -> (f32, f32) {
+    let px = if dy > 0.0 { 5.0 } else { -5.0 };
+    crate::zoomslider::clamp((view.0 + px / track_w.max(1.0), view.1))
 }
 
 #[cfg(test)]
