@@ -73,7 +73,7 @@ impl Editor {
 
     /// Option `MaxUndoSteps` (1..250, default 20).
     pub(crate) fn undo_limit(&self) -> usize {
-        self.modals.options.int("MaxUndoSteps", modal::UNDO_DEFAULT).clamp(1, 250) as usize
+        self.modals.options.int("MaxUndoSteps", modal::UNDO_DEFAULT).clamp(modal::UNDO_MIN, 250) as usize
     }
 
     /// Undo entry name for the event that changed the document (the
