@@ -27,7 +27,8 @@ use crate::model::Model;
 use crate::{EditorError, err};
 
 /// [re:54266d] (binding type names).
-pub const BINDING_TYPES: [&str; 6] = ["Continuous", "Momentary", "Latching", "Trigger", "Gated", "FlipFlop"];
+/// [re:59b2e6]: v1's four binding types.
+pub const BINDING_TYPES: [&str; 4] = ["Continuous", "Momentary", "Latching", "Trigger"];
 const ROW: f32 = 20.0;
 const HEADER: f32 = 20.0;
 const TABLE_STYLE: &str = "BrowserListViewStyle";
@@ -663,8 +664,10 @@ impl MidiMap {
                                 self.selected = None;
                                 Self::rebuild(model, out);
                             }
-                            4 | 5 if r.kind == 0 => self.drag = Some((row, col, *y, if col == 4 { r.min } else { r.max })),
-                            6 => {
+                            // [re:8577a9]: Min / Max only for continuous bindings,
+                            // the type only for buttons' bindings.
+                            4 | 5 if r.kind == 0 => self.drag = Some((row, col, *x, if col == 4 { r.min } else { r.max })),
+                            6 if r.kind != 0 => {
                                 self.menu_row = Some(row);
                                 app.open_menu(path, BINDING_TYPES.iter().map(|s| s.to_string()).collect(), Some(r.kind));
                             }
@@ -681,7 +684,7 @@ impl MidiMap {
                     MouseKind::Drag => {
                         let Some((row, col, y0, v0)) = self.drag else { return false };
                         let Some(r) = rs.get(row).cloned() else { return false };
-                        let v = (v0 + (y0 - y) * 0.005).clamp(0.0, 1.0);
+                        let v = (v0 + (x - y0) * 0.005).clamp(0.0, 1.0);
                         let v = (v * 100.0).round() / 100.0;
                         if let Some(n) = binding_node_mut(&mut model.doc, &r) {
                             n.set(if col == 4 { "Min" } else { "Max" }, v);
@@ -748,7 +751,7 @@ impl MidiMap {
                 let Some(row) = self.menu_row.take() else { return false };
                 let Some(r) = rows(&model.doc).get(row).cloned() else { return false };
                 if let Some(n) = binding_node_mut(&mut model.doc, &r) {
-                    set_string(n, "Type", BINDING_TYPES[(*index).min(5)]);
+                    set_string(n, "Type", BINDING_TYPES[(*index).min(BINDING_TYPES.len() - 1)]);
                 }
                 Self::rebuild(model, out);
                 true
