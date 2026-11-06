@@ -196,3 +196,18 @@ fn midi_map_is_v1s() {
     assert!(matches!(m.get(10, 71), MapItem::Scene { scene: 71 }));
     assert!(matches!(m.get(10, 72), MapItem::None));
 }
+
+/// v1's slicer allocates to its 16 pads: 16 slices, 128 with layers.
+#[test]
+fn slices_fill_v1s_16_pads() {
+    setup();
+    use dreist_dsp::slice::{SlicePoint, extract_pattern_with_locks};
+    let slices: Vec<SlicePoint> = (0..40).map(|i| SlicePoint::manual(i * 1000, false)).collect();
+    let single = extract_pattern_with_locks(&slices, 0, 40_000, 1.0, 4.0, false, false, &|_, _| false);
+    assert_eq!(single.hits.len(), 16);
+    assert!(single.hits.iter().all(|h| h.pad < 16));
+    let multi = extract_pattern_with_locks(&slices, 0, 40_000, 1.0, 4.0, true, false, &|_, _| false);
+    assert_eq!(multi.hits.len(), 40);
+    assert!(multi.hits.iter().all(|h| h.pad < 16));
+    assert_eq!(multi.hits[16].layer, 1);
+}
