@@ -569,7 +569,20 @@ enum LaneItem {
 /// pad FX slot, disabled while the slot has no effect.
 fn graph_type_menu(model: &Model, e: usize, track: usize) -> (Vec<String>, Vec<LaneItem>) {
     let one_shot = model.pad_one_shot(e, track);
-    let mut items: Vec<(String, LaneItem)> = GRAPH_TYPES.iter().map(|&(n, l)| (dreist_gui::menu::item(n, l != lane::REPEATS || one_shot), LaneItem::Lane(l))).collect();
+    // [re:822910]: lanes of the track that hold data carry v1's block icon
+    // (velocity: any step on; others: any value off its default).
+    let pat = model.pattern(e, model.current_pattern(e));
+    let has = |l: usize| {
+        pat.tracks.get(track).is_some_and(|t| t.steps.iter().any(|s| if l == 0 { s.on } else { s.lanes.get(l).is_some_and(|v| (v - dreist_formats::params::step_lane_default(l)).abs() > 1e-6) }))
+    };
+    let mut items: Vec<(String, LaneItem)> = GRAPH_TYPES
+        .iter()
+        .map(|&(n, l)| {
+            let enabled = l != lane::REPEATS || one_shot;
+            let text = if enabled && has(l) { format!("{}{n}", dreist_gui::menu::BLOCK) } else { n.to_string() };
+            (dreist_gui::menu::item(text, enabled), LaneItem::Lane(l))
+        })
+        .collect();
     items.push((String::new(), LaneItem::None));
     let fx = crate::fxchain::effects(model, crate::fxchain::Target::Pad(e, track));
     for slot in 0..6 {
