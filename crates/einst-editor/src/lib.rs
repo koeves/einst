@@ -209,6 +209,8 @@ pub struct Editor {
     pad_row_menu: Option<(Vec<usize>, (usize, usize))>,
     /// The sampler's preview output menu is open on this control.
     preview_out_menu: Option<Vec<usize>>,
+    /// The Grid menu's reset question is open.
+    reset_confirm: bool,
     /// Samples changed on disk.
     watch: editor::changed::Watch,
     /// The sampler's overwrite question is open: anchor, request, file.
@@ -358,6 +360,7 @@ impl Editor {
             layer_menu: None,
             pad_row_menu: None,
             preview_out_menu: None,
+            reset_confirm: false,
             watch: Default::default(),
             sampler_overwrite: None,
             filefind,

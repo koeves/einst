@@ -17,6 +17,8 @@ pub(crate) enum MainAction {
     MidiConsole,
     TransportOptions,
     ResetScale,
+    /// Reset, confirmed.
+    ConfirmReset,
     None,
 }
 
@@ -55,8 +57,16 @@ impl Editor {
             }
             UiEvent::MenuSelected { anchor, name, index } if name == "GridButton" && std::mem::take(&mut self.main_menu) => {
                 let action = self.main_items().get(*index).map(|(_, a)| *a).unwrap_or(MainAction::None);
+                // [re:0aaa8a]: Reset asks first.
+                if action == MainAction::Reset {
+                    let text = format!("Are you sure you want to reset {} to its default state? This action cannot be undone!", crate::product());
+                    self.app.open_menu(anchor, vec![text, String::new(), "Yes".into(), "No".into()], None);
+                    self.reset_confirm = true;
+                    return false;
+                }
                 self.main_action(anchor, action)
             }
+            UiEvent::MenuSelected { anchor, name, index } if name == "GridButton" && std::mem::take(&mut self.reset_confirm) => *index == 2 && self.main_action(anchor, MainAction::ConfirmReset),
             _ => false,
         }
     }
@@ -75,7 +85,7 @@ impl Editor {
                         return false;
                     }
                     // Reset: the default preset if saved, else a new document.
-                    MainAction::Reset => {
+                    MainAction::Reset | MainAction::ConfirmReset => {
                         let loaded = default.as_ref().filter(|p| p.is_file()).and_then(|p| crate::app::read_project(p).map(|(raw, _)| (raw, p.clone())));
                         self.project_path = None;
                         match loaded {

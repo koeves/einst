@@ -4437,3 +4437,19 @@ fn removed_samples_ask_to_find_or_unload() {
     assert!(!ed.model.layer(0, 0, 0).valid, "unloaded");
     let _ = std::fs::remove_dir_all(&tmp);
 }
+
+/// v1 asks before Reset; No keeps the document.
+#[test]
+fn grid_reset_asks_first() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let ob = front_path(&ed, "UtilityControls", "GridButton");
+    ed.model.doc.set("Marker", "1");
+    ed.handle(&UiEvent::Clicked { path: ob.clone(), name: "GridButton".into(), id: 0, on: false });
+    let reset = ed.app.menu.as_ref().unwrap().items.iter().position(|s| s.starts_with("Reset ") && !s.contains("UI")).unwrap();
+    ed.handle(&UiEvent::MenuSelected { anchor: ob.clone(), name: "GridButton".into(), index: reset });
+    let q = ed.app.menu.as_ref().unwrap().items.clone();
+    assert!(q[0].starts_with("Are you sure you want to reset"), "{q:?}");
+    ed.handle(&UiEvent::MenuSelected { anchor: ob, name: "GridButton".into(), index: 3 });
+    assert_eq!(ed.model.doc.attr("Marker"), Some("1"), "No keeps the document");
+}
