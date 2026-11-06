@@ -364,15 +364,15 @@ fn pattern_zoom_and_scroll() {
 fn graph_lane_click_sets_the_step_value() {
     crate::app::test_setup();
     let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
-    // The single global graph (toolbar View).
+    // v1's multi graph view: the selected pad's track (20 px), then its
+    // lanes, the first one velocity (75 px).
     if let Some(pp) = ed.pattern.as_mut() {
         pp.multi = false;
     }
     ed.sync();
-    let gp = ed.app.root.path_of("PatternGraph").unwrap();
+    let gp = ed.app.root.path_of("PatternGrid").unwrap();
     let (x, y) = ed.app.origin(&gp);
-    let h = ed.app.ctrl(&gp).unwrap().rect.h as f32;
-    for ev in ed.app.mouse_move(x as f32 + 5.0, y as f32 + h * 0.75) {
+    for ev in ed.app.mouse_move(x as f32 + 5.0, y as f32 + 20.0 + 75.0 * 0.75) {
         ed.handle(&ev);
     }
     for ev in ed.app.mouse_down(dreist_gui::app::MouseButton::Left) {
@@ -1309,12 +1309,25 @@ fn graph_menu_inserts_a_ramp() {
     let p = demo("Presets/Hollow.geist");
     let Ok(proj) = dreist_formats::Project::load(&p) else { return };
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(proj.raw)) else { return };
-    // The single global graph (toolbar View).
+    // v1's multi graph view: the first lane row's controls.
     if let Some(pp) = ed.pattern.as_mut() {
         pp.multi = false;
     }
     ed.sync();
-    let ac = ed.app.root.path_of("SingleAutoControl").unwrap();
+    fn lane_row(c: &dreist_gui::Ctrl, path: &mut Vec<usize>) -> Option<Vec<usize>> {
+        for (i, k) in c.children.iter().enumerate() {
+            path.push(i);
+            if k.attr("autoSlot") == Some("0") {
+                return Some(path.clone());
+            }
+            if let Some(p) = lane_row(k, path) {
+                return Some(p);
+            }
+            path.pop();
+        }
+        None
+    }
+    let ac = lane_row(&ed.app.root, &mut Vec::new()).expect("lane row");
     let ob = {
         let c = ed.app.ctrl(&ac).unwrap();
         let mut p = ac.clone();
