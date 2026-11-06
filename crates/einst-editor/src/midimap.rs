@@ -263,22 +263,6 @@ pub fn add_binding(doc: &mut Node, midi: bool, a: usize, b: usize, proto: &dreis
     n
 }
 
-/// Remove the bindings whose prototype is `kind` with `index`.
-pub fn remove_matching(doc: &mut Node, kind: u32, index: &[i32; 6]) -> bool {
-    let rs: Vec<Row> = rows(doc).into_iter().collect();
-    let mut any = false;
-    for r in rs.iter().rev() {
-        let Some(node) = bindings(doc).and_then(|m| m.children.iter().find(|c| c.name.as_deref() == Some(&r.key.child_name(r.index)))) else { continue };
-        let Some(p) = node.children.iter().find(|c| c.name.as_deref() == Some("MessagePrototype")) else { continue };
-        let msg = dreist_engine::binding::Message::from_node(p);
-        if msg.kind == kind && msg.index == *index {
-            remove(doc, r);
-            any = true;
-        }
-    }
-    any
-}
-
 /// `Clear All`.
 pub fn clear(doc: &mut Node) {
     let m = bindings_mut(doc);

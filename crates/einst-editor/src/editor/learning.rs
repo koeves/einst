@@ -204,40 +204,6 @@ impl Editor {
                 return true;
             }
         }
-        if let UiEvent::MenuSelected { index, .. } = ev {
-            let Some(stage) = self.learn.menu.take() else { return false };
-            let anchor = self.learn.target.as_ref().map(|t| t.path.clone());
-            let next = match (&stage, *index) {
-                (learn::MenuStage::Top, 0) => Some(learn::MenuStage::Channels),
-                (learn::MenuStage::Top, 1) => Some(learn::MenuStage::HostGroups),
-                (learn::MenuStage::Top, 3) => {
-                    if let Some(t) = self.learn.target.clone() {
-                        if midimap::remove_matching(&mut self.model.doc, t.proto.kind, &t.proto.index) {
-                            self.outbox.push(self.model.rebuild_command());
-                        }
-                        self.learn.labels.remove(&t.path);
-                    }
-                    None
-                }
-                (learn::MenuStage::Channels, c) => Some(learn::MenuStage::CcGroups(c)),
-                (learn::MenuStage::CcGroups(c), g) => Some(learn::MenuStage::Ccs(*c, g)),
-                (learn::MenuStage::Ccs(c, g), k) => {
-                    self.learn_bind(true, *c, g * 16 + k);
-                    None
-                }
-                (learn::MenuStage::HostGroups, g) => Some(learn::MenuStage::Params(g)),
-                (learn::MenuStage::Params(g), k) => {
-                    self.learn_bind(false, g * 16 + k, 0);
-                    None
-                }
-                _ => None,
-            };
-            if let (Some(s), Some(a)) = (next, anchor) {
-                self.app.open_menu(&a, learn::Learn::menu_items(&s), None);
-                self.learn.menu = Some(s);
-            }
-            return true;
-        }
         let path = learn::event_path(ev).map(<[usize]>::to_vec);
         let right = matches!(ev, UiEvent::RightClicked { .. });
         // The press picks the target; the click / value change it causes
@@ -245,15 +211,14 @@ impl Editor {
         if learn::is_control_event(ev) {
             return true;
         }
-        if right || matches!(ev, UiEvent::Pressed { .. }) {
+        // v1: right clicks pass to the mapping table only.
+        if right {
+            let on_map = path.as_ref().is_some_and(|p| self.app.ctrl(p).is_some_and(|c| c.overload == "MIDIMapTable"));
+            return !on_map;
+        }
+        if matches!(ev, UiEvent::Pressed { .. }) {
             if let Some(t) = self.learn_capture(ev) {
                 self.learn.target = Some(t);
-                if right {
-                    if let Some(p) = path {
-                        self.app.open_menu(&p, learn::Learn::menu_items(&learn::MenuStage::Top), None);
-                        self.learn.menu = Some(learn::MenuStage::Top);
-                    }
-                }
             }
             return true;
         }

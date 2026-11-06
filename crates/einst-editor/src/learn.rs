@@ -8,8 +8,8 @@
 //!   ([re:09992a]) and sends `e_setTargetLearnBinding`
 //!   (0xd) with the control's binding ([re:c7fdf4]); the
 //!   next MIDI CC is bound to it.
-//! - A right click opens "Bind to MIDI ▸ Channel n ▸ CC k", "Bind to Host ▸
-//!   Param n" and "Clear current mapping" ([re:833907]).
+//! - A right click does nothing but on the mapping table, as v1
+//!   ([re:318e14]); host parameters are bound from the Host parameters panel.
 //!
 //! Port: a control's binding prototype is the message its normal handler
 //! posts (captured by running the event and discarding the result); the
@@ -34,17 +34,6 @@ pub struct Target {
     pub kind: &'static str,
 }
 
-/// Right-click menu stages.
-#[derive(Clone, Debug, PartialEq)]
-pub enum MenuStage {
-    Top,
-    Channels,
-    CcGroups(usize),
-    Ccs(usize, usize),
-    HostGroups,
-    Params(usize),
-}
-
 #[derive(Default)]
 pub struct Learn {
     pub active: bool,
@@ -52,7 +41,6 @@ pub struct Learn {
     /// Binding text per control path.
     pub labels: HashMap<Vec<usize>, String>,
     pub last_cc: u32,
-    pub menu: Option<MenuStage>,
     /// Absolute rects of learnable controls (filled while active).
     pub rects: Vec<(Rect, Option<String>, bool)>,
 }
@@ -104,16 +92,5 @@ impl Learn {
         rec(root, root.rect.x, root.rect.y, &mut Vec::new(), &mut v);
         let target = self.target.as_ref().map(|t| t.path.clone());
         self.rects = v.into_iter().map(|(r, p)| (r, self.labels.get(&p).cloned(), target.as_ref() == Some(&p))).collect();
-    }
-
-    pub fn menu_items(stage: &MenuStage) -> Vec<String> {
-        match stage {
-            MenuStage::Top => vec!["Bind to MIDI ▸".into(), "Bind to Host ▸".into(), String::new(), "Clear current mapping".into()],
-            MenuStage::Channels => (1..=16).map(|c| format!("Channel {c} ▸")).collect(),
-            MenuStage::CcGroups(_) => (0..8).map(|g| format!("CC {}–{} ▸", g * 16, g * 16 + 15)).collect(),
-            MenuStage::Ccs(_, g) => (0..16).map(|k| format!("CC {}", g * 16 + k)).collect(),
-            MenuStage::HostGroups => (0..8).map(|g| format!("Param {}–{} ▸", g * 16 + 1, g * 16 + 16)).collect(),
-            MenuStage::Params(g) => (0..16).map(|k| format!("Param {}", g * 16 + k + 1)).collect(),
-        }
     }
 }
