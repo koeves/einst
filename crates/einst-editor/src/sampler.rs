@@ -2,13 +2,13 @@
 //! take recorder ([re:9fbf48]).
 //!
 //! - Trigger mode (Immediate / MIDI / Host / Threshold, `e_setSamplerStartMode`
-//!   0xf2, [re:e1d697]) with the threshold panel (Start / Stop sliders and the
+//!   0xf2, [re:5fa03c]) with the threshold panel (Start / Stop sliders and the
 //!   input meter between them) shown for Threshold; record mode (Free /
 //!   Timed / Looped, 0xf3 off / stop / retake) with the Beats / Seconds switch
 //!   and the Bars / Beats or Seconds boxes shown for Timed and Looped.
-//! - Control events [re:97cc15]: Arm → 0xec, Rec → 0xef, Thru → 0xff,
+//! - Control events [re:7941cb]: Arm → 0xec, Rec → 0xef, Thru → 0xff,
 //!   InputGain → 0xf4 (knob × 4), Preview vol → 0xe8, thresholds → 0xf6 /
-//!   0xf7 via [re:766df4], sync group → 0xfa, seconds → 0xf8 (0..3600),
+//!   0xf7 via [re:c57733], sync group → 0xfa, seconds → 0xf8 (0..3600),
 //!   bars / beats → 0xf9, source → 0xfd, Mono → 0xfe (left channel).
 //! - Finished takes go to the take list (the engine posts the audio); Take
 //!   picks the current one, which the wave area shows with its start / end
@@ -29,7 +29,7 @@ use crate::model::{LAYERS, Model};
 
 /// `e_setPreviewVolume`.
 const SET_PREVIEW_VOLUME: u32 = 0xe8;
-/// [re:dab344]: "External" (the host
+/// [re:1864e3]: "External" (the host
 /// input, 38), then output locations 1–33 by name (Master, Sub output
 /// 1–32); routing plugins would follow (out of scope).
 pub fn source_items() -> Vec<String> {
@@ -45,7 +45,7 @@ fn item_of_source(s: i32) -> usize {
     if (1..34).contains(&s) { s as usize } else { 0 }
 }
 
-/// [re:c42363].
+/// [re:c57733].
 pub fn level_to_value(l: f32) -> f32 {
     if l <= 0.0 {
         return 0.0;
@@ -54,7 +54,7 @@ pub fn level_to_value(l: f32) -> f32 {
     if db > -1000.0 { (db / 26.888344).exp() / 1.25 } else { 0.0 }
 }
 
-/// [re:f41d07].
+/// [re:c57733].
 pub fn value_to_level(v: f32) -> f32 {
     if (v as f64) <= 5.64045724672641e-17 {
         return 0.0;
@@ -234,7 +234,7 @@ pub struct Sampler {
     timeline_beats: bool,
 }
 
-/// [re:1a0972] [re:324b22]: takes are
+/// [re:e12a3e] [re:3fbef6]: takes are
 /// saved to `<record path>/<date>/` ([re:9c6245] +
 /// "Sampler Captures", unless `SamplerRecordPath` is set) when no file
 /// dialog is available.
@@ -262,7 +262,7 @@ fn now_utc() -> (i64, u32, u32, u32, u32, u32) {
     (y, m, d, (rem / 3600) as u32, (rem / 60 % 60) as u32, (rem % 60) as u32)
 }
 
-/// A free sample file name [re:7d058d]: `name.wav`, then `name (2).wav` …
+/// A free sample file name [re:b4ec72]: `name.wav`, then `name (2).wav` …
 /// up to 9999.
 pub fn free_filename(dir: &std::path::Path, name: &str) -> Option<std::path::PathBuf> {
     let p = dir.join(format!("{name}.wav"));
@@ -515,7 +515,7 @@ impl Sampler {
         false
     }
 
-    /// Start-up messages ([re:0fd0d9], at messaging start): the last
+    /// Start-up messages ([re:6a1c94], at messaging start): the last
     /// start mode (default Threshold; 0 also maps to Threshold), record
     /// mode, beats sync, seconds, bars / beats, thresholds, channel mode and
     /// thru, re-sent to the sampler.
@@ -742,7 +742,7 @@ impl Sampler {
                 }
                 true
             }
-            // Control event [re:97cc15] 8 (double click): In
+            // Control event [re:7941cb] 8 (double click): In
             // 1.0, Thru 0.7937, Start 0.1, Stop 0.00562.
             UiEvent::DoubleClicked { path, name } if self.mine(path) => {
                 match name.as_str() {
@@ -907,7 +907,7 @@ impl Sampler {
     }
 }
 
-/// `SetStartThreshold02` [re:a2dcfe]: a start below the stop threshold
+/// `SetStartThreshold02` [re:19df34]: a start below the stop threshold
 /// drags the stop threshold down with it, a stop above the start drags the
 /// start up.
 fn set_thresholds(s: &mut crate::model::SamplerView, start: Option<f32>, stop: Option<f32>, out: &mut Vec<Command>) {
@@ -1040,16 +1040,11 @@ impl crate::Editor {
                     Request::Slice => {
                         self.open_slicer(&f);
                     }
+                    // [re:3fbef6] → [re:3c4465]: the take goes to the
+                    // current pad's first layer (reset first with "Reset
+                    // layer settings on load"); its other layers stay.
                     Request::SendToPad => {
-                        // The pad's samples go; the take is its first layer.
                         let p = self.model.pad[e];
-                        for l in 0..LAYERS {
-                            if self.model.layer(e, p, l).valid && !self.model.layer_node(e, p, l).is_some_and(|n| n.locked()) {
-                                let layer = self.model.layer_mut(e, p, l);
-                                layer.attrs.retain(|(k, _)| k != "AudioFileName");
-                                layer.children.retain(|c| c.class != "AudioFileMarkers");
-                            }
-                        }
                         loaded = crate::browser::load_sample_into_layer(&mut self.model, e, p, 0, &f);
                     }
                     _ => self.sampler.message = Some(format!("Saved {}", f.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())),
