@@ -3,22 +3,22 @@
 //! channel strips fixed in the page skin below, with the MIX / SEND
 //! (and the engine mixer's SETUP) view buttons.
 //!
-//! - Layer mixer ([re:de6382]): the 8 layers of the selected pad
+//! - Layer mixer ([re:478fd5]): the 8 layers of the selected pad
 //!   (`Channel0..7`, `LayerMixerStrip.skin`).
-//! - Pad mixer ([re:d84457]): the selected engine's 16 pads (`PadChan0..15`,
+//! - Pad mixer ([re:6ac3f7]): the selected engine's 16 pads (`PadChan0..15`,
 //!   `MixerStripPad.skin`).
 //! - Engine mixer: the 8 engines (`Channel0..7`, `EngineMixerStrip.skin`);
 //!   SETUP shows engine pitch, swing template and depth and the tempo
 //!   modifier.
-//! - Global mixer ([re:51d49b]): 4 global aux returns and the master.
+//! - Global mixer ([re:078be6]): 4 global aux returns and the master.
 //!
 //! Selection and the shown chain (ev_37b25110…, ev_06897cf5…,
 //! ev_975c5a77…, ev_550d1ba0…, ev_705113971…, ev_e8192a36…): a press on
-//! a strip outside its controls ([re:fcb381] [re:42d973], aux [re:4a3270])
-//! selects it: an engine selects that engine ([re:1068c4]), a pad goes
+//! a strip outside its controls ([re:b0a103] [re:b0a103], aux [re:3ec96a])
+//! selects it: an engine selects that engine ([re:654854]), a pad goes
 //! through the pad selection (cmd toggles, shift extends), a layer becomes
-//! the current layer, an aux or the master shows its chain ([re:070ea3] /
-//! [re:d1e5bd]). The strip takes its `…Selected` background (other selected
+//! the current layer, an aux or the master shows its chain ([re:dcfbee] /
+//! [re:dcfbee]). The strip takes its `…Selected` background (other selected
 //! pads / engines `…Secondary`, the rest alternate `…Odd` / `…Even`) and
 //! the glue image joins it to the chain.
 //!
@@ -382,7 +382,7 @@ impl Mixer {
             let pan = attr_f32(node, if matches!(ch, Channel::Layer(_)) { LayerParam::Pan.name() } else { "Pan" }, 0.5);
             let pitch = attr_f32(node, "Pitch", 0.5);
             let (mute, solo) = (node.is_some_and(|n| n.truthy("Mute")), node.is_some_and(|n| n.truthy("Solo")));
-            // [re:5575fd]: PrePostButton = [re:892cf2] (`IsPreFade`); no
+            // [re:a5a13b]: PrePostButton = [re:a5a13b] (`IsPreFade`); no
             // attribute: the option `AuxesArePreFade` default.
             let pre_fade = match node.and_then(|n| n.attr("IsPreFade")) {
                 Some(_) => node.is_some_and(|n| n.truthy("IsPreFade")),
@@ -553,7 +553,7 @@ impl Mixer {
         })
     }
 
-    /// The strip knob tooltip ([re:fcb381] [re:dafd34] and the derived
+    /// The strip knob tooltip ([re:b0a103] [re:bf3ba5] and the derived
     /// strips): Decibels "Gain", Pan "Pan", Percent "Send n", Semitones
     /// "Pitch"; the master gain is a DB15 provider of its display name.
     pub fn tooltip(&self, app: &App, model: &Model, path: &[usize], source: Option<(&str, usize)>) -> Option<String> {
@@ -586,8 +586,8 @@ impl Mixer {
     }
 
     /// A knob double click's reset value: the chain's effects, then
-    /// [re:7b12f8] (Gain ∛0.5, Pan 0.5, Pitch 0.5, sends 0, swing depth 0);
-    /// aux strips ([re:223b19] [re:c32b02]) only reset the gain.
+    /// [re:b0a103] (Gain ∛0.5, Pan 0.5, Pitch 0.5, sends 0, swing depth 0);
+    /// aux and master strips ([re:aeed03], [re:5e70f2]) only reset the gain.
     pub fn reset_value(&self, app: &App, path: &[usize]) -> Option<f32> {
         let name = app.ctrl(path)?.name.clone();
         if let Some(v) = self.fx.as_ref().and_then(|f| f.reset_value(app, path, &name)) {
@@ -596,10 +596,9 @@ impl Mixer {
         let (ch, name) = self.hit(app, path)?;
         match (ch, name.as_str()) {
             (_, "GainSlider") => Some(dreist_formats::params::UNITY_GAIN),
-            (Channel::Aux(_), _) => None,
+            (Channel::Aux(_) | Channel::Master, _) => None,
             (_, "PanKnob") => Some(0.5),
-            // The pad / engine / master strips override the default to 0.5
-            // ([re:06731b], [re:0a2673]; master [re:81d585]).
+            // The pad / engine strips ([re:4d8551], [re:b0a103]).
             (_, "Pitch") => Some(0.5),
             (_, "SwingKnob") => Some(0.0),
             (_, n) if n.starts_with("SendKnob") => Some(0.0),
@@ -622,7 +621,7 @@ impl Mixer {
     }
 
     /// The pad whose strip background (or a passive child: label, panel)
-    /// is at `path`: [re:bfddf4] [re:c455d6] opens the pad menu there
+    /// is at `path`: [re:4d8551] [re:4d8551] opens the pad menu there
     /// (right clicks on the knobs keep their own menus).
     pub fn pad_strip_at(&self, app: &App, path: &[usize]) -> Option<usize> {
         if !app.ctrl(&self.page).is_some_and(|c| c.visible) {
@@ -640,7 +639,7 @@ impl Mixer {
         let e = model.engine;
         match ch {
             Channel::Engine(k) => {
-                // [re:1068c4]: [re:352eb9] (cmd toggles, shift extends) →
+                // [re:654854]: [re:739372] (cmd toggles, shift extends) →
                 // `e_setEngineSelections` 0x43.
                 let cur = crate::multipad::select_engine(model, k, cmd, shift);
                 model.engine = cur;
@@ -682,8 +681,8 @@ impl Mixer {
                 }
                 return true;
             }
-            // [re:703e6d] [re:60ed40], [re:b8ab71] [re:2788cc], [re:ab1a4e]
-            // [re:c9fdd9]: route every pad / layer / engine to parent (0),
+            // [re:625194] [re:4d8551], [re:eab727] [re:ac4e76], [re:074e2e]
+            // [re:b0a103]: route every pad / layer / engine to parent (0),
             // master (1) or "Sub output n" in order (i + 2).
             if let Some(ch) = self.route_all_menu.take() {
                 let engine = matches!(ch, Channel::Engine(_));
@@ -849,7 +848,7 @@ impl Mixer {
                     (Channel::Layer(k), "SoloButton") => msg(id::SET_LAYER_SOLO, &[e, p, k as i32], &[v]),
                     (Channel::Aux(k), "MuteButton") => msg(id::MUTE_GLOBAL_AUX, &[k as i32], &[v]),
                     (Channel::Aux(k), "SoloButton") => msg(id::SOLO_GLOBAL_AUX, &[k as i32], &[v]),
-                    // [re:0a9148] [re:a4e09c]: 0xa3 [aux] [pre] (the Pre /
+                    // [re:3ec96a] [re:3ec96a]: 0xa3 [aux] [pre] (the Pre /
                     // Post radio pair).
                     (Channel::Aux(k), "PreButton") => msg(id::SET_GLOBAL_AUX_PRE_POST, &[k as i32], &[1.0]),
                     (Channel::Aux(k), "PostButton") => msg(id::SET_GLOBAL_AUX_PRE_POST, &[k as i32], &[0.0]),
