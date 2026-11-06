@@ -245,7 +245,7 @@ const SUB_NAMES: [&str; SUB_PORTS] = [
 
 impl Plugin for EinstPlugin {
     const NAME: &'static str = "Einst";
-    const VENDOR: &'static str = "Einst";
+    const VENDOR: &'static str = "Dreist";
     const URL: &'static str = "";
     const EMAIL: &'static str = "";
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
