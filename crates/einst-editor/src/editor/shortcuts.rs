@@ -10,7 +10,7 @@ pub(crate) const MENU_AUDIO: isize = 1001;
 pub(crate) const MENU_MIDI: isize = 1002;
 
 impl Editor {
-    /// [re:907a56] (see `accel`): run the key's
+    /// [re:ed265e] (see `accel`): run the key's
     /// function. Keys a panel uses first (pattern step nudges, delete in
     /// the pattern / song editors) are left to the panels.
     pub(crate) fn accelerator(&mut self, key: &str, mods: accel::Mods) -> bool {
