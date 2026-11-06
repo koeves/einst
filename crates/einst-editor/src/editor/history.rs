@@ -5,7 +5,7 @@ use crate::*;
 impl Editor {
     /// Undo/Redo buttons: restore a snapshot and rebuild the engine.
     pub(crate) fn undo_redo(&mut self, ev: &UiEvent) -> bool {
-        // [re:54e11d]: the newest 16 action
+        // [re:262a8a]: the newest 16 action
         // names (a divider after the first), or a disabled "No undo/redo
         // actions available"; choosing item i steps i + 1 times.
         if let UiEvent::MenuSelected { index, .. } = ev {

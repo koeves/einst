@@ -133,7 +133,7 @@ impl Editor {
         true
     }
 
-    /// [re:bd68bd] → [re:442dbb]
+    /// [re:536a37] → [re:3a91db]
     /// for the selected engine's current pattern. With option `AutoMIDICC`
     /// (default on) graphs that have data but no MIDI binding get one on a
     /// free CC of the engine's channel ([re:521ed5]: 1..127
@@ -210,7 +210,7 @@ impl Editor {
         dreist_formats::file::write_atomic(path, bytes).is_ok()
     }
 
-    /// [re:9b2c04] → [re:2c6861]
+    /// [re:9b2c04] → [re:75cf76]
     /// into the selected engine's current pattern (not when it is locked),
     /// named after the file.
     pub fn open_pattern_midi(&mut self, path: &std::path::Path) -> bool {

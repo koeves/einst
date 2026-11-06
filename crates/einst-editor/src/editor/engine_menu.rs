@@ -2,7 +2,7 @@
 
 use crate::*;
 
-/// Engine selector menu items ([re:b6961a]
+/// Engine selector menu items ([re:5a9b42]
 /// [re:5a9b42]).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) enum EngineAction {
@@ -18,9 +18,9 @@ pub(crate) enum EngineAction {
 }
 
 impl Editor {
-    /// Pad right-click menu ([re:816870]).
-    /// The engine selectors' right-click menu ([re:b6961a]
-    ///  [re:5a9b42], items [re:45f3d6]..[re:11c0d7]; v1's own list
+    /// Pad right-click menu ([re:9cd713]).
+    /// The engine selectors' right-click menu ([re:5a9b42]
+    ///  [re:5a9b42], items [re:5a9b42]..[re:5a9b42]; v1's own list
     /// [re:5a9b42]): Cut / Copy / Paste (0x97), Un-mute / Un-solo all pads / layers on this engine (0x8e / 0x8f,
     /// enabled while the engine's muted / soloed icon is lit), Reset engine
     /// (0x9b), Reset all engines (confirmed; 0x9b for every engine). The

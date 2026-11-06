@@ -11,9 +11,9 @@
 //! equal v2's up to rounding; v1's ±1e−8 per-band denormal offset (about
 //! −160 dBFS) and its summation order are not transcribed.
 //!
-//! [re:deea98] (Parametric EQ, DJ EQ; `InitializePorts` [re:0c7159],
+//! [re:5f7c89] (Parametric EQ, DJ EQ; `InitializePorts` [re:0c7159],
 //! `Voice::UpdateCoeffs` [re:a736a9], `Voice::ProcessBuffer` [re:5f7c89]) with
-//! [re:86c5ff] ([re:631307]..[re:8b82c8]): four bands in series — LF shelf/bell,
+//! [re:5f7c89] ([re:631307]..[re:8b82c8]): four bands in series — LF shelf/bell,
 //! two peaking mids (Orfanidis-style prescribed-Nyquist-gain design,
 //! `peqx`), HF shelf/bell — each switchable, plus a wet/dry mix.
 
@@ -24,7 +24,7 @@ type Coeffs = ([f64; 3], [f64; 3]);
 
 const PASS: Coeffs = ([1.0, 0.0, 0.0], [1.0, 0.0, 0.0]);
 
-/// [re:074878] (asm-checked arithmetic order).
+/// [re:5f7c89] (asm-checked arithmetic order).
 fn peqx(g0: f64, g: f64, gb: f64, w0: f64, dw: f64, fs: f64) -> Coeffs {
     let g2 = g * g;
     let d = g2 - gb * gb;

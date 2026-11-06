@@ -1,4 +1,4 @@
-//! The original v1's Chorus: Dreist's node (Geist2's, [re:b7f410]) as v1
+//! The original v1's Chorus: Dreist's node (Geist2's, [re:76a0cd]) as v1
 //! builds it, from v1's `Voice` code (constructor, `UpdateSampleRate`,
 //! `Reset`, `ProcessBuffer` 0x53a240), transcribed and render-compared
 //! sample by sample (`tests/v1_chorus_transcribed.rs`):

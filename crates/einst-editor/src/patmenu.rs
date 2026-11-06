@@ -1,11 +1,11 @@
 //! Pattern selector and track right-click menus.
 //!
-//! - [re:6abcdc] 0x5c60: Rename pattern; Cut,
+//! - [re:00b273] 0x5c60: Rename pattern; Cut,
 //!   Copy, Paste; Clear pattern (0xaf), Clear all patterns (0xb0); Lock /
 //!   Unlock pattern (0xac `e_lockPattern`); Reset pattern velocity (0xae),
 //!   Quantize pattern timing (0xad), Extract groove from pattern (editor
 //!   message 0x136), Convert timing (Pattern Convertor panel); Swap with /
-//!   Copy to / Move to ▸ patterns ([re:c23a58] /
+//!   Copy to / Move to ▸ patterns ([re:dd0504] /
 //!   copy / move); Export as audio (current pattern).
 //! - Track menu, as the original v1 builds it ([re:fdbfcb], commands
 //!   [re:ebb1c9]): Pen / Erase / Select / Multi Tool; Dragging alters... ▸;

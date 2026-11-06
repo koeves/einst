@@ -11,11 +11,11 @@
 //! The rest (targets, ramps, saturator, feedback clip, DC trackers, reset)
 //! is the same.
 //!
-//! [re:5939a7] (Comb Filter, v2: `Voice::PrepareStream` [re:72902e],
+//! [re:f216da] (Comb Filter, v2: `Voice::PrepareStream` [re:f216da],
 //! `ProcessBuffer` [re:f216da]): tuned feedback comb with cubic-interpolated
 //! taps, saturated input, clipped feedback and audio-rate phase/frequency
 //! modulation from its `ModIn` port. The effect runs it dual-mono
-//! ([re:7441ff]): one instance per channel, each fed its
+//! ([re:f216da]): one instance per channel, each fed its
 //! own channel on both `In` and `ModIn`.
 
 use crate::fast_exp2;
@@ -170,7 +170,7 @@ pub struct Comb {
 impl Comb {
     pub fn new() -> Comb {
         let mut ports = ports_from(ports::COMB_FILTER);
-        // Mode: float-form, max = [re:0cac93] item count (2).
+        // Mode: float-form, max = [re:f216da] item count (2).
         ports[1] = Port::new(0.0, 0.0, 2.0);
         Comb { ports, sr: 0.0, voices: [Voice::new(), Voice::new()] }
     }

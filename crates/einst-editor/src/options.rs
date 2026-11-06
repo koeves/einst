@@ -67,14 +67,14 @@ type FileStamp = Option<(u64, Option<std::time::SystemTime>)>;
 #[cfg(not(test))]
 static FILE_CACHE: std::sync::Mutex<Option<(PathBuf, FileStamp, BTreeMap<String, String>)>> = std::sync::Mutex::new(None);
 
-/// [re:9d78d9]: option
+/// [re:33133e]: option
 /// `LocalDocumentsPath`, default [`dreist_formats::legacy::DOCUMENTS_DIR`] in the home folder. The user
 /// Content, Effects and Effect Chains folders live under it.
 pub fn documents_dir() -> PathBuf {
     PathBuf::from(Options::load().string("LocalDocumentsPath", &default_documents()))
 }
 
-/// [re:857769].
+/// [re:a5b222].
 pub fn default_documents() -> String {
     dreist_formats::paths::home().join(dreist_formats::legacy::DOCUMENTS_DIR).to_string_lossy().into_owned()
 }

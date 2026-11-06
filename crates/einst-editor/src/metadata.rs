@@ -2,7 +2,7 @@
 //! `Pad Editor/MetaDataAnchor.skin`; opened by [re:ecfa09]'s
 //! item menu [re:433bd6]).
 //!
-//! - A working copy of the active analysis' [re:ed1f12] (User,
+//! - A working copy of the active analysis' [re:ab7c81] (User,
 //!   else Master; defaults 120 BPM / 1 bar / 0 beats / 440 Hz, a file
 //!   without a `.gsa` gets a guessed key). Every box parses with `atof`,
 //!   clamps (BPM 20..1000, Bars / Beats ≥ 0, Root 1..20000 Hz, Author /

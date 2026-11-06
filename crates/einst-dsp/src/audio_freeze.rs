@@ -13,15 +13,15 @@
 //!   (`start − floor(ppq4) < 0.1` or `ppq4 − floor(start) > 1`);
 //! - the grain time in seconds 2^(v − 1) is v1's [`fast_exp2`](crate::fast_exp2).
 //!
-//! [re:4f768c] (Audio Freezer, kind 38, dual-mono; `Reset`
-//! [re:4be122], `SetMaxDelay` [re:144838], `ProcessBuffer` [re:8b3e7f]): while the
+//! [re:8b3e7f] (Audio Freezer, kind 38, dual-mono; `Reset`
+//! [re:4be122], `SetMaxDelay` [re:8b3e7f], `ProcessBuffer` [re:8b3e7f]): while the
 //! gate is off the input is recorded into a loop buffer; when it opens the
 //! loop length is latched (`LoopLength` beats) and, at the next 16th-note
 //! boundary, playback switches to grains read from the frozen loop: each
 //! grain starts at the (Speed-drifting) start position plus a manual/random
 //! jump of whole grains, plays at the Scratch rate and crossfades from the
 //! previous grain over `Smooth · grain`. The dry path is delayed by one
-//! sample. The grain length uses `ConvertToUnits(v, mode, [re:88cd77])`,
+//! sample. The grain length uses `ConvertToUnits(v, mode, [re:8b3e7f])`,
 //! i.e. bpm/60 rather than 60/bpm in beat mode, as in the binary.
 
 use crate::fast_exp2;

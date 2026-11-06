@@ -72,7 +72,7 @@ pub enum Dialog {
     ExportAudio,
     /// Missing files: Auto Find start folder.
     ChooseFolder(Option<std::path::PathBuf>),
-    /// Source list › Export to folder ([re:24982a]): the
+    /// Source list › Export to folder ([re:e8becb]): the
     /// folder to copy the shortlist into (from the desktop).
     ExportFolder,
     /// Missing files: Manual, "Please locate <file>" from a folder.

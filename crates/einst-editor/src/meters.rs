@@ -1,6 +1,6 @@
 //! Meter feed: every visible [re:d45123] gets one update
 //! per editor tick from the engine's peak-hold levels, which the caller
-//! then clears ([re:11bc96]).
+//! then clears ([re:06813a]).
 //!
 //! The meter's source comes from its ancestors: mixer strips (`channel`
 //! attr: the mixer channel's output levels), inspector layer rows

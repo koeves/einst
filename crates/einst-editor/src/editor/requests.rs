@@ -192,7 +192,7 @@ impl Editor {
                 }
                 true
             }
-            // [re:c39372] → the export job; the panel stays
+            // [re:bb75bc] → the export job; the panel stays
             // open with its progress ([re:ece5dd]).
             Request::ExportAudio => {
                 if let Some(p) = self.dialog(Dialog::ExportAudio) {

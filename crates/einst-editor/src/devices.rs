@@ -9,7 +9,7 @@
 //! 512, 1024; the device popups list the delegate's devices. Any popup
 //! change hands {rate, block, input, output} to the delegate and refreshes
 //! everything ([re:0f7c8c]). The IOGroup tabs (INPUTS / OUTPUTS) fill
-//! IOTable ([re:ae7160]): columns "Enabled" (50) and
+//! IOTable ([re:0f7c8c]): columns "Enabled" (50) and
 //! "Description", one row per stereo pair, outputs ending with "All
 //! outputs". Refresh re-reads the devices, Close (OK) closes, Cancel puts
 //! the choices back as they were when the panel opened.
@@ -412,7 +412,7 @@ impl Devices {
             p.text(RectF::new(x + 4.0, 0.0, cw - 8.0, HEADER), title, htext, &font, HAlign::Left, VAlign::Center);
             p.fill_rect(RectF::new(x + cw - 1.0, 0.0, 1.0, h), s.colour(LIST_STYLE, "colColumnDivider", hdiv));
         }
-        // [re:a817ff] boxes, 16 × 16 at (17, 2) in the cell.
+        // [re:0f7c8c] boxes, 16 × 16 at (17, 2) in the cell.
         let (cfill, cborder, tick) = (s.colour(CHECK_STYLE, "colFill", Colour::WHITE), s.colour(CHECK_STYLE, "colBorder", Colour::BLACK), s.colour(CHECK_STYLE, "colTick", Colour::BLACK));
         let check = |p: &mut Painter, x: f32, y: f32, on: bool, enabled: bool| {
             let a = if enabled { 1.0 } else { 0.35 };

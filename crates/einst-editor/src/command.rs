@@ -126,7 +126,7 @@ pub fn msg(kind: u32, index: &[i32], value: &[f32]) -> Command {
     Command::Message(Message::new(kind, index, value))
 }
 
-/// An export job as the panel sees it ([re:8c1655]: progress,
+/// An export job as the panel sees it ([re:3fee85]: progress,
 /// abort, the clipping prompt, a fatal error / the error text).
 #[derive(Debug, Default)]
 pub struct ExportStatus {
@@ -142,7 +142,7 @@ pub struct ExportStatus {
 
 pub type ExportProgress = std::sync::Arc<std::sync::Mutex<ExportStatus>>;
 
-/// The host side of [re:a61043]: render (reporting progress,
+/// The host side of [re:3fee85]: render (reporting progress,
 /// stopping on abort), ask through `status` when the export would clip in
 /// Prompt mode, then write.
 pub fn run_export(
