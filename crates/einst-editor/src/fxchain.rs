@@ -398,6 +398,8 @@ pub struct FxPanel {
     built: Option<(Target, Vec<usize>)>,
     /// Open menu: the slot it acts on (None = the chain) and its item actions.
     menu: Option<(Option<usize>, Vec<Action>)>,
+    /// A press on the slot bar: (x, y, slot, dragging).
+    bar_press: Option<(f32, f32, usize, bool)>,
     resources: std::path::PathBuf,
     /// A save the editor should run (file dialog + write).
     pub save_request: Option<SaveRequest>,
@@ -468,6 +470,7 @@ impl FxPanel {
             fx_skins,
             built: None,
             menu: None,
+            bar_press: None,
             resources: dreist_formats::paths::skin_dir(),
             save_request: None,
             chain_presets: Default::default(),
@@ -961,10 +964,34 @@ impl FxPanel {
                 self.scroll = if *dy > 0.0 { self.scroll.saturating_sub(1) } else { (self.scroll + 1).min(SLOTS - VISIBLE_SLOTS) };
                 return true;
             }
-            UiEvent::Mouse { path, kind, x, .. } if self.bar.as_ref() == Some(path) && matches!(kind, dreist_gui::app::MouseKind::Down | dreist_gui::app::MouseKind::Drag) => {
+            // [re:9af496]: a press on an effect's block shows it; [re:2a566b]:
+            // past 5 px the block is dragged, and [re:3132d4] the release
+            // moves the effect to the slot under it ([re:1be64d]).
+            UiEvent::Mouse { path, kind, x, y, .. } if self.bar.as_ref() == Some(path) => {
+                use dreist_gui::app::MouseKind;
                 let w = app.ctrl(path).map(|c| c.rect.w as f32).unwrap_or(1.0).max(1.0);
                 let i = ((x / w * SLOTS as f32).floor().max(0.0) as usize).min(SLOTS - 1);
-                self.reveal(i);
+                match kind {
+                    MouseKind::Down => {
+                        self.bar_press = Some((*x, *y, i, false));
+                        self.reveal(i);
+                    }
+                    MouseKind::Drag => {
+                        if let Some(p) = self.bar_press.as_mut() {
+                            p.3 |= (x - p.0).abs() >= 6.0 || (y - p.1).abs() >= 6.0;
+                        }
+                    }
+                    MouseKind::Up => {
+                        if let Some((_, _, from, true)) = self.bar_press.take() {
+                            if crate::fxmove::move_effect(model, t, from, i) {
+                                out.push(model.rebuild_command());
+                                self.reveal(i);
+                            }
+                        }
+                        self.bar_press = None;
+                    }
+                    MouseKind::RightDown => return false,
+                }
                 return true;
             }
             // Right press on an effect panel's background: Cut / Copy /
