@@ -11,6 +11,7 @@
 #![allow(semicolon_in_expressions_from_non_local_macros)]
 
 pub mod editor;
+pub mod midiclock;
 #[cfg(feature = "standalone")]
 pub mod standalone;
 
@@ -97,6 +98,9 @@ pub struct EinstPlugin {
     live_take: einst_editor::model::LiveTake,
     /// Editor window size shared with the open editor (see `DreistEditor`).
     editor_size: Arc<std::sync::atomic::AtomicU64>,
+    /// The standalone's MIDI clock input (sync on).
+    #[cfg(feature = "standalone")]
+    clock: Option<midiclock::ClockInput>,
 }
 
 impl Default for EinstPlugin {
@@ -117,6 +121,8 @@ impl Default for EinstPlugin {
             bridge: Arc::new(editor::Bridge::default()),
             live_take: Default::default(),
             editor_size: Default::default(),
+            #[cfg(feature = "standalone")]
+            clock: None,
         }
     }
 }
@@ -277,6 +283,10 @@ impl Plugin for EinstPlugin {
         if let Ok(mut bp) = self.bridge.project_path.lock() {
             *bp = self.project_path();
         }
+        #[cfg(feature = "standalone")]
+        {
+            self.clock = midiclock::ClockInput::open();
+        }
         // A relaunch after an audio settings change hands its document over.
         #[cfg(feature = "standalone")]
         if let Some(s) = standalone::take_session() {
@@ -368,6 +378,16 @@ impl Plugin for EinstPlugin {
         // The standalone has no host transport: nih-plug's backend reports
         // "playing at 120 BPM" every block, so the original runs its own (Play /
         // Stop, the project tempo), as the original standalone shell does.
+        // With "Sync to MIDI clock" the standalone follows the clock
+        // (`midiclock`).
+        #[cfg(feature = "standalone")]
+        if let Some(ci) = self.clock.as_mut() {
+            ci.drain();
+            if ci.clock.active() {
+                engine.set_transport(ci.clock.playing(), ci.clock.tempo, Some(ci.clock.ppq));
+            }
+            ci.clock.advance(buffer.samples(), f32::from_bits(self.bridge.sample_rate.load(std::sync::atomic::Ordering::Relaxed)));
+        }
         if !cfg!(feature = "standalone") {
             let t = context.transport();
             engine.set_transport(t.playing, t.tempo.unwrap_or(120.0), t.pos_beats());

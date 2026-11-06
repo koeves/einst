@@ -24,8 +24,9 @@
 //! device, one MIDI input and one MIDI output, chosen when audio starts.
 //! The settings are kept in the options (`Standalone*`); closing a panel
 //! after a change restarts the app's audio (the app relaunches with the
-//! current document). The channel table shows the pair in use; MIDI clock
-//! sync is not available.
+//! current document). The channel table shows the pair in use. "Sync to
+//! MIDI clock" ([re:2f20d2]) makes the standalone follow the chosen
+//! input's MIDI clock (einst-plugin `midiclock`).
 
 use dreist_gui::app::{App, MouseKind, UiEvent};
 use dreist_gui::paint::{Painter, RectF};
@@ -80,6 +81,9 @@ pub struct Settings {
     pub buffer: u32,
     pub midi_in: String,
     pub midi_out: String,
+    /// v1's "Sync to MIDI clock" ([re:2f20d2], option
+    /// `StandaloneSyncToMIDIClock`).
+    pub sync_clock: bool,
 }
 
 impl Settings {
@@ -91,6 +95,7 @@ impl Settings {
             buffer: o.int("StandaloneBufferSize", DEFAULT_BUFFER as i64).max(0) as u32,
             midi_in: o.string("StandaloneMidiInput", ""),
             midi_out: o.string("StandaloneMidiOutput", ""),
+            sync_clock: o.bool("StandaloneSyncToMIDIClock", false),
         }
     }
 
@@ -101,6 +106,7 @@ impl Settings {
         o.set("StandaloneBufferSize", self.buffer as i64);
         o.set("StandaloneMidiInput", self.midi_in.clone());
         o.set("StandaloneMidiOutput", self.midi_out.clone());
+        o.set("StandaloneSyncToMIDIClock", self.sync_clock);
     }
 }
 
@@ -242,6 +248,7 @@ impl Devices {
         let midi = self.midi_overlay.clone().map(|p| self.midi_slide.sync(app, &p, self.open == Some(Panel::Midi))).unwrap_or(false);
         let (out, rate, s) = (self.output_name(), self.rate(), self.settings.clone());
         let tab = self.io_tab;
+        let sync_clock = s.sync_clock;
         if let Some(o) = self.audio_overlay.clone().and_then(|p| app.ctrl_mut(&p)) {
             o.visible = audio;
             for (name, text) in [
@@ -262,9 +269,8 @@ impl Devices {
         }
         if let Some(o) = self.midi_overlay.clone().and_then(|p| app.ctrl_mut(&p)) {
             o.visible = midi;
-            // No MIDI clock sync in the port.
             if let Some(b) = o.find_mut("Sync") {
-                b.enabled = false;
+                b.on = sync_clock;
             }
         }
     }
@@ -315,7 +321,9 @@ impl Devices {
                 }
                 v
             }
-            "InputTable" => self.midi.inputs.iter().map(|d| (*d == self.settings.midi_in, Some(false), d.clone())).collect(),
+            // The clock column: the input the clock comes from while
+            // syncing.
+            "InputTable" => self.midi.inputs.iter().map(|d| (*d == self.settings.midi_in, Some(self.settings.sync_clock && *d == self.settings.midi_in), d.clone())).collect(),
             "OutputTable" => self.midi.outputs.iter().map(|d| (*d == self.settings.midi_out, None, d.clone())).collect(),
             _ => Vec::new(),
         }
@@ -334,6 +342,10 @@ impl Devices {
                     (_, "Close") => self.close(),
                     (_, "Cancel") => self.cancel(),
                     (_, "Refresh") => self.refresh(),
+                    (_, "Sync") => {
+                        self.settings.sync_clock = !self.settings.sync_clock;
+                        self.changed();
+                    }
                     (_, n @ ("SampleRate" | "BufferSize" | "InDevice" | "OutDevice")) => {
                         let items = self.popup_items(n);
                         if !items.is_empty() {

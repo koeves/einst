@@ -3930,8 +3930,8 @@ fn audio_settings_dialog_opens_and_works() {
 }
 
 /// The standalone's MIDI settings: both tables list the host's devices,
-/// a click on a row's box picks that device (again: none), clock sync is
-/// off in the port, Cancel restores.
+/// a click on a row's box picks that device (again: none), "Sync to MIDI
+/// clock" toggles, Cancel restores.
 #[test]
 fn midi_settings_dialog_opens_and_works() {
     crate::app::test_setup();
@@ -3945,7 +3945,13 @@ fn midi_settings_dialog_opens_and_works() {
     let inputs = panel_ctrl(&ed, &o, "InputTable");
     assert_eq!(ed.app.ctrl(&inputs).unwrap().overload, "DeviceTable:InputTable");
     assert_eq!(ed.app.ctrl(&panel_ctrl(&ed, &o, "OutputTable")).unwrap().overload, "DeviceTable:OutputTable");
-    assert!(!ed.app.ctrl(&panel_ctrl(&ed, &o, "Sync")).unwrap().enabled, "no clock sync in the port");
+    // v1's "Sync to MIDI clock" check box toggles the setting.
+    let sync = panel_ctrl(&ed, &o, "Sync");
+    assert!(ed.app.ctrl(&sync).unwrap().enabled);
+    let before = ed.devices.settings().sync_clock;
+    ed.handle(&UiEvent::Clicked { path: sync.clone(), name: "Sync".into(), id: 0, on: !before });
+    assert_eq!(ed.devices.settings().sync_clock, !before);
+    ed.handle(&UiEvent::Clicked { path: sync, name: "Sync".into(), id: 0, on: before });
     // The second input's box (row 2 under the 20 px header).
     let down = |ed: &mut Editor, path: &[usize], y: f32| {
         ed.handle(&UiEvent::Mouse { path: path.to_vec(), overload: ed.app.ctrl(path).unwrap().overload.clone(), kind: dreist_gui::app::MouseKind::Down, x: 25.0, y });
