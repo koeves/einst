@@ -18,6 +18,7 @@ mod editor;
 pub mod filefind;
 mod front;
 mod fxchain;
+mod fxmove;
 mod fxplot;
 mod fxtext;
 pub mod guru;
