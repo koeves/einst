@@ -1,9 +1,9 @@
-//! Missing files ([re:f7e56f], [re:37765e]): the audio files a project
+//! Missing files ([re:0380e2], [re:0380e2]): the audio files a project
 //! refers to that could not be found while loading, in v1's "File Finder"
 //! dialog: a list of their names and Close / Manual / Auto.
 //!
-//! - Auto ([re:513f9b]): choose a start folder ("Please choose a search
-//!   location", from the last folder used), then [re:cdeafd] [re:3c8277]
+//! - Auto ([re:2dfeaf]): choose a start folder ("Please choose a search
+//!   location", from the last folder used), then [re:5ffb17] [re:5ffb17]
 //!   walks it recursively and matches files by name (a trailing
 //!   ".truncated" extension is ignored); a match is loaded into every layer
 //!   that asked for that file. Abort stops it.
@@ -37,7 +37,7 @@ pub struct Missing {
 }
 
 /// Layers whose sample file does not exist: one request per layer, as
-/// the [re:2e303e] request list the table shows.
+/// the [re:b4d0dd] request list the table shows.
 pub fn missing_files(model: &Model) -> Vec<Missing> {
     let mut out: Vec<Missing> = Vec::new();
     for e in 0..crate::model::ENGINES {
@@ -65,7 +65,7 @@ fn match_name(p: &Path) -> Option<String> {
     p.file_name().map(|n| n.to_string_lossy().into_owned())
 }
 
-/// A running [re:fb2fba]: what the worker reports.
+/// A running [re:5ffb17]: what the worker reports.
 #[derive(Debug, Default)]
 pub struct JobState {
     /// Progress: 0..1, each file adding its share of its folder.
@@ -78,7 +78,7 @@ pub struct JobState {
     pub found: Vec<Option<PathBuf>>,
 }
 
-/// [re:8fb33a]: the folder's entries in
+/// [re:5ffb17]: the folder's entries in
 /// reverse listing order; each gets `share` / count of the progress —
 /// files add theirs, folders pass it on to their own entries. A file whose
 /// name matches pending requests satisfies all of them; the search stops
@@ -131,7 +131,7 @@ pub struct FileFind {
     pub request: Option<Request>,
     /// The Auto Find job.
     job: Option<std::sync::Arc<std::sync::Mutex<JobState>>>,
-    /// [re:1395ce] / [re:513f9b]: the folder Manual and Auto start in (the
+    /// [re:1395ce] / [re:2dfeaf]: the folder Manual and Auto start in (the
     /// last one chosen).
     pub last_dir: Option<PathBuf>,
 }
@@ -163,7 +163,7 @@ impl FileFind {
         Ok(FileFind { overlay, slide: Default::default(), open: false, items: Vec::new(), selected: BTreeSet::new(), scroll: 0, request: None, job: None, last_dir: None })
     }
 
-    /// [re:af38f1] with the missing files.
+    /// [re:b4d0dd] with the missing files.
     pub fn show(&mut self, items: Vec<Missing>) {
         self.open = !items.is_empty();
         self.items = items;
@@ -172,7 +172,7 @@ impl FileFind {
     }
 
     pub fn sync(&mut self, app: &mut App) {
-        // [re:89e6b8] / closing [re:48676b]: shown and removed at once,
+        // [re:401f49] / closing [re:819096]: shown and removed at once,
         // centred ([re:24b9de]).
         let open = self.overlay.clone().map(|p| self.slide.sync(app, &p, self.open)).unwrap_or(false);
         if let Some(o) = self.overlay.clone().and_then(|p| app.ctrl_mut(&p)) {
@@ -213,8 +213,8 @@ impl FileFind {
         }
     }
 
-    /// Auto Find [re:513f9b]: HoldingPanel hidden, ScanningPanel shown,
-    /// ScanLabel cleared and the [re:fb2fba] searches `root` on a worker.
+    /// Auto Find [re:2dfeaf]: HoldingPanel hidden, ScanningPanel shown,
+    /// ScanLabel cleared and the [re:5ffb17] searches `root` on a worker.
     pub fn start_auto_find(&mut self, app: &mut App, root: &Path) {
         let wanted: Vec<String> = self.items.iter().map(|m| match_name(&m.path).unwrap_or_default()).collect();
         let st = std::sync::Arc::new(std::sync::Mutex::new(JobState { found: vec![None; wanted.len()], ..JobState::default() }));
@@ -233,7 +233,7 @@ impl FileFind {
         self.job = Some(st);
     }
 
-    /// [re:02d115]: ScanLabel follows the job; when it ends the found
+    /// [re:57e9e5]: ScanLabel follows the job; when it ends the found
     /// files are applied (true: rebuild), the holding panel comes back
     /// with the list, which closes the panel when nothing is left.
     pub fn tick(&mut self, app: &mut App, model: &mut Model) -> bool {
@@ -322,7 +322,7 @@ impl FileFind {
                     self.request = Some(Request::AutoFind);
                     (true, false)
                 }
-                // [re:242e1b].
+                // [re:a92c10].
                 "AbortButton" => {
                     if let Some(Ok(mut g)) = self.job.as_ref().map(|st| st.lock()) {
                         g.abort = true;
@@ -347,7 +347,7 @@ impl FileFind {
         }
     }
 
-    /// [re:28fc2e]: v1's list box, one file name per request (the
+    /// [re:577d8e]: v1's list box, one file name per request (the
     /// ".truncated" extension dropped).
     pub fn draw(&self, r: &Renderer, p: &mut Painter, c: &Ctrl) -> bool {
         if c.overload != "FileFindList" {
