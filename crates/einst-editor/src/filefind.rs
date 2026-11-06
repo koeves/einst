@@ -185,8 +185,8 @@ impl FileFind {
     }
 
     pub fn sync(&mut self, app: &mut App) {
-        // [re:89e6b8] / closing [re:48676b]: slides from the
-        // top (500 ms Exponential in, Logarithmic out).
+        // [re:89e6b8] / closing [re:48676b]: shown and removed at once,
+        // centred ([re:24b9de]).
         let open = self.overlay.clone().map(|p| self.slide.sync(app, &p, self.open)).unwrap_or(false);
         // [re:7315e8]: everything but Select All needs a
         // selection.
@@ -332,11 +332,6 @@ impl FileFind {
 
     /// Returns (changed, rebuild needed).
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent) -> (bool, bool) {
-        if let Some(p) = self.overlay.clone() {
-            if self.slide.animated(app, &p, ev) {
-                return (true, false);
-            }
-        }
         if !self.open {
             return (false, false);
         }

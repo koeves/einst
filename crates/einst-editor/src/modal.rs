@@ -1,32 +1,34 @@
-//! Modal panels over the editor: About ([re:c045a2],
-//! [re:3c1e07]) and Preferences ([re:00fdfe],
-//! [re:0624c1] / [re:397244]).
+//! Modal panels over the editor: About ([re:3d40d0], [re:323f99]),
+//! Preferences ([re:3a9b5d] / [re:6039df]) and Export ([re:0dfe90]). Dialogs
+//! show and close at once, centred over a shaded snapshot ([re:24b9de]);
+//! Preferences and Export sit in a titled frame ([re:2a01cd]).
 //!
-//! Preferences controls ↔ options (on showing): QuantizeREXButton
-//! `AllocatorQuantizeREX`, PreFadeButton `AuxesArePreFade`, MultiButton
-//! `PatternEditorRightClickMode`, ForceModeButton `ForcedLayersFallThrough`,
-//! ResetLayersButton `AllocatorClearLayersOnLoad`, ActiveSensingButton
-//! `SendActiveSensing`, RetardButton `SequencerRetardation`,
-//! RestoreOutputsButton `AllocatorRestoreOutputs` (default on),
-//! KeyboardButton
-//! `RespondToKeyboard` (on), ExtendedKeyboardButton
-//! `RespondToExtendedKeyboard`, AutoAssign `AutoMIDICC` (on); MIDIModeGroup
-//! `MIDINumbering` (child ids, default 1); MetroType `MetronomeSound`
-//! (metronome folders, "Default"); ShadingMode `PatternEditorShadingMode`
-//! (Fixed, Adaptive, Cyclic, Off — [re:c192c5]);
-//! RemMod `RemoveModBehavour` (Prompt, AlwaysClear, NeverClear,
-//! ClearOnModifier — [re:d96028]); UIScaling
-//! `LastEditorScaleFactor` (100–300 %, [re:ce8c40]);
-//! UIStyle (stylesheets); UndoStages `MaxUndoSteps` (20..250, default 20; more than 50 asks);
-//! DocumentsPath `LocalDocumentsPath`. Confirm writes, Cancel discards.
+//! Preferences controls ↔ options (on showing): InvertButton
+//! `GuiDragDownToZoom`, InvertXButton `GuiDragLeftToScrollRight`,
+//! QuantizeREXButton `AllocatorQuantizeREX`, PreFadeButton
+//! `AuxesArePreFade`, MultiButton `PatternEditorRightClickMode`,
+//! ForceModeButton `ForcedLayersFallThrough`, ResetLayersButton
+//! `AllocatorClearLayersOnLoad`, ActiveSensingButton `SendActiveSensing`,
+//! RetardButton `SequencerRetardation`, RestoreOutputsButton
+//! `AllocatorRestoreOutputs` (default on), AutoAssign `AutoMIDICC` (on);
+//! MIDIModeGroup `MIDINumbering` (child ids, default 1); MetroType
+//! `MetronomeSound` (metronome folders, "Default"); ShadingMode
+//! `PatternEditorShadingMode` (Fixed, Adaptive, Cyclic, Off — [re:c192c5]);
+//! ThemeCombo (stylesheets here; v1 lists `Theme_*` files Einst does not
+//! ship); UndoStages `MaxUndoSteps` (at least 20, more than 50 asks);
+//! DocumentsPath `LocalDocumentsPath` (shown only). The DirectWrite and
+//! Launchpad rows are hidden, as v1 does with Launchpad off ([re:3a9b5d]).
 //!
-//! The documents path is written at once, not on Confirm (ev_7e0eff81…,
-//! ev_b8fdc944…): Browse ([re:448611]) asks for a folder ("Please choose
-//! a new the original documents folder", starting at the current one); Reset
-//! ([re:9ab38e]) asks "Are you sure you want to reset the Documents path
-//! to %s?"; the text box ([re:c24122]) reverts to the stored path unless
-//! the typed folder exists. Each write alerts "Changes will be applied the
-//! next time you start Dreist" once per panel showing.
+//! [re:3fca26]: every change is written at once; Finished closes and, when
+//! a toggle changed, tells the engine. Browse asks for a folder ("Please
+//! choose a new <product> documents folder"), Reset asks "Are you sure you
+//! want to reset the Documents path to %s?"; a new path, MIDI numbering,
+//! metronome or undo stages alert "Changes will be applied the next time
+//! you start <product>".
+//!
+//! v2-only, dormant (the v1 skin has no such controls): KeyboardButton
+//! `RespondToKeyboard`, ExtendedKeyboardButton `RespondToExtendedKeyboard`,
+//! RemMod `RemoveModBehavour`, UIScaling `LastEditorScaleFactor`, UIStyle.
 
 use dreist_gui::app::{App, MouseKind, UiEvent};
 use dreist_gui::paint::{Painter, RectF};
@@ -79,27 +81,47 @@ pub enum Kind {
     Export,
 }
 
-/// [re:a3f6c0] normalisation items (`NormalizeComboBox`).
+/// [re:8e3557] normalisation items (`NormalizeComboBox`).
 pub const NORMALIZE: [&str; 3] = ["Prompt if clipping detected", "Normalize if clipping detected", "Always Normalize"];
 
-/// Export panel settings, kept in the options file.
+/// [re:751e2d]: an output location's name (`Master`, `Sub output n`).
+pub fn export_output_name(o: usize) -> String {
+    if o == 0 { "Master".into() } else { dreist_engine::export::output_name(o) }
+}
+
+/// [re:751e2d]: the stored single output, by name; `Master` unless it is
+/// one of `outputs`.
+pub fn export_single_output(o: &Options, outputs: &[usize]) -> usize {
+    let name = o.string("ExportSingleOutput", "Master");
+    outputs.iter().copied().find(|&k| export_output_name(k) == name).unwrap_or(0)
+}
+
+/// [re:751e2d]: C `atoi` of the tail text, held to 0..=60 seconds.
+pub fn export_tail(o: &Options) -> f64 {
+    let t = o.string("ExportTailSecs", "0");
+    let t = t.trim_start();
+    let n: String = t.char_indices().take_while(|(i, c)| c.is_ascii_digit() || (*i == 0 && (*c == '-' || *c == '+'))).map(|(_, c)| c).collect();
+    (n.parse::<i64>().unwrap_or(0) as f64).clamp(0.0, 60.0)
+}
+
+/// Export panel settings, kept in the options file ([re:751e2d]).
 pub fn export_options(o: &Options, engine: usize) -> dreist_engine::export::Options {
     use dreist_engine::export::{Files, Normalize, Source};
     dreist_engine::export::Options {
-        source: match o.int("ExportSource", 2) {
+        source: match o.int("ExportSource", 0).clamp(0, 2) {
             0 => Source::AllEngines,
             1 => Source::Engine(engine),
             _ => Source::Song,
         },
-        files: match o.int("ExportOutputType", 0) {
-            1 => Files::Single(o.int("ExportSingleOutput", 0).clamp(0, dreist_engine::SUB_OUTPUTS as i64) as usize),
+        files: match o.int("ExportOutputType", 0).clamp(0, 2) {
+            1 => Files::Single(export_single_output(o, &(0..=dreist_engine::SUB_OUTPUTS).collect::<Vec<_>>())),
             2 => Files::AllOutputs,
             _ => Files::Mixdown,
         },
-        normalize: [Normalize::Prompt, Normalize::IfClipping, Normalize::Always][o.int("ExportNormalize", 1).clamp(0, 2) as usize],
-        tail: crate::conv::number64(&o.string("ExportTail", "2")).unwrap_or(2.0).max(0.0),
-        looped: o.bool("ExportLoop", false),
-        auto_crop: o.bool("ExportAutoCrop", false),
+        normalize: [Normalize::Prompt, Normalize::IfClipping, Normalize::Always][o.int("ExportNormalizeMode", 0).clamp(0, 2) as usize],
+        tail: export_tail(o),
+        looped: o.bool("ExportLoopMode", false),
+        auto_crop: o.bool("ExportAutoCropMode", false),
         render: crate::options::render_options_from(o),
     }
 }
@@ -115,25 +137,24 @@ pub struct Modals {
     export: Option<Vec<usize>>,
     /// Export panel's Export button was pressed (the editor asks for a path).
     pub export_requested: bool,
+    /// The outputs the single-output menu offers (set by the editor on
+    /// showing the Export panel).
+    pub export_outputs: Vec<usize>,
     pub open: Option<Kind>,
-    /// The panel on screen (sliding in, shown or sliding out).
+    /// The panel on screen.
     shown: Option<Kind>,
-    /// `shown` is sliding out.
-    closing: bool,
-    /// Preferences being edited (written on Confirm).
-    staged: Options,
+    /// A toggle changed this showing: Confirm tells the engine.
+    dirty: bool,
     pub options: Options,
     /// A UI scale tried from Preferences: the old factor and
     /// `LastEditorSize`, when it was applied, whether the prompt is open.
     scale_trial: Option<(i64, String, std::time::Instant, bool)>,
-    /// The running export job ([re:a6f883]).
+    /// The running export job ([re:ece5dd]).
     pub export_job: Option<crate::command::ExportProgress>,
     /// Its prompt or failure alert is open.
     export_alert: bool,
     /// Preferences › Browse was pressed (the editor runs the folder dialog).
     pub browse_requested: bool,
-    /// The documents-path alert was shown this time ([re:d8391c]).
-    docs_alerted: bool,
     /// The reset question or the restart alert is open.
     docs_prompt: Option<DocsPrompt>,
 }
@@ -143,88 +164,98 @@ enum DocsPrompt {
     Reset,
     Alert,
     /// More than 50 undo stages: Yes keeps them, No goes back to 20.
-    Undo(Vec<usize>),
+    Undo(Vec<usize>, i64),
+    /// The minimum alert: 20 is written once it closes.
+    UndoMin(Vec<usize>),
 }
 
 pub fn docs_restart() -> String {
     format!("Changes will be applied the next time you start {}", crate::product())
 }
+/// [re:3fca26]: the Browse dialog's title.
 #[cfg_attr(not(feature = "window"), allow(dead_code))]
-pub const DOCS_BROWSE_TITLE: &str = "Please choose a new documents folder";
+pub fn docs_browse_title() -> String {
+    format!("Please choose a new {} documents folder", crate::product())
+}
 
-/// [re:0d12fb]: the question asked 2 s after a new UI
+/// v2 only (no UI scaling in v1): the question asked 2 s after a new UI
 /// scale was applied.
 pub const KEEP_SCALE: &str = "Do you want to keep this UI scaling ratio?";
 
-/// Dialog slide tags (`UiEvent::Animated`).
-pub(crate) const DIALOG_IN: u32 = 0xd1a0;
-pub(crate) const DIALOG_OUT: u32 = 0xd1a1;
-/// Slide in / out duration used by every dialog (0x43fa0000).
-pub(crate) const DIALOG_MS: f32 = 500.0;
+/// v1's dialog shade over the window (`SynthEditorBase::AddDialogControl`,
+/// [re:24b9de]).
+pub(crate) const SHADE: Colour = Colour::rgba(32, 32, 32, 210);
 
-/// [re:56a48f] with the top
-/// edge (every caller): the dialog starts above the window, x centred
-/// (W/2 − w/2), and slides down to y = 0 (exponential).
-pub(crate) fn slide_in(app: &mut App, overlay: &[usize]) {
-    let w = app.ctrl(overlay).map(|c| c.rect.w).unwrap_or(0);
+/// Show a dialog as v1 does ([re:24b9de]): at once (no animation), centred in
+/// the window on both axes.
+pub(crate) fn place(app: &mut App, overlay: &[usize]) {
+    let Some((w, h)) = app.ctrl(overlay).map(|c| (c.rect.w, c.rect.h)) else { return };
     let mut p = overlay.to_vec();
     p.push(0);
     let Some(r) = app.ctrl(&p).map(|c| c.rect) else { return };
-    let x = w / 2 - r.w / 2;
-    app.animate_rect(&p, Rect::new(x, -r.h, r.w, r.h), Rect::new(x, 0, r.w, r.h), DIALOG_MS, dreist_gui::collapse::exponential, DIALOG_IN);
+    let q = Rect::new(w / 2 - r.w / 2, h / 2 - r.h / 2, r.w, r.h);
+    if let Some(c) = app.ctrl_mut(&p) {
+        c.set_rect(q);
+    }
 }
 
-/// Slide out [re:2e49b1] (top edge, logarithmic):
-/// back above the window; the shade goes when it finishes.
-pub(crate) fn slide_out(app: &mut App, overlay: &[usize]) {
-    let mut p = overlay.to_vec();
-    p.push(0);
-    let Some(r) = app.ctrl(&p).map(|c| c.rect) else { return };
-    app.animate_rect(&p, r, Rect::new(r.x, -r.h, r.w, r.h), DIALOG_MS, dreist_gui::collapse::curve, DIALOG_OUT);
-}
-
-/// One dialog's slide state (for dialogs other than the `Modals` trio).
+/// One dialog's shown state (for dialogs other than the `Modals` trio).
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) struct Slide {
     shown: bool,
-    closing: bool,
 }
 
 impl Slide {
-    /// Start sliding in / out to follow `open`; whether the overlay shows.
+    /// Show / hide at once to follow `open`; whether the overlay shows.
     pub fn sync(&mut self, app: &mut App, overlay: &[usize], open: bool) -> bool {
         if open && !self.shown {
-            slide_in(app, overlay);
-            self.shown = true;
-            self.closing = false;
-        } else if !open && self.shown && !self.closing {
-            slide_out(app, overlay);
-            self.closing = true;
+            place(app, overlay);
         }
-        self.shown
-    }
-
-    /// The slide-out finished: hide.
-    pub fn animated(&mut self, app: &mut App, overlay: &[usize], ev: &UiEvent) -> bool {
-        match ev {
-            UiEvent::Animated { path, tag: DIALOG_OUT } if self.closing && path.starts_with(overlay) => {
-                self.shown = false;
-                self.closing = false;
-                if let Some(o) = app.ctrl_mut(overlay) {
-                    o.visible = false;
-                }
-                true
-            }
-            _ => false,
+        self.shown = open;
+        if let Some(o) = app.ctrl_mut(overlay) {
+            o.visible = open;
         }
+        open
     }
 }
 
+/// A dialog overlay from `rel` ([re:2a01cd]): with a `title`, the panel sits in
+/// a `ModalPanelBackgroundStyle` frame 10 px wider and 35 px taller, at
+/// (5, 29), under a `ModalTitleLabelStyle` label at (5, 0) as wide as the
+/// panel and 30 px high.
 pub(crate) fn overlay(skin: &mut Skin, root: &mut Ctrl, rel: &str, name: &str) -> Result<Option<Vec<usize>>, EditorError> {
+    overlay_titled(skin, root, rel, name, "")
+}
+
+pub(crate) fn overlay_titled(skin: &mut Skin, root: &mut Ctrl, rel: &str, name: &str, title: &str) -> Result<Option<Vec<usize>>, EditorError> {
     let (w, h) = (root.rect.w, root.rect.h);
     // A dialog the UI set does not have stays closed.
     let Some(rel) = skin.find(rel) else { return Ok(None) };
     let Some(mut panel) = skin.load_skin(&rel).map_err(err)?.children.into_iter().next() else { return Ok(None) };
+    if !title.is_empty() {
+        let (cw, ch) = (panel.rect.w, panel.rect.h);
+        panel.set_rect(Rect::new(5, 29, cw, ch));
+        let label = Ctrl {
+            class: "CtrlLabel".into(),
+            name: "DialogTitle".into(),
+            style: "ModalTitleLabelStyle".into(),
+            text: title.into(),
+            rect: Rect::new(5, 0, cw, 30),
+            visible: true,
+            enabled: true,
+            ..Ctrl::default()
+        };
+        panel = Ctrl {
+            class: "CtrlPanel".into(),
+            name: "DialogFrame".into(),
+            style: "ModalPanelBackgroundStyle".into(),
+            rect: Rect::new(0, 0, cw + 10, ch + 35),
+            visible: true,
+            enabled: true,
+            children: vec![panel, label],
+            ..Ctrl::default()
+        };
+    }
     let (pw, ph) = (panel.rect.w.min(w), panel.rect.h.min(h));
     panel.set_rect(Rect::new((w - pw) / 2, (h - ph) / 2, pw, ph));
     let mut o = Ctrl {
@@ -249,18 +280,25 @@ fn camel(s: &str) -> String {
 
 impl Modals {
     pub fn build(skin: &mut Skin, root: &mut Ctrl) -> Result<Modals, EditorError> {
+        // [re:3d40d0] untitled; [re:6039df] "<product> Preferences";
+        // [re:0dfe90] "Export Audio".
         let about = overlay(skin, root, "AboutPanel.skin", "AboutOverlay")?;
-        let prefs = overlay(skin, root, "OptionsPanel.skin", "PreferencesOverlay")?;
-        let export = overlay(skin, root, "ExportPanel.skin", "ExportOverlay")?;
-        // The progress bar shows only while a job runs (timer tick).
+        let prefs = overlay_titled(skin, root, "OptionsPanel.skin", "PreferencesOverlay", &format!("{} Preferences", crate::product()))?;
+        let export = overlay_titled(skin, root, "ExportPanel.skin", "ExportOverlay", "Export Audio")?;
+        // [re:0dfe90]: the progress label and bar show only while a job
+        // runs ([re:9106dd]).
         if let Some(c) = export.as_ref().and_then(|p| {
             let mut c = &mut *root;
             for &i in p {
                 c = c.children.get_mut(i)?;
             }
-            c.find_mut("ProgressBar")
+            Some(c)
         }) {
-            c.visible = false;
+            for n in ["ProgressBar", "ProgressLabel"] {
+                if let Some(k) = c.find_mut(n) {
+                    k.visible = false;
+                }
+            }
         }
         // v1's experimental Windows text renderer and controller support
         // are not ported.
@@ -286,16 +324,15 @@ impl Modals {
             prefs,
             export,
             export_requested: false,
+            export_outputs: vec![0],
             open: None,
             shown: None,
-            closing: false,
-            staged: options.clone(),
+            dirty: false,
             options,
             scale_trial: None,
             export_job: None,
             export_alert: false,
             browse_requested: false,
-            docs_alerted: false,
             docs_prompt: None,
         })
     }
@@ -329,8 +366,7 @@ impl Modals {
 
     pub fn show(&mut self, app: &mut App, k: Kind) {
         self.open = Some(k);
-        self.staged = self.options.clone();
-        self.docs_alerted = false;
+        self.dirty = false;
         if k == Kind::About {
             if let Some(o) = self.about.clone().and_then(|p| app.ctrl_mut(&p)) {
                 // v1's panel leaves the text to code: a label in `AboutView`.
@@ -360,21 +396,12 @@ impl Modals {
     }
 
     pub fn sync(&mut self, app: &mut App) {
-        // Slide the shown dialog out when it closed or another opened, then
-        // the new one in.
-        if self.shown.is_some() && self.shown != self.open && !self.closing {
-            if let Some(p) = self.shown.and_then(|k| self.path(k).cloned()) {
-                slide_out(app, &p);
-                self.closing = true;
-            } else {
-                self.shown = None;
-            }
-        }
-        if self.shown.is_none() {
+        // v1 shows and removes dialogs at once.
+        if self.shown != self.open {
             if let Some(p) = self.open.and_then(|k| self.path(k).cloned()) {
-                slide_in(app, &p);
-                self.shown = self.open;
+                place(app, &p);
             }
+            self.shown = self.open;
         }
         let open = self.open;
         let shown = self.shown;
@@ -390,7 +417,7 @@ impl Modals {
         if open != Some(Kind::Preferences) {
             return;
         }
-        let s = self.staged.clone();
+        let s = self.options.clone();
         let styles = self.styles();
         let Some(p) = self.prefs.clone() else { return };
         let editing = app.is_editing();
@@ -414,37 +441,29 @@ impl Modals {
                 "UIStyle" | "ThemeCombo" => {
                     c.text = style_label(&s.string("StyleSheet", styles.iter().find(|n| n.as_str() == dreist_gui::skin::default_theme()).map(String::as_str).unwrap_or(""))).to_string()
                 }
-                "UndoStages" => {
-                    let v = s.int("MaxUndoSteps", UNDO_DEFAULT).clamp(UNDO_MIN, 250);
-                    c.set_attr("realMin", "1".into());
-                    c.set_attr("realMax", "250".into());
-                    c.value = v as f32;
-                    c.text = v.to_string();
-                }
+                "UndoStages" if !editing => c.text = s.int("MaxUndoSteps", UNDO_DEFAULT).max(UNDO_MIN).to_string(),
                 "DocumentsPath" if !editing => c.text = s.string("LocalDocumentsPath", &default_documents()),
                 _ => {}
             }
         });
     }
 
-    /// [re:f988fc].
+    /// [re:751e2d].
     fn sync_export(&mut self, app: &mut App) {
         let o = self.options.clone();
         let editing = app.is_editing();
         let Some(p) = self.export.clone() else { return };
         let Some(panel) = app.ctrl_mut(&p) else { return };
-        let (src, ty) = (o.int("ExportSource", 2), o.int("ExportOutputType", 0));
+        let (src, ty) = (o.int("ExportSource", 0).clamp(0, 2), o.int("ExportOutputType", 0).clamp(0, 2));
+        let single = export_output_name(export_single_output(&o, &self.export_outputs));
         panel.walk_mut(&mut |c: &mut Ctrl| match c.name.as_str() {
             "SourceButtonGroup" => c.children.iter_mut().enumerate().for_each(|(i, b)| b.on = i as i64 == src),
             "OutputTypeButtonGroup" => c.children.iter_mut().enumerate().for_each(|(i, b)| b.on = i as i64 == ty),
-            "SingleOutputComboBox" => {
-                c.enabled = ty == 1;
-                c.text = dreist_engine::export::output_name(o.int("ExportSingleOutput", 0).max(0) as usize);
-            }
-            "NormalizeComboBox" => c.text = NORMALIZE[o.int("ExportNormalize", 1).clamp(0, 2) as usize].into(),
-            "TailTextBox" if !editing => c.text = o.string("ExportTail", "2"),
-            "LoopButton" => c.on = o.bool("ExportLoop", false),
-            "AutoCropButton" => c.on = o.bool("ExportAutoCrop", false),
+            "SingleOutputComboBox" => c.text = single.clone(),
+            "NormalizeComboBox" => c.text = NORMALIZE[o.int("ExportNormalizeMode", 0).clamp(0, 2) as usize].into(),
+            "TailTextBox" if !editing => c.text = format!("{:.3}", export_tail(&o)),
+            "LoopButton" => c.on = o.bool("ExportLoopMode", false),
+            "AutoCropButton" => c.on = o.bool("ExportAutoCropMode", false),
             _ => {}
         });
     }
@@ -457,10 +476,15 @@ impl Modals {
                 match (parent.as_str(), name.as_str()) {
                     ("SourceButtonGroup", _) => self.options.set("ExportSource", i),
                     ("OutputTypeButtonGroup", _) => self.options.set("ExportOutputType", i),
-                    (_, "SingleOutputComboBox") => app.open_menu(path, (0..=dreist_engine::SUB_OUTPUTS).map(dreist_engine::export::output_name).collect(), None),
+                    // [re:654f3c]: opening the output menu picks Single
+                    // Output; it lists the assigned outputs.
+                    (_, "SingleOutputComboBox") => {
+                        self.options.set("ExportOutputType", 1);
+                        app.open_menu(path, self.export_outputs.iter().map(|&k| export_output_name(k)).collect(), None);
+                    }
                     (_, "NormalizeComboBox") => app.open_menu(path, NORMALIZE.iter().map(|s| s.to_string()).collect(), None),
-                    (_, "LoopButton") => self.options.set("ExportLoop", *on),
-                    (_, "AutoCropButton") => self.options.set("ExportAutoCrop", *on),
+                    (_, "LoopButton") => self.options.set("ExportLoopMode", *on),
+                    (_, "AutoCropButton") => self.options.set("ExportAutoCropMode", *on),
                     // Cancel aborts a running job, else closes.
                     (_, "CancelButton") => match &self.export_job {
                         Some(j) => {
@@ -478,16 +502,20 @@ impl Modals {
             }
             UiEvent::MenuSelected { anchor, name, index } if self.mine(anchor) => {
                 match name.as_str() {
-                    "SingleOutputComboBox" => self.options.set("ExportSingleOutput", *index),
-                    "NormalizeComboBox" => self.options.set("ExportNormalize", *index),
+                    "SingleOutputComboBox" => {
+                        if let Some(&k) = self.export_outputs.get(*index) {
+                            self.options.set("ExportSingleOutput", export_output_name(k));
+                        }
+                    }
+                    "NormalizeComboBox" => self.options.set("ExportNormalizeMode", *index),
                     _ => {}
                 }
                 self.options.save();
                 true
             }
             UiEvent::TextCommitted { path, name, text } if self.mine(path) && name == "TailTextBox" => {
-                let v = crate::conv::number64(text).unwrap_or(2.0).clamp(0.0, 60.0);
-                self.options.set("ExportTail", v);
+                // [re:654f3c]: the text as typed (read back with `atoi`).
+                self.options.set("ExportTailSecs", text.as_str());
                 self.options.save();
                 true
             }
@@ -512,10 +540,10 @@ impl Modals {
         })
     }
 
-    /// [re:6fb3f8] while the job runs: the progress
-    /// bar shows; a clipping question opens as an alert (Yes normalises);
-    /// at the end a failure shows "Export failed. Error reason:\n%s" and
-    /// the panel closes (500 ms Logarithmic).
+    /// [re:9106dd] while the job runs: the progress
+    /// label and bar show; a clipping question opens as an alert (Yes
+    /// normalises); at the end a failure shows "Export failed. Error
+    /// reason:\n%s" and the panel closes.
     fn tick_export(&mut self, app: &mut App) -> bool {
         let Some(job) = self.export_job.clone() else { return false };
         let (progress, prompt, result) = {
@@ -527,6 +555,10 @@ impl Modals {
         if let Some(c) = bar.as_ref().and_then(|b| app.ctrl_mut(b)) {
             c.visible = result.is_none();
             c.value = progress.clamp(0.0, 1.0);
+        }
+        let label = panel.as_ref().and_then(|p| app.ctrl(p).and_then(|c| c.path_of("ProgressLabel")).map(|q| [p.clone(), q].concat()));
+        if let Some(c) = label.as_ref().and_then(|l| app.ctrl_mut(l)) {
+            c.visible = result.is_none();
         }
         if let Some(q) = prompt {
             if !self.export_alert {
@@ -571,10 +603,8 @@ impl Modals {
         if keep {
             return;
         }
-        for o in [&mut self.options, &mut self.staged] {
-            o.set("LastEditorScaleFactor", old);
-            o.set("LastEditorSize", &old_size);
-        }
+        self.options.set("LastEditorScaleFactor", old);
+        self.options.set("LastEditorSize", &old_size);
         self.options.save();
     }
 
@@ -583,20 +613,32 @@ impl Modals {
         self.prefs.as_ref().and_then(|p| app.ctrl(p).and_then(|c| c.path_of("DocumentsPath")).map(|q| [p.clone(), q].concat())).unwrap_or_default()
     }
 
-    /// [re:eb8243] straight away, then the
-    /// restart alert the first time this showing.
+    /// [re:3fca26]: written straight away, then the restart alert.
     pub fn write_documents_path(&mut self, app: &mut App, path: &str) {
-        for o in [&mut self.options, &mut self.staged] {
-            o.set("LocalDocumentsPath", path);
-        }
+        self.options.set("LocalDocumentsPath", path);
         self.options.save();
-        if !self.docs_alerted {
-            self.docs_alerted = true;
-            self.docs_prompt = Some(DocsPrompt::Alert);
-            let anchor = self.docs_anchor(app);
-            app.open_menu(&anchor, vec![docs_restart()], None);
-        }
+        let anchor = self.docs_anchor(app);
+        self.restart_alert(app, &anchor);
         self.sync(app);
+    }
+
+    /// [re:3fca26]: "Changes will be applied the next time you start …".
+    fn restart_alert(&mut self, app: &mut App, anchor: &[usize]) {
+        self.docs_prompt = Some(DocsPrompt::Alert);
+        app.open_menu(anchor, vec![docs_restart()], None);
+    }
+
+    /// [re:3fca26]: write the undo stages; alert when they changed.
+    fn write_undo(&mut self, app: &mut App, path: &[usize], v: i64) {
+        let old = self.options.int("MaxUndoSteps", UNDO_DEFAULT).max(UNDO_MIN);
+        self.options.set("MaxUndoSteps", v);
+        self.options.save();
+        if let Some(c) = app.ctrl_mut(path) {
+            c.text = v.to_string();
+        }
+        if old != v {
+            self.restart_alert(app, path);
+        }
     }
 
     /// The folder the Browse dialog starts in.
@@ -611,18 +653,18 @@ impl Modals {
                 // Yes / No prompt: 0 = Yes (item 2).
                 match q {
                     DocsPrompt::Reset if *index == 2 => self.write_documents_path(app, &default_documents()),
-                    DocsPrompt::Undo(path) if *index != 2 => {
-                        self.staged.set("MaxUndoSteps", UNDO_MIN);
-                        if let Some(c) = app.ctrl_mut(&path) {
-                            c.value = UNDO_MIN as f32;
-                        }
-                    }
+                    DocsPrompt::Undo(path, v) => self.write_undo(app, &path, if *index == 2 { v } else { UNDO_MIN }),
+                    DocsPrompt::UndoMin(path) => self.write_undo(app, &path, UNDO_MIN),
                     _ => {}
                 }
                 return true;
             }
             if app.menu.is_none() {
                 self.docs_prompt = None;
+                // A dismissed undo question or minimum alert takes 20.
+                if let DocsPrompt::Undo(path, _) | DocsPrompt::UndoMin(path) = q {
+                    self.write_undo(app, &path, UNDO_MIN);
+                }
             }
         }
         // The export alerts: the clipping question's answer (Yes = item 2).
@@ -654,14 +696,6 @@ impl Modals {
                 self.keep_scale(true);
             }
         }
-        if let UiEvent::Animated { path, tag: DIALOG_OUT } = ev {
-            if self.closing && self.shown.and_then(|k| self.path(k)).is_some_and(|p| path.starts_with(p)) {
-                self.closing = false;
-                self.shown = None;
-                self.sync(app);
-                return true;
-            }
-        }
         let Some(k) = self.open else { return false };
         if k == Kind::Export {
             return self.handle_export(app, ev);
@@ -672,14 +706,19 @@ impl Modals {
                 true
             }
             UiEvent::Clicked { path, name, on, .. } if self.mine(path) => {
+                // [re:3fca26]: every change is written at once.
                 if let Some((_, key, _)) = TOGGLES.iter().find(|(n, _, _)| n == name) {
-                    self.staged.set(key, *on);
+                    self.options.set(key, *on);
+                    self.options.save();
+                    self.dirty = true;
                     return true;
                 }
                 let parent = app.ctrl(&path[..path.len() - 1]).map(|c| c.name.clone()).unwrap_or_default();
                 if parent == "MIDIModeGroup" {
                     let id = app.ctrl(path).map(|c| c.id).unwrap_or(0);
-                    self.staged.set("MIDINumbering", id);
+                    self.options.set("MIDINumbering", id);
+                    self.options.save();
+                    self.restart_alert(app, path);
                     return true;
                 }
                 if let Some(items) = self.items(name) {
@@ -687,11 +726,10 @@ impl Modals {
                     return true;
                 }
                 match name.as_str() {
+                    // [re:3fca26]: Finished tells the engine when a toggle
+                    // changed, and closes.
                     "ConfirmButton" => {
-                        self.options = self.staged.clone();
-                        self.options.save();
-                        self.options_confirmed = true;
-                        crate::pattern::set_shading_mode(&self.options.string("PatternEditorShadingMode", SHADING[0]));
+                        self.options_confirmed = std::mem::take(&mut self.dirty);
                         self.open = None;
                     }
                     "CancelButton" => self.open = None,
@@ -709,13 +747,23 @@ impl Modals {
                 let Some(items) = self.items(name) else { return true };
                 let Some(v) = items.get(*index) else { return true };
                 match name.as_str() {
-                    "MetroType" => self.staged.set("MetronomeSound", v),
-                    "ShadingMode" => self.staged.set("PatternEditorShadingMode", v),
-                    "RemMod" => self.staged.set("RemoveModBehavour", REMOVE_BEHAVIOUR[(*index).min(3)]),
-                    // [re:0d12fb] [re:e257c1]: a new scale
-                    // applies at once (scale, host resize, options
-                    // `LastEditorScaleFactor` / `LastEditorSize`), and 2 s
-                    // later the [re:275d67] callback asks whether to keep it.
+                    "MetroType" => {
+                        self.options.set("MetronomeSound", v);
+                        self.options.save();
+                        self.restart_alert(app, anchor);
+                    }
+                    "ShadingMode" => {
+                        self.options.set("PatternEditorShadingMode", v);
+                        self.options.save();
+                        crate::pattern::set_shading_mode(v);
+                    }
+                    "RemMod" => {
+                        self.options.set("RemoveModBehavour", REMOVE_BEHAVIOUR[(*index).min(3)]);
+                        self.options.save();
+                    }
+                    // v2 only: a new scale applies at once (scale, host
+                    // resize, options `LastEditorScaleFactor` /
+                    // `LastEditorSize`), and 2 s later asks whether to keep it.
                     "UIScaling" => {
                         let new = (SCALINGS[(*index).min(10)] * 100.0).floor() as i64;
                         let old = self.options.int("LastEditorScaleFactor", 100);
@@ -724,20 +772,15 @@ impl Modals {
                             let f = new as f32 / 100.0;
                             let old_size = self.options.string("LastEditorSize", "0,0");
                             self.scale_trial = Some((old, old_size, std::time::Instant::now(), false));
-                            for o in [&mut self.options, &mut self.staged] {
-                                o.set("LastEditorScaleFactor", new);
-                                o.set("LastEditorSize", format!("{},{}", (w as f32 * f).floor() as i32, (h as f32 * f).floor() as i32));
-                            }
+                            self.options.set("LastEditorScaleFactor", new);
+                            self.options.set("LastEditorSize", format!("{},{}", (w as f32 * f).floor() as i32, (h as f32 * f).floor() as i32));
                             self.options.save();
                         }
                     }
-                    // [re:0d12fb] [re:dfe5ca]: written at once
-                    // and applied ([re:cac947], repaint).
+                    // [re:3fca26]: written at once and applied (repaint).
                     "UIStyle" | "ThemeCombo" => {
                         let name = if v == DEFAULT_STYLE_LABEL { dreist_gui::skin::default_theme().to_string() } else { v.to_string() };
-                        for o in [&mut self.options, &mut self.staged] {
-                            o.set("StyleSheet", &name);
-                        }
+                        self.options.set("StyleSheet", &name);
                         self.options.save();
                         self.style_changed = Some(name);
                     }
@@ -745,36 +788,24 @@ impl Modals {
                 }
                 true
             }
-            // [re:3fca26]: at least 20 undo stages; more than 50 asks.
-            UiEvent::ValueChanged { path, name, value, .. } if self.mine(path) && name == "UndoStages" => {
-                let before = self.staged.int("MaxUndoSteps", UNDO_DEFAULT);
-                let mut v = *value as i64;
-                if v < UNDO_MIN {
-                    v = UNDO_MIN;
+            // [re:3fca26]: the typed number (leading digits, else 0);
+            // under 20 alerts and takes 20, over 50 asks (No takes 20).
+            UiEvent::TextCommitted { path, name, text } if self.mine(path) && name == "UndoStages" => {
+                let t = text.trim_start();
+                let v: i64 = t.char_indices().take_while(|(i, ch)| ch.is_ascii_digit() || (*i == 0 && (*ch == '-' || *ch == '+'))).map(|(_, ch)| ch).collect::<String>().parse().unwrap_or(0);
+                let cur = self.options.int("MaxUndoSteps", UNDO_DEFAULT).max(UNDO_MIN);
+                if v == cur {
                     if let Some(c) = app.ctrl_mut(path) {
-                        c.value = v as f32;
+                        c.text = v.to_string();
                     }
-                    self.docs_prompt = Some(DocsPrompt::Alert);
+                } else if v < UNDO_MIN {
+                    self.docs_prompt = Some(DocsPrompt::UndoMin(path.clone()));
                     app.open_menu(path, vec!["You must have a minimum of 20 undo stages".into()], None);
-                } else if v > 50 && before <= 50 {
-                    self.docs_prompt = Some(DocsPrompt::Undo(path.clone()));
+                } else if v > 50 {
+                    self.docs_prompt = Some(DocsPrompt::Undo(path.clone(), v));
                     app.open_menu(path, vec!["Are you sure you want this many undo stages? This can dramatically increase memory usage!".into(), String::new(), "Yes".into(), "No".into()], None);
-                }
-                self.staged.set("MaxUndoSteps", v);
-                true
-            }
-            UiEvent::TextCommitted { path, name, text } if self.mine(path) && name == "DocumentsPath" => {
-                let t = text.trim();
-                if std::path::Path::new(t).is_dir() {
-                    if t != self.documents_path() {
-                        self.write_documents_path(app, t);
-                    }
                 } else {
-                    // Not a folder: back to the stored path.
-                    let stored = self.documents_path();
-                    if let Some(c) = app.ctrl_mut(path) {
-                        c.text = stored;
-                    }
+                    self.write_undo(app, path, v);
                 }
                 true
             }
@@ -788,13 +819,12 @@ impl Modals {
         if c.overload != "ModalOverlay" {
             return false;
         }
-        // The dialog shade (colour 9 = (32, 32, 32, 180)).
-        p.fill_rect(RectF::new(0.0, 0.0, c.rect.w as f32, c.rect.h as f32), Colour::rgba(32, 32, 32, 180));
+        p.fill_rect(RectF::new(0.0, 0.0, c.rect.w as f32, c.rect.h as f32), SHADE);
         true
     }
 }
 
-/// [re:9c6245].
+/// [re:a5b222].
 pub fn default_documents() -> String {
     crate::options::default_documents()
 }
@@ -823,14 +853,20 @@ mod export_tests {
         crate::app::test_setup();
         let mut o = Options::default();
         let d = export_options(&o, 3);
-        assert_eq!((d.source, d.files, d.normalize, d.tail, d.looped), (Source::Song, Files::Mixdown, Normalize::IfClipping, 2.0, false));
+        // [re:751e2d] defaults: all engines, mixdown, prompt, no tail.
+        assert_eq!((d.source, d.files, d.normalize, d.tail, d.looped), (Source::AllEngines, Files::Mixdown, Normalize::Prompt, 0.0, false));
         o.set("ExportSource", 1);
         o.set("ExportOutputType", 1);
-        o.set("ExportSingleOutput", 5);
-        o.set("ExportNormalize", 2);
-        o.set("ExportTail", "0.5");
-        o.set("ExportLoop", true);
+        o.set("ExportSingleOutput", "Sub output 5");
+        o.set("ExportNormalizeMode", 2);
+        o.set("ExportTailSecs", "7.9s");
+        o.set("ExportLoopMode", true);
         let x = export_options(&o, 3);
-        assert_eq!((x.source, x.files, x.normalize, x.tail, x.looped), (Source::Engine(3), Files::Single(5), Normalize::Always, 0.5, true));
+        assert_eq!((x.source, x.files, x.normalize, x.tail, x.looped), (Source::Engine(3), Files::Single(5), Normalize::Always, 7.0, true));
+        o.set("ExportTailSecs", "90");
+        assert_eq!(export_tail(&o), 60.0);
+        // Not an assigned output: Master.
+        assert_eq!(export_single_output(&o, &[0, 2]), 0);
+        assert_eq!(export_output_name(0), "Master");
     }
 }

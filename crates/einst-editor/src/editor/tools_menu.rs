@@ -111,7 +111,10 @@ impl Editor {
                     // [re:af38f1].
                     MainAction::FindMissing => self.filefind.show(filefind::missing_files(&self.model)),
                     // [re:c7a8f1].
-                    MainAction::Export => self.modals.show(&mut self.app, modal::Kind::Export),
+                    MainAction::Export => {
+                        self.modals.export_outputs = dreist_engine::export::assigned_outputs(&self.model.doc);
+                        self.modals.show(&mut self.app, modal::Kind::Export);
+                    }
                     // The MIDI console (`MIDIDisplayPanel.skin`).
                     MainAction::MidiConsole => {
                         self.midiconsole.show();

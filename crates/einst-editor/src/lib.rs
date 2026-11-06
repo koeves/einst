@@ -389,7 +389,7 @@ impl Editor {
         }
         ed.outbox.extend(startup);
         // `e_registryOptionsChanged` [ForcedLayersFallThrough,
-        // SendActiveSensing] ([re:0d12fb] posts it on
+        // SendActiveSensing] ([re:3fca26] posts it on
         // Confirm; the engine also reads it when built).
         let o = &ed.modals.options;
         let reg = command::msg(dreist_engine::binding::id::REGISTRY_OPTIONS_CHANGED, &[], &[o.bool("ForcedLayersFallThrough", false) as i32 as f32, o.bool("SendActiveSensing", false) as i32 as f32]);
@@ -455,6 +455,7 @@ impl Editor {
         } else {
             modal::Kind::Preferences
         };
+        self.modals.export_outputs = dreist_engine::export::assigned_outputs(&self.model.doc);
         self.modals.show(&mut self.app, k);
         self.sync();
     }

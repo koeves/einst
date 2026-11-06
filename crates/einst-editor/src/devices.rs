@@ -323,13 +323,6 @@ impl Devices {
 
     /// Whether the event was the panel's (the panels are modal).
     pub fn handle(&mut self, app: &mut App, ev: &UiEvent) -> bool {
-        for p in [Panel::Audio, Panel::Midi] {
-            let Some(o) = self.overlay(p).cloned() else { continue };
-            let slide = if p == Panel::Audio { &mut self.audio_slide } else { &mut self.midi_slide };
-            if slide.animated(app, &o, ev) {
-                return true;
-            }
-        }
         if self.open.is_none() {
             return false;
         }
