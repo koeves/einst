@@ -90,6 +90,14 @@ pub struct PatternPanel {
     selectors: Option<Vec<usize>>,
     /// Multi-tool press on a step ([re:86dd7e]..).
     brush: Option<Brush>,
+    /// The left button went down on a step and is held ([re:f07c25]).
+    left_held: bool,
+    /// A right press came while the left button was held: the next
+    /// release is the right button's.
+    right_in_left: bool,
+    /// Insert pattern last drawn over the brushed steps by right presses
+    /// during this brush ([re:ced31a]); once one is drawn the brush stops.
+    insert_cycle: Option<usize>,
     /// Dragging the step selection from (track, step): moved on release,
     /// copied with alt.
     sel_drag: Option<(usize, usize)>,
@@ -118,8 +126,8 @@ pub struct PatternPanel {
     /// Track, lane and first step the graph menu acts on (right-click on
     /// a graph; None = the selected track's lane from step 0).
     graph_target: Option<(usize, usize, usize)>,
-    /// The lane menu shows the FX lanes.
-    lane_menu_fx: bool,
+    /// The graph type menu's items while it is open.
+    lane_menu: Vec<LaneItem>,
     /// Lane values when a graph knob started moving (copied),
     /// the knob, and the last offset.
     graph_snap: Option<(String, Vec<f32>, f32)>,
@@ -467,11 +475,16 @@ pub(crate) fn write_step(out: &mut Vec<Command>, e: usize, pat: i32, track: usiz
     }
 }
 
-/// Pattern editor view: horizontal zoom (steps magnified ×h_zoom), row
+/// Pattern editor view: horizontal zoom (steps magnified ×zoom), row
 /// height multiplier, and the first visible step / row.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct PatternView {
+    /// The horizontal zoom last set with the buttons (the zoom of the
+    /// pattern they were pressed on; the layout reads [`Self::zoom`]).
     pub h_zoom: u32,
+    /// Horizontal zoom per pattern, 1..=[`MAX_ZOOM`] ([re:19fda2]: v1 keeps
+    /// it in the engine state per pattern).
+    pub zoom: [u32; 24],
     pub v_zoom: f32,
     pub h_scroll: usize,
     pub v_scroll: usize,
@@ -483,7 +496,17 @@ pub struct PatternView {
 
 impl Default for PatternView {
     fn default() -> Self {
-        PatternView { h_zoom: 1, v_zoom: 1.0, h_scroll: 0, v_scroll: 0, lane: 0, drag_lane: 0 }
+        PatternView { h_zoom: 1, zoom: [1; 24], v_zoom: 1.0, h_scroll: 0, v_scroll: 0, lane: 0, drag_lane: 0 }
+    }
+}
+
+/// Highest horizontal zoom ([re:213965]).
+pub const MAX_ZOOM: u32 = 20;
+
+impl PatternView {
+    /// Pattern `p`'s horizontal zoom.
+    pub fn zoom_of(&self, p: usize) -> u32 {
+        self.zoom.get(p).copied().unwrap_or(1).clamp(1, MAX_ZOOM)
     }
 }
 
@@ -491,9 +514,74 @@ impl Default for PatternView {
 const MARKER_W: f32 = 10.0;
 const MARKER_H: f32 = 15.0;
 
-/// Lanes offered directly in the graph menu; the FX lanes go in a second
-/// menu.
+/// v1's graph types before the pad FX lanes, in its order (step graph
+/// item names [re:676d2a]) with their lanes here. v1's Duration and Link to
+/// previous (items 8 and 9) are not offered ([re:822910]).
+const GRAPH_TYPES: [(&str, usize); 21] = [
+    ("Velocity", 0),
+    ("Pan", 1),
+    ("Repeats", 2),
+    ("Shift", 3),
+    ("Reverse", 4),
+    ("Coarse Pitch", 6),
+    ("Fine Pitch", 7),
+    ("Start Point", 8),
+    ("Filter Cutoff", 11),
+    ("Filter Resonance", 12),
+    ("Filter Type", 13),
+    ("Filter Drive", 14),
+    ("Force Layer", 15),
+    ("Send 1", 19),
+    ("Send 2", 20),
+    ("Send 3", 21),
+    ("Send 4", 22),
+    ("Amp env depth 1", dreist_formats::params::V1_ROUTING_LANE),
+    ("Amp env depth 2", dreist_formats::params::V1_ROUTING_LANE + 1),
+    ("Free env depth 1", dreist_formats::params::V1_ROUTING_LANE + 2),
+    ("Free env depth 2", dreist_formats::params::V1_ROUTING_LANE + 3),
+];
+
+/// Lanes before the pad FX lanes (the Drag Edits list).
 const CORE_LANES: usize = 39;
+
+/// First pad FX lane (FX 1 Active); each of the six slots has nine.
+const FX_LANE: usize = CORE_LANES;
+
+/// What a graph type menu item picks.
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum LaneItem {
+    Lane(usize),
+    /// The pad FX slot's submenu.
+    Fx(usize),
+    None,
+}
+
+/// v1's graph type menu ([re:822910]) for `track`: the graph types
+/// (Repeats only on one-shot pads), a divider, then "Pad FX n (type)" per
+/// pad FX slot, disabled while the slot has no effect.
+fn graph_type_menu(model: &Model, e: usize, track: usize) -> (Vec<String>, Vec<LaneItem>) {
+    let one_shot = model.pad_one_shot(e, track);
+    let mut items: Vec<(String, LaneItem)> = GRAPH_TYPES.iter().map(|&(n, l)| (dreist_gui::menu::item(n, l != lane::REPEATS || one_shot), LaneItem::Lane(l))).collect();
+    items.push((String::new(), LaneItem::None));
+    let fx = crate::fxchain::effects(model, crate::fxchain::Target::Pad(e, track));
+    for slot in 0..6 {
+        let kind = fx.iter().find(|f| f.0 == slot).map_or(0, |f| f.1);
+        let name = dreist_formats::params::EFFECT_TYPES.get(kind).copied().unwrap_or_default();
+        items.push((dreist_gui::menu::item(format!("Pad FX {} ({name}) ▸", slot + 1), kind != 0), LaneItem::Fx(slot)));
+    }
+    items.into_iter().unzip()
+}
+
+/// A pad FX slot's graph types ([re:f35536]): Active, Mix, Level and the
+/// effect's parameters (v1 numbers them on from the slot's fourth lane
+/// however many the effect has).
+fn graph_fx_menu(model: &Model, e: usize, track: usize, slot: usize) -> (Vec<String>, Vec<LaneItem>) {
+    let fx = crate::fxchain::effects(model, crate::fxchain::Target::Pad(e, track));
+    let kind = fx.iter().find(|f| f.0 == slot).map_or(0, |f| f.1);
+    let base = FX_LANE + slot * 9;
+    let names = ["Active", "Mix", "Level"].into_iter().chain(dreist_formats::params::effect_param_names(kind).iter().copied());
+    names.enumerate().filter(|(k, _)| base + k < dreist_engine::pattern::LANES).map(|(k, n)| (n.to_string(), LaneItem::Lane(base + k))).unzip()
+}
 
 pub(crate) fn lane_label(lane: usize) -> String {
     // v1's routing-depth lanes, as its envelope rows name them.
@@ -538,7 +626,7 @@ impl GridLayout {
         let row_h = ((h as f32 / count as f32).max(12.0) * view.v_zoom.max(1.0)).floor();
         let rows_fit = ((h as f32 / row_h).floor() as usize).clamp(1, count);
         let first_row = view.v_scroll.min(count - rows_fit);
-        let step_w = (w as f32 / steps as f32).max(4.0) * view.h_zoom.max(1) as f32;
+        let step_w = (w as f32 / steps as f32).max(4.0) * view.zoom_of(model.current_pattern(model.engine)) as f32;
         let visible_steps = ((w as f32 / step_w).floor() as usize).clamp(1, steps);
         let first_step = view.h_scroll.min(steps - visible_steps);
         let track_y = (0..rows_fit).map(|r| r as f32 * row_h).collect();
@@ -781,6 +869,9 @@ impl PatternPanel {
             selectors: root.path_of("PatternSelectors"),
             brush: None,
             sel_drag: None,
+            left_held: false,
+            right_in_left: false,
+            insert_cycle: None,
             marker_drag: None,
             brush_value: 1.0,
             erase: None,
@@ -792,7 +883,7 @@ impl PatternPanel {
             graph_last: None,
             graph_drag_state: GraphDrag::default(),
             graph_target: None,
-            lane_menu_fx: false,
+            lane_menu: Vec::new(),
             graph_snap: None,
             rng: 0x9e37_79b9,
             selection: Default::default(),
@@ -1045,6 +1136,10 @@ impl PatternPanel {
         set(app, "DragEditButton", &|c| c.text = drag.clone());
         let follow = model.follow_playback;
         set(app, "Follow", &|c| c.on = follow);
+        // [re:6eb457]: zoom in up to the highest zoom, out down to 1.
+        let zoom = model.pattern_view[e].zoom_of(cur);
+        set(app, "ZoomInH", &|c| c.enabled = zoom < MAX_ZOOM);
+        set(app, "ZoomOutH", &|c| c.enabled = zoom > 1);
         // The tools panel.
         let tool = self.tool as usize;
         if let Some(g) = self.named.path_in(app, &self.page, "ToolsPanel").and_then(|p| app.ctrl_mut(&p)).and_then(|c| c.find_mut("ButtonGroup")) {
@@ -1452,15 +1547,17 @@ impl PatternPanel {
                 true
             }
             UiEvent::MenuSelected { anchor, name, index } if name == "GraphCombo" => {
-                if !self.lane_menu_fx && *index == CORE_LANES {
-                    self.lane_menu_fx = true;
-                    let items = (CORE_LANES..dreist_engine::pattern::LANES).map(lane_label).collect();
-                    app.open_menu(anchor, items, None);
-                    return false;
-                }
-                let lane = if self.lane_menu_fx { CORE_LANES + index } else { *index };
+                let lane = match std::mem::take(&mut self.lane_menu).get(*index).copied() {
+                    Some(LaneItem::Lane(l)) => l,
+                    Some(LaneItem::Fx(slot)) => {
+                        let (items, lanes) = graph_fx_menu(model, e, model.pad[e], slot);
+                        self.lane_menu = lanes;
+                        app.open_menu(anchor, items, None);
+                        return false;
+                    }
+                    _ => return false,
+                };
                 model.pattern_view[e].lane = lane;
-                self.lane_menu_fx = false;
                 // A MultiTrack lane row's combo changes that lane.
                 if let Some((t, slot)) = self.auto_ctx.take() {
                     if let Some(l) = self.auto_lanes.get_mut(&(e, t)).and_then(|v| v.get_mut(slot)) {
@@ -1491,6 +1588,22 @@ impl PatternPanel {
             }
             UiEvent::Mouse { path, overload, kind, x, y } if overload == "PatternGrid" => {
                 let Some(lay) = self.layout(app, model) else { return false };
+                // [re:ced31a]: a right press while the left button holds a
+                // step only cycles insert patterns (pen and multi tools on
+                // one-shot pads); the rubber band has let go of the track.
+                if *kind == MouseKind::RightDown && self.left_held && self.band.is_none() {
+                    self.right_in_left = true;
+                    self.cycle_insert_pattern(model, &lay, out);
+                    return true;
+                }
+                if *kind == MouseKind::Up {
+                    if std::mem::take(&mut self.right_in_left) {
+                        return false;
+                    }
+                    // [re:3b0155].
+                    self.left_held = false;
+                    self.insert_cycle = None;
+                }
                 // [re:ced31a]: the right button opens the track menu
                 // under the pen, erase and select tools. The multi tool's
                 // deletes, or opens the menu with alt; option
@@ -1500,6 +1613,7 @@ impl PatternPanel {
                 // The erase tool's left button deletes, with shift it
                 // selects ([re:f07c25]); the select tool's left button
                 // selects as shift does with the others.
+                let raw = *kind;
                 let kind = &match (self.tool, kind) {
                     (Tool::Erase, MouseKind::Down) if !app.mods.shift => MouseKind::RightDown,
                     (_, k) => *k,
@@ -1531,32 +1645,61 @@ impl PatternPanel {
                     self.track_menu = Some((track, Some(step), path.clone()));
                     return true;
                 }
-                // Shift-drag: rubber-band selection of steps that are on.
-                let on_selected = self.selection.contains(&(track, step)) && pat.tracks.get(track).and_then(|t| t.steps.get(step)).is_some_and(|s| s.on);
-                if *kind == MouseKind::Down && (app.mods.shift || select) && !on_selected {
-                    if !app.mods.cmd {
-                        self.selection.clear();
+                let on_now = pat.tracks.get(track).and_then(|t| t.steps.get(step)).is_some_and(|s| s.on);
+                if raw == MouseKind::Down {
+                    self.left_held = true;
+                }
+                // Left press [re:f07c25]: the select tool, and shift with
+                // the others, go to the selection press [re:63ef27]; so
+                // does the multi tool's press on a selected event
+                // ([re:1fec54]), whose other presses clear the selection
+                // and draw. The pen draws and keeps the selection.
+                let multi = self.tool == Tool::Multi;
+                if *kind == MouseKind::Down && (app.mods.shift || select || (multi && on_now && self.selection.contains(&(track, step)))) {
+                    if on_now && (!app.mods.shift || multi) {
+                        // An event: cmd toggles it, else it joins (alone
+                        // unless already selected); then the selection
+                        // drags, the release moving it (alt: copying it).
+                        if app.mods.cmd {
+                            if !self.selection.remove(&(track, step)) {
+                                self.selection.insert((track, step));
+                            }
+                        } else {
+                            if !self.selection.contains(&(track, step)) {
+                                self.selection.clear();
+                            }
+                            self.selection.insert((track, step));
+                        }
+                        self.sel_drag = Some((track, step));
+                        return true;
                     }
+                    // Rubber band [re:979d3d]: an event under the press is
+                    // selected at once.
                     self.band = Some(((track, step), (track, step)));
-                    self.update_band(&pat);
+                    if on_now {
+                        self.selection.insert((track, step));
+                    }
                     return true;
                 }
                 if let Some((a, _)) = self.band {
                     match kind {
                         MouseKind::Drag => {
                             self.band = Some((a, (track, step)));
-                            self.update_band(&pat);
+                            self.update_band(&pat, app.mods.cmd);
                         }
-                        MouseKind::Up => self.band = None,
+                        // [re:31b6ba]: released on the empty step it was
+                        // pressed on, the selection clears.
+                        MouseKind::Up => {
+                            if !on_now && a == (track, step) {
+                                self.selection.clear();
+                            } else {
+                                self.band = Some((a, (track, step)));
+                                self.update_band(&pat, app.mods.cmd);
+                            }
+                            self.band = None;
+                        }
                         _ => {}
                     }
-                    return true;
-                }
-                let on_now = pat.tracks.get(track).and_then(|t| t.steps.get(step)).is_some_and(|s| s.on);
-                // [re:63ef27]: a press on a selected step drags the selection;
-                // the release moves it there (alt: copies it).
-                if *kind == MouseKind::Down && on_now && self.selection.contains(&(track, step)) {
-                    self.sel_drag = Some((track, step));
                     return true;
                 }
                 if let Some((t0, s0)) = self.sel_drag {
@@ -1594,12 +1737,10 @@ impl PatternPanel {
                     // the selection (0xc8); otherwise a brush press [re:bf6801].
                     MouseKind::Down => {
                         self.erase = None;
-                        let selected_on = on_now && self.selection.contains(&(track, step));
-                        if !self.selection.is_empty() && !selected_on {
+                        self.insert_cycle = None;
+                        if multi {
                             self.selection.clear();
-                            return true;
                         }
-                        self.selection.clear();
                         model.pad[e] = track;
                         let gated = !model.pad_one_shot(e, track);
                         let mut b = Brush { track, last: step, min: step, max: step, gated, dur_drag: false, last_y: *y };
@@ -1628,11 +1769,14 @@ impl PatternPanel {
                         self.erase = Some((track, step));
                         true
                     }
+                    // [re:7c1f2d]: nothing more once an insert pattern is drawn.
+                    MouseKind::Drag if self.insert_cycle.is_some() => true,
                     MouseKind::Drag => {
                         let Some(mut b) = self.brush else { return false };
                         if b.track != track {
                             return false;
                         }
+                        let start = out.len();
                         let i = step;
                         let (v, alt) = (self.brush_value, app.mods.alt);
                         if !b.gated {
@@ -1695,6 +1839,7 @@ impl PatternPanel {
                             self.brush_value = ctx.set_velocity_no_fade(out, track, *y, &mut b, lo, hi, v);
                         }
                         self.brush = Some(b);
+                        self.selection_offsets(model, out, start);
                         true
                     }
                     // Multi-tool press (right button): the graph menu with
@@ -1733,10 +1878,9 @@ impl PatternPanel {
                 let track = model.pad[e] as i32;
                 match name.as_str() {
                     "GraphCombo" => {
-                        let mut items: Vec<String> = (0..CORE_LANES).map(lane_label).collect();
-                        items.push("FX ▸".into());
-                        self.lane_menu_fx = false;
-                        app.open_menu(path, items, Some(model.pattern_view[e].lane.min(CORE_LANES)));
+                        let (items, lanes) = graph_type_menu(model, e, model.pad[e]);
+                        self.lane_menu = lanes;
+                        app.open_menu(path, items, None);
                         false
                     }
                     // Toolbar view mode: multi track / multi graph ("Show a
@@ -1756,9 +1900,14 @@ impl PatternPanel {
                         model.follow_playback = *on;
                         true
                     }
+                    // [re:213965] / [re:bc7d5a]: one step up or down,
+                    // stored for the current pattern ([re:0f0c3d]: 1..=20).
                     "ZoomInH" | "ZoomOutH" => {
                         let v = &mut model.pattern_view[e];
-                        v.h_zoom = if name == "ZoomInH" { (v.h_zoom * 2).min(16) } else { (v.h_zoom / 2).max(1) };
+                        let z = v.zoom_of(cur as usize);
+                        let z = if name == "ZoomInH" { (z + 1).min(MAX_ZOOM) } else { z.saturating_sub(1).max(1) };
+                        v.zoom[cur as usize % 24] = z;
+                        v.h_zoom = z;
                         true
                     }
                     "ZoomInV" | "ZoomOutV" => {
@@ -1780,7 +1929,7 @@ impl PatternPanel {
                     }
                     "NextTrackButton" | "PreviousTrackButton" => {
                         let p = model.pad[e] as i32 + if name == "NextTrackButton" { 1 } else { -1 };
-                        model.pad[e] = p.clamp(0, 63) as usize;
+                        model.pad[e] = p.clamp(0, crate::model::V1_PADS as i32 - 1) as usize;
                         true
                     }
                     // [re:9ef8aa]: shift steps by 8, alt doubles / halves,
@@ -1898,12 +2047,15 @@ impl PatternPanel {
                 out.push(c);
                 continue;
             };
-            let (t, s, l) = (m.index[1].max(0) as usize, m.index[5].max(0) as usize, m.value[0].max(0.0) as usize);
-            if m.kind != id::SET_STEP_GRAPH_STATE || m.value[2] < 0.5 || m.index[3] != cur as i32 || !self.selection.contains(&(t, s)) {
+            // [re:dd7ba7]: a velocity set on a selected step offsets every
+            // selected step's velocity ([re:3509f7]).
+            let velocity = m.kind == id::SET_STEP_VELOCITY;
+            let (t, s, l) = (m.index[1].max(0) as usize, m.index[5].max(0) as usize, if velocity { lane::VELOCITY } else { m.value[0].max(0.0) as usize });
+            if !(velocity || (m.kind == id::SET_STEP_GRAPH_STATE && m.value[2] >= 0.5)) || m.index[3] != cur as i32 || !self.selection.contains(&(t, s)) {
                 out.push(c);
                 continue;
             }
-            let delta = m.value[1] - get(&vals, t, s, l);
+            let delta = if velocity { m.value[0] } else { m.value[1] } - get(&vals, t, s, l);
             for &(qt, qs) in &self.selection {
                 let locked = model
                     .engine_node(e)
@@ -1915,7 +2067,8 @@ impl PatternPanel {
                 }
                 let v = (get(&vals, qt, qs, l) + delta).clamp(0.0, 1.0);
                 vals.insert((qt, qs, l), v);
-                out.push(msg(id::SET_STEP_GRAPH_STATE, &[e as i32, qt as i32, -1, cur as i32, qt as i32, qs as i32], &[l as f32, v, 0.0]));
+                let index = [e as i32, qt as i32, -1, cur as i32, qt as i32, qs as i32];
+                out.push(if velocity { msg(id::SET_STEP_VELOCITY, &index, &[v]) } else { msg(id::SET_STEP_GRAPH_STATE, &index, &[l as f32, v, 0.0]) });
             }
         }
     }
@@ -2142,14 +2295,50 @@ impl PatternPanel {
         }
     }
 
-    /// Steps that are on inside the rubber band join the selection.
-    fn update_band(&mut self, pat: &PatternData) {
+    /// [re:35c4ff]: events inside the rubber band are selected; without
+    /// `cmd` the events outside it are deselected (but steps tied to the
+    /// previous one).
+    fn update_band(&mut self, pat: &PatternData, cmd: bool) {
         let Some(((t0, s0), (t1, s1))) = self.band else { return };
+        let inside = |t: usize, s: usize| (t0.min(t1)..=t0.max(t1)).contains(&t) && (s0.min(s1)..=s0.max(s1)).contains(&s);
+        let step = |t: usize, s: usize| pat.tracks.get(t).and_then(|tr| tr.steps.get(s));
+        if !cmd {
+            self.selection.retain(|&(t, s)| inside(t, s) || step(t, s).is_some_and(|st| st.on && st.tied()));
+        }
         for t in t0.min(t1)..=t0.max(t1) {
             for s in s0.min(s1)..=s0.max(s1) {
-                if pat.tracks.get(t).and_then(|tr| tr.steps.get(s)).is_some_and(|st| st.on) {
+                if step(t, s).is_some_and(|st| st.on) {
                     self.selection.insert((t, s));
                 }
+            }
+        }
+    }
+
+    /// A right press while the brush holds a one-shot pad's steps
+    /// ([re:ced31a], pen and multi tools): the next insert pattern
+    /// (the pattern templates, [re:24173a]) over the brushed steps
+    /// ([re:c9de7c]): its first element on the first step, repeating; on
+    /// steps keep their velocity at full duration, the others go off.
+    fn cycle_insert_pattern(&mut self, model: &Model, lay: &GridLayout, out: &mut Vec<Command>) {
+        let Some(b) = self.brush.filter(|b| !b.gated && matches!(self.tool, Tool::Pen | Tool::Multi)) else { return };
+        let templates = crate::patmenu::pattern_templates(&self.resources);
+        if templates.is_empty() || self.sel_drag.is_some() {
+            return;
+        }
+        let k = self.insert_cycle.map_or(0, |k| k + 1);
+        let k = if k >= templates.len() { 0 } else { k };
+        self.insert_cycle = Some(k);
+        let bits = &templates[k].1;
+        let e = model.engine;
+        let cur = model.current_pattern(e);
+        let pat = model.pattern(e, cur);
+        let ctx = StepCtx { e, cur: cur as i32, drag_lane: model.pattern_view[e].drag_lane, pat: &pat, lay };
+        let Some(t) = pat.tracks.get(b.track) else { return };
+        for (i, st) in (b.min..=b.max).take_while(|&st| st < t.steps.len()).enumerate() {
+            if bits[i % bits.len()] {
+                ctx.note_on(out, b.track, st, t.steps[st].lanes[lane::VELOCITY], 1.0, false);
+            } else {
+                ctx.note_off(out, b.track, st, false);
             }
         }
     }
@@ -2864,3 +3053,7 @@ fn graph_value_text(model: &Model, track: usize, lane: usize, f: f32) -> String 
         _ => pct(f),
     }
 }
+
+#[cfg(test)]
+#[path = "pattern_v1_tests.rs"]
+mod v1_tests;

@@ -4536,7 +4536,8 @@ fn step_selection_drags() {
     let lay = ed.pattern.as_ref().unwrap().layout(&ed.app, &ed.model).unwrap();
     let at = |s: usize| (lay.step_x(s) + 2.0, lay.row_y(lay.row(3).unwrap()) + 2.0);
     let ev = |kind, (x, y): (f32, f32)| UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind, x, y };
-    ed.pattern.as_mut().unwrap().tool = crate::pattern::Tool::Pen;
+    // v1: the Pen always draws; the Multi tool drags a selection.
+    ed.pattern.as_mut().unwrap().tool = crate::pattern::Tool::Multi;
     ed.handle(&ev(MouseKind::Down, at(2)));
     ed.handle(&ev(MouseKind::Up, at(2)));
     ed.pattern.as_mut().unwrap().selection = [(3, 2)].into_iter().collect();
