@@ -16,7 +16,7 @@ impl Editor {
     pub(crate) fn accelerator(&mut self, key: &str, mods: accel::Mods) -> bool {
         let o = &self.modals.options;
         let Some(e) = accel::lookup(key, mods, o.bool("RespondToKeyboard", true), o.bool("RespondToExtendedKeyboard", false), self.menu_bar) else { return false };
-        if e.id == 0x18 || (matches!(key, "left" | "right") && self.model.editor_tab == 0 && self.pattern.as_ref().is_some_and(|p| p.has_selection())) {
+        if (matches!(key, "left" | "right") && self.model.editor_tab == 0 && self.pattern.as_ref().is_some_and(|p| p.has_selection())) {
             return false;
         }
         self.run_action(e.action);
@@ -36,6 +36,10 @@ impl Editor {
                 self.handle(&ev);
             }
             accel::Action::Editor(id) => self.accelerator_message(id),
+            accel::Action::View(n) => {
+                self.model.editor_tab = n;
+                self.sync();
+            }
         }
     }
 
@@ -62,7 +66,6 @@ impl Editor {
                 .map(|e| match e {
                     accel::Menu::Item(id) => item(*id),
                     accel::Menu::Separator => Item::separator(),
-                    accel::Menu::Sub(t, sub) => Item { title: (*t).into(), submenu: items(sub), ..Item::default() },
                 })
                 .collect()
         }

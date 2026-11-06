@@ -42,6 +42,8 @@ pub enum Action {
     Press(&'static str),
     /// Loop: an empty function.
     Nothing,
+    /// View menu: show main page `n` (v1's `e_updateSelectView`).
+    View(usize),
 }
 
 pub struct Accel {
@@ -59,9 +61,8 @@ const N: Mods = Mods { shift: false, cmd: false, alt: false, ctrl: false };
 const C: Mods = Mods { shift: false, cmd: true, alt: false, ctrl: false };
 const SC: Mods = Mods { shift: true, cmd: true, alt: false, ctrl: false };
 const CA: Mods = Mods { shift: false, cmd: true, alt: true, ctrl: false };
-const SCA: Mods = Mods { shift: true, cmd: true, alt: true, ctrl: false };
 const S: Mods = Mods { shift: true, cmd: false, alt: false, ctrl: false };
-const AK: Mods = Mods { shift: false, cmd: false, alt: true, ctrl: true };
+const A: Mods = Mods { shift: false, cmd: false, alt: true, ctrl: false };
 
 const fn a(id: u32, key: &'static str, mods: Mods, name: &'static str, action: Action) -> Accel {
     Accel { id, key, mods, name, action }
@@ -78,101 +79,64 @@ const fn a(id: u32, key: &'static str, mods: Mods, name: &'static str, action: A
 /// e_toggleMetronome 0x18, e_toggleQuantize 0x19,
 /// e_songSetActive 0x117 (!active, 0), e_returnToZero 0x1d, e_panic 0x12.
 pub const TABLE: &[Accel] = &[
+    // v1's menus and key equivalents ([re:689471] [re:4accac] [re:8e7307] [re:ee7b06] [re:42a8c6] [re:33b96d]); functions as v1's
+    // [re:ed265e] (ids are v1's).
     a(0x00, ",", C, "Preferences", Action::Editor(0x16a)),
     a(0x01, "o", C, "Open Preset", Action::Editor(0x16c)),
     a(0x02, "o", CA, "Open Engine", Action::Editor(0x16d)),
     a(0x03, "o", SC, "Open Kit", Action::Editor(0x16e)),
-    a(0x09, "s", C, "Save Preset", Action::Editor(0x174)),
-    a(0x0a, "s", SC, "Save Preset As...", Action::Editor(0x176)),
-    a(0x0d, "s", CA, "Save Kit", Action::Editor(0x178)),
-    a(0x0e, "s", SCA, "Save Kit As...", Action::Editor(0x179)),
-    a(0x16, "z", C, "Undo", Action::Editor(0x18d)),
-    a(0x17, "z", SC, "Redo", Action::Editor(0x18e)),
-    a(0x18, "delete", N, "Delete Selected Steps", Action::Editor(0x18f)),
-    a(0x19, "f", SC, "Filter Browser List", Action::Editor(0x160)),
-    a(0x1a, "f", C, "Find", Action::Editor(0x161)),
-    a(0x1b, " ", N, "Play", Action::Toggle("PlayButton")),
-    a(0x1c, "r", N, "Record", Action::Toggle("RecButton")),
-    a(0x1d, "r", CA, "Retro Record", Action::Editor(0x23)),
-    a(0x1e, "m", N, "Metronome", Action::Toggle("MetroButton")),
-    a(0x1f, "k", N, "Input Quantize", Action::Toggle("QuantizeButton")),
-    a(0x20, "s", N, "Song mode", Action::Toggle("SongButton")),
-    a(0x21, "l", N, "Loop", Action::Nothing),
-    a(0x22, "0", N, "Return to zero", Action::Press("RestartButton")),
-    a(0x23, "p", SC, "Panic", Action::Press("PanicButton")),
-    a(0x24, "down", N, "Next File", Action::Editor(0x155)),
-    a(0x25, "up", N, "Previous File", Action::Editor(0x156)),
-    a(0x26, "right", N, "Next Location", Action::Editor(0x157)),
-    a(0x27, "left", N, "Previous Location", Action::Editor(0x158)),
-    a(0x28, "enter", N, "Enter Folder", Action::Editor(0x15a)),
-    a(0x29, "left", S, "Parent Folder", Action::Editor(0x15b)),
-    a(0x2a, "r", SC, "Refresh", Action::Editor(0x159)),
-    a(0x33, "1", N, "Browser", Action::Editor(0x14e)),
-    a(0x32, "2", N, "Transmod", Action::Editor(0x14d)),
-    a(0x2b, "3", N, "Pattern", Action::Editor(0x146)),
-    a(0x30, "4", N, "Layer Mixer", Action::Editor(0x14b)),
-    a(0x2f, "5", N, "Pad Mixer", Action::Editor(0x14a)),
-    a(0x2e, "6", N, "Mixer", Action::Editor(0x149)),
-    a(0x2c, "7", N, "Scenes", Action::Editor(0x147)),
-    a(0x2d, "8", N, "Song", Action::Editor(0x148)),
-    a(0x31, "9", N, "Mapping", Action::Editor(0x14c)),
-    a(0x34, "1", AK, "Reset UI size to default", Action::Editor(0x152)),
-    a(0x35, "2", AK, "Reset UI scale to 100%", Action::Editor(0x153)),
+    a(0x04, "s", C, "Save Preset", Action::Editor(0x174)),
+    a(0x05, "s", CA, "Save Engine", Action::Editor(0x175)),
+    a(0x06, "s", SC, "Save Kit", Action::Editor(0x178)),
+    a(0x08, "z", C, "Undo", Action::Editor(0x18d)),
+    a(0x09, "z", SC, "Redo", Action::Editor(0x18e)),
+    a(0x0b, "f", C, "Find", Action::Editor(0x161)),
+    a(0x0a, "f", SC, "Filter Browser List", Action::Editor(0x160)),
+    a(0x0c, " ", N, "Play", Action::Toggle("PlayButton")),
+    a(0x0d, "r", N, "Record", Action::Toggle("RecButton")),
+    a(0x0e, "r", A, "Retro Record", Action::Editor(0x23)),
+    a(0x0f, "m", N, "Metronome", Action::Toggle("MetroButton")),
+    a(0x10, "k", N, "Input Quantize", Action::Toggle("QuantizeButton")),
+    a(0x11, "s", N, "Song mode", Action::Toggle("SongButton")),
+    a(0x12, "0", N, "Return to zero", Action::Press("RestartButton")),
+    a(0x13, "down", N, "Next File", Action::Editor(0x155)),
+    a(0x14, "up", N, "Previous File", Action::Editor(0x156)),
+    a(0x15, "right", N, "Next Location", Action::Editor(0x157)),
+    a(0x16, "left", N, "Previous Location", Action::Editor(0x158)),
+    a(0x17, "enter", N, "Enter Folder", Action::Editor(0x15a)),
+    a(0x18, "left", S, "Parent Folder", Action::Editor(0x15b)),
+    a(0x19, "r", SC, "Refresh", Action::Editor(0x159)),
+    a(0x1a, "1", N, "Pattern", Action::View(crate::front::PATTERN_PAGE)),
+    a(0x1b, "2", N, "Scenes", Action::View(crate::front::SCENE_PAGE)),
+    a(0x1c, "3", N, "Song", Action::View(crate::front::SONG_PAGE)),
+    a(0x1d, "4", N, "Pads/Layers", Action::View(crate::front::PADS_PAGE)),
+    a(0x1e, "5", N, "Layers Mixer", Action::View(crate::front::LAYER_MIXER_PAGE)),
+    a(0x1f, "6", N, "Pad Mixer", Action::View(crate::front::PAD_MIXER_PAGE)),
+    a(0x20, "7", N, "Engine Mixer", Action::View(crate::front::ENGINE_MIXER_PAGE)),
+    a(0x21, "8", N, "Global Mixer", Action::View(crate::front::GLOBAL_MIXER_PAGE)),
+    a(0x22, "9", N, "Sampler", Action::View(crate::front::SAMPLER_PAGE)),
 ];
 
 /// Menu items without a key (File menu): id, title, editor
 /// message (functions 4–8, 11, 12, 15–20).
-pub const UNKEYED: &[(u32, &str, u32)] = &[
-    (0x04, "Open Pad", 0x16f),
-    (0x05, "Open PatternBank", 0x170),
-    (0x06, "Open Pattern", 0x171),
-    (0x07, "Open Pattern As MIDI", 0x172),
-    (0x08, "Open Mapping", 0x173),
-    (0x0b, "Save Engine", 0x175),
-    (0x0c, "Save Engine As...", 0x177),
-    (0x0f, "Save Pad", 0x17a),
-    (0x10, "Save PatternBank", 0x17b),
-    (0x11, "Save Pattern", 0x17c),
-    (0x12, "Save Pattern As MIDI", 0x17d),
-    (0x13, "Save Mapping", 0x17e),
-    (0x14, "Export As Audio", 0x17f),
-];
+pub const UNKEYED: &[(u32, &str, u32)] = &[];
 
 /// A menu bar entry.
 pub enum Menu {
     Item(u32),
     Separator,
-    Sub(&'static str, &'static [Menu]),
 }
 
-use Menu::{Item as I, Separator as Sep, Sub};
+use Menu::{Item as I, Separator as Sep};
 
 /// The standalone's menus (File, Edit, Browser, Transport, View;
 /// Preferences sits in the app menu).
 pub const MENUS: &[(&str, &[Menu])] = &[
-    (
-        "File",
-        &[
-            I(0x01),
-            I(0x02),
-            I(0x03),
-            Sub("Open Others...", &[I(0x04), I(0x05), I(0x06), I(0x07), I(0x08)]),
-            Sep,
-            I(0x09),
-            I(0x0a),
-            I(0x0b),
-            I(0x0c),
-            I(0x0d),
-            I(0x0e),
-            Sub("Save Others...", &[I(0x0f), I(0x10), I(0x11), I(0x12), I(0x13)]),
-            Sep,
-            I(0x14),
-        ],
-    ),
-    ("Edit", &[I(0x16), I(0x17), Sep, I(0x18), Sep, I(0x1a), I(0x19)]),
-    ("Browser", &[I(0x24), I(0x25), I(0x26), I(0x27), I(0x28), I(0x29), I(0x2a)]),
-    ("Transport", &[I(0x1b), I(0x1c), I(0x1d), I(0x1e), I(0x1f), I(0x20), I(0x22), I(0x21), I(0x23)]),
-    ("View", &[I(0x33), I(0x32), I(0x2b), I(0x30), I(0x2f), I(0x2e), I(0x2c), I(0x2d), I(0x31), Sep, I(0x34), I(0x35)]),
+    ("File", &[I(0x01), I(0x02), I(0x03), Sep, I(0x04), I(0x05), I(0x06)]),
+    ("Edit", &[I(0x08), I(0x09), Sep, I(0x0b), I(0x0a)]),
+    ("Browser", &[I(0x13), I(0x14), I(0x15), I(0x16), I(0x17), I(0x18), I(0x19)]),
+    ("Transport", &[I(0x0c), I(0x0d), I(0x0e), I(0x0f), I(0x10), I(0x11), I(0x12)]),
+    ("View", &[I(0x1a), I(0x1b), I(0x1c), I(0x1d), I(0x1e), I(0x1f), I(0x20), I(0x21), I(0x22)]),
 ];
 
 /// An entry's title and function (keyed or not).
@@ -190,7 +154,7 @@ pub fn lookup(key: &str, mods: Mods, keyboard: bool, extended: bool, menu_bar: b
     if !keyboard {
         return None;
     }
-    (e.mods.any() || extended || (0x24..=0x27).contains(&e.id)).then_some(e)
+    (e.mods.any() || extended || (0x13..=0x16).contains(&e.id)).then_some(e)
 }
 
 #[cfg(test)]
@@ -201,17 +165,19 @@ mod tests {
     fn gating() {
         crate::app::test_setup();
         // Space plays from the menu bar; in a plugin only with extended keys.
-        assert_eq!(lookup(" ", N, true, false, true).map(|e| e.id), Some(0x1b));
+        assert_eq!(lookup(" ", N, true, false, true).map(|e| e.id), Some(0x0c));
         assert!(lookup(" ", N, true, false, false).is_none());
-        assert_eq!(lookup(" ", N, true, true, false).map(|e| e.id), Some(0x1b));
+        assert_eq!(lookup(" ", N, true, true, false).map(|e| e.id), Some(0x0c));
         // Modified keys need only RespondToKeyboard; the browser arrows
         // always respond.
-        assert_eq!(lookup("z", SC, true, false, false).map(|e| e.id), Some(0x17));
+        assert_eq!(lookup("z", SC, true, false, false).map(|e| e.id), Some(0x09));
         assert!(lookup("z", SC, false, false, false).is_none());
-        assert_eq!(lookup("down", N, true, false, false).map(|e| e.id), Some(0x24));
+        assert_eq!(lookup("down", N, true, false, false).map(|e| e.id), Some(0x13));
         assert!(lookup("enter", N, true, false, false).is_none());
         // Modifiers must match exactly.
         assert!(lookup("z", CA, true, true, true).is_none());
-        assert_eq!(lookup("left", S, true, false, true).map(|e| e.id), Some(0x29));
+        assert_eq!(lookup("left", S, true, false, true).map(|e| e.id), Some(0x18));
+        // v1: Retro Record is alt+R.
+        assert_eq!(lookup("r", A, true, false, false).map(|e| e.id), Some(0x0e));
     }
 }
