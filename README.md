@@ -17,6 +17,25 @@ Outputs: `Einst.vst3`, `Einst.clap`, `Einst.app` (Apple Silicon). Plugin IDs: CL
 | `einst-plugin` | nih-plug VST3 / CLAP plugin and standalone app |
 | `xtask` | nih-plug bundler (`cargo xtask bundle einst-plugin`) |
 
+## Screenshots
+
+Two demo songs, rebuilt as Einst projects for testing (not part of this repository), rendered
+headlessly at 2x.
+
+![Pad / Layers page: a layer's sample with its amp and free envelopes](docs/screens/readme/pad-layers.png)
+*Pad / Layers: the selected pad's layers, the layer's sound controls and its sample with the amp
+and free envelopes.*
+
+![Pattern editor with graph lanes under two opened tracks](docs/screens/readme/pattern.png)
+*Pattern editor in multi-track graph view: a 128-step pattern with velocity lanes opened under
+two tracks, and the mapping pane on the left.*
+
+![Song page arranging patterns on the eight engines](docs/screens/readme/song.png)
+*Song: patterns arranged on the eight engine rows.*
+
+![Engine mixer with a Bus Compressor in the engine's effect chain](docs/screens/readme/engine-mixer.png)
+*Engine mixer: the engine's effect chain (a Bus Compressor) above the eight engine channels.*
+
 ## Build
 
     scripts/build.sh              # release: target/bundled/Einst.{app,vst3,clap}

@@ -4,5 +4,6 @@
 .DS_Store
 __pycache__/
 /.stage
-/docs/screens/
+/docs/screens/*
+!/docs/screens/readme/
 /test-songs/
