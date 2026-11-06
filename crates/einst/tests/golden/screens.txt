@@ -7,7 +7,7 @@ modal-about d5b9aec177dc2091
 modal-audio 0f52268baeb647f8
 modal-console 67e1f9ce2dcf8e42
 modal-export a344d16433c16b4e
-modal-filefind 8326a1242591039a
+modal-filefind 660dccdef40164ba
 modal-midi 3e64b4c23369e0b0
 modal-preferences 5a77fcd0bebe799a
 page-enginemixer 8e0efa88f119720b
