@@ -4470,3 +4470,37 @@ fn link_keys_pick_pads() {
     m.all_rows = true;
     assert_eq!(multipad::edit_pads(&m, 13), Some(0xF000));
 }
+
+/// v1: dragging a step selection moves it; alt copies it.
+#[test]
+fn step_selection_drags() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    use dreist_gui::app::MouseKind;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = 0;
+    ed.sync();
+    let gp = ed.app.root.path_of("PatternGrid").unwrap();
+    let lay = ed.pattern.as_ref().unwrap().layout(&ed.app, &ed.model).unwrap();
+    let at = |s: usize| (lay.step_x(s) + 2.0, lay.row_y(lay.row(3).unwrap()) + 2.0);
+    let ev = |kind, (x, y): (f32, f32)| UiEvent::Mouse { path: gp.clone(), overload: "PatternGrid".into(), kind, x, y };
+    ed.pattern.as_mut().unwrap().tool = crate::pattern::Tool::Pen;
+    ed.handle(&ev(MouseKind::Down, at(2)));
+    ed.handle(&ev(MouseKind::Up, at(2)));
+    ed.pattern.as_mut().unwrap().selection = [(3, 2)].into_iter().collect();
+    ed.take_commands();
+    ed.handle(&ev(MouseKind::Down, at(2)));
+    ed.handle(&ev(MouseKind::Drag, at(5)));
+    ed.handle(&ev(MouseKind::Up, at(5)));
+    let e = ed.model.engine;
+    let pat = ed.model.pattern(e, ed.model.current_pattern(e));
+    assert!(pat.tracks[3].steps[5].on && !pat.tracks[3].steps[2].on, "moved");
+    assert!(ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == id::SET_STEP_OFF)));
+    // Alt copies.
+    ed.app.mods.alt = true;
+    ed.handle(&ev(MouseKind::Down, at(5)));
+    ed.handle(&ev(MouseKind::Up, at(7)));
+    ed.app.mods.alt = false;
+    let pat = ed.model.pattern(e, ed.model.current_pattern(e));
+    assert!(pat.tracks[3].steps[5].on && pat.tracks[3].steps[7].on, "copied");
+}

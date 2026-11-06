@@ -90,6 +90,9 @@ pub struct PatternPanel {
     selectors: Option<Vec<usize>>,
     /// Multi-tool press on a step ([re:86dd7e]..).
     brush: Option<Brush>,
+    /// Dragging the step selection from (track, step): moved on release,
+    /// copied with alt.
+    sel_drag: Option<(usize, usize)>,
     /// A track length marker drag: the track, the marker's x and whether
     /// every track follows (shift / cmd).
     marker_drag: Option<(usize, f32, bool)>,
@@ -777,6 +780,7 @@ impl PatternPanel {
             row_template,
             selectors: root.path_of("PatternSelectors"),
             brush: None,
+            sel_drag: None,
             marker_drag: None,
             brush_value: 1.0,
             erase: None,
@@ -1527,7 +1531,8 @@ impl PatternPanel {
                     return true;
                 }
                 // Shift-drag: rubber-band selection of steps that are on.
-                if *kind == MouseKind::Down && (app.mods.shift || select) {
+                let on_selected = self.selection.contains(&(track, step)) && pat.tracks.get(track).and_then(|t| t.steps.get(step)).is_some_and(|s| s.on);
+                if *kind == MouseKind::Down && (app.mods.shift || select) && !on_selected {
                     if !app.mods.cmd {
                         self.selection.clear();
                     }
@@ -1547,6 +1552,38 @@ impl PatternPanel {
                     return true;
                 }
                 let on_now = pat.tracks.get(track).and_then(|t| t.steps.get(step)).is_some_and(|s| s.on);
+                // [re:63ef27]: a press on a selected step drags the selection;
+                // the release moves it there (alt: copies it).
+                if *kind == MouseKind::Down && on_now && self.selection.contains(&(track, step)) {
+                    self.sel_drag = Some((track, step));
+                    return true;
+                }
+                if let Some((t0, s0)) = self.sel_drag {
+                    if *kind == MouseKind::Up {
+                        self.sel_drag = None;
+                        let (dt, ds) = (track as i64 - t0 as i64, step as i64 - s0 as i64);
+                        if dt == 0 && ds == 0 {
+                            return true;
+                        }
+                        let n = pat.steps as i64;
+                        let moved: Vec<(usize, usize, dreist_engine::pattern::StepData)> = self.selection.iter().filter_map(|&(t, s)| Some((t, s, pat.tracks.get(t)?.steps.get(s)?.clone()))).collect();
+                        if !app.mods.alt {
+                            for (t, s, _) in &moved {
+                                write_step(out, e, cur, *t, *s, &dreist_engine::pattern::StepData::off());
+                            }
+                        }
+                        self.selection.clear();
+                        for (t, s, d) in moved {
+                            let (t2, s2) = (t as i64 + dt, s as i64 + ds);
+                            if t2 < 0 || t2 >= pat.tracks.len() as i64 || s2 < 0 || s2 >= n {
+                                continue;
+                            }
+                            write_step(out, e, cur, t2 as usize, s2 as usize, &d);
+                            self.selection.insert((t2 as usize, s2 as usize));
+                        }
+                    }
+                    return true;
+                }
                 let drag_lane = model.pattern_view[e].drag_lane;
                 // [re:f32484] multi tool (tool 3).
                 let ctx = StepCtx { e, cur, drag_lane, pat: &pat, lay: &lay };
