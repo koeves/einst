@@ -247,6 +247,8 @@ pub struct Browser {
     /// An engine / pad / pattern / bank / MIDI file to load where the
     /// editor's selection is (v1's file click load, [re:4f89be]).
     pub load_request: Option<PathBuf>,
+    /// The file press held alt.
+    alt_click: bool,
     /// `PreviewButton`: audio files preview when clicked.
     preview_mode: bool,
     preview_volume: f32,
@@ -1010,6 +1012,7 @@ impl Browser {
             slice_mode: false,
             slice_request: None,
             load_request: None,
+            alt_click: false,
             preview_mode: false,
             preview_volume: 0.793_700_5,
             search: None,
@@ -1901,7 +1904,15 @@ impl Browser {
             "wav" | "aif" | "aiff" if self.slice_mode && en.path.parent().is_none_or(slicing_allowed) => self.slice_request = Some(en.path),
             e if crate::search::is_audio(e) && self.preview_mode && !self.auto_load => self.preview(&en.path, out),
             e if crate::search::is_audio(e) => {
-                load_sample_into_doc(model, &en.path);
+                // v1: with alt, the pad's first layer without a sample.
+                let (ed, p) = (model.engine, model.pad[model.engine]);
+                match self.alt_click.then(|| (0..crate::model::LAYERS).find(|&l| !model.layer(ed, p, l).valid)) {
+                    Some(Some(l)) => {
+                        load_sample_into_layer(model, ed, p, l, &en.path);
+                    }
+                    Some(None) => return false,
+                    None => load_sample_into_doc(model, &en.path),
+                }
                 out.push(model.rebuild_command());
             }
             // v1 loads every supported part on a click ([re:4f89be]): engines,
@@ -2073,6 +2084,7 @@ impl Browser {
                     return true;
                 }
                 self.multi.clear();
+                self.alt_click = app.mods.alt;
                 let again = self.selected == Some(i);
                 self.selected = Some(i);
                 // A second click / a folder opens on release, unless the
