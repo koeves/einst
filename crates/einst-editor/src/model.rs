@@ -42,11 +42,11 @@ pub struct Model {
     pub samples: Option<std::path::PathBuf>,
     /// Selected transmod source (0 = the parameters themselves).
     pub source: usize,
-    /// Sampler state from the audio thread ([re:090c66]).
+    /// Sampler state from the audio thread ([re:e99ba3]).
     pub sampler: SamplerView,
     /// Song position (quarter notes) while playing, from the audio thread.
     pub song_pos: Option<f64>,
-    /// The host reports a loop ([re:a26535]).
+    /// The host reports a loop ([re:18072c]).
     pub host_loop: bool,
     /// Decoded sample bytes the engine holds (the memory readout), once
     /// the plugin has built an engine.
@@ -58,7 +58,7 @@ pub struct Model {
     /// Option `PatternEditorFollow`: the pattern editor and the song
     /// scroll to keep the playback position in view.
     pub follow_playback: bool,
-    /// `e_setModifiers` 0x26 ([re:6f7056] / [re:80578e], not saved):
+    /// `e_setModifiers` 0x26 ([re:4e93f6] / [re:4e93f6], not saved):
     /// actions apply to all layers / all pads.
     pub all_layers: bool,
     pub all_pads: bool,
@@ -69,7 +69,7 @@ pub struct Model {
     pub mod_alt: bool,
     pub mod_shift: bool,
     /// Engine multi-selection (`e_setEngineSelections` 0x43, the original
-    /// [re:1b20b6]; not saved — loading selects only `CurrentEngine`).
+    /// [re:4e93f6]; not saved — loading selects only `CurrentEngine`).
     pub engine_sel: u8,
     /// Pattern editor scroll / zoom per engine.
     pub pattern_view: [crate::pattern::PatternView; ENGINES],
@@ -89,8 +89,8 @@ pub fn bucket(l: &[f32], r: &[f32]) -> (f32, f32) {
 }
 
 /// The pad inspector's wave display in sampling mode
-/// ([re:085538], [re:af56a1]
-/// [re:dda7e9]): the take being recorded or the last take, as min/max pairs
+/// ([re:e7fe61], [re:ccf9e2]
+/// [re:ccf9e2]): the take being recorded or the last take, as min/max pairs
 /// of `LIVE_BUCKET` frames, until the layer view takes over again.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Sampling {
@@ -132,7 +132,7 @@ impl LiveTake {
     }
 }
 
-/// What the sampler panel shows ([re:c2fc2f]).
+/// What the sampler panel shows ([re:e99ba3]).
 #[derive(Clone, Debug, PartialEq)]
 pub struct SamplerView {
     /// 0 idle, 1 armed, 2 recording.
@@ -363,14 +363,14 @@ impl Model {
         dreist_engine::live::PadMode::from_name(self.engine_node(e).and_then(|n| n.attr("EnginePadMode")).unwrap_or("Normal"))
     }
 
-    /// [re:e78221]; `None` when unset.
+    /// [re:e109cc]; `None` when unset.
     pub fn pad_name(&self, e: usize, p: usize) -> Option<String> {
         let n = self.pad_node(e, p)?;
         let s = n.child("FixedString", "PadName")?.attr("string")?;
         (!s.is_empty()).then(|| s.to_string())
     }
 
-    /// [re:d2541e]: no layer with a sample plays Gated / Looping
+    /// [re:f281c9]: no layer with a sample plays Gated / Looping
     /// (no pad counts as one-shot).
     pub fn pad_one_shot(&self, e: usize, p: usize) -> bool {
         !(0..LAYERS).any(|l| self.layer_node(e, p, l).is_some_and(|n| n.attr("AudioFileName").is_some_and(|f| !f.is_empty()) && matches!(n.attr("PlaybackMode"), Some("Gated" | "Looping"))))

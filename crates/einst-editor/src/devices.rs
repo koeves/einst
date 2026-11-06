@@ -1,21 +1,21 @@
-//! Standalone audio and MIDI settings ([re:b5d239], ev_c012d36c…,
-//! ev_bc97f83f…; [re:fd47b6], same evidence), on the original
-//! [re:d1c9a9] / `MIDIOptions.skin`.
+//! Standalone audio and MIDI settings ([re:0f7c8c], ev_c012d36c…,
+//! ev_bc97f83f…; [re:47e42a], same evidence), on the original
+//! [re:0f7c8c] / `MIDIOptions.skin`.
 //!
-//! Audio ([re:2d4553]): SampleRate, BufferSize,
+//! Audio ([re:0f7c8c]): SampleRate, BufferSize,
 //! InDevice and OutDevice popups (the Windows panel with the ASIO controls
-//! is removed on the Mac). [re:b8e440] lists the
-//! device's rates; [re:fd4b4a] 32, 64, 128, 256,
+//! is removed on the Mac). [re:b34f9e] lists the
+//! device's rates; [re:1c91ca] 32, 64, 128, 256,
 //! 512, 1024; the device popups list the delegate's devices. Any popup
 //! change hands {rate, block, input, output} to the delegate and refreshes
-//! everything ([re:43218b]). The IOGroup tabs (INPUTS / OUTPUTS) fill
+//! everything ([re:0f7c8c]). The IOGroup tabs (INPUTS / OUTPUTS) fill
 //! IOTable ([re:ae7160]): columns "Enabled" (50) and
 //! "Description", one row per stereo pair, outputs ending with "All
 //! outputs". Refresh re-reads the devices, Close (OK) closes, Cancel puts
 //! the choices back as they were when the panel opened.
 //!
-//! MIDI ([re:d4cd64],
-//! [re:cce3c4]): InputTable with "Enable", "Clock" and "Description",
+//! MIDI ([re:47e42a],
+//! [re:dda853]): InputTable with "Enable", "Clock" and "Description",
 //! OutputTable with "Enable" and "Description"; Refresh, Sync to clock,
 //! Cancel, Close. The v1 set's panels are authored in v1's dialog style
 //! (`Global/AudioOptions.skin`, `Global/MIDIOptions.skin`).
@@ -36,7 +36,7 @@ use dreist_gui::{Colour, Ctrl, Skin};
 use crate::EditorError;
 use crate::options::Options;
 
-/// Buffer sizes offered [re:fd4b4a].
+/// Buffer sizes offered [re:1c91ca].
 pub const BUFFER_SIZES: [u32; 6] = [32, 64, 128, 256, 512, 1024];
 pub const DEFAULT_BUFFER: u32 = 512;
 /// The input popup's "no input" item (nih-plug connects no input then).
@@ -61,7 +61,7 @@ pub struct MidiSetup {
     pub outputs: Vec<String>,
 }
 
-/// The standalone app's side ([re:16f787]).
+/// The standalone app's side ([re:0f7c8c]).
 pub trait DeviceHost: Send {
     /// Devices, and the rates / channels of `output` and `input` ("" =
     /// the default output, no input).

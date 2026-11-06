@@ -54,11 +54,11 @@ pub fn save(doc: &Node, src_samples: Option<&Path>, path: &Path) -> std::io::Res
     Ok((out, errors))
 }
 
-/// The parts of a project that have their own files ([re:4196af] File
-/// menu; [re:57f674], kit
-/// [re:394e94], pad [re:25e3af], pattern bank
-/// [re:1b98ba], pattern [re:b14536], mappings
-/// [re:65fec7]). Each file is `<root>` holding the object(s) under their class
+/// The parts of a project that have their own files ([re:b760e7] File
+/// menu; [re:ab541b], kit
+/// [re:fcb951], pad [re:f7ca55], pattern bank
+/// [re:aa41a2], pattern [re:5546fe], mappings
+/// [re:6421a6]). Each file is `<root>` holding the object(s) under their class
 /// name (`Engine`, `Pad`, `StepPattern`, `BindingMap`; a kit is `Pad0..63`,
 /// a bank `StepPattern0..23`), default attributes removed, samples kept in
 /// `<stem>.samples/` like a project's.
@@ -73,7 +73,7 @@ pub enum Part {
 }
 
 impl Part {
-    /// (extension, filter description, noun) as [re:0b6aaa]
+    /// (extension, filter description, noun) as [re:e8becb]
     /// 0x16c.. passes them to load / save.
     /// The extension is the app's own (saving); loading takes every family
     /// (`dreist_formats::profile::extensions_of`).
@@ -134,7 +134,7 @@ pub fn save_part(doc: &Node, src_samples: Option<&Path>, part: Part, path: &Path
 /// Option `AllocatorRestoreOutputs` (default on): loads take the files'
 /// `OutputLocation`s. Off, the objects keep their routing
 /// ([re:7decb8] reads the option;
-/// [re:d12ebb] skips the attribute).
+/// [re:62feb9] skips the attribute).
 pub fn restore_outputs() -> bool {
     crate::options::Options::load().bool("AllocatorRestoreOutputs", true)
 }
@@ -157,8 +157,8 @@ pub fn keep_outputs(old: &Node, new: &mut Node) {
 
 /// Load a part file into `doc` (samples made absolute against the file's
 /// `.samples` folder). Engine loads keep the old engine's locked pads,
-/// layers, patterns and tracks (engine load [re:6463fe]); a pad
-/// replaces the pad (pad load [re:7acfa5], 0x56); a bank or a
+/// layers, patterns and tracks (engine load [re:b3d487]); a pad
+/// replaces the pad (pad load [re:49cfcd], 0x56); a bank or a
 /// pattern replaces the unlocked patterns.
 pub fn load_part(doc: &mut Node, samples: Option<&Path>, part: Part, path: &Path) -> bool {
     let before = (!restore_outputs()).then(|| doc.clone());
