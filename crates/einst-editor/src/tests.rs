@@ -362,12 +362,14 @@ fn pattern_zoom_and_scroll() {
     ed.set_playback(true, steps, None);
     assert_eq!(ed.model.pattern_view[e].h_scroll, 0, "follow is off by default");
     ed.model.follow_playback = true;
+    // v1: the view moves just far enough, the step becoming the last shown.
     steps[e] = Some(last - 1);
     ed.set_playback(true, steps, None);
-    assert_eq!(ed.model.pattern_view[e].h_scroll, last as usize - 1);
+    let scrolled = ed.model.pattern_view[e].h_scroll;
+    assert_eq!(scrolled, last as usize - lay.visible_steps);
     steps[e] = Some(last);
     ed.set_playback(true, steps, None);
-    assert_eq!(ed.model.pattern_view[e].h_scroll, last as usize - 1, "still in view");
+    assert_eq!(ed.model.pattern_view[e].h_scroll, scrolled + 1, "one more step");
 }
 
 #[test]
