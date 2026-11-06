@@ -436,8 +436,15 @@ impl Mixer {
                     "EnginePitchKnob" => k.value = pitch,
                     "SwingKnob" => k.value = depth,
                     "EngineSwingTemplateCombo" => k.text = swing.clone(),
-                    "EngineNumBox" if !editing => k.text = num.to_string(),
-                    "EngineDenomBox" if !editing => k.text = den.to_string(),
+                    // v1's 1..16 boxes ([re:074e2e]): value01 = (n − 1) / 15.
+                    "EngineNumBox" if !editing => {
+                        k.text = num.to_string();
+                        k.value = (num.clamp(1, 16) - 1) as f32 / 15.0;
+                    }
+                    "EngineDenomBox" if !editing => {
+                        k.text = den.to_string();
+                        k.value = (den.clamp(1, 16) - 1) as f32 / 15.0;
+                    }
                     "MuteButton" => k.on = mute,
                     "SoloButton" => k.on = solo,
                     "PreButton" => k.on = pre_fade,
@@ -776,6 +783,12 @@ impl Mixer {
                     (Channel::Engine(k), "GainSlider") => msg(id::SET_ENGINE_PARAMETER, &[k as i32], &[v, EngineParam::Gain as u8 as f32, 0.0]),
                     (Channel::Engine(k), "PanKnob") => msg(id::SET_ENGINE_PARAMETER, &[k as i32], &[v, EngineParam::Pan as u8 as f32, 0.0]),
                     (Channel::Engine(k), "Pitch") => msg(id::SET_ENGINE_PARAMETER, &[k as i32], &[v, EngineParam::Pitch as u8 as f32, 0.0]),
+                    // A drag on a tempo modifier box ([re:074e2e]: dragable,
+                    // 1..16, the value rounded).
+                    (Channel::Engine(k), "EngineNumBox" | "EngineDenomBox") => {
+                        let n = (1.0 + 15.0 * v.clamp(0.0, 1.0)).round();
+                        msg(if name == "EngineNumBox" { id::SET_ENGINE_TEMPO_NUM } else { id::SET_ENGINE_TEMPO_DENOM }, &[k as i32], &[n])
+                    }
                     // `e_setEngineSwingTemplateDepth` 0x95.
                     (Channel::Engine(k), "SwingKnob") => msg(id::SET_ENGINE_SWING_TEMPLATE_DEPTH, &[k as i32], &[v.clamp(0.0, 1.0)]),
                     (Channel::Pad(k), "GainSlider") => msg(id::SET_PAD_PARAMETER, &[e, Self::pad_of(model, k) as i32], &[v, PadParam::Gain as u8 as f32, 0.0]),

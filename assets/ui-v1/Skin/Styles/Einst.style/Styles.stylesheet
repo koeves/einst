@@ -243,18 +243,18 @@
     <CtrlStyle name="ModalNonEditableEditBoxStyle" colBorder="Ink" colFill="ModalField" colText="Ink" font="Sans10" optDrawBorder="true" parentStyle0="ModalFieldStyle" />
     <CtrlStyle name="LEDEditBoxCenteredStyle" colFill="LcdLight" colText="Ink" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseTextBoxStyle" />
     <CtrlStyle name="LEDEditBoxNonEditableStyle" colFill="LcdLight" colText="Ink" font="Sans10" parentStyle0="BaseTextBoxStyle" />
-    <CtrlStyle name="LEDComboBoxStyle" colFill="LcdLight" colText="Ink" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
-    <CtrlStyle name="ModalComboBoxStyle" colBorder="Ink" colFill="ModalField" colText="Ink" font="Sans10" optDrawBorder="true" parentStyle0="ModalFieldStyle" />
-    <CtrlStyle name="LEDMediumComboBoxStyle" colFill="LcdLight" colText="Ink" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
-    <CtrlStyle name="LEDLargeComboBoxStyle" colFill="LcdLight" colText="Ink" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
-    <CtrlStyle name="LEDLargerComboBoxStyle" colFill="LcdLight" colText="Ink" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
-    <CtrlStyle name="LEDSmallComboBoxStyle" colFill="LcdLight" colText="Ink" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
-    <CtrlStyle name="FieldEditorComboBoxStyle" colFill="LcdLight" colText="Ink" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
-    <CtrlStyle name="LEDSmallValueBoxStyle" colFill="LcdLight" colText="Ink" font="Sans10" parentStyle0="BaseTextBoxStyle" />
-    <CtrlStyle name="LEDSmallValueBoxCenteredStyle" colFill="LcdLight" colText="Ink" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseTextBoxStyle" />
-    <CtrlStyle name="LEDSmallNonDragableValueBoxStyle" colFill="LcdLight" colText="Ink" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseTextBoxStyle" />
-    <CtrlStyle name="HardDragableValueBoxStyle" colFill="LcdLight" colText="Ink" font="Sans10" parentStyle0="BaseTextBoxStyle" />
-    <CtrlStyle name="HardDragableCenteredValueBoxStyle" colFill="LcdLight" colText="Ink" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseTextBoxStyle" />
+    <CtrlStyle name="LEDComboBoxStyle" colFill="LcdLight" colText="Ink" dragable="false" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
+    <CtrlStyle name="ModalComboBoxStyle" colBorder="Ink" colFill="ModalField" colText="Ink" dragable="false" font="Sans10" optDrawBorder="true" parentStyle0="ModalFieldStyle" />
+    <CtrlStyle name="LEDMediumComboBoxStyle" colFill="LcdLight" colText="Ink" dragable="false" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
+    <CtrlStyle name="LEDLargeComboBoxStyle" colFill="LcdLight" colText="Ink" dragable="false" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
+    <CtrlStyle name="LEDLargerComboBoxStyle" colFill="LcdLight" colText="Ink" dragable="false" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
+    <CtrlStyle name="LEDSmallComboBoxStyle" colFill="LcdLight" colText="Ink" dragable="false" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
+    <CtrlStyle name="FieldEditorComboBoxStyle" colFill="LcdLight" colText="Ink" dragable="false" font="Sans10" optPopupDivider="false" parentStyle0="BaseTextBoxStyle" realPopupArrowSize="0.3" />
+    <CtrlStyle name="LEDSmallValueBoxStyle" colFill="LcdLight" colText="Ink" dragable="false" font="Sans10" parentStyle0="BaseTextBoxStyle" />
+    <CtrlStyle name="LEDSmallValueBoxCenteredStyle" colFill="LcdLight" colText="Ink" dragable="true" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseTextBoxStyle" />
+    <CtrlStyle name="LEDSmallNonDragableValueBoxStyle" colFill="LcdLight" colText="Ink" dragable="false" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseTextBoxStyle" />
+    <CtrlStyle name="HardDragableValueBoxStyle" colFill="LcdLight" colText="Ink" dragable="true" font="Sans10" parentStyle0="BaseTextBoxStyle" />
+    <CtrlStyle name="HardDragableCenteredValueBoxStyle" colFill="LcdLight" colText="Ink" dragable="true" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseTextBoxStyle" />
     <CtrlStyle name="NextFXPresetButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
     <CtrlStyle name="PrevFXPresetButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
     <CtrlStyle name="LargePowerButtonStyle" parentStyle0="LcdPowerButtonStyle" />

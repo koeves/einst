@@ -189,6 +189,8 @@ STYLE_ATTRS = {
     "lineWidth": ("realLineWidth", "same value"),
     "colLine": ("colLine", "colour"),
     "plotRectInset": ("realPlotInset", "same value"),
+    # Value boxes a press drags (v1's style flag 0x80; dreist-gui's App).
+    "dragable": ("dragable", "same value"),
 }
 
 # v1 style classes dreist-gui needs as the style's element class to draw the
@@ -200,7 +202,7 @@ NATIVE_STYLES = {"CtrlMeterStyle", "CtrlTableViewStyle", "CtrlListBoxStyle"}
 DROPPED = {
     "name", "imUp", "imDown", "imDisabled", "imBackground", "imKnobNormal", "imBackingStrip", "imAltBackingStrip",
     "imKnobOff", "imKnobOn", "imOff", "imOn", "optSmartTile", "intSmartTileEdgeSize", "optNoGraphics", "clippingRect",
-    "optEditable", "dragable", "optSendValueWhenFocusLost", "optAlphaDisabled", "optGreyOutDisabled", "optNoBackground",
+    "optEditable", "optSendValueWhenFocusLost", "optAlphaDisabled", "optGreyOutDisabled", "optNoBackground",
     "fineScale", "incDecButtonMode", "snapSteps", "optScaleKnob", "optHistogram",
     "optNoClickOutsideKnobMove", "optNoClickOutsideKnobPage", "optIsScrollbar", "optXFineBehaviour",
     "optShiftFineBehaviour", "optStripInverted", "macroValueScaler", "microValueScaler", "longDim",
