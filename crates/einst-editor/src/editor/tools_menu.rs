@@ -88,10 +88,16 @@ impl Editor {
                     MainAction::Reset | MainAction::ConfirmReset => {
                         let loaded = default.as_ref().filter(|p| p.is_file()).and_then(|p| crate::app::read_project(p).map(|(raw, _)| (raw, p.clone())));
                         self.project_path = None;
-                        match loaded {
-                            Some((raw, p)) => self.open_document(raw, Some(dreist_formats::model::samples_dir(&p)), None),
-                            None => self.open_document(project::new_document(), None, None),
+                        let (mut raw, samples) = match loaded {
+                            Some((raw, p)) => (raw, Some(dreist_formats::model::samples_dir(&p))),
+                            None => (project::new_document(), None),
+                        };
+                        // v1 loads the default preset as any state: locked
+                        // bindings stay ([re:6421a6]).
+                        if options::Options::load().bool("BindingsLocked", false) {
+                            midimap::carry_bindings(&self.model.doc, &mut raw);
                         }
+                        self.open_document(raw, samples, None);
                         self.outbox.push(self.model.rebuild_command());
                     }
                     MainAction::SaveDefault => {
