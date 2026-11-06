@@ -281,6 +281,9 @@ impl Editor {
             changed |= self.file_menu(ev);
             changed |= self.tools_help_menu(ev);
             changed |= self.text_commit(ev);
+            if let Some(f) = self.browser.as_mut().and_then(|b| b.load_request.take()) {
+                changed |= self.load_file_at(&f, None, None);
+            }
             if let Some(f) = self.browser.as_mut().and_then(|b| b.slice_request.take()) {
                 changed |= self.open_slicer_from_browser(&f);
             }
