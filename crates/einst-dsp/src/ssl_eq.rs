@@ -145,7 +145,6 @@ impl SslEq {
     fn update(&mut self, sr: f32) {
         let p = |i: usize| self.ports[i].value;
         let fs = sr as f64;
-        let gain = |x: f32| ((x as f64 * 1.19029).tan() as f32 * 8.0) as f64;
         for b in 0..4 {
             let base = b * 4;
             self.on[b] = p(base + 3) >= 0.5;
@@ -154,24 +153,35 @@ impl SslEq {
                 continue;
             }
             self.keys[b] = key;
-            let c = match b {
-                0 => {
-                    let f = fast_exp2(key[1] + 1.0) as f64;
-                    if key[0] < 0.5 { ssl_shelf(f, gain(key[2]), fs, false) } else { ssl_bell(f, gain(key[2]), fs) }
-                }
-                1 | 2 => {
-                    let f = fast_exp2(key[1] + 1.0) as f64;
-                    ssl_peak(f, (-key[0]).exp() as f64, gain(key[2]), fs)
-                }
-                _ => {
-                    let f = fast_exp2(key[1] + 1.0) as f64;
-                    if key[0] < 0.5 { ssl_shelf(f, gain(key[2]), fs, true) } else { ssl_bell(f, gain(key[2]), fs) }
-                }
-            };
-            self.bands[b].c = c;
+            self.bands[b].c = band_coeffs(b, key, fs);
         }
         self.first = false;
     }
+}
+
+/// Band `b`'s coefficients from its first three ports (shape or Q,
+/// frequency, gain) at `fs`.
+fn band_coeffs(b: usize, key: [f32; 3], fs: f64) -> Coeffs {
+    let gain = |x: f32| ((x as f64 * 1.19029).tan() as f32 * 8.0) as f64;
+    let f = fast_exp2(key[1] + 1.0) as f64;
+    match b {
+        1 | 2 => ssl_peak(f, (-key[0]).exp() as f64, gain(key[2]), fs),
+        _ if key[0] >= 0.5 => ssl_bell(f, gain(key[2]), fs),
+        _ => ssl_shelf(f, gain(key[2]), fs, b != 0),
+    }
+}
+
+/// The editor plot of band `band` (0..4) for port values `ports`:
+/// [re:1afe17] recomputes the coefficients and draws the band's response
+/// when its In port is on, else the flat 0 dB line.
+pub fn display_part(ports: &[f32], band: usize, sample_rate: f32) -> [f32; crate::eq_display::POINTS] {
+    let p = |i: usize| ports.get(i).copied().unwrap_or(0.0);
+    let base = band * 4;
+    if band >= 4 || p(base + 3) < 0.5 {
+        return crate::eq_display::curve(&[], sample_rate);
+    }
+    let ([b0, b1, b2], [_, a1, a2]) = band_coeffs(band, [p(base), p(base + 1), p(base + 2)], sample_rate as f64);
+    crate::eq_display::curve(&[[b0, b1, b2, a1, a2]], sample_rate)
 }
 
 impl Default for SslEq {

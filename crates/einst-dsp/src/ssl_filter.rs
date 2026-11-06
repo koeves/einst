@@ -123,3 +123,23 @@ impl Node for SslFilter {
         }
     }
 }
+
+/// The editor plot of part `part` for port values `ports`: 0 the low-pass,
+/// 1 the high-pass. [re:d9b038] draws the part's response when its active
+/// port is on, else the flat 0 dB line. The high-pass is shown as v1's
+/// display biquad ([re:426c2d]: an RBJ high-pass, Q 1/√2, at the HP
+/// frequency), not the 3rd-order filter the audio runs through.
+pub fn display_part(ports: &[f32], part: usize, sample_rate: f32) -> [f32; crate::eq_display::POINTS] {
+    let p = |i: usize| ports.get(i).copied().unwrap_or(0.0);
+    let (on, freq, mode) = match part {
+        0 => (2, 3, 3),
+        1 => (0, 1, 6),
+        _ => return crate::eq_display::curve(&[], sample_rate),
+    };
+    if p(on) < 0.5 {
+        return crate::eq_display::curve(&[], sample_rate);
+    }
+    let mut f = crate::vari_eq::Filter::default();
+    f.set(mode, (1.0 / sample_rate) * fast_exp2(p(freq) + 1.0), std::f32::consts::FRAC_1_SQRT_2, 0.0);
+    crate::eq_display::curve(&[[f.b0, f.b1, f.b2, f.a1, f.a2]], sample_rate)
+}

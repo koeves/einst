@@ -213,6 +213,15 @@ impl VariEq {
     }
 }
 
+/// The editor plot for port values `ports` ([re:2c171a]): the
+/// response of the block's filter, always drawn.
+pub fn display(ports: &[Port], sample_rate: f32) -> [f32; crate::eq_display::POINTS] {
+    let (mode, f, q, g) = VariEq::coeff_args(ports, sample_rate);
+    let mut flt = Filter::default();
+    flt.set(mode, f, q, g);
+    crate::eq_display::curve(&[[flt.b0, flt.b1, flt.b2, flt.a1, flt.a2]], sample_rate)
+}
+
 impl Default for VariEq {
     fn default() -> Self {
         VariEq::new()

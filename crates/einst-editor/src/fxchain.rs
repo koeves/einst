@@ -321,7 +321,7 @@ pub enum Target {
 }
 
 impl Target {
-    fn index(self) -> [i32; 3] {
+    pub(crate) fn index(self) -> [i32; 3] {
         match self {
             Target::Engine(e) => [e as i32, -1, -1],
             Target::Pad(e, p) => [e as i32, p as i32, -1],
@@ -407,6 +407,11 @@ pub struct FxPanel {
 }
 
 impl FxPanel {
+    /// The chain shown and its six slot panels.
+    pub(crate) fn shown(&self) -> Option<(Target, &[Vec<usize>])> {
+        self.built.as_ref().map(|(t, _)| (*t, &self.slots[..]))
+    }
+
     /// Fill the mixer's chain panel at `host` (its `EffectChain.skin`
     /// already mounted) with the six slots.
     pub fn build(skin: &mut Skin, root: &mut Ctrl, host: Vec<usize>) -> Result<FxPanel, crate::EditorError> {
@@ -619,6 +624,7 @@ impl FxPanel {
                     _ => {}
                 }
             });
+            crate::fxplot::sync(c, kind, node, model.sample_rate.unwrap_or(crate::fxplot::DEFAULT_SAMPLE_RATE));
         });
     }
 
