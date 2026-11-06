@@ -1726,8 +1726,9 @@ fn engine_selector_level_overlay() {
         }
         c.children.iter().find_map(find)
     }
-    let a = find(&ed.app.root).and_then(|c| c.attr("overlayAlpha")).and_then(|v| v.parse::<f32>().ok());
-    assert_eq!(a, Some(0.75));
+    // v1: the level curve of (L + R)/2 (0 dB → 0.8).
+    let a = find(&ed.app.root).map(|c| c.value);
+    assert!(a.is_some_and(|a| (a - 0.8).abs() < 1e-4), "{a:?}");
     if let Ok(out) = std::env::var("DREIST_HEADER_SHOT") {
         let mut m = dreist_engine::Meters::default();
         m.engine[0] = [1.0, 1.0];
@@ -1735,10 +1736,10 @@ fn engine_selector_level_overlay() {
         ed.update_meters(&m);
         ed.render(1.0).save_png(out).unwrap();
     }
-    // Falls by 0.8149 of the gap per tick.
+    // Falls by at most 0.1 per tick.
     ed.update_meters(&dreist_engine::Meters::default());
-    let a = find(&ed.app.root).and_then(|c| c.attr("overlayAlpha")).and_then(|v| v.parse::<f32>().ok()).unwrap();
-    assert!((a - 0.75 * 0.8149294).abs() < 1e-4, "{a}");
+    let a = find(&ed.app.root).map(|c| c.value).unwrap();
+    assert!((a - 0.7).abs() < 1e-4, "{a}");
 }
 
 #[test]
