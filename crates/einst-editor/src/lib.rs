@@ -129,6 +129,7 @@ enum FileAction {
     Save { part: project::Part, as_new: bool },
     SaveMidi,
     OpenMidi,
+    ToggleEmbedSamples,
 }
 
 /// [re:b86a03] [re:2761f5]: five entries,
