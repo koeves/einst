@@ -102,6 +102,23 @@ impl TempoDrag {
     }
 }
 
+/// The standalone's MIDI clock sync ([re:c57733]): on, and the time of the
+/// last clock (ms since the epoch; 0 none yet). Set by the plugin.
+pub static CLOCK_SYNC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+pub static CLOCK_LAST_MS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Milliseconds since the epoch.
+pub fn now_ms() -> u64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as u64).unwrap_or(0)
+}
+
+/// [re:c57733]: syncing and no clock for 2 s: the MIDI indicator takes
+/// `MIDIIndiErrorStyle`.
+pub fn clock_missing() -> bool {
+    use std::sync::atomic::Ordering::Relaxed;
+    CLOCK_SYNC.load(Relaxed) && now_ms().saturating_sub(CLOCK_LAST_MS.load(Relaxed)) >= 2000
+}
+
 /// Indicator hold (10 ticks of the 1/30 s timer).
 const INDICATOR_TICKS: u32 = 10;
 const GAIN_EDIT: &str = "MasterGainEdit";
@@ -288,7 +305,11 @@ impl Header {
         });
         set("RestartButton", &|c| c.enabled = learn || song.active);
         let (midi, voice) = (self.midi_ticks > 0, self.voice_ticks > 0);
-        set("MIDIIndi", &|c| c.on = midi);
+        let missing = clock_missing();
+        set("MIDIIndi", &|c| {
+            c.on = midi;
+            c.style = if missing { "MIDIIndiErrorStyle" } else { "MIDIIndiStyle" }.into();
+        });
         set("VoiceIndi", &|c| c.on = voice);
     }
 
