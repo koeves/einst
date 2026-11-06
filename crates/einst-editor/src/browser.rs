@@ -2564,6 +2564,19 @@ impl Browser {
             } else {
                 let ext = en.path.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
                 crate::browsericons::draw(r, p, st, icon, "file", &crate::browsericons::badge(&ext));
+                // [re:4e8f2d]: a file in a folder that disallows slicing
+                // carries the star over its icon.
+                if crate::search::is_audio(&ext.to_lowercase()) && en.path.parent().is_some_and(|d| !slicing_allowed(d)) {
+                    let (cx, cy, ro, ri) = (icon.x + icon.w - 4.0, icon.y + 4.0, 4.0f32, 1.7f32);
+                    let pts: Vec<(f32, f32)> = (0..10)
+                        .map(|k| {
+                            let a = std::f32::consts::PI * (k as f32 / 5.0) - std::f32::consts::FRAC_PI_2;
+                            let rr = if k % 2 == 0 { ro } else { ri };
+                            (cx + rr * a.cos(), cy + rr * a.sin())
+                        })
+                        .collect();
+                    p.fill_polygon(&pts, Colour::rgba(232, 180, 40, 255));
+                }
             }
             p.text(RectF::new(22.0, y, name_w - 24.0, FILE_ROW), &en.name, col, &font, HAlign::Left, VAlign::Center);
             // [re:b86812]: the play button at the name column's right, and
