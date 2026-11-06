@@ -42,6 +42,7 @@ use dreist_gui::paint::{Painter, RectF};
 use dreist_gui::render::Renderer;
 use dreist_gui::style::{HAlign, VAlign};
 use dreist_gui::{Colour, Ctrl, Rect, Skin};
+use einst_dsp::classify;
 
 use crate::EditorError;
 use crate::command::Command;
@@ -302,12 +303,37 @@ impl Slicer {
         v.sort_by_key(|s| s.start);
         self.slices = v;
         self.selected = self.selected.filter(|&i| i < self.slices.len());
+        self.classify_slices();
         self.update_pattern();
     }
 
     fn update_pattern(&mut self) {
         let (start, end) = self.region();
-        self.pattern = slice::extract_pattern(&self.slices, start, end, self.analysis.bars, self.analysis.beats, self.multi_layer, quantize_rex());
+        self.pattern = slice::extract_pattern_full(&self.slices, start, end, self.analysis.bars, self.analysis.beats, self.multi_layer, quantize_rex(), self.classify, &|_, _| false);
+    }
+
+    /// With Classify on, [re:49a32c]: one classifier for the file runs over
+    /// the first 128 slices in order (each up to the next slice, at most
+    /// `2·sr` frames), skipping empty and deleted slices and locked slices
+    /// that have a type.
+    fn classify_slices(&mut self) {
+        let Some(a) = self.audio.as_ref().filter(|_| self.classify) else { return };
+        let (data, n) = (&a.data, a.data.left.len());
+        let end = |i: usize| self.slices.get(i + 1).map_or(n, |s| s.start as usize).min(n);
+        let max = (0..self.slices.len()).map(|i| end(i).saturating_sub(self.slices[i].start as usize)).max().unwrap_or(0);
+        if max == 0 {
+            return;
+        }
+        let mut c = classify::Classifier::new(max, if data.right.is_some() { 2 } else { 1 }, data.sample_rate);
+        let ends: Vec<usize> = (0..self.slices.len()).map(end).collect();
+        for (i, s) in self.slices.iter_mut().enumerate().take(128) {
+            let a0 = s.start as usize;
+            if ends[i] <= a0 || s.deleted || (s.locked && s.kind != 0) {
+                continue;
+            }
+            let b = a0 + classify::slice_frames(ends[i] - a0, data.sample_rate);
+            s.kind = classify::slice_type(c.process(&data.left[a0..b], data.right.as_ref().map(|r| &r[a0..b])));
+        }
     }
 
     /// Tempo from bars and beats.
@@ -526,7 +552,12 @@ impl Slicer {
                 match name.as_str() {
                     // Classify (Transient only): the state is kept; slices are
                     // allocated in order.
-                    "AnalyzeButton" => self.classify = *on,
+                    "AnalyzeButton" => {
+                        self.classify = *on;
+                        self.classify_slices();
+                        self.update_pattern();
+                        self.edited(model, out);
+                    }
                     "MultiLayersButton" => {
                         self.multi_layer = *on;
                         self.update_pattern();
@@ -566,6 +597,12 @@ impl Slicer {
                 match index {
                     0 => s.locked = !s.locked,
                     1 => s.deleted = !s.deleted,
+                    // Type overrides lock the slice, which keeps the type
+                    // through the next classification ([re:49a32c]).
+                    3..=6 => {
+                        s.kind = (*index - 2) as u8;
+                        s.locked = true;
+                    }
                     _ => return true,
                 }
                 self.update_pattern();
@@ -732,7 +769,7 @@ impl Slicer {
                             return true;
                         }
                         let Some(i) = self.marker_at(*x, w).or_else(|| self.slice_of(self.frame_at(*x, w))) else { return true };
-                        let s = self.slices[i];
+                        let (s, classify) = (self.slices[i], self.classify);
                         let items = SLICE_MENU
                             .iter()
                             .enumerate()
@@ -740,8 +777,8 @@ impl Slicer {
                                 0 if s.locked => "Unlock slice".to_string(),
                                 1 if s.deleted => "Restore slice".to_string(),
                                 0..=2 => t.to_string(),
-                                // Classify overrides: no classification yet.
-                                _ => dreist_gui::menu::item(*t, false),
+                                // Type overrides, with Classify on.
+                                _ => dreist_gui::menu::item(*t, classify),
                             })
                             .collect();
                         self.selected = Some(i);
@@ -785,7 +822,7 @@ impl Slicer {
                 || model.layer_node(e, p, l).is_some_and(|n| n.locked())
                 || model.pattern_node(e, pat_index).and_then(|sp| sp.children.iter().find(|t| t.class == "Track" && t.name.as_deref() == Some(&format!("Track{p}")))).is_some_and(|n| n.locked())
         };
-        self.pattern = slice::extract_pattern_with_locks(&self.slices, start, end, self.analysis.bars, self.analysis.beats, self.multi_layer, quantize_rex(), &blocked);
+        self.pattern = slice::extract_pattern_full(&self.slices, start, end, self.analysis.bars, self.analysis.beats, self.multi_layer, quantize_rex(), self.classify, &blocked);
         let usable: Vec<SlicePoint> = self.slices.iter().filter(|s| !s.deleted).copied().collect();
         let load = |model: &mut Model, p: usize, l: usize, s0: u32, s1: u32, name: &str| {
             load_region(model, e, p, l, &file, (s0, s1, frames, sr), name);
@@ -1048,5 +1085,32 @@ mod tests {
         assert!(s.slices.iter().any(|p| p.start == 1000 && p.locked));
         assert!(s.slices.iter().any(|p| p.start == 3000 && p.deleted));
         assert_eq!(s.slice_span(3500), Some((1000, 44100)), "deleted slices do not cut");
+    }
+
+    #[test]
+    fn classify_types_slices_and_allocates_by_type() {
+        // Two decaying 55 Hz hits: kicks.
+        let sr = 44100usize;
+        let mut left = vec![0.0f32; sr * 2];
+        for p in [0, sr] {
+            for i in 0..sr {
+                left[p + i] = (i as f32 * 55.0 * std::f32::consts::TAU / sr as f32).sin() * (-(i as f32) / 4000.0).exp();
+            }
+        }
+        let mut s = Slicer::closed(None);
+        s.open = true;
+        s.analysis = SliceFile::new(sr as u32 * 2);
+        s.audio = Some(Audio { data: std::sync::Arc::new(dreist_dsp::voice::SampleData { left, right: None, sample_rate: sr as f32 }), buckets: Vec::new() });
+        s.view = (0, sr as u32 * 2);
+        s.slices = vec![SlicePoint::manual(0, false), SlicePoint::manual(sr as u32, false)];
+        s.classify = true;
+        s.classify_slices();
+        s.update_pattern();
+        assert!(s.slices.iter().all(|p| p.kind == 1), "{:?}", s.slices);
+        assert_eq!(s.pattern.hits.iter().map(|h| h.pad).collect::<Vec<_>>(), vec![0, 1]);
+        // A locked slice with a type keeps it.
+        s.slices[1] = SlicePoint { kind: 3, ..SlicePoint::manual(sr as u32, true) };
+        s.classify_slices();
+        assert_eq!(s.slices[1].kind, 3);
     }
 }
