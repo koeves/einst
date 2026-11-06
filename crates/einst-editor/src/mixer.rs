@@ -652,7 +652,8 @@ impl Mixer {
                 let p = Self::pad_of(model, k);
                 out.push(crate::multipad::select(model, e, p, cmd, shift));
             }
-            Channel::Layer(k) => model.layer[e] = k,
+            // [re:20acae] / [re:3b7732]: cmd toggles a layer, shift extends from the anchor.
+            Channel::Layer(k) => out.push(crate::multipad::select_layer(model, e, k, cmd, shift)),
         }
     }
 
