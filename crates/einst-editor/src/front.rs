@@ -175,6 +175,10 @@ pub(crate) fn root(skin: &mut Skin) -> Result<Ctrl, EditorError> {
             }
         }
     }
+    // [re:d2f251]: the tempo box edits on a double click; a press drags it.
+    if let Some(c) = root.find_mut("BPMTextBox").filter(|c| c.overload == "TempoBox") {
+        c.set_attr("optSingleClickEdit", "false".into());
+    }
     for (i, n) in ["MasterVULeft", "MasterVURight"].into_iter().enumerate() {
         if let Some(c) = root.find_mut(n) {
             c.set_attr("masterSide", i.to_string());

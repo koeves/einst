@@ -1497,10 +1497,11 @@ impl PatternPanel {
                 // `PatternEditorRightClickMode` swaps the two ([re:1fec54]).
                 let multi_menu = crate::options::Options::load().bool("PatternEditorRightClickMode", false) != app.mods.alt;
                 let menu = *kind == MouseKind::RightDown && (self.tool != Tool::Multi || (multi_menu && !app.mods.shift));
-                // The erase tool's left button deletes; the select tool's
-                // left button selects as shift does with the others.
+                // The erase tool's left button deletes, with shift it
+                // selects ([re:f07c25]); the select tool's left button
+                // selects as shift does with the others.
                 let kind = &match (self.tool, kind) {
-                    (Tool::Erase, MouseKind::Down) => MouseKind::RightDown,
+                    (Tool::Erase, MouseKind::Down) if !app.mods.shift => MouseKind::RightDown,
                     (_, k) => *k,
                 };
                 let select = self.tool == Tool::Select;
@@ -1770,6 +1771,8 @@ impl PatternPanel {
                         out.push(msg(k, &[e as i32, -1, -1, cur, track], &[0.0]));
                         true
                     }
+                    // [re:98fb4b]: with steps selected only those move.
+                    "NudgeBack" | "NudgeNext" if !self.selection.is_empty() => self.shortcut(model, if name == "NudgeNext" { "right" } else { "left" }, false, out),
                     "NudgePatternBackButton" | "NudgePatternForwardButton" | "NudgeBack" | "NudgeNext" => {
                         let k = if name == "NudgePatternForwardButton" || name == "NudgeNext" { id::NUDGE_PATTERN_FORWARD } else { id::NUDGE_PATTERN_BACKWARDS };
                         out.push(msg(k, &[e as i32, -1, -1, cur], &[0.0]));

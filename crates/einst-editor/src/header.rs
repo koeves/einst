@@ -66,6 +66,40 @@ pub struct Header {
     voice_ticks: u32,
     /// The controls `sync` sets.
     named: dreist_gui::app::PathCache,
+    /// A tempo box drag ([re:95a5c7]).
+    tempo_drag: Option<TempoDrag>,
+}
+
+/// [re:863166]: a press on the tempo box's whole-number digits drags the
+/// whole number (20..1000 over 3000 px, 5000 with shift), elsewhere the
+/// decimals (0..0.99 over 200 px, 2000 with shift), keeping the other part.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct TempoDrag {
+    y: f32,
+    whole: bool,
+    acc: f32,
+    tempo: f32,
+}
+
+impl TempoDrag {
+    fn start(tempo: f32, y: f32, whole: bool) -> TempoDrag {
+        let acc = if whole { (tempo.floor() - 20.0) / 980.0 } else { tempo.fract() / 0.99 };
+        TempoDrag { y, whole, acc: acc.clamp(0.0, 1.0), tempo }
+    }
+
+    /// The tempo after a move to `y`.
+    fn drag(&mut self, y: f32, shift: bool) -> f32 {
+        let span = match (self.whole, shift) {
+            (true, false) => -3000.0,
+            (true, true) => -5000.0,
+            (false, false) => -200.0,
+            (false, true) => -2000.0,
+        };
+        self.acc = ((y - self.y).round() / span + self.acc).clamp(0.0, 1.0);
+        self.y = y;
+        self.tempo = if self.whole { (self.acc * 980.0 + 20.0).floor() + self.tempo.fract() } else { self.tempo.floor() + self.acc * 0.99 };
+        self.tempo
+    }
 }
 
 /// Indicator hold (10 ticks of the 1/30 s timer).
@@ -184,7 +218,7 @@ pub(crate) fn selector_hit(app: &App, base: &[usize], path: &[usize]) -> Option<
 impl Header {
     pub fn build(root: &Ctrl) -> Header {
         let scopes = ["EditorEngineSelectors", "Transport", "MasterControls", "UtilityControls"].iter().filter_map(|n| root.path_of(n)).collect();
-        Header { scopes, selectors: root.path_of("EditorEngineSelectors"), options: None, menu: 0, midi_ticks: 0, voice_ticks: 0, named: Default::default() }
+        Header { scopes, selectors: root.path_of("EditorEngineSelectors"), options: None, menu: 0, midi_ticks: 0, voice_ticks: 0, named: Default::default(), tempo_drag: None }
     }
 
     /// Open the transport options menu at `anchor` (the main menu's
@@ -331,6 +365,26 @@ impl Header {
 
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
         match ev {
+            UiEvent::Mouse { path, overload, kind, x, y } if overload == "TempoBox" => {
+                use dreist_gui::app::MouseKind;
+                match kind {
+                    MouseKind::Down => {
+                        // The whole-number digits: the text left of its point.
+                        let (w, text) = app.ctrl(path).map(|c| (c.rect.w as f32, c.text.clone())).unwrap_or_default();
+                        let dot = text.find('.').unwrap_or(text.len()) as f32 / text.len().max(1) as f32;
+                        self.tempo_drag = Some(TempoDrag::start(model.tempo() as f32, *y, *x < w * dot));
+                    }
+                    MouseKind::Drag => {
+                        if let Some(d) = self.tempo_drag.as_mut() {
+                            let t = d.drag(*y, app.mods.shift);
+                            out.push(msg(id::SET_TEMPO, &[], &[t]));
+                        }
+                    }
+                    MouseKind::Up => self.tempo_drag = None,
+                    MouseKind::RightDown => {}
+                }
+                return true;
+            }
             // [re:29c1c3]: a right click on the Metro button opens the
             // metronome output menu.
             UiEvent::RightClicked { path, name } if name == "MetroButton" && self.scopes.iter().any(|s| path.starts_with(s)) => {
@@ -447,5 +501,27 @@ impl Header {
             }
             _ => false,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::TempoDrag;
+
+    #[test]
+    fn tempo_drag_moves_whole_or_decimals() {
+        // Whole number: 3000 px for 20..1000 (30 px: +9.8, floored), the
+        // decimals kept.
+        let mut d = TempoDrag::start(120.5, 100.0, true);
+        let t = d.drag(70.0, false);
+        assert!((t - 129.5).abs() < 1e-3, "{t}");
+        // Shift: 5000 px.
+        let mut d = TempoDrag::start(120.0, 100.0, true);
+        assert!((d.drag(50.0, true) - 129.0).abs() < 1e-3);
+        // Decimals: 200 px for 0..0.99, the whole number kept.
+        let mut d = TempoDrag::start(120.0, 100.0, false);
+        let t = d.drag(0.0, false);
+        assert!((t - 120.495).abs() < 1e-3, "{t}");
+        assert!((d.drag(-1000.0, false) - 120.99).abs() < 1e-3, "clamped");
     }
 }

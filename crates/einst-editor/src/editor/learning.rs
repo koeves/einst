@@ -184,9 +184,7 @@ impl Editor {
     pub(crate) fn learn_event(&mut self, ev: &UiEvent) -> bool {
         if let UiEvent::Clicked { path, name, .. } = ev {
             if name == "LearnButton" && front::path_in(&self.app.root, "Transport", "LearnButton").as_ref() == Some(path) {
-                self.learn.active = !self.learn.active;
-                self.learn.target = None;
-                self.inspector.learn_buttons(&mut self.app, self.learn.active);
+                self.set_learn(!self.learn.active);
                 return true;
             }
         }
@@ -205,6 +203,11 @@ impl Editor {
             }
         }
         let path = learn::event_path(ev).map(<[usize]>::to_vec);
+        // The browser / mapping page tabs still switch pages (leaving the
+        // mapping page ends learn mode).
+        if self.utility_tabs.as_ref().is_some_and(|t| t.clicked(&self.app, ev).is_some()) {
+            return false;
+        }
         let right = matches!(ev, UiEvent::RightClicked { .. });
         // The press picks the target; the click / value change it causes
         // is swallowed.

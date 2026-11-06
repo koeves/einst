@@ -185,7 +185,10 @@ impl Editor {
                 let o = self.padmenu.select(&mut self.app, &anchor, &mut self.model, &mut self.clipboard, *index, &mut self.outbox);
                 if let (Some(d), Some(b)) = (o.browse, self.browser.as_mut()) {
                     b.browse(d);
-                    self.model.utility_tab = 0;
+                    if self.model.utility_tab == front::MAPPING_PAGE {
+                        self.set_learn(false);
+                    }
+                    self.model.utility_tab = front::BROWSER_PAGE;
                 }
                 if let Some(l) = o.save {
                     let e = self.model.engine;

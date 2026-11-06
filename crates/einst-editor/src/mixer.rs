@@ -213,6 +213,11 @@ fn ctrl_at<'a>(root: &'a mut Ctrl, path: &[usize]) -> &'a mut Ctrl {
 }
 
 impl Mixer {
+    /// The effect chain panel on top, if this page has one.
+    pub(crate) fn fx_panel(&self) -> Option<&crate::fxchain::FxPanel> {
+        self.fx.as_ref()
+    }
+
     /// Mount the page's skin into `page` and find its strips and chain.
     pub fn build(skin: &mut Skin, root: &mut Ctrl, page: &[usize], kind: Kind) -> Result<Mixer, EditorError> {
         let host = ctrl_at(root, page);
