@@ -176,39 +176,25 @@ pub(crate) fn pad_or_empty(model: &Model, e: usize, p: usize) -> Node {
     model.pad_node(e, p).cloned().unwrap_or_else(|| Node::new("Pad", Some(&format!("Pad{p}"))))
 }
 
-/// [re:8d96e9]: copy pad `p` to the pads above (Up), below
-/// (Down) or both (Centred), each layer's coarse tune offset by the pad
-/// distance in semitones; past ±12 the excess goes to the octave (counted
-/// from 0, clamped to ±4) as in the original.
+/// Clone using pitching: pad `p` copied over the engine's pads, pitched
+/// by their place.
 pub fn clone_pad(model: &mut Model, e: usize, p: usize, dir: Clone) {
+    // [re:a1fdb2]: the pad goes to all 16 pads (itself included), then each
+    // layer's coarse tune moves by the pad's place: Up +i from the first,
+    // Down −(15 − i) to the last, Centred +1..+8 above the eighth pad and
+    // −1..−7 below it; at most ±12 semitones, the octave untouched.
     let src = pad_or_empty(model, e, p);
-    let targets: Vec<usize> = match dir {
-        Clone::Up => (p + 1..PADS).collect(),
-        Clone::Down => (0..p).collect(),
-        Clone::Centred => (0..PADS).filter(|&q| q != p).collect(),
-    };
-    for q in targets {
+    let n = crate::model::V1_PADS;
+    for q in 0..n {
+        let offset = match dir {
+            Clone::Up => q as f64,
+            Clone::Down => q as f64 - (n - 1) as f64,
+            Clone::Centred => q as f64 - 7.0,
+        };
         let mut node = src.clone();
-        let offset = q as f64 - p as f64;
         for l in node.children.iter_mut().filter(|c| c.class == "Layer") {
             let tune = l.f32("CoarseTune").unwrap_or(LayerParam::CoarseTune.default_value());
-            let mut st = dreist_dsp::convert::semitones(tune, false) + offset;
-            let mut oct = 0.0f64;
-            let mut wrapped = false;
-            while st > 12.0 || st < -12.0 {
-                let up = st > 12.0;
-                let next = oct + if up { 1.0 } else { -1.0 };
-                wrapped = true;
-                if next.abs() > 4.0 {
-                    st = if up { 12.0 } else { -12.0 };
-                    break;
-                }
-                oct = next;
-                st += if up { -12.0 } else { 12.0 };
-            }
-            if wrapped {
-                l.set("Octave", ((oct + 4.0) / 8.0) as f32);
-            }
+            let st = (dreist_dsp::convert::semitones(tune, false) + offset).clamp(-12.0, 12.0);
             l.set("CoarseTune", ((st + 12.0) / 24.0) as f32);
         }
         put_pad(model, e, q, node);
@@ -717,17 +703,25 @@ mod tests {
     }
 
     #[test]
-    fn clone_up_shifts_tune_and_wraps_into_octaves() {
+    fn clone_up_shifts_tune_from_the_first_pad() {
         crate::app::test_setup();
         let mut m = model();
         clone_pad(&mut m, 0, 4, Clone::Up);
         let tune = |m: &Model, p| dreist_dsp::convert::semitones(m.layer_param(0, p, 0, LayerParam::CoarseTune), false);
-        assert!((tune(&m, 5) - 1.0).abs() < 1e-4);
-        assert!((tune(&m, 16) - 12.0).abs() < 1e-4);
-        // 13 semitones up: octave 1, tune +1.
-        assert!((tune(&m, 17) - 1.0).abs() < 1e-4);
-        assert!((m.layer_param(0, 17, 0, LayerParam::Octave) - 5.0 / 8.0).abs() < 1e-6);
-        assert!(m.pad_node(0, 3).is_none());
+        assert!(tune(&m, 0).abs() < 1e-4, "pad 1 at the original pitch");
+        assert!((tune(&m, 5) - 5.0).abs() < 1e-4);
+        assert!((tune(&m, 15) - 12.0).abs() < 1e-4, "at most +12");
+        assert!(m.pad_node(0, 16).is_none(), "16 pads");
+    }
+
+    #[test]
+    fn clone_centred_keeps_the_eighth_pad() {
+        crate::app::test_setup();
+        let mut m = model();
+        clone_pad(&mut m, 0, 4, Clone::Centred);
+        let tune = |m: &Model, p| dreist_dsp::convert::semitones(m.layer_param(0, p, 0, LayerParam::CoarseTune), false);
+        assert!(tune(&m, 7).abs() < 1e-4);
+        assert!((tune(&m, 8) - 1.0).abs() < 1e-4 && (tune(&m, 0) + 7.0).abs() < 1e-4);
     }
 
     #[test]
@@ -752,12 +746,12 @@ mod tests {
     }
 
     #[test]
-    fn clone_down_reaches_pad_zero() {
+    fn clone_down_ends_on_the_last_pad() {
         crate::app::test_setup();
         let mut m = model();
         clone_pad(&mut m, 0, 4, Clone::Down);
-        let tune = dreist_dsp::convert::semitones(m.layer_param(0, 0, 0, LayerParam::CoarseTune), false);
-        assert!((tune + 4.0).abs() < 1e-4);
-        assert!(m.pad_node(0, 5).is_none());
+        let tune = |p| dreist_dsp::convert::semitones(m.layer_param(0, p, 0, LayerParam::CoarseTune), false);
+        assert!(tune(15).abs() < 1e-4, "pad 16 at the original pitch");
+        assert!((tune(0) + 12.0).abs() < 1e-4, "at least −12");
     }
 }
