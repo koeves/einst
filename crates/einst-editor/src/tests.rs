@@ -3581,8 +3581,11 @@ fn engine_strip_controls_post_engine_messages() {
     let m = msgs(&mut ed, UiEvent::TextCommitted { path: num, name: "EngineNumBox".into(), text: "3".into() });
     assert!(m.iter().any(|m| m.kind == id::SET_ENGINE_TEMPO_NUM && m.value[0] == 3.0), "{m:?}");
     let den = strip_control(&ed, &s, "EngineDenomBox");
-    let m = msgs(&mut ed, UiEvent::TextCommitted { path: den, name: "EngineDenomBox".into(), text: "40".into() });
+    let m = msgs(&mut ed, UiEvent::TextCommitted { path: den.clone(), name: "EngineDenomBox".into(), text: "40".into() });
     assert!(m.iter().any(|m| m.kind == id::SET_ENGINE_TEMPO_DENOM && m.value[0] == 16.0), "clamped to 16: {m:?}");
+    // v1's dragable box: value01 0.5 → 1 + 15·0.5 = 8.5 → 9 (rounded).
+    let m = msgs(&mut ed, UiEvent::ValueChanged { path: den.clone(), name: "EngineDenomBox".into(), id: 0, value: 0.5 });
+    assert!(m.iter().any(|m| m.kind == id::SET_ENGINE_TEMPO_DENOM && m.value[0] == 9.0), "{m:?}");
     ed.sync();
     assert_eq!(ed.model.engine_node(3).and_then(|n| n.u32("TempoNumerator")), Some(3));
     assert_eq!(ed.app.ctrl(&strip_control(&ed, &s, "EngineNumBox")).unwrap().text, "3");
