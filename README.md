@@ -74,7 +74,6 @@ shares with Dreist (the Geist2 rebuild). This repository adds what v1 does diffe
   `cargo clippy --workspace --all-targets --features einst-plugin/standalone -- -D warnings`,
   `cargo test --workspace`.
 - dreist-commons is a submodule at `commons`: clone with `--recursive`.
-- Git conventions for contributors and agents: [`.agents/git.md`](.agents/git.md).
 
 ## Related projects
 
