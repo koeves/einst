@@ -423,7 +423,7 @@ impl Editor {
                 }
                 for (i, f) in files.iter().enumerate() {
                     let (p, l) = if m.alt { (q, i) } else { (q + i, 0) };
-                    if p < 64 && l < LAYERS {
+                    if p < crate::model::V1_PADS && l < LAYERS {
                         crate::browser::load_sample_into_layer(&mut self.model, e, p, l, f);
                     }
                 }
