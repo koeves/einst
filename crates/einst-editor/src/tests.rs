@@ -4656,3 +4656,33 @@ fn browser_footer_controls_learn_as_v1() {
     let t = ed.editor_binding_target(&lp, &ed.app.ctrl(&lp).unwrap().clone()).expect("editor binding");
     assert_eq!((t.proto.kind, t.name.as_str(), t.group.as_str(), t.kind), (0x84, "Lock all pads", "Browser", "Trigger"));
 }
+
+/// v1's source list ([re:7dd3b2]): a folder dropped from Finder on the
+/// Content section becomes a content pack.
+#[test]
+fn finder_folder_drop_on_content_adds_a_pack() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    fn find(c: &dreist_gui::Ctrl, path: &mut Vec<usize>) -> Option<Vec<usize>> {
+        for (i, k) in c.children.iter().enumerate() {
+            path.push(i);
+            if k.overload == "BrowserSourceList" {
+                return Some(path.clone());
+            }
+            if let Some(p) = find(k, path) {
+                return Some(p);
+            }
+            path.pop();
+        }
+        None
+    }
+    let Some(list) = find(&ed.app.root, &mut Vec::new()) else { return };
+    let dir = std::env::temp_dir().join(format!("einst-pack-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let (_, oy) = ed.app.origin(&list);
+    ed.app.mouse_move(5.0, oy as f32 + 3.0);
+    ed.handle(&UiEvent::Files { to: list.clone(), files: vec![dir.clone()], x: 5.0, y: oy as f32 + 3.0, dropped: true });
+    let got = ed.browser.as_ref().unwrap().source_paths();
+    assert!(got.contains(&dir), "{list:?} {got:?}");
+    let _ = std::fs::remove_dir_all(&dir);
+}
