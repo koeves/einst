@@ -103,6 +103,8 @@ pub struct Slicer {
     pub(crate) view: (u32, u32),
     /// A drag on the wave that zooms / scrolls: (x, y, view at the press).
     view_drag: Option<(f32, f32, (u32, u32))>,
+    /// The slices came from Divide mode.
+    chopped: bool,
     /// A drag on the zoom scrollbar: (zone, last x) (`zoomslider::hit`).
     bar_drag: Option<(u8, f32)>,
     /// The slice whose context menu is open.
@@ -150,6 +152,7 @@ impl Slicer {
             view: (0, 0),
             bar_drag: None,
             view_drag: None,
+            chopped: false,
             menu: None,
             snapshot: None,
             extracted: false,
@@ -275,11 +278,17 @@ impl Slicer {
         self.audio.as_ref().map(|a| a.data.left.len() as u32).unwrap_or(0)
     }
 
-    /// Slice the file again (locked and deleted slices are kept).
+    /// Slice the file again (locked and deleted slices are kept in
+    /// Transient mode). Divide makes locked slices, as v1's chop does
+    /// ([re:7b32bf], [re:d73885]); they are not carried back into Transient mode.
     pub fn reslice(&mut self) {
-        let kept: Vec<SlicePoint> = self.slices.iter().filter(|s| s.locked || s.deleted).copied().collect();
+        let kept: Vec<SlicePoint> = if self.chopped { Vec::new() } else { self.slices.iter().filter(|s| s.locked || s.deleted).copied().collect() };
         let (start, end) = self.region();
         let mut v = if self.mode == 0 { slice::for_sensitivity(&self.analysis.slices, self.sensitivity) } else { slice::chop(start, end - start, self.divisions as f32) };
+        self.chopped = self.mode != 0;
+        if self.chopped {
+            v.iter_mut().for_each(|s| s.locked = true);
+        }
         if self.mode == 0 {
             for k in kept {
                 if let Some(s) = v.iter_mut().find(|s| s.start == k.start) {
@@ -1028,8 +1037,12 @@ mod tests {
         assert_eq!(s.slices.len(), 2, "{:?}", s.slices);
         assert_eq!(s.pattern.hits.len(), 2);
         assert_eq!(s.slice_span(30000), Some((22050, 44100)));
-        // Transient keeps the locked and the deleted ones.
+        assert!(s.slices.iter().all(|p| p.locked), "Divide makes locked slices (v1)");
+        // Back in Transient the divided slices go.
         s.mode = 0;
+        s.reslice();
+        assert!(!s.slices.iter().any(|p| p.locked));
+        // Transient keeps the locked and the deleted ones.
         s.slices = vec![SlicePoint::manual(1000, true), SlicePoint { deleted: true, ..SlicePoint::manual(3000, false) }];
         s.reslice();
         assert!(s.slices.iter().any(|p| p.start == 1000 && p.locked));
