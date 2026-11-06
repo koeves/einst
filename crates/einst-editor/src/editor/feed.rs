@@ -70,12 +70,13 @@ impl Editor {
         if !(grid || song) {
             return;
         }
-        // Option `PatternEditorFollow`: keep the position in view.
-        if playing && self.model.follow_playback {
-            let mut scrolled = grid && self.pattern.as_ref().is_some_and(|p| p.follow(&self.app, &mut self.model));
+        // Keep the position in view: the pattern page with option
+        // `PatternEditorFollow`, the song page with its Follow button.
+        if playing {
+            let mut scrolled = grid && self.model.follow_playback && self.pattern.as_ref().is_some_and(|p| p.follow(&self.app, &mut self.model));
             // The song panel only shows the position with the song active.
             let song_active = self.model.doc.children.iter().find(|c| c.class == "SongSequencer").and_then(|n| n.bool("SongActive")).unwrap_or(false);
-            if let (true, true, Some(pos), Some(sg)) = (song, song_active, song_pos, self.song.as_mut()) {
+            if let (true, true, Some(pos), Some(sg)) = (song, song_active, song_pos, self.song.as_mut().filter(|sg| sg.follow_on)) {
                 scrolled |= sg.follow(pos);
             }
             if scrolled {

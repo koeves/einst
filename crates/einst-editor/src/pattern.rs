@@ -323,6 +323,35 @@ pub(crate) enum Tool {
 }
 
 const TOOLS: [Tool; 4] = [Tool::Pen, Tool::Erase, Tool::Select, Tool::Multi];
+/// v1's names in option `PatternEditorTool` ([re:c74f4c] [re:be34ff]).
+const TOOL_NAMES: [&str; 4] = ["Pen", "Delete", "Selection", "Multi"];
+
+/// The remembered tool (default Pen).
+fn saved_tool() -> Tool {
+    let n = crate::options::Options::load().string("PatternEditorTool", "Pen");
+    TOOL_NAMES.iter().position(|&t| t == n).map_or(Tool::Pen, |i| TOOLS[i])
+}
+
+/// Option `PatternEditorDragEditType`: the Drag Edits lane by v1's item
+/// name (default Velocity), one for every engine ([re:10527a]).
+pub(crate) fn saved_drag_lane() -> usize {
+    let n = crate::options::Options::load().string("PatternEditorDragEditType", "Velocity");
+    GRAPH_TYPES.iter().find(|&&(name, _)| name == n).map_or(0, |&(_, l)| l)
+}
+
+/// A new Drag Edits lane: every engine's, remembered.
+fn set_drag_lane(model: &mut Model, l: usize) {
+    for v in &mut model.pattern_view {
+        v.drag_lane = l;
+    }
+    if let Some(&(name, _)) = GRAPH_TYPES.iter().find(|&&(_, x)| x == l) {
+        let mut o = crate::options::Options::load();
+        o.set("PatternEditorDragEditType", name);
+        if !cfg!(test) {
+            o.save();
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, Default)]
 struct GraphDrag {
@@ -925,7 +954,7 @@ impl PatternPanel {
             clipboard: Vec::new(),
             track_menu: None,
             graph_menu: None,
-            tool: Tool::Multi,
+            tool: saved_tool(),
             lane_clip: Vec::new(),
             toolbar_menu: None,
             resources: dreist_formats::paths::skin_dir(),
@@ -1267,9 +1296,13 @@ impl PatternPanel {
         let selected = model.pad[e];
         let names: Vec<String> = (0..lay.tracks).map(|r| model.pad_name(e, lay.track(r)).unwrap_or_else(|| format!("Pad {}", lay.track(r) + 1))).collect();
         let gains: Vec<f32> = (0..lay.tracks).map(|r| model.pad_gain(e, lay.track(r))).collect();
+        // The view buttons (the tools panel has a MultiButton of its own).
         let multi = self.multi;
-        set(app, "MultiButton", &|c| c.on = multi);
-        set(app, "SingleButton", &|c| c.on = !multi);
+        if let Some(g) = self.named.path_in(app, &self.page, "ModeGroup").and_then(|p| app.ctrl_mut(&p)) {
+            for b in &mut g.children {
+                b.on = (b.name == "MultiButton") == multi;
+            }
+        }
         self.apply_view(app);
         let sig = format!("{:?}{:?}{}", lay.track_y, lay.graphs, lay.row_h);
         let open: Vec<bool> = (0..lay.tracks).map(|r| self.auto_open.contains(&(e, lay.track(r)))).collect();
@@ -1456,7 +1489,7 @@ impl PatternPanel {
                     && self.named.path_in(app, &self.page, "ToolsPanel").is_some_and(|t| path.starts_with(&t))
                     && app.ctrl(&path[..path.len() - 1]).is_some_and(|g| g.name == "ButtonGroup") =>
             {
-                self.tool = TOOLS[path[path.len() - 1].min(3)];
+                self.set_tool(TOOLS[path[path.len() - 1].min(3)]);
                 true
             }
             // ÷2 / ×2 (manual §9:5): the whole lane stretched (its first
@@ -1614,7 +1647,7 @@ impl PatternPanel {
                 }
                 let idx = [e as i32, -1, -1, cur, track as i32];
                 match *index {
-                    0..=3 => self.tool = TOOLS[*index],
+                    0..=3 => self.set_tool(TOOLS[*index]),
                     5 => send_all(out, &vec![dreist_formats::params::step_lane_default(lane); n]),
                     7 | 8 => {
                         self.lane_clip = vals.clone();
@@ -2386,7 +2419,7 @@ impl PatternPanel {
                 false
             }
             ToolbarAction::DragLane(l) => {
-                model.pattern_view[e].drag_lane = l;
+                set_drag_lane(model, l);
                 true
             }
             // "Single Track View" is the toolbar View button (option
@@ -2487,16 +2520,26 @@ impl PatternPanel {
         !self.clipboard.is_empty()
     }
 
+    /// A new tool, remembered as `PatternEditorTool` ([re:c74f4c]).
+    pub(crate) fn set_tool(&mut self, t: Tool) {
+        self.tool = t;
+        let mut o = crate::options::Options::load();
+        o.set("PatternEditorTool", TOOL_NAMES[TOOLS.iter().position(|&x| x == t).unwrap_or(0)]);
+        if !cfg!(test) {
+            o.save();
+        }
+    }
+
     /// A track menu pick the pattern editor carries out.
     pub fn menu_request(&mut self, app: &mut App, model: &mut Model, req: crate::patmenu::EditorRequest, out: &mut Vec<Command>) -> bool {
         use crate::patmenu::EditorRequest as R;
         match req {
             R::Tool(i) => {
-                self.tool = TOOLS[i.min(3)];
+                self.set_tool(TOOLS[i.min(3)]);
                 true
             }
             R::DragLane(l) => {
-                model.pattern_view[model.engine].drag_lane = l;
+                set_drag_lane(model, l);
                 true
             }
             R::Cut => self.shortcut(model, "x", true, out),

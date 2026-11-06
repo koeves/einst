@@ -381,7 +381,11 @@ impl Sampler {
             host: Some(hp),
             wave,
             record_mode: o.int("SamplerLastTimedMode", 0).clamp(0, 2) as u8,
-            name: "Sample".into(),
+            // v1 keeps the name, auto-crop (default on) and zoom mode
+            // ([re:5fa03c] [re:7941cb] [re:0740e8] [re:b64a6c]).
+            name: o.string("SamplerLastName", "Sample"),
+            auto_crop: o.bool("SamplerLastAutoCrop", true),
+            zoom_mode: o.int("SamplerLastZoomMode", 0),
             view: (0.0, 1.0),
             timeline_beats: crate::timeline::beats_mode("Sampler"),
             ..Sampler::default()
@@ -613,7 +617,10 @@ impl Sampler {
                     }
                     Menu::Send => match acts.get(*index).copied().flatten() {
                         Some(r) => self.request = Some(r),
-                        None if *index + 1 == acts.len() => self.auto_crop = !self.auto_crop,
+                        None if *index + 1 == acts.len() => {
+                            self.auto_crop = !self.auto_crop;
+                            save_opt("SamplerLastAutoCrop", self.auto_crop);
+                        }
                         None => {}
                     },
                     Menu::Timeline => {
@@ -655,6 +662,7 @@ impl Sampler {
                     }
                     "AutoZoomGroup" => {
                         self.zoom_mode = i as i64;
+                        save_opt("SamplerLastZoomMode", self.zoom_mode);
                         self.apply_auto_zoom();
                         return true;
                     }
@@ -795,7 +803,10 @@ impl Sampler {
                         save_opt("SamplerLastBars", s.bars);
                         save_opt("SamplerLastBeats", s.beats);
                     }
-                    "NameTextBox" => self.name = text.trim().to_string(),
+                    "NameTextBox" => {
+                        self.name = text.trim().to_string();
+                        save_opt("SamplerLastName", text);
+                    }
                     _ => return false,
                 }
                 true
