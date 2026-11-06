@@ -477,9 +477,10 @@ impl Pads {
                             out.push(Command::PadHit { engine: e, pad: idx, velocity: (vel * 127.0) as u32 });
                             self.held = Some(idx);
                         }
-                        // [re:20c941]: cmd toggles, shift extends.
+                        // [re:20c941]: one pad is selected (v1 has no
+                        // multi-pad selection).
                         if normal || alt {
-                            out.push(crate::multipad::select(model, e, idx, app.mods.cmd, app.mods.shift));
+                            out.push(crate::multipad::select(model, e, idx, false, false));
                         }
                         true
                     }
