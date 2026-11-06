@@ -1,10 +1,10 @@
-//! Keyboard shortcuts ([re:a191fd], ev_16eeb3a7…, ev_ce262c09…,
+//! Keyboard shortcuts ([re:e08d60], ev_16eeb3a7…, ev_ce262c09…,
 //! ev_68554242…).
 //!
 //! [re:9db09e] hands each key to
-//! [re:9454a7], which looks the key up in
+//! [re:ed265e], which looks the key up in
 //! the accelerator table (the menus' key equivalents) and
-//! runs the entry's function [re:df170c]:
+//! runs the entry's function [re:e08d60]:
 //! - nothing happens unless option `RespondToKeyboard` (default on) is set;
 //! - an entry matches when the key matches and either both sides have no
 //!   modifiers or the modifier sets are equal;
