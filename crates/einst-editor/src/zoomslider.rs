@@ -1,4 +1,4 @@
-//! [re:28a1ae] ([re:bd0c5b]..) and the [re:1402db] zoom logic
+//! [re:55b154] ([re:55b154]..) and the [re:a31f0f] zoom logic
 //! shared by the layer wave display: the view is (start, size) as fractions
 //! of the file. See the dreist-re GUI notes (Zoom slider, Wave display zoom).
 
@@ -11,7 +11,7 @@ pub fn thumb(view: (f32, f32), tw: f32) -> (f32, f32) {
     (view.0 * tw, view.1 * tw)
 }
 
-/// Left press [re:89f320]: 2 left edge, 3 right edge (within 2 px),
+/// Left press [re:e61a44]: 2 left edge, 3 right edge (within 2 px),
 /// 1 inside the thumb.
 pub fn hit(view: (f32, f32), tw: f32, h: f32, x: f32, y: f32) -> Option<u8> {
     let (tx, thw) = thumb(view, tw);
@@ -28,15 +28,15 @@ pub fn hit(view: (f32, f32), tw: f32, h: f32, x: f32, y: f32) -> Option<u8> {
     }
 }
 
-/// [re:632a19] without a press: within
+/// [re:e893f3] without a press: within
 /// 2 px of a thumb edge the left / right cursor, else the arrow.
 pub fn over_edge(view: (f32, f32), tw: f32, h: f32, x: f32, y: f32) -> bool {
     let (tx, thw) = thumb(view, tw);
     y >= 0.0 && y < h && ((x - tx).abs() < 2.0 || (x - (tx + thw)).abs() < 2.0)
 }
 
-/// The zone drags (centre [re:109246], left
-/// [re:3ef21b], right [re:4f55d9]): the new view after moving
+/// The zone drags (centre [re:26a721], left
+/// [re:8f9d60], right [re:caff2d]): the new view after moving
 /// from `last` to `x` (thumb at least 20 px and `min` of the track).
 pub fn drag(view: (f32, f32), tw: f32, mode: u8, last: f32, x: f32, min: f32) -> (f32, f32) {
     let (mut tx, mut thw) = thumb(view, tw);
@@ -63,7 +63,7 @@ pub fn clamp(view: (f32, f32)) -> (f32, f32) {
     (view.0.clamp(0.0, 1.0 - size), size)
 }
 
-/// [re:34ae9d]: size / `factor` (at least `track_w /
+/// [re:a31f0f]: size / `factor` (at least `track_w /
 /// frames`), the start moving by (old − new)·`centre`.
 pub fn zoom_in(view: (f32, f32), factor: f32, centre: f32, track_w: f32, frames: u32) -> (f32, f32) {
     if factor == 1.0 || factor == 0.0 || frames == 0 {
@@ -74,8 +74,8 @@ pub fn zoom_in(view: (f32, f32), factor: f32, centre: f32, track_w: f32, frames:
 }
 
 /// Auto zoom (`AutoZoomGroup`, option `WaveDisplayZoomMode`): 1
-/// both markers [re:338aad] (the markers ± 500 frames), 2
-/// start marker [re:d6b60d] / 3 end marker [re:e23870] (1 %
+/// both markers [re:679612] (the markers ± 500 frames), 2
+/// start marker [re:358336] / 3 end marker [re:3a4fa1] (1 %
 /// of the file centred on the marker); `None` for mode 0.
 pub fn auto_zoom(mode: i64, frames: u32, start: u32, end: u32) -> Option<(f32, f32)> {
     if !(1..=3).contains(&mode) {
@@ -102,7 +102,7 @@ pub fn auto_zoom(mode: i64, frames: u32, start: u32, end: u32) -> Option<(f32, f
     Some(clamp(v))
 }
 
-/// [re:867658]: the thumb in colFill, 2 px edge
+/// [re:bcee78]: the thumb in colFill, 2 px edge
 /// lines and 10 px discs (white there; colAltFill) with 6 px centres
 /// (black; colBorder), over the track (colTrack).
 pub fn draw(p: &mut Painter, s: &StyleSheet, style: &str, w: f32, h: f32, view: (f32, f32)) {
