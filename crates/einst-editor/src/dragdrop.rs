@@ -481,7 +481,10 @@ impl Editor {
             // The manual (2:4): a folder dropped from Finder onto the browser
             // shows its contents.
             (Source::Files(files), Target::FileList) => {
-                let Some(dir) = files.iter().find(|f| f.is_dir()).filter(|_| from.is_empty()).cloned() else { return false };
+                // [re:56400b]: the first item's folder (a file's own folder);
+                // the list's own drags are not taken.
+                let Some(first) = files.first().filter(|_| from.is_empty()) else { return false };
+                let Some(dir) = (if first.is_dir() { Some(first.clone()) } else { first.parent().map(Path::to_path_buf) }) else { return false };
                 self.browser.as_mut().map(|b| b.show_folder(dir)).is_some()
             }
             (Source::Files(files), Target::Shortlist) => {
