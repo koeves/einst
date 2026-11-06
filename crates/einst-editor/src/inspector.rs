@@ -290,6 +290,10 @@ pub struct Inspector {
     /// Marker drag: object 1 start, 2 end, 3 loop start, 4 loop end
     /// (the dragged object), and the markers when it started.
     drag: Option<(u8, WaveMarkers)>,
+    /// Lower-half drag of the wave: zoom / scroll from (x, y, view).
+    view_drag: Option<(f32, f32, (f32, f32))>,
+    /// Samples read for the wave's audition.
+    audition: std::cell::RefCell<dreist_engine::audio::SampleCache>,
     /// Visible part of the file (start, length) as fractions.
     pub(crate) view: (f32, f32),
     /// The pad view's play mode, Vel-Amp and velocity split lanes.
@@ -385,6 +389,8 @@ impl Inspector {
             view: (0.0, 1.0),
             vsplit: Default::default(),
             zoom_drag: None,
+            view_drag: None,
+            audition: Default::default(),
             zoom_mode: o.int("WaveDisplayZoomMode", 0),
             zoom_key: None,
             env_visible: (o.bool("AmpEnvVisible", true), o.bool("FreeEnvVisible", true)),
@@ -1212,7 +1218,37 @@ impl Inspector {
                         }
                         let hit = cands.into_iter().map(|(o, f)| (o, (to_x(f) - x).abs())).filter(|(_, d)| *d < 4.0).min_by(|a, b| a.1.total_cmp(&b.1));
                         self.drag = hit.map(|(o, _)| (o, m));
-                        self.drag.is_some()
+                        if self.drag.is_some() {
+                            return true;
+                        }
+                        // v1's zones ([re:dc59ce]): the upper half auditions the
+                        // layer's region ([re:75e50d]), the lower half drags the
+                        // view ([re:079fd4]).
+                        if y >= crate::timeline::WAVE_TOP && y < crate::timeline::WAVE_TOP + h * 0.5 {
+                            drop(cache);
+                            if let Some(d) = self.audition.borrow_mut().get(&file) {
+                                out.push(Command::PreviewRegion { data: d, start: m.start, end: m.end.max(m.start + 1), looping: false });
+                            }
+                            return true;
+                        }
+                        if y >= crate::timeline::WAVE_TOP {
+                            self.view_drag = Some((*x, y, self.view));
+                            return true;
+                        }
+                        false
+                    }
+                    dreist_gui::app::MouseKind::Drag if self.view_drag.is_some() => {
+                        let (x0, y0, v) = self.view_drag.unwrap();
+                        let (zs, ss) = crate::zoomslider::drag_signs();
+                        let factor = (-(y - y0) * zs / 100.0).exp2();
+                        let tw = w;
+                        let zoomed = crate::zoomslider::zoom_in(v, factor, (x0 / w.max(1.0)).clamp(0.0, 1.0), tw, frames);
+                        self.view = crate::zoomslider::clamp((zoomed.0 + ss * (x - x0) / w.max(1.0) * zoomed.1, zoomed.1));
+                        true
+                    }
+                    dreist_gui::app::MouseKind::Up if self.view_drag.is_some() => {
+                        self.view_drag = None;
+                        true
                     }
                     dreist_gui::app::MouseKind::Drag => {
                         let Some((obj, m0)) = self.drag else { return false };
