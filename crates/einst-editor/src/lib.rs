@@ -1,5 +1,5 @@
 //! The v2 editor: the installed skin (via `dreist-gui`) assembled as
-//! [re:e6e2c9] does, with the the original panels bound to a
+//! [re:757608] does, with the the original panels bound to a
 //! [`Model`] and emitting [`Command`]s for the engine. See
 //! the dreist-re GUI notes.
 
@@ -114,7 +114,7 @@ pub fn product() -> &'static str {
     dreist_formats::profile::get().product
 }
 
-/// File menu items ([re:4139f8] [re:3ce6a1]).
+/// File menu items ([re:4139f8] [re:42ba5f]).
 #[derive(Debug, Clone)]
 enum FileAction {
     None,
@@ -384,7 +384,7 @@ impl Editor {
         // `LastEditorScaleFactor` (Preferences › UI scaling), applied when
         // the window opens. The window keeps v1's fixed size.
         ed.app.ui_scale = (ed.modals.options.int("LastEditorScaleFactor", 100).clamp(50, 300) as f32) / 100.0;
-        // [re:f98edd] (messaging initialized).
+        // [re:6a1c94] (messaging initialized).
         let startup = sampler::Sampler::startup_messages(&mut ed.model);
         // The document follows, as the engine's does (`mirror_message`).
         for c in &startup {
@@ -493,7 +493,7 @@ impl Editor {
         self.watch_samples();
     }
 
-    /// Open the slicer on an audio file ([re:b73f33]).
+    /// Open the slicer on an audio file ([re:401f49]).
     pub fn open_slicer(&mut self, file: &std::path::Path) -> bool {
         let ok = self.open_slicer_from_browser(file);
         self.sync();

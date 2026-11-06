@@ -1,12 +1,12 @@
-//! Scene page (`Scene/ScenePanel.skin`, [re:07e3d5]): 64 scene slots
+//! Scene page (`Scene/ScenePanel.skin`, [re:04e91a]): 64 scene slots
 //! (v1's six octaves, C-2 to B3), 16 of them visible (`Scene0..15`, a 4 × 4
 //! grid, bottom row first) with the page / row scroll buttons and the
 //! scene view control (`ScrollArea` mini-map under the `ViewSlider`).
 //!
-//! - [re:1b7c5f]: the select button shows the scene's MIDI key name
+//! - [re:828540]: the select button shows the scene's MIDI key name
 //!   ([re:8ad0c7], C-2 = scene 0) and selects without playing.
-//! - Trigger [re:3a4349] posts `e_sceneTrigger` 0x10a [scene, on],
-//!   snapshot [re:d39e7a] `e_sceneSnapshot` 0x10d, clear [re:10dbd2]
+//! - Trigger [re:4c8e3a] posts `e_sceneTrigger` 0x10a [scene, on],
+//!   snapshot [re:dbb7fb] `e_sceneSnapshot` 0x10d, clear [re:ff0484]
 //!   `e_sceneClear` 0x108.
 //! - The trigger image shows the slot's state: empty, used, cued (waiting
 //!   for its start) or active.
@@ -305,8 +305,8 @@ impl Scenes {
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
         if let UiEvent::MenuSelected { index, .. } = ev {
             if let Some(n) = self.menu.take() {
-                // [re:341343] → `OnCut/Copy/PasteScene...Clipboard`
-                // [re:1e957d] / [re:03355d] / [re:6aafb3].
+                // [re:1264d4] → `OnCut/Copy/PasteScene...Clipboard`
+                // [re:aba5b6] / [re:9b7404] / [re:b201dd].
                 let node = |model: &Model| model.doc.children.iter().find(|c| c.class == "SceneManager").and_then(|m| m.child("Scene", &format!("Scene{n}"))).cloned();
                 match index {
                     0 | 1 => {
