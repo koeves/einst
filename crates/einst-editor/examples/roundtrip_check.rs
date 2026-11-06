@@ -46,7 +46,7 @@ fn main() {
         let doc = dreist_formats::Project::load(p).expect("load").raw;
         let src = dreist_formats::model::samples_dir(p);
         let out = tmp.join(p.file_name().unwrap());
-        let (saved, errors) = einst_editor::project::save(&doc, Some(&src), &out).expect("save");
+        let (saved, errors) = einst_editor::project::save(&doc, Some(&src), &out, true).expect("save");
         let back = dreist_formats::Project::load(&out).expect("reload").raw;
         let (mut a, mut b) = (doc.clone(), back.clone());
         strip_paths(&mut a);

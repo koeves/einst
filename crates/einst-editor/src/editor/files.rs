@@ -9,7 +9,8 @@ impl Editor {
     /// pattern, pattern from MIDI, mappings and Load Guru... ▸ (Preset, Kit,
     /// Pattern, Pattern Bank); SAVE has Save preset, current engine, kit,
     /// current pad, pattern bank, current pattern, current pattern as MIDI,
-    /// mappings and Export as audio.... Every save asks for the file.
+    /// mappings, Export as audio... and the check item Save samples with
+    /// presets. Every save asks for the file.
     pub(crate) fn file_menu(&mut self, ev: &UiEvent) -> bool {
         use project::Part;
         let e = self.model.engine;
@@ -42,8 +43,16 @@ impl Editor {
                     ("Save current pattern".into(), FileAction::Save { part: Part::Pattern(e, pat), as_new: true }),
                     ("Save current pattern as MIDI".into(), FileAction::SaveMidi),
                     ("Save mappings".into(), FileAction::Save { part: Part::Mappings, as_new: true }),
+                    (String::new(), FileAction::None),
                     ("Export as audio...".into(), FileAction::ExportAudio),
+                    (String::new(), FileAction::None),
                 ];
+                let mut items = items;
+                // [re:d52ca7]: the check item for option
+                // `SaveSamplesWithChunks` ([re:c2ab69] toggles it).
+                let on = project::embed_samples();
+                let label = if on { format!("{}Save samples with presets", dreist_gui::menu::CHECK) } else { "Save samples with presets".into() };
+                items.push((label, FileAction::ToggleEmbedSamples));
                 self.show_file_menu(path, items);
                 false
             }
@@ -63,6 +72,16 @@ impl Editor {
         let pat = self.model.current_pattern(e);
         match action {
             FileAction::None => return false,
+            FileAction::ToggleEmbedSamples => {
+                let mut o = options::Options::load();
+                let on = o.bool("SaveSamplesWithChunks", false);
+                o.set("SaveSamplesWithChunks", !on);
+                o.save();
+                // v1 shows the menu again.
+                let ev = UiEvent::Clicked { path: anchor.to_vec(), name: "SaveButton".into(), id: 0, on: false };
+                self.file_menu(&ev);
+                return false;
+            }
             FileAction::GuruMenu => {
                 let items = [("Preset", guru::Kind::Preset), ("Kit", guru::Kind::Kit), ("Pattern", guru::Kind::Pattern), ("Pattern Bank", guru::Kind::Bank)];
                 let items = items.into_iter().map(|(l, k)| (l.to_string(), FileAction::OpenGuru(k))).collect();
@@ -125,7 +144,7 @@ impl Editor {
                 let target = if as_new { None } else { self.part_paths.get(&key).cloned() };
                 let Some(f) = target.or_else(|| self.dialog(Dialog::SavePart(part))) else { return false };
                 let f = if f.extension().is_none() { f.with_extension(ext) } else { f };
-                if project::save_part(&self.model.doc, self.model.samples.as_deref(), part, &f).is_ok() {
+                if project::save_part(&self.model.doc, self.model.samples.as_deref(), part, &f, project::embed_samples()).is_ok() {
                     self.part_paths.insert(key, f);
                 }
             }
@@ -323,7 +342,7 @@ impl Editor {
 
     /// Save the document (collecting samples) and adopt the saved copy.
     pub fn save_to(&mut self, path: &std::path::Path) -> bool {
-        match project::save(&self.model.doc, self.model.samples.as_deref(), path) {
+        match project::save(&self.model.doc, self.model.samples.as_deref(), path, project::embed_samples()) {
             Ok((doc, _errors)) => {
                 self.model.doc = doc;
                 self.model.samples = Some(dreist_formats::model::samples_dir(path));

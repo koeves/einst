@@ -1639,8 +1639,16 @@ fn file_menu_parts_save_and_open() {
     ed.app.menu = None;
     save_menu(&mut ed);
     let items = ed.app.menu.as_ref().unwrap().items.clone();
-    assert_eq!(items.len(), 9, "{items:?}");
+    assert_eq!(items.len(), 12, "{items:?}");
     assert_eq!(items[6], "Save current pattern as MIDI");
+    assert_eq!((items[8].as_str(), items[10].as_str(), items[11].as_str()), ("", "", "Save samples with presets"));
+    // The check item toggles option SaveSamplesWithChunks and shows the
+    // menu again, checked.
+    pick(&mut ed, "Save samples with presets");
+    assert!(options::Options::load().bool("SaveSamplesWithChunks", false));
+    assert_eq!(ed.app.menu.as_ref().unwrap().items[11], format!("{}Save samples with presets", dreist_gui::menu::CHECK));
+    ed.app.menu = None;
+    save_menu(&mut ed);
     pick(&mut ed, "Save current engine");
     let text = std::fs::read_to_string(dir.join("x.einstengine")).expect("engine file");
     assert!(text.contains("<Engine name=\"Engine\""), "{}", &text[..200.min(text.len())]);
