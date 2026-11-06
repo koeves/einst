@@ -211,3 +211,24 @@ fn slices_fill_v1s_16_pads() {
     assert!(multi.hits.iter().all(|h| h.pad < 16));
     assert_eq!(multi.hits[16].layer, 1);
 }
+
+/// v1's snapshot stores an engine on an empty pattern with pattern power
+/// off.
+#[test]
+fn snapshot_of_an_empty_pattern_turns_power_off() {
+    setup();
+    use dreist_engine::binding::{Message, id};
+    use dreist_formats::Node;
+    let mut doc = Node::new("root", None);
+    for k in 0..2 {
+        let eng = doc.child_mut_or_insert("Engine", &format!("Engine{k}"));
+        eng.child_mut_or_insert("EngineState", "EngineState").set("CurrentPattern", 0).set("PatternPower", "true");
+    }
+    let step = doc.child_mut_or_insert("Engine", "Engine1").child_mut_or_insert("StepPattern", "StepPattern0").child_mut_or_insert("Track", "Track0").child_mut_or_insert("Step", "S0");
+    step.set("State", "true");
+    let m = Message::new(id::SCENE_SNAPSHOT, &[], &[3.0]);
+    dreist_engine::engine::doc::mirror_message(&mut doc, &m);
+    let scene = doc.child("SceneManager", "Scenes").and_then(|s| s.child("Scene", "Scene3")).unwrap();
+    let pow = |k: usize| scene.child("SceneEngine", &format!("Eng{k}")).and_then(|e| e.attr("pattpower")).map(str::to_string);
+    assert_eq!((pow(0), pow(1)), (Some("false".into()), Some("true".into())));
+}
