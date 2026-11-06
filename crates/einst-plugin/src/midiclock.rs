@@ -146,12 +146,16 @@ impl ClockInput {
                 (),
             )
             .ok()?;
+        einst_editor::CLOCK_SYNC.store(true, std::sync::atomic::Ordering::Relaxed);
         Some(ClockInput { _conn: conn, rx, clock: Clock::default() })
     }
 
     /// Feed the queued messages (audio thread; no blocking).
     pub fn drain(&mut self) {
         while let Ok((stamp, m, n)) = self.rx.try_recv() {
+            if m[0] == 0xf8 {
+                einst_editor::CLOCK_LAST_MS.store(einst_editor::now_ms(), std::sync::atomic::Ordering::Relaxed);
+            }
             self.clock.message(&m[..n], (stamp / 1000) as u32);
         }
     }

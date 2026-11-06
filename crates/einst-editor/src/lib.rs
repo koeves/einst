@@ -23,6 +23,8 @@ mod fxplot;
 mod fxtext;
 pub mod guru;
 mod header;
+/// The standalone MIDI clock state the plugin sets (MIDI indicator).
+pub use header::{CLOCK_LAST_MS, CLOCK_SYNC, now_ms};
 mod inspector;
 mod learn;
 mod metadata;
