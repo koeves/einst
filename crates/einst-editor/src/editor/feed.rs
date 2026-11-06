@@ -245,7 +245,9 @@ impl Editor {
 
     pub fn take_commands(&mut self) -> Vec<Command> {
         if let Some(b) = self.browser.as_mut() {
-            b.poll_preview(&mut self.outbox);
+            if b.poll_preview(&mut self.outbox) {
+                self.app.dirty = true;
+            }
         }
         if std::mem::take(&mut self.model.pattern_grown) {
             let r = self.model.rebuild_command();
