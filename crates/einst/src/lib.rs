@@ -82,5 +82,6 @@ pub fn install() {
     dreist_dsp::fx::install_factory(dreist_dsp::fx::NodeFactory { create: einst_dsp::create, internal_ports: einst_dsp::internal_ports });
     dreist_dsp::fx::install_exp2(einst_dsp::fast_exp2);
     dreist_dsp::rules::install(RULES);
+    dreist_formats::params::set_stretch_v1(true);
     dreist_dsp::model::install(&einst_dsp::voice_model::V1Voice);
 }

@@ -119,9 +119,9 @@ fn voice_ignores_the_pan_lane() {
     assert_eq!(l, r);
 }
 
-/// v1's stretch ratio is at most 4 ([re:d8985e]): an amount for ×7.3
-/// plays as long as one for ×4; tracking, the layer's source BPM over the
-/// host's.
+/// v1's stretch ratio is at most 4 ([re:d8985e]): the amount's top is ×4
+/// (v1's cubic curve); tracking, the layer's source BPM over the host's,
+/// capped the same.
 #[test]
 fn timestretch_ratio_is_capped_at_four() {
     let n = 8000;
@@ -138,8 +138,8 @@ fn timestretch_ratio_is_capped_at_four() {
         v.prepare_timestretch();
         play(src.clone(), s, 8 * n, 64, |_, _| {}).2.expect("voice ends")
     };
-    let four = stop(0.5 + 3.0 / 14.0, None);
-    assert_eq!(stop(0.95, None), four);
+    let four = stop(1.0, None);
+    assert!(stop(0.95, None) < four, "×3.2 is shorter than ×4");
     // Tracking at the host's 120 BPM: 240 → ×2, 960 → capped at ×4.
     let two = stop(0.5, Some((240.0, 120.0)));
     assert!(four > two * 3 / 2, "{four} vs {two}");
