@@ -1741,8 +1741,17 @@ impl PatternPanel {
                         model.pad[e] = p.clamp(0, 63) as usize;
                         true
                     }
+                    // [re:9ef8aa]: shift steps by 8, alt doubles / halves,
+                    // 1..=1024.
                     "PlusButton" | "MinusButton" => {
-                        let n = if name == "PlusButton" { pat.steps + 1 } else { pat.steps.saturating_sub(1).max(1) };
+                        let d = if app.mods.shift {
+                            8
+                        } else if app.mods.alt {
+                            if name == "PlusButton" { pat.steps } else { pat.steps / 2 }
+                        } else {
+                            1
+                        };
+                        let n = if name == "PlusButton" { (pat.steps + d).min(1024) } else { pat.steps.saturating_sub(d).max(1) };
                         out.push(msg(id::SET_PATTERN_STEP_COUNT, &[e as i32, -1, -1, cur], &[n as f32]));
                         true
                     }
