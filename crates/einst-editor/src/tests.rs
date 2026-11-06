@@ -1223,31 +1223,21 @@ fn effect_panel_cut_copy_paste() {
     panic!("no effect panel found");
 }
 
+/// v1 has no per-track lengths: the grid's right edge does not set one.
 #[test]
-fn track_length_marker_drag_and_reset() {
+fn no_track_length_markers() {
     crate::app::test_setup();
     use dreist_gui::app::MouseKind;
     let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
     let grid = ed.app.root.path_of("PatternGrid").unwrap();
     let w = ed.app.ctrl(&grid).unwrap().rect.w as f32;
     let lay = ed.pattern.as_ref().unwrap().layout(&ed.app, &ed.model).unwrap();
-    let e = ed.model.engine;
-    let first = lay.track(0);
     let mouse = |ed: &mut Editor, kind: MouseKind, x: f32, y: f32| ed.handle(&UiEvent::Mouse { path: grid.clone(), overload: "PatternGrid".into(), kind, x, y });
     ed.take_commands();
-    // The full-length marker sits at the right edge.
     mouse(&mut ed, MouseKind::Down, w - 5.0, lay.row_y(0) + 3.0);
     mouse(&mut ed, MouseKind::Drag, lay.step_x(4) + 2.0, lay.row_y(0) + 3.0);
     mouse(&mut ed, MouseKind::Up, lay.step_x(4) + 2.0, lay.row_y(0) + 3.0);
-    let m: Vec<_> = ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { Some(m) } else { None }).collect();
-    assert!(m.iter().any(|m| m.kind == dreist_engine::binding::id::SET_TRACK_LENGTH && m.index[1] == first as i32 && m.value[0] == 4.0), "{m:?}");
-    let cur = ed.model.current_pattern(e);
-    assert_eq!(ed.model.pattern(e, cur).tracks[first].length, 4);
-    // Right press on the marker resets it.
-    let x = lay.step_x(4) + 3.0;
-    mouse(&mut ed, MouseKind::RightDown, x, lay.row_y(0) + 3.0);
-    let steps = ed.model.pattern(e, cur).steps;
-    assert_eq!(ed.model.pattern(e, cur).tracks[first].length, steps);
+    assert!(!ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SET_TRACK_LENGTH)));
 }
 
 #[test]
