@@ -4709,3 +4709,22 @@ fn finder_folder_drop_on_content_adds_a_pack() {
     assert!(got.contains(&dir), "{list:?} {got:?}");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// v1's export prompt names the file by source and output and starts in
+/// the last export's folder.
+#[test]
+fn export_prompt_names_as_v1() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    assert_eq!(ed.export_file_name(), ("All Mixdown".to_string(), false));
+    ed.modals.options.set("ExportSource", 2);
+    assert_eq!(ed.export_file_name().0, "Song Mixdown");
+    ed.modals.options.set("ExportOutputType", 2);
+    assert_eq!(ed.export_file_name(), ("Song ".to_string(), true));
+    ed.modals.options.set("ExportSource", 1);
+    ed.modals.options.set("ExportOutputType", 1);
+    let e = ed.model.engine;
+    let pat = ed.model.pattern_name(e, ed.model.current_pattern(e));
+    assert_eq!(ed.export_file_name(), (format!("{pat} Master"), false));
+    assert_eq!(modal::last_save_location(), options::documents_dir());
+}

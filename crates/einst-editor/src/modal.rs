@@ -85,6 +85,15 @@ pub enum Kind {
 pub const NORMALIZE: [&str; 3] = ["Prompt if clipping detected", "Normalize if clipping detected", "Always Normalize"];
 
 /// [re:751e2d]: an output location's name (`Master`, `Sub output n`).
+/// Where the export prompt starts ([re:85bfd4]): option `LastSavePath`
+/// (the last export's file or folder) when it exists, else the documents
+/// folder.
+pub fn last_save_location() -> std::path::PathBuf {
+    let last = std::path::PathBuf::from(Options::load().string("LastSavePath", ""));
+    let dir = if last.is_file() { last.parent().map(std::path::Path::to_path_buf).unwrap_or_default() } else { last };
+    if !dir.as_os_str().is_empty() && dir.is_dir() { dir } else { crate::options::documents_dir() }
+}
+
 pub fn export_output_name(o: usize) -> String {
     if o == 0 { "Master".into() } else { dreist_engine::export::output_name(o) }
 }

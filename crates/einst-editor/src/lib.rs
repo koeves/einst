@@ -71,7 +71,13 @@ pub use model::Model;
 pub enum Dialog {
     OpenProject,
     SaveProject,
-    ExportAudio,
+    /// Export audio ([re:bb75bc]): a `.wav` named `name` in `start`, or with
+    /// several outputs (`folder`) a folder the files go in.
+    ExportAudio {
+        name: String,
+        folder: bool,
+        start: std::path::PathBuf,
+    },
     /// Missing files: Auto Find start folder.
     ChooseFolder(Option<std::path::PathBuf>),
     /// Source list › Export to folder ([re:e8becb]): the
