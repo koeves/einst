@@ -4455,3 +4455,18 @@ fn browser_click_loads_parts_and_presets_need_a_double_click() {
     assert!(!ed.take_commands().iter().any(|c| matches!(c, Command::LoadProject(_))), "one click: no preset load");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// v1's link keys: alt edits all 16 pads, alt+shift the pad's row.
+#[test]
+fn link_keys_pick_pads() {
+    crate::app::test_setup();
+    let mut m = Model::new(project::new_document());
+    assert_eq!(multipad::edit_pads(&m, 5), None);
+    m.mod_alt = true;
+    assert_eq!(multipad::edit_pads(&m, 5), Some(0xFFFF));
+    m.mod_shift = true;
+    assert_eq!(multipad::edit_pads(&m, 5), Some(0xF0));
+    m.mod_alt = false;
+    m.all_rows = true;
+    assert_eq!(multipad::edit_pads(&m, 13), Some(0xF000));
+}

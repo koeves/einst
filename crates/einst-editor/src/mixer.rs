@@ -346,7 +346,7 @@ impl Mixer {
                     "SendButton" => c.on = mode == 1,
                     "AllLayers" => c.on = model.all_layers,
                     "AllPads" => c.on = model.all_pads,
-                    "AllGroups" => c.on = false,
+                    "AllGroups" => c.on = model.all_rows,
                     _ => {}
                 }
             }
@@ -813,15 +813,20 @@ impl Mixer {
                         "SendButton" => self.mode = 1,
                         // [re:281f54]: `e_setModifiers` 0x26 [all layers,
                         // all pads, false].
-                        "AllLayers" | "AllPads" => {
-                            if name == "AllPads" {
-                                model.all_pads = *on;
-                            } else {
-                                model.all_layers = *on;
+                        "AllLayers" | "AllPads" | "AllGroups" => {
+                            match name.as_str() {
+                                "AllPads" => {
+                                    model.all_pads = *on;
+                                    model.all_rows &= !*on;
+                                }
+                                "AllGroups" => {
+                                    model.all_rows = *on;
+                                    model.all_pads &= !*on;
+                                }
+                                _ => model.all_layers = *on,
                             }
-                            out.push(msg(id::SET_MODIFIERS, &[], &[model.all_layers as i32 as f32, model.all_pads as i32 as f32, 0.0]));
+                            out.push(msg(id::SET_MODIFIERS, &[], &[model.all_layers as i32 as f32, model.all_pads as i32 as f32, model.all_rows as i32 as f32]));
                         }
-                        "AllGroups" => {}
                         _ => return false,
                     }
                     return true;

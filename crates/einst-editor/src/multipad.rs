@@ -126,6 +126,17 @@ fn fans_out(kind: u32) -> bool {
 
 /// The extra messages for the other selected pads (to be applied after the
 /// original ones, against the document as it was).
+/// The pads an edit of pad `p` reaches by the link buttons and keys
+/// (v1: All pads or alt — the 16 pads; Row or alt+shift — the 4 pads of
+/// `p`'s row); `None`: the selection.
+pub fn edit_pads(model: &Model, p: usize) -> Option<u64> {
+    let (alt, shift) = (model.mod_alt, model.mod_shift);
+    if model.all_rows || (alt && shift) {
+        return Some(0xFu64 << (p.min(63) / 4 * 4));
+    }
+    (model.all_pads || alt).then_some(0xFFFF)
+}
+
 pub fn fan_out(model: &Model, cmds: &[Command]) -> Vec<Command> {
     let mut extra = Vec::new();
     for c in cmds {
@@ -143,7 +154,7 @@ pub fn fan_out(model: &Model, cmds: &[Command]) -> Vec<Command> {
         }
         let (e, p) = (m.index[0] as usize, m.index[1] as usize);
         let (_, mask) = selection(model, e);
-        let mask = if model.all_pads { u64::MAX } else { mask };
+        let mask = edit_pads(model, p).unwrap_or(mask);
         if mask & (1u64 << p.min(63)) == 0 || mask.count_ones() < 2 {
             continue;
         }
@@ -299,7 +310,10 @@ fn layer_fan_out(model: &Model, m: &Message, extra: &mut Vec<Command>) {
     if !model.all_layers && !selected {
         return;
     }
-    let pads: Vec<usize> = if model.all_pads { (0..64).collect() } else { vec![p] };
+    let pads: Vec<usize> = match edit_pads(model, p) {
+        Some(m) => (0..64).filter(|k| m & (1u64 << k) != 0).collect(),
+        None => vec![p],
+    };
     let layers: Vec<usize> = if model.all_layers { (0..crate::model::LAYERS).collect() } else { (0..crate::model::LAYERS).filter(|k| lmask & (1u8 << k) != 0).collect() };
     // 0x66 [param, value, source]: relative to the addressed layer's old value.
     let rel = (m.kind == id::SET_LAYER_PARAMETER)
@@ -358,9 +372,9 @@ mod tests {
         // A pad outside the selection is not fanned out.
         let other = crate::command::msg(id::MUTE_PAD, &[e as i32, 9], &[1.0]);
         assert!(fan_out(&model, &[other]).is_empty());
-        // All pads: every other pad.
+        // All pads: v1's other 15 pads.
         model.all_pads = true;
-        assert_eq!(fan_out(&model, &[crate::command::msg(id::MUTE_PAD, &[e as i32, 9], &[1.0])]).len(), 63);
+        assert_eq!(fan_out(&model, &[crate::command::msg(id::MUTE_PAD, &[e as i32, 9], &[1.0])]).len(), 15);
     }
 
     #[test]
