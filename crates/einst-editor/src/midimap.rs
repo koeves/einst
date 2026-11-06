@@ -1,10 +1,10 @@
-//! MIDI map tab ([re:0a1cc7], `Automation/AutoMapPanel.skin`): the
+//! MIDI map tab ([re:8dd1e7], `Automation/AutoMapPanel.skin`): the
 //! project's bindings as a table.
 //!
-//! - [re:cd3bfc]: Lock (option `BindingsLocked`),
+//! - [re:8dd1e7]: Lock (option `BindingsLocked`),
 //!   Clear All, Auto select (`SelectIncomingBindings`, default on), Send
 //!   Note / Send CC toggles; AddButton hidden.
-//! - [re:5a7a2b]: columns Clear (40), Locale (170,
+//! - [re:7b9d21]: columns Clear (40), Locale (170,
 //!   min 90), Path, Name (170, min 90), Min, Max, Type (90), Focus (40), rows
 //!   20 px. Locale reads "MIDI Ch %d CC %d" or "Host param %d"; Clear is the
 //!   icon-font glyph U+E922; Type is a popup of the binding types; Min/Max are
@@ -26,7 +26,7 @@ use crate::command::Command;
 use crate::model::Model;
 use crate::{EditorError, err};
 
-/// [re:54266d] (binding type names).
+/// [re:59b2e6] (binding type names).
 /// [re:59b2e6]: v1's four binding types.
 pub const BINDING_TYPES: [&str; 4] = ["Continuous", "Momentary", "Latching", "Trigger"];
 const ROW: f32 = 20.0;
@@ -68,7 +68,7 @@ const COLUMNS: [(&str, f32, f32, f32); 8] = [
     ("Focus", 40.0, 40.0, 40.0),
 ];
 
-/// [re:856d26] (ev_b5b84613…): the last 5 px of a resizable
+/// [re:d217fe] (ev_b5b84613…): the last 5 px of a resizable
 /// column's header cell resize it.
 const RESIZE_GRIP: f32 = 5.0;
 
@@ -243,7 +243,7 @@ pub fn add_binding(doc: &mut Node, midi: bool, a: usize, b: usize, proto: &dreis
     let mut n = Node::new("Binding", Some(&key.child_name(k)));
     n.set("EnterTargetMode", "false").set("MajorIndex", a).set("Max", 1).set("Min", 0).set("MinorIndex", b);
     if proto.editor {
-        // [re:1aeee8] `EditorOnly`: the message goes to the editor.
+        // [re:986cd0] `EditorOnly`: the message goes to the editor.
         n.set("EditorOnly", "true");
     }
     let s = |c: &str, nm: &str, v: &str| {
@@ -281,7 +281,7 @@ fn set_string(n: &mut Node, name: &str, v: &str) {
     }
 }
 
-/// [re:66fafd] / [re:260d06]:
+/// [re:4611e1] / [re:4611e1]:
 /// a binding's Min/Max in the target's units — pad, engine and layer
 /// parameters through their conversions, gains (metronome 0x24, aux 0x9f,
 /// master 0xa5, preview 0x15f) linear −100..6, master tune 0xa6 −12..12,
@@ -301,7 +301,7 @@ pub fn binding_value(r: &Row, v: f32) -> f32 {
 }
 
 /// `BindingsLocked`: the loaded project keeps the current bindings
-/// ([re:92292a] skips restoring "Bindings" while
+/// ([re:6421a6] skips restoring "Bindings" while
 /// the bindings are locked).
 pub fn carry_bindings(from: &Node, to: &mut Node) {
     to.children.retain(|c| c.class != "BindingMap");
@@ -532,7 +532,7 @@ impl MidiMap {
         match ev {
             UiEvent::Clicked { path, name, on, .. } if path.starts_with(&self.page) => {
                 match name.as_str() {
-                    // [re:99090c]: confirm, then 0x10.
+                    // [re:502e46]: confirm, then 0x10.
                     "Clear" if app.ctrl(path).is_some_and(|c| c.class == "CtrlButton") => {
                         let items = vec!["Are you sure you want to remove all bindings? This cannot be undone!".into(), String::new(), "Yes".into(), "No".into()];
                         app.open_menu(path, items, None);
@@ -575,7 +575,7 @@ impl MidiMap {
                 true
             }
             UiEvent::Mouse { path, overload, kind, x, y } if overload == "MIDIMapTable" => {
-                // [re:ba68d6] / mouse move:
+                // [re:d217fe] / mouse move:
                 // a press on a grip resizes that column by the pointer's
                 // travel within its min / max.
                 if let Some((col, last)) = self.col_drag {
@@ -626,7 +626,7 @@ impl MidiMap {
                     return true;
                 }
                 match kind {
-                    // [re:fb19a6] [re:1cc864]: a row's
+                    // [re:7b9d21] [re:7b9d21]: a row's
                     // right-click menu (the row gets selected).
                     MouseKind::RightDown => {
                         let Some((row, col)) = self.cell(app, rs.len(), *x, *y) else { return false };
@@ -760,7 +760,7 @@ impl MidiMap {
         }
     }
 
-    /// Timer tick [re:451f3a]: with Auto select on, the binding of the last
+    /// Timer tick [re:78dc11]: with Auto select on, the binding of the last
     /// incoming MIDI channel/CC gets selected and scrolled into view.
     pub fn incoming(&mut self, app: &App, model: &Model, ch: usize, cc: usize) {
         if !self.auto_select {
