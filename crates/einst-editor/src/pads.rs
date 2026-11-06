@@ -473,10 +473,21 @@ impl Pads {
                             f.flash();
                         }
                         self.press = (*x, *y);
-                        out.push(Command::PadHit { engine: e, pad: idx, velocity: (vel * 127.0) as u32 });
-                        self.held = Some(idx);
+                        // v1: Normal mode selects and plays (alt selects
+                        // only, [re:e30edf]); Chromatic and Velocity
+                        // play and select with alt only ([re:5f4599],
+                        // [re:be4957]).
+                        use dreist_engine::live::PadMode;
+                        let normal = !matches!(model.pad_mode(e), PadMode::Chromatic | PadMode::Velocity);
+                        let alt = app.mods.alt;
+                        if !(normal && alt) {
+                            out.push(Command::PadHit { engine: e, pad: idx, velocity: (vel * 127.0) as u32 });
+                            self.held = Some(idx);
+                        }
                         // [re:e066f0]: cmd toggles, shift extends.
-                        out.push(crate::multipad::select(model, e, idx, app.mods.cmd, app.mods.shift));
+                        if normal || alt {
+                            out.push(crate::multipad::select(model, e, idx, app.mods.cmd, app.mods.shift));
+                        }
                         true
                     }
                     MouseKind::Drag => {
