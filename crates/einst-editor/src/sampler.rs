@@ -30,19 +30,22 @@ use crate::model::{LAYERS, Model};
 /// `e_setPreviewVolume`.
 const SET_PREVIEW_VOLUME: u32 = 0xe8;
 /// [re:1864e3]: "External" (the host
-/// input, 38), then output locations 1–33 by name (Master, Sub output
-/// 1–32); routing plugins would follow (out of scope).
+/// input, 38), then "Resample " and the name of output locations 1–16
+/// (Master, Sub output 1–15); routing plugins would follow (out of scope).
 pub fn source_items() -> Vec<String> {
-    std::iter::once("External".to_string()).chain((1..34).map(|i| dreist_engine::engine::Route::from_index(i).name())).collect()
+    std::iter::once("External".to_string()).chain((1..=SOURCE_LOCATIONS).map(|i| format!("Resample {}", dreist_engine::engine::Route::from_index(i).name()))).collect()
 }
+
+/// v1's resample sources: the 16 output locations.
+const SOURCE_LOCATIONS: usize = 16;
 
 /// List index ↔ `recordsource`: item 0 = 38, item i = location i.
 fn source_of_item(i: usize) -> i32 {
-    if i == 0 { dreist_engine::sampler::SOURCE_EXTERNAL } else { i.min(33) as i32 }
+    if i == 0 { dreist_engine::sampler::SOURCE_EXTERNAL } else { i.min(SOURCE_LOCATIONS) as i32 }
 }
 
 fn item_of_source(s: i32) -> usize {
-    if (1..34).contains(&s) { s as usize } else { 0 }
+    if (1..=SOURCE_LOCATIONS as i32).contains(&s) { s as usize } else { 0 }
 }
 
 /// [re:c57733].

@@ -271,11 +271,12 @@ fn sampler_source_list_offers_external_and_the_outputs() {
     ed.sync();
     let sl = sampler_path(&ed, "SourceList");
     // A new document records the master (the constructor's default).
-    assert_eq!(ed.app.ctrl(&sl).unwrap().text, "Master");
+    assert_eq!(ed.app.ctrl(&sl).unwrap().text, "Resample Master");
     ed.handle(&UiEvent::Clicked { path: sl.clone(), name: "SourceList".into(), id: 0, on: false });
     let items = ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap();
-    assert_eq!(items.len(), 34);
-    assert_eq!((items[0].as_str(), items[1].as_str(), items[33].as_str()), ("External", "Master", "Sub output 32"));
+    // v1: External, then "Resample " and the 16 output locations.
+    assert_eq!(items.len(), 17);
+    assert_eq!((items[0].as_str(), items[1].as_str(), items[16].as_str()), ("External", "Resample Master", "Resample Sub output 15"));
     ed.app.menu = None;
     ed.handle(&UiEvent::MenuSelected { anchor: sl.clone(), name: "SourceList".into(), index: 0 });
     let src: Vec<f32> = ed.take_commands().into_iter().filter_map(|c| if let Command::Message(m) = c { (m.kind == id::SAMPLER_RECORD_SOURCE).then_some(m.value[0]) } else { None }).collect();
