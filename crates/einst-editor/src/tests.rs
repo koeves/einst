@@ -4754,3 +4754,21 @@ fn swing_import_asks_before_overwriting() {
     assert!(user.join("Groove B.swingtemplate").exists(), "the next file imports");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// v1: Alt on an engine's Mute applies it to all eight engines.
+#[test]
+fn alt_mute_reaches_every_engine() {
+    crate::app::test_setup();
+    use dreist_engine::binding::id;
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let sel = ed.app.root.path_of("EngineSelector0").or_else(|| ed.app.root.path_of("EngineSelectors")).expect("engine selectors");
+    let mute = [sel.clone(), ed.app.ctrl(&sel).unwrap().path_of("MuteButton").expect("mute")].concat();
+    let count = |ed: &mut Editor| ed.take_commands().iter().filter(|c| matches!(c, Command::Message(m) if m.kind == id::MUTE_ENGINE)).count();
+    ed.take_commands();
+    ed.handle(&UiEvent::Clicked { path: mute.clone(), name: "MuteButton".into(), id: 0, on: true });
+    assert_eq!(count(&mut ed), 1);
+    ed.app.mods.alt = true;
+    ed.handle(&UiEvent::Clicked { path: mute, name: "MuteButton".into(), id: 0, on: false });
+    ed.app.mods.alt = false;
+    assert_eq!(count(&mut ed), 8);
+}
