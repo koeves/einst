@@ -43,6 +43,7 @@ impl Editor {
                 self.app.cursor = self.drag_cursor(from, to);
                 self.pad_drag_flash(&from.clone(), &to.clone(), *x, *y);
                 self.drop_highlights(&from.clone(), &to.clone());
+                self.drag_dwell_over(&from.clone(), &to.clone());
             }
             _ => {}
         }

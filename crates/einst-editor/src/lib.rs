@@ -161,6 +161,8 @@ pub struct Editor {
     pub(crate) external_drag: Option<Vec<std::path::PathBuf>>,
     /// Pattern key / engine selector drop highlights.
     pub(crate) drop_hl: dragdrop::DropHighlights,
+    /// A drag dwelling over an engine selector or the pads, since when.
+    pub(crate) drag_dwell: Option<(dragdrop::Dwell, std::time::Instant)>,
     pub app: App,
     /// Native file dialogs (set by the window host; `None` in tests).
     pub dialogs: Option<DialogFn>,
@@ -335,6 +337,7 @@ impl Editor {
             drop_label: String::new(),
             external_drag: None,
             drop_hl: Default::default(),
+            drag_dwell: None,
             model,
             outbox: Vec::new(),
             pads,
@@ -472,6 +475,9 @@ impl Editor {
             self.app.dirty = true;
         }
         self.animate_drop_highlights();
+        if self.animate_drag_dwell() {
+            self.app.dirty = true;
+        }
         if self.filefind.scanning() && self.filefind.tick(&mut self.app, &mut self.model) {
             self.outbox.push(self.model.rebuild_command());
             self.sync();
