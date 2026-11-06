@@ -91,4 +91,6 @@ Einst is not affiliated with or endorsed by FXpansion.
 
 ## AI usage
 
-Built with the assistance of Claude, using REA. Tested by hand and by ear.
+Built with assistance of Claude using REA.
+
+Tested by hand and by ear.
