@@ -1,3 +1,6 @@
+//! v2 only: v1 has no transmod panels (none of its skins holds them), so
+//! in Einst these entry points find nothing to act on.
+//!
 //! Transmod: the source selector ([re:548e1b] in the root
 //! `TransmodSelectPanel`, with the 4 macro knobs) and the modulator slots
 //! panel ([re:413943]: 16 slots, `EmptySlot.skin` or the
