@@ -4631,3 +4631,15 @@ fn finder_folder_drop_opens_it_in_the_browser() {
     assert_eq!(ed.browser.as_ref().and_then(|b| b.current_dir().map(|p| p.to_path_buf())), Some(dir.clone()));
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// v1's browser footer bindings ([re:c8c512]): the lock buttons are
+/// editor-only triggers, preview volume and stop bind to the engine, all
+/// under "Browser".
+#[test]
+fn browser_footer_controls_learn_as_v1() {
+    crate::app::test_setup();
+    let Ok(ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let lp = ed.app.root.path_of("LockPadsButton").expect("lock pads");
+    let t = ed.editor_binding_target(&lp, &ed.app.ctrl(&lp).unwrap().clone()).expect("editor binding");
+    assert_eq!((t.proto.kind, t.name.as_str(), t.group.as_str(), t.kind), (0x84, "Lock all pads", "Browser", "Trigger"));
+}
