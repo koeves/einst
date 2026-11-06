@@ -510,6 +510,9 @@ impl PatternView {
     }
 }
 
+/// Per-track lengths (their markers): a v2 addition v1 does not have.
+const TRACK_LENGTHS: bool = false;
+
 /// Track length marker size ([re:f32484] ctor [re:74d707]).
 const MARKER_W: f32 = 10.0;
 const MARKER_H: f32 = 15.0;
@@ -1008,6 +1011,9 @@ impl PatternPanel {
     /// press resets it to the pattern length ([re:714b55]).
     #[allow(clippy::too_many_arguments)]
     fn track_marker(&mut self, app: &App, model: &Model, lay: &GridLayout, kind: MouseKind, x: f32, y: f32, out: &mut Vec<Command>) -> bool {
+        if !TRACK_LENGTHS {
+            return false;
+        }
         let e = model.engine;
         let cur = model.current_pattern(e);
         let pat = model.pattern(e, cur);
@@ -2558,7 +2564,10 @@ impl PatternPanel {
             // The length marker ([re:4ad041]
             // [re:e606aa]): a left-pointing triangle, tip at x + 1, half
             // height 0.4·min(h, 12), `PatternTrackMarkerStyle` colFill
-            // (colAltFill while dragged).
+            // (colAltFill while dragged). v2 only: v1 has no track lengths.
+            if !TRACK_LENGTHS {
+                continue;
+            }
             let drag = self.marker_drag.filter(|(tr, _, all)| *all || *tr == lay.track(row));
             let len = if t.length > 0 { t.length as usize } else { lay.steps };
             let mx = drag.map(|(_, x, _)| x.min(c.rect.w as f32 - MARKER_W)).unwrap_or_else(|| Self::marker_x(&lay, len, c.rect.w as f32));
