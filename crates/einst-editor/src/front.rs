@@ -317,6 +317,14 @@ impl Front {
                 out.push(msg(id::SET_MASTER_CHANNEL_TUNE, &[], &[0.5]));
                 true
             }
+            // [re:29c1c3]: a double click puts the metronome at 0 dB
+            // (0.7937005).
+            UiEvent::DoubleClicked { name, .. } if name == "MetroVol" => {
+                let v = dreist_formats::params::UNITY_GAIN;
+                model.doc.child_mut_or_insert("Metronome", "Metronome").set("Gain", dreist_formats::node::format_g16(v as f64));
+                out.push(msg(id::SET_METRONOME_LEVEL, &[], &[v]));
+                true
+            }
             UiEvent::ValueChanged { name, value, .. } if name == "MetroVol" => {
                 model.doc.child_mut_or_insert("Metronome", "Metronome").set("Gain", dreist_formats::node::format_g16(*value as f64));
                 out.push(msg(id::SET_METRONOME_LEVEL, &[], &[*value]));

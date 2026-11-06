@@ -117,6 +117,10 @@ impl Editor {
             return Some((t, pos));
         }
         match name {
+            // [re:a1779f]: the metronome level is DB15; Restart in the
+            // transport is a Name provider (Bool in the pattern tool bar).
+            "MetroVol" => return below(db15_text(&c.display_name, v)),
+            "RestartButton" if crate::front::path_in(&self.app.root, "Transport", "RestartButton").as_deref() == Some(path) => return below(c.display_name.clone()),
             // [re:5cdc6f]: DB15 / CoarsePitch under the display name.
             "MasterSlider" => return below(db15_text(&c.display_name, v)),
             "MasterPitch" => return below(crate::conv::coarse_pitch_text(&c.display_name, v)),
