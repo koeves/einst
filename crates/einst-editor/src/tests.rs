@@ -4619,3 +4619,28 @@ fn drag_dwell_selects_engine_and_shows_pads() {
     ed.animate();
     assert_eq!(ed.model.editor_tab, front::PADS_PAGE);
 }
+
+/// v1's automation Live mode: the knobs set the lane's track amounts
+/// instead of rewriting the steps.
+#[test]
+fn automation_live_mode_sets_track_amounts() {
+    crate::app::test_setup();
+    let Some(mut ed) = demo_editor("Presets/Hollow.geist") else { return };
+    if let Some(pp) = ed.pattern.as_mut() {
+        pp.multi = false;
+    }
+    ed.sync();
+    let ac = ed.app.root.path_of("SingleAutoControl").unwrap();
+    let group = [ac.clone(), ed.app.ctrl(&ac).unwrap().path_of("ModeGroup").expect("mode switch")].concat();
+    assert!(ed.app.ctrl(&group).unwrap().visible);
+    let live = [group, vec![1]].concat();
+    ed.handle(&UiEvent::Clicked { path: live, name: "CtrlButton".into(), id: 0, on: true });
+    let knob = [ac.clone(), ed.app.ctrl(&ac).unwrap().path_of("ScaleKnob").unwrap()].concat();
+    ed.take_commands();
+    ed.handle(&UiEvent::ValueChanged { path: knob, name: "ScaleKnob".into(), id: 0, value: 0.8 });
+    let e = ed.model.engine;
+    let lane = dreist_formats::params::STEP_LANES[ed.model.pattern_view[e].lane];
+    let t = crate::padmenu::track_node(&ed.model, e, ed.model.pad[e]).expect("track");
+    assert_eq!(t.f32(&format!("{lane}Scal")), Some(0.8));
+    assert!(!ed.take_commands().iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::SET_STEP_GRAPH_STATE)), "no step rewrite");
+}
