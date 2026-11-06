@@ -349,12 +349,9 @@ enum FileAction {
     NoSlice(bool),
     Reveal,
     RevealFolder,
-    ShortlistMenu,
-    AddToShortlist(usize),
-    AddToNewShortlist,
     Favourite,
     FavouriteFolder,
-    LoadRandom,
+    ShortlistCurrent,
     None,
 }
 
@@ -1561,7 +1558,8 @@ impl Browser {
         self.shortlists.len() - 1
     }
 
-    /// The file list context menu for entry `i` ([re:9dbfe6]): with two or
+    /// The file list context menu for entry `i` ([re:9dbfe6]; v1's order
+    /// [re:351450]): with two or
     /// more rows selected the reveal / shortlist / favourite items act on
     /// the whole selection.
     fn file_menu(&mut self, i: usize) -> Vec<(String, FileAction)> {
@@ -1586,14 +1584,10 @@ impl Browser {
         v.push((if many { "Reveal selected items in Finder".to_string() } else { format!("Reveal \"{name}\" in Finder") }, FileAction::Reveal));
         v.push((item("Reveal current folder in Finder", !listing), FileAction::RevealFolder));
         v.push((String::new(), FileAction::None));
-        let label = if many {
-            "Add selected to shortlist ▸".to_string()
-        } else {
-            let stem = entry.as_ref().and_then(|e| e.path.file_stem()).map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
-            format!("Add {stem} to shortlist ▸")
-        };
+        // v1 ([re:b9350b]): one item, to the current shortlist.
+        let label = if many { "Shortlist selected items".to_string() } else { format!("Shortlist \"{name}\"") };
         self.shortlist_ok = files_only;
-        v.push((label, FileAction::ShortlistMenu));
+        v.push((item(label, files_only), FileAction::ShortlistCurrent));
         v.push((String::new(), FileAction::None));
         let fav = if many { "Add selected items to favourites".to_string() } else { format!("Add \"{name}\" to favourites") };
         v.push((item(fav, folders_only), FileAction::Favourite));
@@ -1602,8 +1596,6 @@ impl Browser {
         } else if search && !self.saved {
             v.push(("Save search results".into(), FileAction::SaveSearch));
         }
-        v.push((String::new(), FileAction::None));
-        v.push(("Load random sounds to pads".into(), FileAction::LoadRandom));
         v
     }
 
@@ -1612,7 +1604,7 @@ impl Browser {
         self.selection().into_iter().filter_map(|k| self.entries.get(k).cloned()).collect()
     }
 
-    fn file_action(&mut self, app: &mut App, anchor: &[usize], a: FileAction, model: &mut Model, out: &mut Vec<Command>) -> bool {
+    fn file_action(&mut self, app: &mut App, anchor: &[usize], a: FileAction, _model: &mut Model, _out: &mut Vec<Command>) -> bool {
         let open = |items: Vec<(String, FileAction)>, app: &mut App, me: &mut Browser| {
             let (labels, actions): (Vec<String>, Vec<FileAction>) = items.into_iter().unzip();
             me.menu = actions;
@@ -1679,39 +1671,6 @@ impl Browser {
                 }
                 false
             }
-            FileAction::ShortlistMenu => {
-                // Enabled only when the selection is files only.
-                let ok = self.shortlist_ok;
-                let mut items: Vec<(String, FileAction)> = self.shortlists.iter().enumerate().map(|(k, (n, _))| (dreist_gui::menu::item(n.clone(), ok), FileAction::AddToShortlist(k))).collect();
-                if !items.is_empty() {
-                    items.push((String::new(), FileAction::None));
-                }
-                items.push((dreist_gui::menu::item("Add to new shortlist", ok), FileAction::AddToNewShortlist));
-                open(items, app, self);
-                false
-            }
-            FileAction::AddToShortlist(k) => {
-                let paths: Vec<PathBuf> = self.menu_targets().into_iter().map(|e| e.path).collect();
-                if let Some((_, files)) = self.shortlists.get_mut(k) {
-                    for p in paths {
-                        if !files.contains(&p) {
-                            files.push(p);
-                        }
-                    }
-                }
-                save_shortlists(&self.shortlists);
-                true
-            }
-            FileAction::AddToNewShortlist => {
-                let paths: Vec<PathBuf> = self.menu_targets().into_iter().map(|e| e.path).collect();
-                if paths.is_empty() {
-                    return false;
-                }
-                self.new_shortlist(paths);
-                true
-            }
-            // Folders only; already
-            // present favourites stay.
             FileAction::Favourite | FileAction::FavouriteFolder => {
                 let ts: Vec<PathBuf> = if a == FileAction::Favourite { self.menu_targets().into_iter().filter(|e| e.dir).map(|e| e.path).collect() } else { self.dir.clone().into_iter().collect() };
                 for t in ts {
@@ -1723,19 +1682,9 @@ impl Browser {
                 self.sources = sources(&self.favourites, &self.searches, &self.shortlists);
                 true
             }
-            FileAction::LoadRandom => {
-                let Some(d) = self.dir.clone() else { return false };
-                let seed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|t| t.as_nanos() as u64).unwrap_or(1);
-                let files = random_sounds(&d, seed);
-                if files.is_empty() {
-                    return false;
-                }
-                let e = model.engine;
-                for (p, f) in files.iter().enumerate() {
-                    load_sample_into_layer(model, e, p, 0, f);
-                }
-                out.push(model.rebuild_command());
-                true
+            FileAction::ShortlistCurrent => {
+                let paths: Vec<PathBuf> = self.menu_targets().into_iter().map(|e| e.path).collect();
+                self.add_to_current_shortlist(paths)
             }
             FileAction::None => false,
         }

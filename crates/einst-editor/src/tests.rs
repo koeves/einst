@@ -3267,16 +3267,10 @@ fn browser_menu_acts_on_the_selection() {
     ed.handle(&ev(MouseKind::RightDown, 1.0));
     let items = ed.app.menu.as_ref().unwrap().items.clone();
     assert!(items.iter().any(|t| t == "Reveal selected items in Finder"), "{items:?}");
-    assert!(items.iter().any(|t| t.starts_with("Add selected to shortlist")), "{items:?}");
+    // v1: one item for the current shortlist, enabled for files.
+    assert!(items.iter().any(|t| t == "Shortlist selected items"), "{items:?}");
     // Favourites take folders only: disabled for files.
     assert!(items.iter().any(|t| t == &dreist_gui::menu::item("Add selected items to favourites", false)), "{items:?}");
-    // The shortlist sub menu is enabled for files (not chosen here: it
-    // would write the user's shortlists).
-    let k = items.iter().position(|t| t.starts_with("Add selected to shortlist")).unwrap();
-    let anchor = ed.app.menu.as_ref().unwrap().anchor.clone();
-    ed.handle(&UiEvent::MenuSelected { anchor, name: String::new(), index: k });
-    let sub = ed.app.menu.as_ref().unwrap().items.clone();
-    assert!(sub.iter().any(|t| t == "Add to new shortlist"), "{sub:?}");
     let _ = std::fs::remove_dir_all(&dir);
 }
 
