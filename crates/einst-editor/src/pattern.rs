@@ -1,5 +1,5 @@
 //! Pattern panel: `PatternPanel.skin` with the toolbar (`Toolbar.skin`,
-//! [re:bca08c]) and the pattern editor ([re:677fc4]).
+//! [re:bca08c]) and the pattern editor ([re:3d468b]).
 //! The step grid, track rows and timeline are code-drawn as in
 //! [re:38cc40] / [re:9392a2] /
 //! [re:477245] (see the dreist-re GUI notes):
@@ -87,7 +87,7 @@ pub struct PatternPanel {
     rows: Option<Vec<usize>>,
     row_template: Option<Ctrl>,
     selectors: Option<Vec<usize>>,
-    /// Multi-tool press on a step ([re:86dd7e]..).
+    /// Multi-tool press on a step ([re:1fec54]..).
     brush: Option<Brush>,
     /// The left button went down on a step and is held ([re:f07c25]).
     left_held: bool,
@@ -116,10 +116,10 @@ pub struct PatternPanel {
     frame_pattern: std::cell::RefCell<Option<(usize, usize, std::rc::Rc<PatternData>)>>,
     /// The controls `sync` sets.
     named: dreist_gui::app::PathCache,
-    /// The graph lane view ([re:e9d6e3]) and its last edited step.
+    /// The graph lane view ([re:e0c788]) and its last edited step.
     graph: Option<Vec<usize>>,
     graph_last: Option<usize>,
-    /// Graph drag state ([re:79aee7] anchor step,
+    /// Graph drag state ([re:7410fc] anchor step,
     /// value, last y, line mode, erasing).
     graph_drag_state: GraphDrag,
     /// Track, lane and first step the graph menu acts on (right-click on
@@ -158,9 +158,9 @@ pub struct PatternPanel {
     /// Swing menu entries (template paths) while open.
     swing_menu: Option<Vec<std::path::PathBuf>>,
     /// Swing menu › Extract timing from current pattern: the pattern whose
-    /// groove the editor saves ([re:51ad7b]).
+    /// groove the editor saves ([re:6012ce]).
     pub groove: Option<usize>,
-    /// Swing menu › Import MIDI template ([re:0c1fbf]).
+    /// Swing menu › Import MIDI template ([re:6012ce]).
     pub import_midi_template: bool,
     /// Swing menu › Import Guru shuffle was picked.
     pub import_guru_swing: bool,
@@ -170,7 +170,7 @@ pub struct PatternPanel {
     /// opened track) or "SingleGraph" (toolbar View: one global graph).
     pub multi: bool,
     /// MultiTrack lanes per (engine, track) ([re:b8d7a4])
-    /// and the tracks whose automation is open ([re:a42ffd]).
+    /// and the tracks whose automation is open ([re:f3a3ad]).
     auto_lanes: std::collections::HashMap<(usize, usize), Vec<usize>>,
     auto_open: std::collections::HashSet<(usize, usize)>,
     /// `AutomationControls.skin` for MultiTrack lane rows.
@@ -207,14 +207,14 @@ enum ToolbarAction {
     None,
 }
 
-/// Lanes offered by "Drag Edits..." ([re:4120dd] 0..0x27 without
-/// Duration and LinkToPrevious).
+/// Lanes offered by "Drag Edits..." ([re:fe2c73]): v1's graph items
+/// 0..22 without Duration and Link to previous (the graph type menu's).
 pub(crate) fn drag_lanes() -> Vec<usize> {
-    (0..CORE_LANES).filter(|&l| l != 9 && l != 10).collect()
+    GRAPH_TYPES.iter().map(|&(_, l)| l).collect()
 }
 
-/// [re:e12d93] / duplicating the selected steps
-/// [re:7b48a6] ([re:0562d7]): with no selection the
+/// [re:429c2d] / duplicating the selected steps
+/// [re:3dd3f8] ([re:0562d7]): with no selection the
 /// pattern doubles (at most 1024 steps) and the steps repeat; otherwise the
 /// selected steps are copied one selection span later (the pattern doubles
 /// when the copies would not fit) and the selection moves to the copies.
@@ -230,7 +230,8 @@ fn duplicate(pat: &PatternData, selection: &std::collections::BTreeSet<(usize, u
         grow(out, m);
         for t in 0..pat.tracks.len() {
             for s in 0..m - n {
-                if let Some(d) = get(t, s).filter(|d| d.on) {
+                // v1 copies every step, graph data included.
+                if let Some(d) = get(t, s) {
                     write_step(out, e, cur, t, n + s, &d);
                 }
             }
@@ -490,9 +491,9 @@ pub struct PatternView {
     pub v_zoom: f32,
     pub h_scroll: usize,
     pub v_scroll: usize,
-    /// Lane shown in the graph view ([re:0e63fa]).
+    /// Lane shown in the graph view ([re:7a8562]).
     pub lane: usize,
-    /// Toolbar "Drag Edits..." lane ([re:60eade]).
+    /// Toolbar "Drag Edits..." lane ([re:8b6d77]).
     pub drag_lane: usize,
 }
 
@@ -638,14 +639,14 @@ impl GridLayout {
         GridLayout { top_track: first + count - 1 - first_row, first_row, tracks: rows_fit, total_tracks: count, row_h, step_w, steps, first_step, visible_steps, track_y, graphs: Vec::new() }
     }
 
-    /// MultiTrack layout (track dimensions [re:b32367]): each opened
-    /// track is followed by one graph row per lane, max(2·row height, 75)
-    /// px high; rows start at the scrolled-to track.
+    /// MultiTrack layout (inner panel height [re:cd1f67]): each opened
+    /// track is followed by its graph row, 75 px high; rows start at the
+    /// scrolled-to track.
     pub fn compute_multi(model: &Model, pat: &PatternData, w: i32, h: i32, lanes_of: &dyn Fn(usize) -> Vec<usize>) -> GridLayout {
         let mut lay = GridLayout::compute(model, pat, w, h);
         let view = model.pattern_view[model.engine];
         let (first, count) = model.visible_pads();
-        let graph_h = (lay.row_h * 2.0).max(75.0).floor();
+        let graph_h = 75.0;
         let first_row = view.v_scroll.min(count.saturating_sub(1));
         let (mut y, mut track_y, mut graphs) = (0.0f32, Vec::new(), Vec::new());
         for t in (first..first + count - first_row).rev() {
@@ -980,7 +981,7 @@ impl PatternPanel {
     }
 
     /// A knob double click's reset value: the graph controls 0.5
-    /// ([re:66a130] [re:3199e7]), the
+    /// ([re:4e7c36] [re:4e7c36]), the
     /// toolbar's swing 0 ([re:587c2e] [re:37b5f9]).
     pub fn reset_value(&self, path: &[usize], name: &str) -> Option<f32> {
         if !path.starts_with(&self.page) {
@@ -1113,7 +1114,7 @@ impl PatternPanel {
         self.rows_sig.clear();
     }
 
-    /// Layout update [re:2013b6]: the splitter gives the single graph 75 px in
+    /// Layout update [re:b7ab85]: the splitter gives the single graph 75 px in
     /// SingleGraph mode and nothing in MultiTrack mode.
     fn apply_view(&self, app: &mut App) {
         let Some(sp) = self.splitter.as_ref().and_then(|p| app.ctrl_mut(p)) else { return };
@@ -1246,7 +1247,7 @@ impl PatternPanel {
                 row.set_attr("trackRow", r.to_string());
                 rows.children.push(row);
             }
-            // MultiTrack lane controls ([re:bc7b1d]).
+            // MultiTrack lane controls ([re:be3f16]).
             if let Some(at) = &auto_t {
                 for g in &lay.graphs {
                     let mut c = at.clone();
@@ -1473,10 +1474,8 @@ impl PatternPanel {
             // [re:05f028]): Extract timing from current pattern, Import MIDI
             // template, Import Guru swing/shuffle, divider, the templates
             // (swing template paths, current checked).
-            UiEvent::RightClicked { path, name } if name == SWING_KNOB => {
-                self.swing_knob_menu = true;
-                self.handle(app, model, &UiEvent::Clicked { path: path.clone(), name: "SwingDrop".into(), id: 0, on: false }, out)
-            }
+            // v1's knobs have no menu: the swing template menu is the engine
+            // mixer strip's ([re:6012ce]); this one is v2's toolbar menu.
             UiEvent::TextCommitted { path, name, text } if name == SWING_EDIT => {
                 let parent = path[..path.len() - 1].to_vec();
                 if let Some(c) = app.ctrl_mut(&parent) {
@@ -1946,14 +1945,14 @@ impl PatternPanel {
                         app.open_menu(path, items, None);
                         false
                     }
-                    // Toolbar view mode: multi track / multi graph ("Show a
-                    // Single Global Graph", lambda [re:ec3067]): writes
-                    // `PatternEditorViewMode`.
                     // The automation controls' Edit / Live switch.
                     "CtrlButton" if path.len() > 1 && app.ctrl(&path[..path.len() - 1]).is_some_and(|g| g.name == "ModeGroup") => {
                         self.graph_live = path.last() == Some(&1);
                         true
                     }
+                    // Toolbar view mode: multi track / multi graph ("Show a
+                    // Single Global Graph", lambda [re:ec3067]): writes
+                    // `PatternEditorViewMode`.
                     "MultiButton" | "SingleButton" if path.len() > 1 && app.ctrl(&path[..path.len() - 1]).is_some_and(|g| g.name == "ModeGroup") => {
                         self.set_view(name == "MultiButton", model);
                         true
@@ -2075,7 +2074,7 @@ impl PatternPanel {
     /// passed; the right button restores the lane default. `y` is relative
     /// to the graph, `h` its height.
     #[allow(clippy::too_many_arguments)]
-    /// [re:e9d6e3] mouse handling (left press [re:eac224],
+    /// [re:e0c788] mouse handling (left press [re:eac224],
     /// move [re:7410fc], right press [re:4e8f88],
     /// delete tool [re:6f3bda]) with the default tool: a click sets the
     /// step from y (switch lanes: top half on); dragging fills every step
@@ -2092,11 +2091,9 @@ impl PatternPanel {
         r
     }
 
-    /// Pattern message 0xd6 with the edit flag (value 2) on a step
-    /// that is editor-selected: every selected step of the
-    /// pattern moves by the same delta ([re:090253]
-    /// [re:57983c] → [re:d4c180], clamped
-    /// 0..1, no linkage; unlocked tracks only). The selection lives in the
+    /// A velocity set on an editor-selected step: every selected step's
+    /// velocity moves by the same delta ([re:3509f7], clamped 0..1; unlocked
+    /// tracks only; v1 offsets no other lane). The selection lives in the
     /// editor here, so the editor rewrites its own messages from `start`.
     fn selection_offsets(&self, model: &Model, out: &mut Vec<Command>, start: usize) {
         if self.selection.is_empty() || out.len() <= start {
@@ -2119,7 +2116,8 @@ impl PatternPanel {
             // selected step's velocity ([re:3509f7]).
             let velocity = m.kind == id::SET_STEP_VELOCITY;
             let (t, s, l) = (m.index[1].max(0) as usize, m.index[5].max(0) as usize, if velocity { lane::VELOCITY } else { m.value[0].max(0.0) as usize });
-            if !(velocity || (m.kind == id::SET_STEP_GRAPH_STATE && m.value[2] >= 0.5)) || m.index[3] != cur as i32 || !self.selection.contains(&(t, s)) {
+            let graph_velocity = m.kind == id::SET_STEP_GRAPH_STATE && m.value[2] >= 0.5 && l == lane::VELOCITY;
+            if !(velocity || graph_velocity) || m.index[3] != cur as i32 || !self.selection.contains(&(t, s)) {
                 out.push(c);
                 continue;
             }
@@ -2803,7 +2801,7 @@ impl PatternPanel {
 }
 
 /// Mirror `e_selectPattern` into the GUI document (`EngineState CurrentPattern`).
-/// A multi-tool press on a step ([re:86dd7e] last step,
+/// A multi-tool press on a step ([re:1fec54] last step,
 /// brushed range, gated pad, dragging a
 /// duration chain's end, last y).
 #[derive(Clone, Copy, Debug)]
