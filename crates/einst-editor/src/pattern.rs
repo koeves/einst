@@ -212,7 +212,7 @@ pub(crate) fn drag_lanes() -> Vec<usize> {
 }
 
 /// [re:e12d93] / duplicating the selected steps
-/// [re:7b48a6] ([re:34a571]): with no selection the
+/// [re:7b48a6] ([re:0562d7]): with no selection the
 /// pattern doubles (at most 1024 steps) and the steps repeat; otherwise the
 /// selected steps are copied one selection span later (the pattern doubles
 /// when the copies would not fit) and the selection moves to the copies.
@@ -948,10 +948,10 @@ impl PatternPanel {
         Some(Cursor::image(if end { "ResizeRightThin" } else { "Multi" }))
     }
 
-    /// [re:65ed38] → scroll to make the step visible
-    /// [re:3583e2]: while playing with `PatternEditorFollow`, a current step
-    /// outside the visible steps becomes the first one shown. True when
-    /// it scrolled.
+    /// Scroll to make the step visible [re:5fd4bc]: while playing with
+    /// `PatternEditorFollow`, the view moves step by step until the current
+    /// step shows (it becomes the first visible one from the left, the last
+    /// from the right). True when it scrolled.
     pub fn follow(&self, app: &App, model: &mut Model) -> bool {
         let e = model.engine;
         let Some(step) = model.steps[e].map(|s| s as usize) else { return false };
@@ -962,7 +962,7 @@ impl PatternPanel {
         if step >= lay.steps || (lay.first_step..lay.first_step + lay.visible_steps).contains(&step) {
             return false;
         }
-        model.pattern_view[e].h_scroll = step;
+        model.pattern_view[e].h_scroll = if step < lay.first_step { step } else { step + 1 - lay.visible_steps.max(1) };
         true
     }
 
@@ -1256,7 +1256,7 @@ impl PatternPanel {
     }
 
     /// The graph's tooltip at pointer x (graph coordinates)
-    /// ([re:407d1e], placed by
+    /// ([re:7b75f3], placed by
     /// [re:a4325a] above the graph at the
     /// pointer): "<lane>: step <n> to <value>".
     pub fn graph_tooltip(&self, app: &App, model: &Model, x: f32) -> Option<String> {
@@ -1270,7 +1270,8 @@ impl PatternPanel {
         let pat = model.pattern(e, model.current_pattern(e));
         let f = pat.tracks.get(track).and_then(|t| t.steps.get(step)).and_then(|s| s.lanes.get(lane).copied()).unwrap_or_else(|| dreist_formats::params::step_lane_default(lane));
         let name = Some(lane_label(lane)).filter(|n| !n.is_empty())?;
-        Some(format!("{name}: step {} to {}", step + 1, graph_value_text(model, track, lane, f)))
+        // v1's "%s: step %03li to %s".
+        Some(format!("{name}: step {:03} to {}", step + 1, graph_value_text(model, track, lane, f)))
     }
 
     /// Returns true when the model changed.
@@ -1732,9 +1733,9 @@ impl PatternPanel {
                 // [re:f32484] multi tool (tool 3).
                 let ctx = StepCtx { e, cur, drag_lane, pat: &pat, lay: &lay };
                 match kind {
-                    // Left press [re:12e437] / multi-tool press [re:e6464c]:
+                    // Left press [re:f07c25] / multi-tool press [re:1fec54]:
                     // with editor-selected steps a click elsewhere only clears
-                    // the selection (0xc8); otherwise a brush press [re:bf6801].
+                    // the selection (0xc8); otherwise a brush press [re:33ad9d].
                     MouseKind::Down => {
                         self.erase = None;
                         self.insert_cycle = None;
@@ -1745,7 +1746,8 @@ impl PatternPanel {
                         let gated = !model.pad_one_shot(e, track);
                         let mut b = Brush { track, last: step, min: step, max: step, gated, dur_drag: false, last_y: *y };
                         if !on_now {
-                            let dur = if gated && app.mods.alt { ((*x - lay.step_x(step)) / lay.step_w.max(1.0)).clamp(0.0, 1.0) } else { 1.0 };
+                            // v1: a gated pad's new step lasts to the press point.
+                            let dur = if gated { ((*x - lay.step_x(step)) / lay.step_w.max(1.0)).clamp(0.0, 1.0) } else { 1.0 };
                             if drag_lane != 0 {
                                 self.brush_value = pat.tracks[track].steps[step].lanes[drag_lane];
                             }
@@ -1773,14 +1775,17 @@ impl PatternPanel {
                     MouseKind::Drag if self.insert_cycle.is_some() => true,
                     MouseKind::Drag => {
                         let Some(mut b) = self.brush else { return false };
-                        if b.track != track {
+                        // v1: in a mono pattern a one-shot brush paints the
+                        // track under the pointer.
+                        let mono = pat.mono && !b.gated;
+                        if b.track != track && !mono {
                             return false;
                         }
                         let start = out.len();
                         let i = step;
                         let (v, alt) = (self.brush_value, app.mods.alt);
                         if !b.gated {
-                            // Brush move [re:04db30], one-shot pads: every
+                            // Brush move [re:7c1f2d], one-shot pads: every
                             // step passed turns on; the vertical drag sets the
                             // Drag Edits value of the brushed range.
                             if i > b.max {
@@ -1788,19 +1793,21 @@ impl PatternPanel {
                             } else if i < b.min {
                                 b.min = i;
                             }
-                            if i != b.last {
+                            if i != b.last || track != b.track {
                                 let (a, z) = (b.last.min(i), b.last.max(i).min(pat.steps as usize - 1));
                                 for k in a..=z {
                                     ctx.note_on(out, track, k, v, 1.0, false);
                                 }
                                 b.last = i;
                             }
-                            let fade = alt && b.min != b.max;
-                            self.brush_value = ctx.set_velocity(out, track, *x, *y, &mut b, i, fade, v);
+                            if !mono {
+                                let fade = alt && b.min != b.max;
+                                self.brush_value = ctx.set_velocity(out, track, *x, *y, &mut b, i, fade, v);
+                            }
                         } else {
                             // Gated pads: drags make duration chains (tied
-                            // steps), dragging back releases them; alt makes
-                            // the step under the pointer a partial one.
+                            // steps), dragging back releases them; the step
+                            // under the pointer lasts to it.
                             let mut fill_to = i;
                             let mut fill = false;
                             if i > b.max {
@@ -1830,7 +1837,7 @@ impl PatternPanel {
                                     if k > fill_to {
                                         ctx.note_off(out, track, k, false);
                                     } else {
-                                        let dur = if alt && k == fill_to { ((*x - lay.step_x(k)) / lay.step_w.max(1.0)).clamp(0.0, 1.0) } else { 1.0 };
+                                        let dur = if k == fill_to { ((*x - lay.step_x(k)) / lay.step_w.max(1.0)).clamp(0.0, 1.0) } else { 1.0 };
                                         ctx.note_on(out, track, k, v, dur, b.last < k);
                                     }
                                 }
@@ -1844,7 +1851,7 @@ impl PatternPanel {
                     }
                     // Multi-tool press (right button): the graph menu with
                     // option (or without it in the swapped right-click mode),
-                    // else a delete move [re:a5603b] — an editor-selected step
+                    // else a delete move [re:a1e0ea] — an editor-selected step
                     // clears the selection's steps (0xb1), otherwise steps go
                     // off from the last erased one to here.
                     MouseKind::RightDown => {
@@ -2002,14 +2009,14 @@ impl PatternPanel {
         }
     }
 
-    /// [re:d47fd5] / mouse move: value from
+    /// [re:eac224] / mouse move: value from
     /// the height (on/off lanes: upper half on); dragging fills the steps
     /// passed; the right button restores the lane default. `y` is relative
     /// to the graph, `h` its height.
     #[allow(clippy::too_many_arguments)]
-    /// [re:e9d6e3] mouse handling (left press [re:fc66b7],
-    /// move [re:6b8705], right press [re:235fb8],
-    /// delete tool [re:8ed66a]) with the default tool: a click sets the
+    /// [re:e9d6e3] mouse handling (left press [re:eac224],
+    /// move [re:7410fc], right press [re:4e8f88],
+    /// delete tool [re:6f3bda]) with the default tool: a click sets the
     /// step from y (switch lanes: top half on); dragging fills every step
     /// passed with the value, shift adjusts it by −0.001 per pixel from
     /// where it was; option-drag draws a line from the clicked step and
@@ -2088,13 +2095,22 @@ impl PatternPanel {
         let g = &mut self.graph_drag_state;
         match kind {
             MouseKind::RightDown => {
+                // v1: only the Multi tool erases with the right button (the
+                // option swaps it with Alt); every other tool opens the menu.
                 let menu_mode = crate::options::Options::load().bool("PatternEditorRightClickMode", false);
-                if menu_mode != mods.alt {
+                if self.tool != Tool::Multi || menu_mode != mods.alt {
                     self.graph_target = Some((track, lane, step));
                     self.graph_menu = Some(false);
                     app.open_menu(path, GRAPH_MENU.iter().map(|s| s.to_string()).collect(), None);
                     return false;
                 }
+                *g = GraphDrag { anchor: step, erase: true, ..GraphDrag::default() };
+                send(out, step, dreist_formats::params::step_lane_default(lane));
+                self.graph_last = Some(step);
+                true
+            }
+            // The Erase tool's left press erases ([re:6f3bda]).
+            MouseKind::Down if self.tool == Tool::Erase => {
                 *g = GraphDrag { anchor: step, erase: true, ..GraphDrag::default() };
                 send(out, step, dreist_formats::params::step_lane_default(lane));
                 self.graph_last = Some(step);
@@ -2737,14 +2753,12 @@ struct Brush {
     last_y: f32,
 }
 
-/// [re:7cbaab]: one-shot pads
-/// always; else the step is on and the next one is not tied to it.
+/// [re:35e48f]: one-shot pads
+/// always, the pattern's last step too; else the step is on and the next
+/// one is not tied to it.
 fn last_in_duration_chain(pat: &PatternData, track: usize, step: usize, gated: bool) -> bool {
-    if !gated {
+    if !gated || step + 1 >= pat.steps as usize {
         return true;
-    }
-    if step + 1 >= pat.steps as usize {
-        return false;
     }
     let t = &pat.tracks[track];
     t.step(step as u32).on && !t.step(step as u32 + 1).tied()
@@ -2764,7 +2778,7 @@ impl StepCtx<'_> {
         [self.e as i32, track as i32, -1, self.cur, track as i32, step as i32]
     }
 
-    /// Note on [re:84f436]: nothing when the step is already on
+    /// Note on [re:6ecdf6]: nothing when the step is already on
     /// with this duration; duration 0 turns it off; else 0xd2 [velocity (1
     /// while Drag Edits is another lane), duration, tied].
     fn note_on(&self, out: &mut Vec<Command>, track: usize, step: usize, vel: f32, dur: f32, tie: bool) {
@@ -2779,12 +2793,12 @@ impl StepCtx<'_> {
         out.push(msg(id::SET_STEP_ON, &self.index(track, step), &[vel, dur, tie as i32 as f32]));
     }
 
-    /// Note off [re:2edb8e]: 0xd3 [erased by the user].
+    /// Note off [re:5c6222]: 0xd3 [erased by the user].
     fn note_off(&self, out: &mut Vec<Command>, track: usize, step: usize, user: bool) {
         out.push(msg(id::SET_STEP_OFF, &self.index(track, step), &[user as i32 as f32]));
     }
 
-    /// Velocity set [re:98683f]: 0xd5 velocity, or 0xd6 for the
+    /// Velocity set [re:57ca74]: 0xd5 velocity, or 0xd6 for the
     /// Drag Edits lane, clamped to 0..1.
     fn lane_set(&self, out: &mut Vec<Command>, track: usize, step: usize, v: f32) {
         let v = v.clamp(0.0, 1.0);
@@ -2795,7 +2809,7 @@ impl StepCtx<'_> {
         }
     }
 
-    /// Velocity without fade [re:387ce3]: value − 0.005 per pixel moved down
+    /// Velocity without fade [re:c7151a]: value − 0.005 per pixel moved down
     /// (lane 4: the upper half of the row is 1, else 0) for steps a..=b.
     fn set_velocity_no_fade(&self, out: &mut Vec<Command>, track: usize, y: f32, b: &mut Brush, a: usize, z: usize, v: f32) -> f32 {
         let v = if self.drag_lane == 4 {
@@ -2812,7 +2826,7 @@ impl StepCtx<'_> {
         v
     }
 
-    /// Velocity [re:8e5320]: with alt over a range, above / below the
+    /// Velocity [re:e7b948]: with alt over a range, above / below the
     /// row a ramp from the value to 1 − t (t = distance / 6 rows) across it;
     /// otherwise as [`Self::set_velocity_no_fade`].
     #[allow(clippy::too_many_arguments)]
@@ -2893,7 +2907,7 @@ pub(crate) fn set_current_pattern(model: &mut Model, e: usize, p: usize) {
     }
 }
 
-/// [re:d396b9].
+/// [re:0a4142].
 pub fn compressed(v: f32, amount: f32, target: f32) -> f32 {
     if (amount - 0.5).abs() < 1e-6 {
         return v;
@@ -2908,15 +2922,14 @@ pub fn compressed(v: f32, amount: f32, target: f32) -> f32 {
     if (target - 0.5).abs() < 1e-6 { ((v - target) * k + v).clamp(0.0, 1.0) } else { (((1.0 - v) - target) * k + v).clamp(0.0, 1.0) }
 }
 
-/// [re:3a5054]
-/// (`r` uniform 0..1): amount quantised to 1 %, 0.5 = none, above adds and
-/// below subtracts up to |2·amount − 1|·r.
+/// [re:2126a0]
+/// (`r` uniform 0..1): 0.5 = none, above adds and below subtracts up to
+/// |2·amount − 1|·r.
 pub fn randomised(v: f32, amount: f32, r: f32) -> f32 {
-    let q = (amount * 100.0).round();
-    if (q * 0.01 - 0.5).abs() < 1e-6 {
+    if (amount - 0.5).abs() < 1e-6 {
         return v;
     }
-    let d = q * 0.02 - 1.0;
+    let d = amount * 2.0 - 1.0;
     if d.abs() < 1e-6 {
         return v;
     }
@@ -2971,30 +2984,8 @@ mod shading_tests {
     }
 }
 
-/// [re:6f3ef7].
-const SVF_MODES: [&str; 10] = ["L2", "L4", "H2", "H4", "B2", "B4", "N2", "N4", "P2", "P4"];
-
-/// A filter type step's text for one layer's filter model
-/// (`round(FilterAlgorithm · 3)`): SH101, SVF, MS20, else none.
-fn filter_type_text(algorithm: Option<f32>, f: f32) -> String {
-    let pick = |names: &[&str], n: f32| match ((f * n) as i32 - 1).max(-1) {
-        -1 => "As layer setup".to_string(),
-        k => names.get(k as usize).map(|s| s.to_string()).unwrap_or_default(),
-    };
-    match algorithm.map(|a| (a * 3.0).round() as i32) {
-        None | Some(1) => pick(&SVF_MODES, 10.0),
-        Some(0) => pick(&dreist_dsp::sh101::SH101_MODES, 22.0),
-        Some(2) => pick(&dreist_dsp::ms20::MS20_MODES, 4.0),
-        _ => match (f * 3.0) as i32 {
-            0 => "As layer setup".into(),
-            1 => "Positive".into(),
-            _ => "Negative".into(),
-        },
-    }
-}
-
 /// The value part of a graph tooltip (lane table of
-/// [re:407d1e]).
+/// [re:7b75f3]).
 fn graph_value_text(model: &Model, track: usize, lane: usize, f: f32) -> String {
     use crate::conv::{db_unity, pan_text};
     let pct = |v: f32| format!("{:03}%", (v * 100.0) as i64);
@@ -3012,39 +3003,29 @@ fn graph_value_text(model: &Model, track: usize, lane: usize, f: f32) -> String 
         9 | 12 | 14 | 16 => pct(f),
         10 | 17 | 18 => String::new(),
         11 | 19..=38 => bip(f),
+        // v1: the filter mode names by `(int)(v·10)`, LPF 2 pole beyond.
         13 => {
-            let e = model.engine;
-            let layers: Vec<usize> = (0..8).filter(|&l| model.layer(e, track, l).valid).collect();
-            let alg =
-                |l: usize| model.layer_node(e, track, l).map(|n| n.f32(dreist_formats::LayerParam::FilterAlgorithm.name()).unwrap_or(dreist_formats::LayerParam::FilterAlgorithm.default_value()));
-            match layers.as_slice() {
-                [] => filter_type_text(None, f),
-                [l] => filter_type_text(alg(*l), f),
-                ls => ls.iter().map(|&l| format!("Layer {}: {}", l + 1, filter_type_text(alg(l), f))).collect::<Vec<_>>().join("\n"),
-            }
+            const MODES: [&str; 11] =
+                ["As layer setup", "LPF 2 pole", "LPF 4 pole", "HPF 2 pole", "HPF 4 pole", "BPF 2 pole", "BPF 4 pole", "Notch 2 pole", "Notch 4 pole", "Peak 2 pole", "Peak 4 pole"];
+            MODES.get((f * 10.0) as usize).unwrap_or(&"LPF 2 pole").to_string()
         }
         15 => match (f * 8.0).floor() as i64 - 1 {
             k if k < 0 => "Unforced".into(),
             k => format!("Layer {}", k + 1),
         },
         l if l >= 39 => match (l - 39) % 9 {
-            0 => ["As Effect", "Active", "Inactive"][((2.0 * f + 1.0).floor() as usize).clamp(1, 3) - 1].into(),
+            0 => if f < 0.5 { "Inactive" } else { "Active" }.into(),
             1 => pct(f),
             2 => db_unity(f),
-            // "\nEffective: " + [re:f50115] of the pad
-            // chain effect's value × f ([re:8a45b0]).
+            // v1: the pad chain effect's text for the lane value
+            // ([re:d7f635]).
             _ => {
-                let mut t = pct(f);
+                let mut t = String::new();
                 if let Some((slot, param)) = dreist_formats::params::step_lane_fx_param(l) {
                     let e = model.engine;
                     if let Some((_, kind, node)) = crate::fxchain::effects(model, crate::fxchain::Target::Pad(e, track)).into_iter().find(|(s, _, _)| *s == slot) {
-                        let key: Option<String> = dreist_formats::params::effect_param_names(kind).get(param).map(|n| n.chars().filter(|c| !c.is_whitespace()).collect());
-                        let v = key.and_then(|k| node.f32(&k)).unwrap_or(0.5);
                         let sync = node.f32("Sync").is_none_or(|s| s >= 0.5);
-                        if let Some(x) = crate::fxtext::text(kind, param, v * f, sync).filter(|x| !x.is_empty()) {
-                            t.push_str("\nEffective: ");
-                            t.push_str(&x);
-                        }
+                        t = crate::fxtext::text(kind, param, f, sync).unwrap_or_default();
                     }
                 }
                 t
