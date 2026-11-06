@@ -72,6 +72,7 @@ pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules {
     timestretch_v1: true,
     midi_export_v1: true,
     midi_map_v1: true,
+    slice_pads: 16,
 };
 
 /// Install Einst's profile, effect nodes, v1's fast 2^x, rules and voice
