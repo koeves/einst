@@ -25,6 +25,9 @@ env:
   TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag || 'dev' }}
 
 jobs:
+  commits:
+    uses: ./.github/workflows/commits.yml
+
   build:
     runs-on: macos-14
     steps:
@@ -51,7 +54,7 @@ jobs:
   release:
     # The tag's CHANGELOG.md section is the release notes; without one,
     # git-cliff generates them from the commits since the previous tag.
-    needs: build
+    needs: [commits, build]
     if: github.event_name == 'push' || inputs.upload
     runs-on: ubuntu-24.04
     steps:
