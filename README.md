@@ -88,3 +88,7 @@ shares with Dreist (the Geist2 rebuild). This repository adds what v1 does diffe
 The crates are MIT OR Apache-2.0. `einst-plugin` and the binaries built from it are
 GPL-3.0-or-later. See [`LICENSE`](LICENSE) and [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 Einst is not affiliated with or endorsed by FXpansion.
+
+## AI usage
+
+Built with the assistance of Claude, using REA. Tested by hand and by ear.
