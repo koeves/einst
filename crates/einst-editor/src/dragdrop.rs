@@ -84,6 +84,8 @@ enum Target {
     Engine(usize),
     /// The browser's shortlist pane.
     Shortlist,
+    /// The browser's file list (a folder from outside shows its contents).
+    FileList,
 }
 
 fn ext(p: &Path) -> String {
@@ -129,6 +131,7 @@ impl Editor {
                 "LayerRow" => return c.attr("layer")?.parse().ok().map(Target::Layer),
                 "PatternSelector" => return c.name.strip_prefix("Key")?.parse().ok().map(Target::Pattern),
                 "BrowserShortList" => return Some(Target::Shortlist),
+                "BrowserFileList" => return Some(Target::FileList),
                 _ => {}
             }
             match c.name.as_str() {
@@ -463,6 +466,12 @@ impl Editor {
             }
             // [re:d5abda] / [re:13bdb0]: files only, from elsewhere than the
             // shortlist itself, join the current shortlist.
+            // The manual (2:4): a folder dropped from Finder onto the browser
+            // shows its contents.
+            (Source::Files(files), Target::FileList) => {
+                let Some(dir) = files.iter().find(|f| f.is_dir()).filter(|_| from.is_empty()).cloned() else { return false };
+                self.browser.as_mut().map(|b| b.show_folder(dir)).is_some()
+            }
             (Source::Files(files), Target::Shortlist) => {
                 let own = self.app.ctrl(from).is_some_and(|c| c.overload == "BrowserShortList");
                 if own || files.iter().any(|f| f.is_dir()) {
