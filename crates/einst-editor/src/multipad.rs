@@ -1,10 +1,11 @@
-//! Multi-pad selection ([re:d611cc], `e_setPadSelections`
+//! Multi-pad selection ([re:20c941], `e_setPadSelections`
 //! 0x44, `EngineState` `padSelAnchor` / `padSelItems`) and the original's
-//! "apply to every selected pad" rule of [re:5723c8]
+//! "apply to every selected pad" rule of [re:31ab79]
 //! ([re:f3180c] / [re:eac469]).
 //!
-//! A click selects the pad; cmd toggles it in the selection; shift selects
-//! the contiguous range from the anchor. Pad messages from the editor whose
+//! A click selects the pad alone, as v1's `SelectPad` ([re:20c941]); the
+//! cmd / shift multi-selection below is v2's, kept dormant (no control
+//! reaches it). Pad messages from the editor whose
 //! pad is part of the selection apply to every selected pad: parameter
 //! (0x4e) and send level (0x55) changes move the others by the same delta,
 //! clamped to 0..1; the rest set the same value. Automation messages are
@@ -18,7 +19,7 @@
 //! all layers on go to every existing layer of the selected layers (all 8
 //! with all layers) of the addressed pad (every pad with all pads);
 //! `e_setLayerParameter` 0x66 moves the others by the same delta. The layer
-//! selection (`e_setLayerSelections` 0x45, [re:b98fa6] `layerSelAnchor` /
+//! selection (`e_setLayerSelections` 0x45, [re:214344] `layerSelAnchor` /
 //! `layerSelItems`) comes from the pad inspector's layer table.
 
 use dreist_engine::binding::{Message, id};
@@ -199,7 +200,7 @@ pub fn layer_selection(model: &Model, e: usize, p: usize) -> (usize, u8) {
     (anchor, stored | 1u8 << anchor.min(7))
 }
 
-/// [re:281f54] [re:c47c8f]: the layer table's row selection
+/// [re:281f54] [re:24ee83]: the layer table's row selection
 /// (cmd toggles, shift extends) → `e_setLayerSelections` 0x45 [e, p]
 /// [anchor, mask as raw float bits]; the anchor becomes the current layer.
 pub fn select_layer(model: &mut Model, e: usize, l: usize, cmd: bool, shift: bool) -> Command {
