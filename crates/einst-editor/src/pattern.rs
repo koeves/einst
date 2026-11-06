@@ -328,7 +328,7 @@ struct GraphDrag {
     erase: bool,
 }
 
-/// [re:73dd2d]: lane values for `n`
+/// [re:17a09c]: lane values for `n`
 /// steps (`r` supplies uniform randoms for Randomise).
 pub fn insert_shape(shape: usize, n: usize, r: &mut dyn FnMut() -> f32) -> Vec<f32> {
     insert_from(shape, n, 0, r).into_iter().map(|(_, v)| v).collect()
@@ -404,7 +404,7 @@ pub fn insert_from(shape: usize, n: usize, start: usize, r: &mut dyn FnMut() -> 
     out.into_iter().map(|(i, v)| (i, v.clamp(0.0, 1.0))).collect()
 }
 
-/// [re:6fb427] 0x4530 state of the 24 `Key<n>`
+/// [re:57364c] 0x4530 state of the 24 `Key<n>`
 /// selectors under `path`: on = current pattern, `patternUsed` (not empty),
 /// `patternLocked` (the lock glyph).
 pub(crate) fn sync_selectors(app: &mut App, model: &Model, path: &[usize]) {
@@ -918,10 +918,11 @@ impl PatternPanel {
         })
     }
 
-    /// [re:dc19e2] (multi
-    /// tool): NotAllowed on a locked pattern / track, Selection with
-    /// shift, ResizeRightThin over the last step of a gated pad's duration
-    /// chain (unless it is editor-selected), else Multi.
+    /// [re:a1ee7c]: NotAllowed on a locked pattern / track; the Erase and
+    /// Select tools their own cursor (Erase with shift: Selection); Pen and
+    /// Multi: Selection with shift, ResizeRightThin over the last step of a
+    /// gated pad's duration chain (unless it is editor-selected), else the
+    /// tool's cursor.
     pub fn hover_cursor(&self, app: &App, model: &Model, path: &[usize], overload: &str, x: f32, y: f32) -> Option<dreist_gui::cursor::Cursor> {
         use dreist_gui::cursor::Cursor;
         if overload != "PatternGrid" || self.grid.as_deref() != Some(path) {
@@ -935,17 +936,26 @@ impl PatternPanel {
         if locked(model.pattern_node(e, cur)) || locked(crate::padmenu::track_node(model, e, track)) {
             return Some(Cursor::image("NotAllowed"));
         }
+        let own = match self.tool {
+            Tool::Erase if !app.mods.shift => Some("Delete"),
+            Tool::Select => Some("Selection"),
+            _ => None,
+        };
+        if let Some(c) = own {
+            return Some(Cursor::image(c));
+        }
         if app.mods.shift {
             return Some(Cursor::image("Selection"));
         }
+        let tool_cursor = if self.tool == Tool::Pen { "Pen" } else { "Multi" };
         let gated = !model.pad_one_shot(e, track);
         if !gated {
-            return Some(Cursor::image("Multi"));
+            return Some(Cursor::image(tool_cursor));
         }
         let pat = model.pattern(e, cur);
         let on = pat.tracks[track].step(step as u32).on;
         let end = on && last_in_duration_chain(&pat, track, step, true) && !self.selection.contains(&(track, step));
-        Some(Cursor::image(if end { "ResizeRightThin" } else { "Multi" }))
+        Some(Cursor::image(if end { "ResizeRightThin" } else { tool_cursor }))
     }
 
     /// Scroll to make the step visible [re:5fd4bc]: while playing with
