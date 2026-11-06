@@ -282,21 +282,6 @@ pub struct SongPanel {
     retro: [Vec<(SongPart, bool)>; ENGINES],
 }
 
-#[cfg(test)]
-pub(crate) fn retro_len_for_test(model: &Model, t: usize, pattern: usize) -> f64 {
-    retro_len(model, t, pattern)
-}
-
-/// Pattern length for retro placement: 1 QN for stopped parts or unknown
-/// lengths ([re:2cd575]).
-fn retro_len(model: &Model, t: usize, pattern: usize) -> f64 {
-    if pattern == STOP_PART {
-        return 1.0;
-    }
-    let l = cycle_qn(model, t, pattern);
-    if l < 0.001 { 1.0 } else { l }
-}
-
 fn key(start: f64) -> i64 {
     (start * 960.0).round() as i64
 }
@@ -1536,43 +1521,19 @@ impl SongPanel {
         self.retro.iter().any(|t| !t.is_empty())
     }
 
-    /// Retro record [re:2cd575] (Retro button): the buffered
-    /// parts go into the song, selected. Unless every part was played with
-    /// the song running they are moved to start after the song's end (each
-    /// track's last part rounded up to its pattern length), keeping their
-    /// spacing from the earliest pattern-aligned start.
+    /// Retro record [re:4aa5f6] (Retro button): the buffered
+    /// parts go into the song where they were played, selected.
     pub fn apply_retro(&mut self, model: &Model, out: &mut Vec<Command>) -> bool {
         if !self.has_retro() {
             return false;
         }
-        let mut earliest = 999999.0f64;
-        let mut all_playing = true;
-        for (t, parts) in self.retro.iter().enumerate() {
-            for (p, playing) in parts {
-                let len = retro_len(model, t, p.pattern);
-                earliest = earliest.min(quantize_round((p.start / len).floor() * len));
-                all_playing &= *playing;
-            }
-        }
+        // [re:4aa5f6]: the parts go where they were played, cutting what
+        // they overlap (whether the song was playing does not matter).
         let before = song_of(model);
-        let offset = if all_playing {
-            0.0
-        } else {
-            let mut end = 0.0f64;
-            for (t, parts) in before.tracks.iter().enumerate() {
-                if let Some(last) = parts.last() {
-                    let len = retro_len(model, t, last.pattern);
-                    let e = quantize_round(last.start + last.length);
-                    end = end.max(quantize_round(((e + len) / len).floor() * len).max(0.0));
-                }
-            }
-            end - earliest
-        };
         let mut song = before.clone();
         self.selected.clear();
         for (t, parts) in std::mem::take(&mut self.retro).into_iter().enumerate() {
-            for (mut p, _) in parts {
-                p.start += offset;
+            for (p, _) in parts {
                 self.selected.insert((t, key(p.start)));
                 add_part_cut(model, &mut song, t, p);
             }

@@ -446,8 +446,8 @@ fn song_recording_and_retro() {
     assert_eq!(s.tracks[1].len(), 1);
     assert_eq!((s.tracks[1][0].start, s.tracks[1][0].length, s.tracks[1][0].pattern), (4.0, 8.0, 2));
     assert!(!ed.history.undo.is_empty(), "recording leaves an undo point");
-    // Not recording: the part goes to the retro buffer; Retro appends it
-    // after the song's end (rounded up to the pattern length).
+    // Not recording: the part goes to the retro buffer; Retro puts it
+    // where it was played.
     ed.song_events(&[
         SongEvent::State(0),
         SongEvent::Started { track: 0, pattern: 0, time: 2.0, recording: false, phase: 0.0 },
@@ -462,11 +462,8 @@ fn song_recording_and_retro() {
     ed.handle(&UiEvent::Clicked { path: rb, name: "RetroButton".into(), id: 0, on: false });
     let s = song(&ed);
     assert_eq!(s.tracks[0].len(), 1);
-    let len = super::song::retro_len_for_test(&ed.model, 1, 2);
-    let end = dreist_engine::song::quantize_round(((12.0 + len) / len).floor() * len);
-    let len0 = super::song::retro_len_for_test(&ed.model, 0, 0);
-    let earliest = dreist_engine::song::quantize_round((2.0f64 / len0).floor() * len0);
-    assert!((s.tracks[0][0].start - (2.0 + end - earliest)).abs() < 1e-9, "{:?}", s.tracks[0]);
+    // v1: where it was played.
+    assert!((s.tracks[0][0].start - 2.0).abs() < 1e-9, "{:?}", s.tracks[0]);
 }
 
 #[test]
