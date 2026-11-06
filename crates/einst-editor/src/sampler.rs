@@ -594,13 +594,9 @@ impl Sampler {
     pub fn handle(&mut self, app: &mut App, model: &mut Model, ev: &UiEvent, out: &mut Vec<Command>) -> bool {
         match ev {
             UiEvent::Mouse { path, overload, kind, x, y } if overload == "SamplerWaveArea" && self.mine(path) => return self.wave_mouse(app, path, *kind, *x, *y, out),
-            UiEvent::Wheel { path, overload, dy } if overload == "SamplerWaveArea" && self.mine(path) => {
-                let Some(n) = self.take().map(Take::frames) else { return false };
-                let w = app.ctrl(path).map(|c| c.rect.w as f32).unwrap_or(1.0);
-                let mx = (app.mouse_pos().0 - app.origin(path).0 as f32) / w.max(1.0);
-                self.view = crate::zoomslider::zoom_in(self.view, if *dy > 0.0 { 2.0 } else { 0.5 }, mx.clamp(0.0, 1.0), w, n);
-                return true;
-            }
+            // v1: the wave forwards the wheel to its zoom slider
+            // ([re:1a34bd]), and the sampler's has none, so it does nothing.
+            UiEvent::Wheel { path, overload, .. } if overload == "SamplerWaveArea" && self.mine(path) => return true,
             UiEvent::MenuSelected { anchor, index, .. } if self.mine(anchor) => {
                 let Some((which, acts)) = self.menu.take() else { return false };
                 let s = &mut model.sampler;
