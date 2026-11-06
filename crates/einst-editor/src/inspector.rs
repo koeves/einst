@@ -1379,19 +1379,6 @@ impl Inspector {
         self.vsplit.reset_value(path, name).map(|_| PadParam::V2A.curve())
     }
 
-    /// [re:efb170] "Remove all modulation from this control"
-    /// ([re:bed354]): 0x68 per source; port: the parameter's depth 0 for
-    /// sources 1..=28.
-    pub fn remove_modulation(&self, app: &App, model: &Model, path: &[usize]) -> Vec<Command> {
-        if !self.params.as_ref().is_some_and(|pp| path.starts_with(pp)) || !app.ctrl(path).is_some_and(|c| c.class == "CtrlTransmodKnob") {
-            return Vec::new();
-        }
-        let Some(par) = app.ctrl(path).and_then(|c| param_for_control(&c.name)) else { return Vec::new() };
-        let e = model.engine;
-        let idx = [e as i32, model.pad[e] as i32, model.layer[e] as i32];
-        (1..=28).map(|s| msg(id::SET_LAYER_PARAMETER, &idx, &[par as u8 as f32, 0.0, s as f32])).collect()
-    }
-
     /// A knob double click's reset value ([re:ed3c05]
     /// [re:f0ac00]: [re:6b28ff], the parameter's default; depths to
     /// none, sends to 0; the pad view's gain / pan / sends and Vel-Amp).

@@ -60,7 +60,6 @@ use dreist_gui::{Ctrl, Skin};
 
 pub use command::Command;
 use editor::engine_menu::EngineAction;
-use editor::knobs::KnobAction;
 pub use model::Model;
 
 /// What the file dialogs are asked for.
@@ -170,7 +169,6 @@ pub struct Editor {
     /// Undo (false) / redo (true) history menu open.
     history_menu: Option<bool>,
     /// A knob's right-click menu: the control and the items' actions.
-    knob_menu: Option<(Vec<usize>, String, Vec<KnobAction>)>,
     /// An open engine selector menu (anchor, engine, item actions); the
     /// "Reset all engines" confirmation; the engine being renamed.
     engine_menu: Option<(Vec<usize>, usize, Vec<EngineAction>)>,
@@ -327,7 +325,6 @@ impl Editor {
             project_path: None,
             history: undo::History::default(),
             history_menu: None,
-            knob_menu: None,
             engine_menu: None,
             knob_edit: None,
             file_menu: None,
