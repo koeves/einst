@@ -1,31 +1,30 @@
-//! Browser search ([re:50427c].., [re:536e2c]
-//! [re:f2c679]..): options, locations and the file matcher, shared by the
+//! Browser search ([re:824b1a].., [re:51da06]
+//! [re:51da06]..): options, locations and the file matcher, shared by the
 //! header's quick search ([re:111944]) and
-//! the advanced search pane ([re:6d3139]).
+//! the advanced search pane ([re:7e4f0f]).
 
 use std::path::{Path, PathBuf};
 
-/// [re:6984ca] (type names [re:e10820]).
+/// [re:f6b71c] (type names [re:f6b71c]).
 pub const TYPES: [&str; 4] = ["File name", "Audio length", "File size", "File type"];
 
-/// Sub-options per search type [re:3fc5fd]. Audio length lists "Less than
-/// (sec)" twice and never offers "Is (sec)" (kept as the original).
+/// Sub-options per search type [re:e6a164].
 pub fn sub_types(kind: usize) -> &'static [&'static str] {
     match kind {
         0 => &["Contains", "Starts with", "Ends with", "Is", "Does not contain", "Does not start with", "Does not end with", "Is not"],
-        1 => &["Greater than (sec)", "Less than (sec)", "Less than (sec)"],
+        1 => &["Greater than (sec)", "Less than (sec)", "Is (sec)"],
         2 => &["Greater than (Mb)", "Less than (Mb)", "Is (Mb)"],
         3 => &["Audio", "MIDI / Patterns", "Project Files", "Folder"],
         _ => &[],
     }
 }
 
-/// Types that take a search term [re:cee6a3]: every type but File type.
+/// Types that take a search term [re:a9a212]: every type but File type.
 pub fn takes_term(kind: usize) -> bool {
     kind < 3
 }
 
-/// Term validity [re:ef7094]: length and size terms must be > 0; the
+/// Term validity [re:630367]: length and size terms must be > 0; the
 /// error and the replacement term.
 pub fn validate(kind: usize, term: &str) -> Result<(), (&'static str, &'static str)> {
     if (kind == 1 || kind == 2) && atof(term) <= 0.0 {
@@ -48,18 +47,18 @@ pub(crate) fn atof(s: &str) -> f32 {
     (0..=end).rev().find_map(|n| crate::conv::number(&s[..n])).unwrap_or(0.0)
 }
 
-/// [re:86d350].
+/// [re:4e4543].
 pub fn is_audio(ext: &str) -> bool {
     ["wav", "aif", "aiff", "rcy", "rx2", "rex", "rex2", "rcso", "sampler"].iter().any(|x| ext.eq_ignore_ascii_case(x))
 }
 
-/// [re:d5ac15].
+/// [re:d169a7].
 pub fn is_pattern(ext: &str) -> bool {
     use dreist_formats::profile::{DocKind, doc_kind};
     matches!(doc_kind(ext), Some(DocKind::Pattern | DocKind::Bank)) || ["mid", "G01", "G24"].iter().any(|x| ext.eq_ignore_ascii_case(x))
 }
 
-/// [re:5333c5].
+/// [re:440fc2].
 pub fn is_project(ext: &str) -> bool {
     use dreist_formats::profile::{DocKind, doc_kind};
     matches!(doc_kind(ext), Some(DocKind::Pad | DocKind::Kit | DocKind::Pattern | DocKind::Engine | DocKind::Project)) || ["G01", "G24", "KIT", "GRU"].iter().any(|x| ext.eq_ignore_ascii_case(x))
@@ -77,13 +76,13 @@ impl SearchOption {
         SearchOption { kind: 0, sub: "Contains".into(), term: term.into() }
     }
 
-    /// [re:3c5155]: an
+    /// [re:0ce95c]: an
     /// option whose type takes a term counts only with a non-blank term.
     pub fn usable(&self) -> bool {
         !takes_term(self.kind) || !self.term.trim().is_empty()
     }
 
-    /// [re:c1dcaf].
+    /// [re:824b1a].
     pub fn matches(&self, path: &Path, dir: bool) -> bool {
         let ext = path.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
         match self.kind {
@@ -138,7 +137,7 @@ impl SearchOption {
     }
 }
 
-/// [re:78b552]: any option (or all with
+/// [re:f0d01e]: any option (or all with
 /// `match_all`); no options match nothing.
 pub fn matches(opts: &[SearchOption], path: &Path, dir: bool, match_all: bool) -> bool {
     if opts.is_empty() {
@@ -150,7 +149,7 @@ pub fn matches(opts: &[SearchOption], path: &Path, dir: bool, match_all: bool) -
 /// The port's hit limit.
 pub const MAX_HITS: usize = 2000;
 
-/// [re:8f998f] over each (folder, sub folders)
+/// [re:cfbc4e] over each (folder, sub folders)
 /// location: every non-hidden entry is tested; folders are entered first
 /// when the location searches sub folders. Paths, folder flag.
 pub fn scan(locations: &[(PathBuf, bool)], opts: &[SearchOption], match_all: bool) -> Vec<(PathBuf, bool)> {
@@ -228,7 +227,7 @@ mod tests {
     }
 }
 
-/// Height of the open pane ([re:ede612]: 0x7d).
+/// Height of the open pane ([re:172c53]: 0x7d).
 pub const PANE_HEIGHT: i32 = 125;
 const RECENT: usize = 10;
 
@@ -254,8 +253,8 @@ pub enum PaneAction {
     Run(Vec<SearchOption>, bool),
 }
 
-/// [re:77145a] (`SearchPane.skin`, three
-/// [re:cefbe2]s from `SearchOptionItem.skin`) and the
+/// [re:7e4f0f] (`SearchPane.skin`, three
+/// [re:63e11a]s from `SearchOptionItem.skin`) and the
 /// search box menu state.
 pub struct SearchPane {
     pub open: bool,
@@ -331,7 +330,7 @@ impl SearchPane {
         self.recent.truncate(RECENT);
     }
 
-    /// The pane's options that take part ([re:b7f0e2]).
+    /// The pane's options that take part ([re:982f22]).
     pub fn options(&self) -> Vec<SearchOption> {
         self.rows
             .iter()
@@ -341,7 +340,7 @@ impl SearchPane {
     }
 
     /// Open or close the pane, moving the navigator row and the split view
-    /// below it ([re:1814b1]: one animation block, 750 ms,
+    /// below it ([re:172c53]: one animation block, 750 ms,
     /// logarithmic: the pane's height to 125 / 0, the navigator, the
     /// previous / next location buttons and the split view's top to the
     /// pane's bottom, the split view's height to the rest).
@@ -469,7 +468,7 @@ impl SearchPane {
                         }
                     }
                     Some(PaneMenu::Type(r)) => {
-                        // Control event [re:2f7d29] → sub types updated.
+                        // Control event [re:f83834] → sub types updated.
                         if *index < TYPES.len() {
                             self.rows[r] = (*index, 0, if takes_term(*index) { std::mem::take(&mut self.rows[r].2) } else { String::new() });
                         }
@@ -500,7 +499,7 @@ impl SearchPane {
                     self.match_all = *on;
                     Some(PaneAction::Handled)
                 }
-                // Control event [re:b09f4f] → search start [re:6e1b99].
+                // Control event [re:15e84e] → search start [re:41e3ce].
                 "DoSearchButton" => {
                     let opts = self.options();
                     if opts.is_empty() {
@@ -516,7 +515,7 @@ impl SearchPane {
                 }
                 _ => None,
             },
-            // Term validation [re:3472b3].
+            // Term validation [re:ae5eac].
             UiEvent::TextCommitted { path, name, text } if name == "SearchTermBox" && path.starts_with(page) => {
                 let r = row_of(app, path)?;
                 let k = self.rows[r].0;
