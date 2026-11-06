@@ -110,13 +110,28 @@ pub fn native_dialogs() -> crate::DialogFn {
         crate::Dialog::OpenMidiTemplate => rfd::FileDialog::new().set_title("Please choose the file(s) you wish to import").add_filter("MIDI files", &["mid"]).pick_file(),
         crate::Dialog::OpenMidi => rfd::FileDialog::new().set_title("Please choose the MIDI file to load").add_filter("Pattern MIDI files", &["mid", "midi"]).pick_file(),
         crate::Dialog::SaveMidi => rfd::FileDialog::new().set_title("Please select the location to save to").add_filter("Pattern MIDI files", &["mid"]).set_file_name("Pattern.mid").save_file(),
-        crate::Dialog::ChooseFolder => rfd::FileDialog::new().set_title("Please choose a search location").pick_folder(),
+        // [re:513f9b]: titled "Please choose a search location", from the last folder.
+        crate::Dialog::ChooseFolder(start) => {
+            let d = rfd::FileDialog::new().set_title("Please choose a search location");
+            match start {
+                Some(s) => d.set_directory(s),
+                None => d,
+            }
+            .pick_folder()
+        }
         crate::Dialog::ExportFolder => {
             let desktop = dreist_formats::paths::home().join("Desktop");
             rfd::FileDialog::new().set_title("Please choose a location to export to").set_directory(desktop).pick_folder()
         }
         crate::Dialog::ChooseDocuments(start) => rfd::FileDialog::new().set_title(crate::modal::docs_browse_title()).set_directory(start).pick_folder(),
-        crate::Dialog::LocateFile => rfd::FileDialog::new().add_filter("Audio", &["wav", "aif", "aiff"]).pick_file(),
+        crate::Dialog::LocateFile { title, start } => {
+            let d = rfd::FileDialog::new().set_title(title).add_filter("Audio", &["wav", "aif", "aiff"]);
+            match start {
+                Some(s) => d.set_directory(s),
+                None => d,
+            }
+            .pick_file()
+        }
         crate::Dialog::SaveSwingTemplate => {
             let mut d = rfd::FileDialog::new().set_title("Please select the location to save to").add_filter("Swing template files", &["swingtemplate"]).set_file_name("Groove.swingtemplate");
             if let Some(u) = crate::swing::user_dir() {

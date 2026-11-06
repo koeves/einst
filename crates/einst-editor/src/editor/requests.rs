@@ -161,22 +161,34 @@ impl Editor {
                 }
                 true
             }
-            Request::FileFind(r) => {
-                let d = match r {
-                    filefind::Request::AutoFind => Dialog::ChooseFolder,
-                    filefind::Request::Locate(_) => Dialog::LocateFile,
-                };
-                if let Some(p) = self.dialog(d) {
-                    match r {
-                        filefind::Request::AutoFind => {
-                            self.modals.options.set("FileFindLastLocation", p.to_string_lossy());
-                            self.filefind.start_auto_find(&mut self.app, &p);
-                        }
-                        filefind::Request::Locate(i) => {
-                            self.filefind.manual_find(&mut self.model, i, &p);
-                            self.outbox.push(self.model.rebuild_command());
-                        }
+            Request::FileFind(filefind::Request::AutoFind) => {
+                if let Some(p) = self.dialog(Dialog::ChooseFolder(self.filefind.last_dir())) {
+                    self.filefind.last_dir = Some(p.clone());
+                    self.filefind.start_auto_find(&mut self.app, &p);
+                }
+                true
+            }
+            // [re:1395ce]: "Please locate <file>" for each missing file in
+            // turn (from the last folder); a cancel stops, a file that
+            // does not load alerts; all found closes the panel.
+            Request::FileFind(filefind::Request::Manual) => {
+                let mut changed = false;
+                let mut alerts = Vec::new();
+                while let Some(m) = self.filefind.items.first().cloned() {
+                    let name = m.path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                    let Some(p) = self.dialog(Dialog::LocateFile { title: format!("Please locate {name}"), start: self.filefind.last_dir() }) else { break };
+                    self.filefind.last_dir = p.parent().map(std::path::Path::to_path_buf);
+                    match self.filefind.manual_find(&mut self.model, 0, &p) {
+                        Ok(()) => changed = true,
+                        Err(alert) => alerts.push(alert),
                     }
+                }
+                if !alerts.is_empty() {
+                    let anchor = self.app.root.path_of("FileFindOverlay").unwrap_or_default();
+                    self.app.open_menu(&anchor, vec![alerts.join("\n")], None);
+                }
+                if changed {
+                    self.outbox.push(self.model.rebuild_command());
                 }
                 true
             }
