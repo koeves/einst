@@ -370,6 +370,8 @@ impl Editor {
             patmenu: patmenu::PatMenu::default(),
             clipboard: padmenu::Clipboard::default(),
         };
+        // [re:427435]: shift alone drags knobs ten times finer.
+        ed.app.fine_drag = true;
         // `LastEditorScaleFactor` (Preferences › UI scaling), applied when
         // the window opens. The window keeps v1's fixed size.
         ed.app.ui_scale = (ed.modals.options.int("LastEditorScaleFactor", 100).clamp(50, 300) as f32) / 100.0;
