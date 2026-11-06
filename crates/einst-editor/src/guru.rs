@@ -1,7 +1,7 @@
-//! Guru imports ([re:73eb4f], see the dreist-re Guru notes): the
+//! Guru imports ([re:53d392], see the dreist-re Guru notes): the
 //! original Guru's XML files converted into the document — `.G01` patterns, `.G24`
 //! pattern banks, `.KIT` kits, `.GRU` presets — and Guru 1 text swing
-//! templates ([re:0a45b1]).
+//! templates ([re:8abed7]).
 //!
 //! As v1 does it ([re:361f70]): the file becomes a v1 file (a kit of
 //! pads 0..15 from a fresh engine, a pattern, a bank of 24 patterns, a
@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 
 use dreist_formats::Node;
 
-/// What a Guru file holds ([re:3c6863]).
+/// What a Guru file holds ([re:22de0e]).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     Pattern,
@@ -67,12 +67,12 @@ pub fn level(g: f32) -> f32 {
     clamp01((g * 0.25).cbrt())
 }
 
-/// [re:7ab03d] (±12 semitones).
+/// [re:9ddde6] (±12 semitones).
 fn pitch_norm(st: f64) -> f32 {
     ((st + 12.0) / 24.0) as f32
 }
 
-/// [re:f50fdf] → a `StepPattern` node ([re:78d175]).
+/// [re:16a0f5] → a `StepPattern` node ([re:16a0f5]).
 pub fn convert_pattern(c: Option<&Node>, slot: usize) -> Node {
     let mut sp = Node::new("StepPattern", Some(&format!("StepPattern{slot}")));
     let pages = int(c, "Pages", 1);
@@ -120,7 +120,7 @@ pub fn convert_pattern(c: Option<&Node>, slot: usize) -> Node {
     sp
 }
 
-/// One [re:d7fbce] (defaults when an attribute is missing).
+/// One [re:16a0f5] (defaults when an attribute is missing).
 fn convert_step(cs: &Node, at: usize) -> Node {
     let n = Some(cs);
     let mut s = Node::new("Step", Some(&format!("Step{at}")));
@@ -161,7 +161,7 @@ fn convert_step(cs: &Node, at: usize) -> Node {
     s
 }
 
-/// [re:7dc2a1] → layer node attributes ([re:fa1c16]) as v1 converts them
+/// [re:362c78] → layer node attributes ([re:362c78]) as v1 converts them
 /// ([re:f90c43]). `cut_by` is the pad's Guru `CutBy`; `guru` the imported
 /// file (its folder holds the samples). Whether the sample was found.
 fn convert_layer(cl: &Node, layer: &mut Node, cut_by: i64, guru: &Path) -> bool {
@@ -247,7 +247,7 @@ fn trunc12(st: f64) -> f64 {
     }
 }
 
-/// [re:b5da8f] → a fresh pad node ([re:34b283]) as v1 converts it
+/// [re:ec6514] → a fresh pad node ([re:ec6514]) as v1 converts it
 /// ([re:6bf466]): all 8 layers (a missing one at the Guru defaults); the
 /// velocity split counts the layers whose sample was found ([re:cd13f3]).
 fn convert_pad(cp: Option<&Node>, name: &str, guru: &Path) -> Node {
@@ -283,7 +283,7 @@ fn convert_pad(cp: Option<&Node>, name: &str, guru: &Path) -> Node {
     pad
 }
 
-/// [re:976fb1] → engine node ([re:26a8d5]) as v1 converts it
+/// [re:429a35] → engine node ([re:429a35]) as v1 converts it
 /// ([re:8b371a]): engine settings, swing, pads 0..15 and patterns 0..23.
 fn convert_engine(ce: Option<&Node>, eng: &mut Node, guru: &Path) {
     eng.set("TempoNumerator", f(ce, "Numerator", 1.0) as i64);
@@ -316,8 +316,8 @@ fn convert_pads(ce: Option<&Node>, guru: &Path) -> Vec<Node> {
     (0..16).map(|p| convert_pad(ce.and_then(|c| child(c, &format!("Pad{p}"))), &format!("Pad{p}"), guru)).collect()
 }
 
-/// [re:190791] (Steps 1..128, Name "Guru ST", `Step%d` `Mov0`) → a swing
-/// template ([re:fd40bc]).
+/// [re:22cbc3] (Steps 1..128, Name "Guru ST", `Step%d` `Mov0`) → a swing
+/// template ([re:22cbc3]).
 fn convert_groove(g: Option<&Node>) -> Node {
     let steps = int(g, "Steps", 1).clamp(1, 128);
     let mut n = Node::new("SwingTemplate", Some("SwingTemplate"));
@@ -437,7 +437,7 @@ pub fn import_preset(path: &Path) -> Result<Node, String> {
 }
 
 /// Guru 1 swing template text
-/// ([re:5070ca]): a "VERSION" line is required; "MAX=" gives the step count
+/// ([re:8abed7]): a "VERSION" line is required; "MAX=" gives the step count
 /// (default 32); each "STEP=" line's value is the 6 characters from
 /// column 9 (at most 128 steps). The template is named after the file.
 pub fn convert_swing_text(path: &Path) -> Result<Node, String> {
