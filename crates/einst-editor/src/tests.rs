@@ -953,21 +953,21 @@ fn keyboard_accelerators() {
     assert!(ed.model.playing);
     key(&mut ed, " ", false, false);
     assert_eq!(plays(&mut ed), vec![false]);
-    // Number keys switch panels; M toggles the metronome.
+    // Number keys switch v1's pages; M toggles the metronome.
     key(&mut ed, "8", false, false);
-    assert_eq!(ed.model.editor_tab, 2);
-    key(&mut ed, "3", false, false);
-    assert_eq!(ed.model.editor_tab, 0);
+    assert_eq!(ed.model.editor_tab, crate::front::GLOBAL_MIXER_PAGE);
+    key(&mut ed, "1", false, false);
+    assert_eq!(ed.model.editor_tab, crate::front::PATTERN_PAGE);
     key(&mut ed, "m", false, false);
     assert!(ed.outbox.iter().any(|c| matches!(c, Command::Message(m) if m.kind == dreist_engine::binding::id::TOGGLE_METRONOME && m.value[0] == 1.0)));
     // Menu bar items run regardless of the keyboard options.
     ed.menu_bar = false;
-    ed.menu_command(0x1b);
+    ed.menu_command(0x0c);
     assert_eq!(plays(&mut ed), vec![true]);
     let (app, menus) = ed.menu_bar_items();
     assert!(app.iter().any(|i| i.title == "Audio Settings..."));
     assert_eq!(menus.iter().map(|m| m.0.as_str()).collect::<Vec<_>>(), ["File", "Edit", "Browser", "Transport", "View"]);
-    assert!(menus[0].1.iter().any(|i| i.title == "Open Others..." && i.submenu.iter().any(|s| s.title == "Open Pattern As MIDI")));
+    assert_eq!(menus[0].1.iter().map(|i| i.title.as_str()).collect::<Vec<_>>(), ["Open Preset", "Open Engine", "Open Kit", "", "Save Preset", "Save Engine", "Save Kit"]);
     // Cmd+Z runs the header's Undo (nothing to undo: no change).
     let doc = ed.model.doc.clone();
     key(&mut ed, "z", true, false);
