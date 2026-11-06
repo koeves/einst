@@ -6,8 +6,8 @@
 //! Each `EngineSelector<n>` ([re:f63ff1]) shows its number on
 //! `EngineSelectionButton`; selecting one ([re:d505d0]) posts
 //! `e_selectEngine` (0x41). Mute/Solo/PatternPower post 0x8c/0x8d/0xa8 for
-//! that engine ([re:16a055]); with pattern power off the button shows its
-//! power-off art.
+//! that engine, or with Alt for all eight ([re:16a055]); with pattern power
+//! off the button shows its power-off art.
 //!
 //! Transport and master controls ([re:29c1c3] callbacks):
 //! - MasterSlider ([re:3ba02a]) posts `e_setMasterChannelGain` 0xa5; a
@@ -466,10 +466,13 @@ impl Header {
         if let Some(base) = &self.selectors {
             if let Some((i, child)) = selector_hit(app, base, path) {
                 let e = app.ctrl(&[base.as_slice(), &[i]].concat()).and_then(|s| s.attr("engine")).and_then(|v| v.parse::<usize>().ok()).unwrap_or(i).min(ENGINES - 1);
+                // [re:16a055]: with Alt the state goes to all eight engines.
+                let engines: Vec<usize> = if app.mods.alt { (0..ENGINES).collect() } else { vec![e] };
+                let each = |kind: u32, out: &mut Vec<Command>| out.extend(engines.iter().map(|&k| msg(kind, &[k as i32], &[*on as i32 as f32])));
                 match child.as_str() {
-                    "MuteButton" => out.push(msg(id::MUTE_ENGINE, &[e as i32], &[*on as i32 as f32])),
-                    "SoloButton" => out.push(msg(id::SOLO_ENGINE, &[e as i32], &[*on as i32 as f32])),
-                    "PatternPower" => out.push(msg(id::SET_PATTERN_POWER_STATE, &[e as i32], &[*on as i32 as f32])),
+                    "MuteButton" => each(id::MUTE_ENGINE, out),
+                    "SoloButton" => each(id::SOLO_ENGINE, out),
+                    "PatternPower" => each(id::SET_PATTERN_POWER_STATE, out),
                     _ => {
                         model.engine = e;
                         model.engine_sel = 1 << e;
