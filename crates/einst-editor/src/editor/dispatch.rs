@@ -511,6 +511,7 @@ impl Editor {
             changed |= self.run_request(r);
         }
         // Pad edits apply to every selected pad.
+        (self.model.mod_alt, self.model.mod_shift) = (self.app.mods.alt, self.app.mods.shift);
         let extra = multipad::fan_out(&self.model, &self.outbox[n..]);
         self.outbox.extend(extra);
         for c in &self.outbox[n..] {

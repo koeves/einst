@@ -902,8 +902,15 @@ impl Inspector {
                     "AllLayers" | "AllPads" | "AllGroups" => {
                         match name.as_str() {
                             "AllLayers" => model.all_layers = *on,
-                            "AllPads" => model.all_pads = *on,
-                            _ => model.all_rows = *on,
+                            // v1: All pads and Row exclude each other.
+                            "AllPads" => {
+                                model.all_pads = *on;
+                                model.all_rows &= !*on;
+                            }
+                            _ => {
+                                model.all_rows = *on;
+                                model.all_pads &= !*on;
+                            }
                         }
                         out.push(msg(id::SET_MODIFIERS, &[], &[model.all_layers as i32 as f32, model.all_pads as i32 as f32, model.all_rows as i32 as f32]));
                     }

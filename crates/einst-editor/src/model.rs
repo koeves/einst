@@ -60,6 +60,10 @@ pub struct Model {
     pub all_pads: bool,
     /// The selector's Row link: edits apply to the pads of the row.
     pub all_rows: bool,
+    /// Alt / shift held for the edit being made: alt works as All pads,
+    /// alt+shift as Row (v1's tooltips on those buttons).
+    pub mod_alt: bool,
+    pub mod_shift: bool,
     /// Engine multi-selection (`e_setEngineSelections` 0x43, the original
     /// [re:1b20b6]; not saved — loading selects only `CurrentEngine`).
     pub engine_sel: u8,
@@ -294,6 +298,8 @@ impl Model {
             all_layers: false,
             all_pads: false,
             all_rows: false,
+            mod_alt: false,
+            mod_shift: false,
             engine_sel: 0,
             pattern_view: Default::default(),
             sampling: None,
