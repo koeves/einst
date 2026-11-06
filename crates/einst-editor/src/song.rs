@@ -1,13 +1,13 @@
-//! Song tab (`SongPanel.skin`, [re:f184d3]): one row per
+//! Song tab (`SongPanel.skin`, [re:3829fc]): one row per
 //! engine (`SongTrackHeaderPanel.skin` headers), a timeline and the parts.
 //!
-//! - Rows start 20 px down ([re:5029dc]: `20 + id·h`).
-//! - Grid ([re:f7dd45]): bar lines in
+//! - Rows start 20 px down ([re:ef2dc3]: `20 + id·h`).
+//! - Grid ([re:182a98]): bar lines in
 //!   `colGridBar`, beat lines at α0.5, labels "bar.beat" (fine zoom) or the
 //!   bar number, in `SongTimelineStyle`.
-//! - Parts ([re:b452f0] /
-//!   [re:6c3c15]): rounded sections per pattern
-//!   repeat in `colPart` ([re:86878c] 0x20), border `colBorder`, the
+//! - Parts ([re:d5c964] /
+//!   [re:b14d22]): rounded sections per pattern
+//!   repeat in `colPart` ([re:d5c964] 0x20), border `colBorder`, the
 //!   pattern name in `colText` at the top left.
 //! - The blackout overlay (`SongPanelBlackoutPanelStyle`) covers the tracks
 //!   while song mode is off.
@@ -72,7 +72,7 @@ const SONG_TOOLS: [SongTool; 4] = [SongTool::Draw, SongTool::Erase, SongTool::Se
 /// The pattern popup's name on the page.
 const POPUP: &str = "SongPatternPopup";
 
-/// [re:207106] (left-button operation per tool [re:588ddb]).
+/// [re:4e6b67] (left-button operation per tool [re:4e6b67]).
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum OpKind {
     /// Pressed on a part (op 1): a move once the pointer has gone 3 px
@@ -274,7 +274,7 @@ pub struct SongPanel {
     /// 16 marker; with the grab QN and the loop at the start.
     timeline: Option<(u8, f64, f64, f64)>,
     body_w: std::cell::Cell<f32>,
-    /// Song recording ([re:463c61]: one part per track being
+    /// Song recording ([re:7b9cde]: one part per track being
     /// recorded, with whether the song played when it started) and the
     /// retro buffer.
     pub rec_state: u8,
@@ -389,7 +389,7 @@ impl SongPanel {
         })
     }
 
-    /// Snap [re:e72501]: with fewer than 4 bars visible a 16th, under 16
+    /// Snap [re:165e78]: with fewer than 4 bars visible a 16th, under 16
     /// bars a beat, else whole bars (a power of two of them per 32 bars).
     pub(crate) fn snap_qn(&self) -> f64 {
         let bars = self.body_w.get() as f64 / (4.0 * self.zoom as f64);
@@ -654,7 +654,7 @@ impl SongPanel {
                 }
                 self.selected = new_sel;
             }
-            // Start change [re:ccc0f2]: end fixed, phase follows.
+            // Start change [re:4a9546]: end fixed, phase follows.
             OpKind::Start => {
                 let min_len = picked.iter().map(|(_, p)| p.length).fold(f64::MAX, f64::min);
                 let min_start = picked.iter().map(|(_, p)| p.start).fold(f64::MAX, f64::min);
@@ -677,7 +677,7 @@ impl SongPanel {
                     add_part_cut(model, &mut song, *t, SongPart { length: len, ..p.clone() });
                 }
             }
-            // Phase change [re:64218f]: phase wraps in the cycle.
+            // Phase change [re:ab5f6c]: phase wraps in the cycle.
             OpKind::Phase => {
                 for (t, p) in &picked {
                     let cycle = cycle_qn(model, *t, p.pattern).max(1e-6);
@@ -710,8 +710,8 @@ impl SongPanel {
         }
     }
 
-    /// Pattern IDs by delta [re:7474af] (delta clamped so every selected
-    /// part stays in 0..=23) / set [re:5a5315] on the selection,
+    /// Pattern IDs by delta [re:061a2f] (delta clamped so every selected
+    /// part stays in 0..=23) / set [re:490bc2] on the selection,
     /// committed as "Change pattern IDs".
     fn change_patterns(&mut self, model: &Model, delta: Option<i32>, set: Option<usize>, out: &mut Vec<Command>) {
         let before = song_of(model);
@@ -737,7 +737,7 @@ impl SongPanel {
         Self::commit(&before, &song, out);
     }
 
-    /// `ShowPatternPopup(draw, ...)` [re:ae8c40]: the 24 pattern keys of
+    /// `ShowPatternPopup(draw, ...)` [re:6a573c]: the 24 pattern keys of
     /// the track (v1's popup panel) under `anchor`, the selection's common
     /// pattern (or the draw pattern) lit.
     fn open_pattern_menu(&mut self, app: &mut App, model: &Model, anchor: &[usize], draw: bool) {
@@ -791,7 +791,7 @@ impl SongPanel {
         app.dirty = true;
     }
 
-    /// Part buttons [re:90f6ff]: the three part buttons inside the anchor
+    /// Part buttons [re:381bce]: the three part buttons inside the anchor
     /// part's top-right corner, hidden when the part is narrower than the
     /// buttons plus 8 px.
     fn place_part_buttons(&self, app: &mut App, model: &Model) {
@@ -899,7 +899,7 @@ impl SongPanel {
         app.begin_edit(&path);
     }
 
-    /// Quantize [re:156a89]: start (and end) to the snap grid;
+    /// Quantize [re:faf6db]: start (and end) to the snap grid;
     /// the phase follows the start in "Maintain Sync", stays in "Maintain
     /// Start Phase", and in "Auto" follows unless the pattern restarts.
     fn quantize(&self, model: &Model, song: &mut Song, end: bool) {
@@ -963,7 +963,7 @@ impl SongPanel {
             b.on = follow;
         }
         let _ = name;
-        // Pattern buttons [re:ea233f]: enabled with a selection.
+        // Pattern buttons [re:4bd29a]: enabled with a selection.
         let any = !self.selected.is_empty();
         for n in ["SelectPatternButton", "NextPatternButton", "PrevPatternButton"] {
             if let Some(b) = page.find_mut(n) {
@@ -990,7 +990,7 @@ impl SongPanel {
     }
 
     /// Hover cursor over the song body: the operation a left press would
-    /// start (as `handle`'s Down) through the operation's cursor [re:01ad57] —
+    /// start (as `handle`'s Down) through the operation's cursor [re:d4f18d] —
     /// 2/3 band Selection, 5 resize ResizeRight, 6 change start ResizeLeft,
     /// 7 phase ResizeBiDir, 10 insert Pen, 12 erase Delete, 13 / 14 / 15 loop start / end /
     /// move ResizeLeft / ResizeRight / ResizeBiDir, others the arrow.
@@ -1065,7 +1065,7 @@ impl SongPanel {
                 let Some(c) = app.ctrl(path) else { return false };
                 let rh = row_h(c);
                 let qn = (*x / self.zoom + self.scroll) as f64;
-                // Timeline (left press [re:d8f27a] / mouse move).
+                // Timeline (left press [re:3fed38] / mouse move).
                 if let Some((op, grab, s0, e0)) = self.timeline {
                     let snap = |v: f64| quantize_round((v / self.snap_qn()).round() * self.snap_qn()).max(0.0);
                     match kind {
@@ -1107,7 +1107,7 @@ impl SongPanel {
                         }
                     } else {
                         self.marker = quantize_round((qn / self.snap_qn()).round() * self.snap_qn()).max(0.0);
-                        // Current time reset [re:a4e021]: with the song on and the
+                        // Current time reset [re:e9cde4]: with the song on and the
                         // transport stopped, 0x1c `e_setCurrentTime`.
                         if song.active && !model.playing {
                             out.push(msg(id::SET_CURRENT_TIME, &[], &[self.marker as f32]));
@@ -1286,7 +1286,7 @@ impl SongPanel {
             }
             UiEvent::Clicked { path, name, .. } if path.starts_with(&self.page) => {
                 match name.as_str() {
-                    // Control event [re:e3a0fd] → pattern IDs by delta.
+                    // Control event [re:cacf78] → pattern IDs by delta.
                     "NextPatternButton" => self.change_patterns(model, Some(1), None, out),
                     "PrevPatternButton" => self.change_patterns(model, Some(-1), None, out),
                     // The blackout's Activate: song mode on (`e_songSetActive`).
@@ -1376,7 +1376,7 @@ impl SongPanel {
                     add_part_cut(model, &mut next, t, np);
                 }
             }
-            // Duplicate [re:5e972b]: everything when nothing is selected;
+            // Duplicate [re:b00d9a]: everything when nothing is selected;
             // copies follow the selection's end and become the selection.
             MenuAction::Duplicate => {
                 let picked = if picked.is_empty() { song.tracks.iter().enumerate().flat_map(|(t, ps)| ps.iter().map(move |p| (t, p.clone()))).collect() } else { picked };
@@ -1454,7 +1454,7 @@ impl SongPanel {
         true
     }
 
-    /// Recorder messages ([re:2af005]: 500, 0x1f2, 499, 0x1f8).
+    /// Recorder messages ([re:7b9cde]: 500, 0x1f2, 499, 0x1f8).
     /// Returns whether a new recording started (the editor's undo point
     /// "Record Song Parts").
     pub fn song_event(&mut self, model: &Model, ev: &SongEvent, out: &mut Vec<Command>) -> bool {
@@ -1475,7 +1475,7 @@ impl SongPanel {
                 }
                 false
             }
-            // `PatternStopped` [re:be8eab].
+            // `PatternStopped` [re:7c078d].
             SongEvent::Stopped { track, pattern, time, recording } => {
                 let Some((mut part, playing)) = self.recording.get_mut(*track).and_then(Option::take) else { return false };
                 if part.pattern != *pattern {
@@ -1502,7 +1502,7 @@ impl SongPanel {
         }
     }
 
-    /// Timer tick [re:220222]: parts being recorded grow to the
+    /// Timer tick [re:1f0ef0]: parts being recorded grow to the
     /// song position; a jump back before a part's start drops it.
     pub fn tick(&mut self, model: &Model) {
         let Some(pos) = model.song_pos else { return };
@@ -1542,7 +1542,7 @@ impl SongPanel {
         true
     }
 
-    /// [re:6a5a7e] with
+    /// [re:1f0ef0] with
     /// `PatternEditorFollow`: a new playback position outside the visible
     /// body (no drag going on) scrolls it to the middle. True when it moved.
     pub fn follow(&mut self, pos: f64) -> bool {
