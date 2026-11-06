@@ -1,31 +1,31 @@
 //! The front panel's engine selectors, transport and master section
-//! ([re:6e0e89], [re:4139f8] in the original's header bar; Einst's v1
+//! ([re:5cdc6f], [re:2a613c] in the original's header bar; Einst's v1
 //! layout has them under the LCD: `EditorEngineSelectors`, `Transport`,
 //! `MasterControls`).
 //!
-//! Each `EngineSelector<n>` ([re:4fd51c]) shows its number on
-//! `EngineSelectionButton`; selecting one ([re:a570ec]) posts
+//! Each `EngineSelector<n>` ([re:f63ff1]) shows its number on
+//! `EngineSelectionButton`; selecting one ([re:d505d0]) posts
 //! `e_selectEngine` (0x41). Mute/Solo/PatternPower post 0x8c/0x8d/0xa8 for
-//! that engine ([re:c7d50e]); with pattern power off the button shows its
+//! that engine ([re:16a055]); with pattern power off the button shows its
 //! power-off art.
 //!
-//! Transport and master controls ([re:46c9b4] callbacks):
-//! - MasterSlider ([re:3f9657]) posts `e_setMasterChannelGain` 0xa5; a
-//!   double click ([re:dd3107]) resets it to 0 dB (0.7937) when the
+//! Transport and master controls ([re:29c1c3] callbacks):
+//! - MasterSlider ([re:3ba02a]) posts `e_setMasterChannelGain` 0xa5; a
+//!   double click (v1: always; the `DoubleClickResets` option is v2's) ([re:3ba02a]) resets it to 0 dB (0.7937) when the
 //!   option `DoubleClickResets` (default on) is set, else opens a text edit
 //!   in dB ("Master Level", decibel text). It follows
 //!   `e_updateMasterGain` 0x192.
-//! - PanicButton ([re:f41aad]) `e_panic` 0x12; the engine answers with the
+//! - PanicButton ([re:29c1c3]) `e_panic` 0x12; the engine answers with the
 //!   play and record buttons off (0x1d4 / 0x1d5).
-//! - SongButton ([re:e49218]) `e_songSetActive` 0x117 [on, false];
-//!   LoopButton ([re:e3d5c1]) `e_songSetInternalLoopActive` 0x120 [on];
-//!   RestartButton ([re:7dd0f4]) `e_returnToZero` 0x1d.
+//! - SongButton ([re:29c1c3]) `e_songSetActive` 0x117 [on, false];
+//!   LoopButton ([re:29c1c3]) `e_songSetInternalLoopActive` 0x120 [on];
+//!   RestartButton ([re:29c1c3]) `e_returnToZero` 0x1d.
 //! - `e_songStateChanged` 0x1f6 / learn state 0x132: Song on = song
 //!   active, Loop on = internal loop on; Restart is enabled in learn mode or
 //!   with the song active, Loop in learn mode or with the song active and
 //!   no host loop (the song sequencer's state queries, [re:3a88f8]: active,
 //!   internal loop enabled, host loop enabled).
-//! - The transport options ([re:d718a1]; the main menu's "Transport
+//! - v2 only (v1 has no such options): the transport options ([re:d718a1]; the main menu's "Transport
 //!   options" submenu here): check items for the options
 //!   `PatternEditorFollow` (default off; editor message 0x18c),
 //!   `PadSelectionFollowsMIDI` (on) and `EngineSelectionFollowsMIDI` (off)
@@ -39,7 +39,7 @@
 //!   menu (Master and Sub output 1–14, output locations 1..=15; 0x25), also on
 //!   a right click on the Metro button.
 //! - MetroButton follows the document's `Metronome Mute`.
-//! - Indicators (timer tick [re:8ae44a]): MIDIIndi lights for 10 ticks when a
+//! - Indicators (timer tick [re:c57733]): MIDIIndi lights for 10 ticks when a
 //!   block carried MIDI, VoiceIndi for 10 ticks
 //!   after `e_updateVoiceStolen` 0x18a.
 
@@ -60,7 +60,7 @@ pub struct Header {
     /// options, 2 the metronome output sub menu).
     options: Option<Vec<usize>>,
     menu: u8,
-    /// Indicator countdowns in timer ticks ([re:f5d1f8] MIDI,
+    /// Indicator countdowns in timer ticks ([re:c57733] MIDI,
     /// voices).
     midi_ticks: u32,
     voice_ticks: u32,
@@ -109,7 +109,7 @@ const GAIN_EDIT: &str = "MasterGainEdit";
 /// The master gain knob.
 pub(crate) const MASTER_GAIN: &str = "MasterSlider";
 
-/// [re:b4c931]: the learn binding of a
+/// [re:a54ccb]: the learn binding of a
 /// header control: (path, name, type, message, value slot or none).
 pub(crate) fn binding_for(name: &str) -> Option<(&'static str, &'static str, &'static str, u32)> {
     Some(match name {
@@ -141,7 +141,7 @@ fn metronome_mut(model: &mut Model) -> &mut dreist_formats::Node {
     model.doc.child_mut_or_insert("Metronome", "Metronome")
 }
 
-/// The metronome's `Gain` (default ∛0.5, [re:7fe011]).
+/// The metronome's `Gain` (default ∛0.5, [re:424c3b]).
 fn metronome_gain(model: &Model) -> f32 {
     metronome(model).and_then(|n| n.f32("Gain")).unwrap_or(0.5f32.cbrt())
 }
@@ -156,7 +156,7 @@ pub fn carry_metronome(from: &dreist_formats::Node, to: &mut dreist_formats::Nod
     }
 }
 
-/// `PrerollTime` option values ([re:105287]).
+/// v2 only: `PrerollTime` option values ([re:105287]).
 pub const PREROLL_NAMES: [&str; 4] = ["PrerollOff", "Preroll1Bar", "Preroll2Bars", "Preroll4Bars"];
 const PREROLL_ITEMS: [&str; 4] = ["No pre-roll", "1 bar", "2 bars", "4 bars"];
 
@@ -290,7 +290,7 @@ impl Header {
         set("VoiceIndi", &|c| c.on = voice);
     }
 
-    /// An Options menu pick ([re:4139f8]): write the
+    /// An Options menu pick ([re:2a613c]): write the
     /// option and tell the engine / editor.
     fn option_chosen(&mut self, app: &mut App, model: &mut Model, menu: u8, index: usize, out: &mut Vec<Command>) {
         let mut o = crate::options::Options::load();
