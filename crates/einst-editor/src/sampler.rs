@@ -523,16 +523,13 @@ impl Sampler {
     }
 
     /// Start-up messages ([re:6a1c94], at messaging start): the last
-    /// start mode (default Threshold; 0 also maps to Threshold), record
-    /// mode, beats sync, seconds, bars / beats, thresholds, channel mode and
-    /// thru, re-sent to the sampler.
+    /// start mode (default Immediate), record mode, beats sync, seconds,
+    /// bars / beats, thresholds, channel mode and thru, re-sent to the
+    /// sampler.
     pub fn startup_messages(model: &mut Model) -> Vec<Command> {
         let o = crate::options::Options::load();
         let s = &mut model.sampler;
-        let start = match o.int("SamplerLastStartMode", 3) {
-            0 => 3,
-            n => n.clamp(0, 3),
-        };
+        let start = o.int("SamplerLastStartMode", 0).clamp(0, 3);
         s.start_mode = start as u8;
         s.beats_mode = o.bool("SamplerLastSyncMode", true);
         s.secs = crate::conv::number(&o.string("SamplerLastSeconds", "1")).unwrap_or(0.0).clamp(0.0, 3600.0);
@@ -554,6 +551,41 @@ impl Sampler {
             msg(id::SAMPLER_MONO, &[], &[s.channels as f32]),
             msg(id::SAMPLER_THRU, &[], &[s.thru as i32 as f32]),
         ]
+    }
+
+    /// A loaded project's `Sampler` node (version 2) becomes the remembered
+    /// settings, as v1's loader writes them to the `SamplerLast*` options
+    /// ([re:378f24]); the page then reloads them.
+    pub fn adopt_project(&mut self, model: &mut Model) -> Vec<Command> {
+        let Some(n) = model.doc.children.iter().find(|c| c.class == "Sampler").filter(|n| n.version.unwrap_or(1) >= 2).cloned() else { return Vec::new() };
+        let mut o = crate::options::Options::load();
+        let pos = |names: &[&str], key: &str| n.attr(key).and_then(|v| names.iter().position(|x| *x == v.trim()));
+        if let Some(i) = pos(&dreist_engine::sampler::V1_START_MODES, "startmode") {
+            o.set("SamplerLastStartMode", i);
+        }
+        if let Some(i) = pos(&dreist_engine::sampler::V1_TIMED_MODES, "timedmode") {
+            o.set("SamplerLastTimedMode", i);
+            self.record_mode = i as u8;
+        }
+        if let Some(b) = n.bool("beatsmode") {
+            o.set("SamplerLastSyncMode", b);
+        }
+        for (key, opt) in [
+            ("recsecs", "SamplerLastSeconds"),
+            ("recbars", "SamplerLastBars"),
+            ("recbeats", "SamplerLastBeats"),
+            ("startthreshold", "SamplerLastStartThreshold"),
+            ("stopthreshold", "SamplerLastStopThreshold"),
+        ] {
+            if let Some(v) = n.attr(key) {
+                o.set(opt, v.trim());
+            }
+        }
+        if let Some(b) = n.bool("inputthru") {
+            o.set("SamplerLastThruMode", b);
+        }
+        o.save();
+        Self::startup_messages(model)
     }
 
     fn mine(&self, path: &[usize]) -> bool {

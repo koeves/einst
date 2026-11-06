@@ -4709,3 +4709,21 @@ fn pattern_keys_do_nothing_as_v1() {
     ed.app.mods.cmd = false;
     assert!(ed.pattern.as_ref().unwrap().selection.is_empty());
 }
+
+/// v1: a project's `Sampler` node (version 2) becomes the remembered
+/// sampler settings, modes by name.
+#[test]
+fn project_sampler_settings_are_adopted() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    let mut doc = project::new_document();
+    let mut sm = dreist_formats::Node::new("Sampler", Some("Sampler"));
+    sm.version = Some(2);
+    sm.set("startmode", "MIDI").set("timedmode", "Loop").set("recbars", 4).set("beatsmode", "false");
+    doc.children.push(sm);
+    ed.open_document(doc, None, None);
+    let o = options::Options::load();
+    assert_eq!((o.int("SamplerLastStartMode", 0), o.int("SamplerLastTimedMode", 0), o.string("SamplerLastBars", "")), (1, 2, "4".to_string()));
+    assert!(!o.bool("SamplerLastSyncMode", true));
+    assert_eq!(ed.model.sampler.start_mode, 1);
+}
