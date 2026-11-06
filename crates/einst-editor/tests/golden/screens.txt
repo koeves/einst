@@ -19,4 +19,4 @@ page-pattern 59e4bcd4bd148ce4
 page-sampler 320aabfe516972c9
 page-scene 57d82bae28e9cf3f
 page-song 56eaf0657f30077c
-slicer 41391024dfef2d39
+slicer 0b06da5bf1166c79
