@@ -1488,9 +1488,11 @@ impl PatternPanel {
             UiEvent::Mouse { path, overload, kind, x, y } if overload == "PatternGrid" => {
                 let Some(lay) = self.layout(app, model) else { return false };
                 // [re:ced31a]: the right button opens the track menu
-                // under the pen, erase and select tools; the multi tool's
-                // deletes.
-                let menu = *kind == MouseKind::RightDown && self.tool != Tool::Multi;
+                // under the pen, erase and select tools. The multi tool's
+                // deletes, or opens the menu with alt; option
+                // `PatternEditorRightClickMode` swaps the two ([re:1fec54]).
+                let multi_menu = crate::options::Options::load().bool("PatternEditorRightClickMode", false) != app.mods.alt;
+                let menu = *kind == MouseKind::RightDown && (self.tool != Tool::Multi || (multi_menu && !app.mods.shift));
                 // The erase tool's left button deletes; the select tool's
                 // left button selects as shift does with the others.
                 let kind = &match (self.tool, kind) {
