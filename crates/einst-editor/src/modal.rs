@@ -17,7 +17,7 @@
 //! RemMod `RemoveModBehavour` (Prompt, AlwaysClear, NeverClear,
 //! ClearOnModifier — [re:d96028]); UIScaling
 //! `LastEditorScaleFactor` (100–300 %, [re:ce8c40]);
-//! UIStyle (stylesheets); UndoStages `MaxUndoSteps` (1..250, default 20);
+//! UIStyle (stylesheets); UndoStages `MaxUndoSteps` (20..250, default 20; more than 50 asks);
 //! DocumentsPath `LocalDocumentsPath`. Confirm writes, Cancel discards.
 //!
 //! The documents path is written at once, not on Confirm (ev_7e0eff81…,
@@ -57,6 +57,8 @@ pub const SHADING: [&str; 4] = ["Fixed", "Adaptive", "Cyclic", "Off"];
 pub const REMOVE_BEHAVIOUR: [&str; 4] = ["Prompt", "AlwaysClear", "NeverClear", "ClearOnModifier"];
 pub const SCALINGS: [f32; 11] = [1.0, 1.1, 1.2, 1.25, 1.35, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0];
 pub const UNDO_DEFAULT: i64 = 20;
+/// v1's fewest undo stages.
+pub const UNDO_MIN: i64 = 20;
 
 /// The default stylesheet ("v2") as the style menu shows it.
 pub const DEFAULT_STYLE_LABEL: &str = "Default";
@@ -137,10 +139,12 @@ pub struct Modals {
     docs_prompt: Option<DocsPrompt>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum DocsPrompt {
     Reset,
     Alert,
+    /// More than 50 undo stages: Yes keeps them, No goes back to 20.
+    Undo(Vec<usize>),
 }
 
 pub fn docs_restart() -> String {
@@ -412,7 +416,7 @@ impl Modals {
                     c.text = style_label(&s.string("StyleSheet", styles.iter().find(|n| n.as_str() == dreist_gui::skin::default_theme()).map(String::as_str).unwrap_or(""))).to_string()
                 }
                 "UndoStages" => {
-                    let v = s.int("MaxUndoSteps", UNDO_DEFAULT).clamp(1, 250);
+                    let v = s.int("MaxUndoSteps", UNDO_DEFAULT).clamp(UNDO_MIN, 250);
                     c.set_attr("realMin", "1".into());
                     c.set_attr("realMax", "250".into());
                     c.value = v as f32;
@@ -602,12 +606,19 @@ impl Modals {
     }
 
     pub fn handle(&mut self, app: &mut App, ev: &UiEvent) -> bool {
-        if let Some(q) = self.docs_prompt {
+        if let Some(q) = self.docs_prompt.clone() {
             if let UiEvent::MenuSelected { index, .. } = ev {
                 self.docs_prompt = None;
                 // Yes / No prompt: 0 = Yes (item 2).
-                if q == DocsPrompt::Reset && *index == 2 {
-                    self.write_documents_path(app, &default_documents());
+                match q {
+                    DocsPrompt::Reset if *index == 2 => self.write_documents_path(app, &default_documents()),
+                    DocsPrompt::Undo(path) if *index != 2 => {
+                        self.staged.set("MaxUndoSteps", UNDO_MIN);
+                        if let Some(c) = app.ctrl_mut(&path) {
+                            c.value = UNDO_MIN as f32;
+                        }
+                    }
+                    _ => {}
                 }
                 return true;
             }
@@ -735,8 +746,22 @@ impl Modals {
                 }
                 true
             }
+            // [re:3fca26]: at least 20 undo stages; more than 50 asks.
             UiEvent::ValueChanged { path, name, value, .. } if self.mine(path) && name == "UndoStages" => {
-                self.staged.set("MaxUndoSteps", *value as i64);
+                let before = self.staged.int("MaxUndoSteps", UNDO_DEFAULT);
+                let mut v = *value as i64;
+                if v < UNDO_MIN {
+                    v = UNDO_MIN;
+                    if let Some(c) = app.ctrl_mut(path) {
+                        c.value = v as f32;
+                    }
+                    self.docs_prompt = Some(DocsPrompt::Alert);
+                    app.open_menu(path, vec!["You must have a minimum of 20 undo stages".into()], None);
+                } else if v > 50 && before <= 50 {
+                    self.docs_prompt = Some(DocsPrompt::Undo(path.clone()));
+                    app.open_menu(path, vec!["Are you sure you want this many undo stages? This can dramatically increase memory usage!".into(), String::new(), "Yes".into(), "No".into()], None);
+                }
+                self.staged.set("MaxUndoSteps", v);
                 true
             }
             UiEvent::TextCommitted { path, name, text } if self.mine(path) && name == "DocumentsPath" => {
