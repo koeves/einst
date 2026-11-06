@@ -364,6 +364,12 @@ impl Editor {
         self.model.name = name;
         self.model.pad = [0; model::ENGINES];
         self.model.layer = [0; model::ENGINES];
+        // The project's sampler settings become the remembered ones.
+        let msgs = self.sampler.adopt_project(&mut self.model);
+        for c in &msgs {
+            self.model.apply(c);
+        }
+        self.outbox.extend(msgs);
         // [re:af38f1] when samples are missing.
         self.filefind.show(filefind::missing_files(&self.model));
         self.sync();
