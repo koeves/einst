@@ -614,7 +614,9 @@ impl Inspector {
     /// destination typed (else the song tempo), the source from the
     /// stretch amount (length %, `Curve::Stretch`).
     fn stretch_bpm(&self, model: &Model, e: usize, p: usize, l: usize) -> (f64, f64) {
-        let dest = self.dest_bpm.get(&(e, p, l)).copied().unwrap_or_else(|| model.tempo());
+        // The layer's stored destination (v1 `DestinationBPM`), else the song's.
+        let stored = model.layer_node(e, p, l).and_then(|n| n.f32("DestinationBPM")).filter(|v| *v > 0.0).map(f64::from);
+        let dest = stored.or_else(|| self.dest_bpm.get(&(e, p, l)).copied()).unwrap_or_else(|| model.tempo());
         let pct = LayerParam::TimestretchAmount.curve().to_units(model.layer_param(e, p, l, LayerParam::TimestretchAmount)) as f64;
         (dest * pct / 100.0, dest)
     }
@@ -954,30 +956,21 @@ impl Inspector {
                 };
                 let amount = LayerParam::TimestretchAmount.curve().from_units((100.0 * src / dest) as f32).clamp(0.0, 1.0);
                 out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[LayerParam::TimestretchAmount as u8 as f32, amount, 0.0]));
+                // Both tempos are the layer's ([re:c0683b]).
+                model.layer_mut(e, p, l).set("SourceBPM", src as f32).set("DestinationBPM", dest as f32);
                 true
             }
-            // Find source tempo: the sample's length as 1, 2, 4 … bars of
-            // 4/4 in 80..160 BPM.
+            // [re:e62449]: Find source tempo is the file's own analysis
+            // tempo, else [re:155b84]'s guess from the whole file's length.
             UiEvent::Clicked { path, name, .. } if self.in_params(path) && name == "FindBPMButton" => {
-                let Some((frames, sr)) = model.layer_sample(e, p, l).and_then(|f| dreist_engine::audio::info(&f)) else { return true };
-                let m = wave_markers(model, e, p, l, frames as u32);
-                let secs = (m.end.saturating_sub(m.start)) as f64 / sr.max(1.0) as f64;
-                if secs <= 0.0 {
-                    return true;
-                }
-                let mut beats = 4.0;
-                let mut bpm = beats * 60.0 / secs;
-                while bpm < 80.0 && beats < 1024.0 {
-                    beats *= 2.0;
-                    bpm = beats * 60.0 / secs;
-                }
-                while bpm >= 160.0 && beats > 1.0 {
-                    beats /= 2.0;
-                    bpm = beats * 60.0 / secs;
-                }
+                let Some(file) = model.layer_sample(e, p, l) else { return true };
+                let gsa = dreist_engine::gsa::SliceFile::load(&file.with_extension("gsa")).map(|a| a.bpm).filter(|b| *b > 0.0);
+                let bpm = gsa.or_else(|| dreist_engine::audio::info(&file).map(|(frames, sr)| guess_bpm(frames as f32, sr))).unwrap_or(0.0);
+                let bpm = if bpm <= 0.0 { 120.0 } else { bpm as f64 };
                 let (_, dest) = self.stretch_bpm(model, e, p, l);
                 let amount = LayerParam::TimestretchAmount.curve().from_units((100.0 * bpm / dest) as f32).clamp(0.0, 1.0);
                 out.push(msg(id::SET_LAYER_PARAMETER, &idx, &[LayerParam::TimestretchAmount as u8 as f32, amount, 0.0]));
+                model.layer_mut(e, p, l).set("SourceBPM", bpm as f32).set("DestinationBPM", dest as f32);
                 true
             }
             // Combo menus.
@@ -1846,8 +1839,36 @@ fn draw_sampling(sm: &crate::model::Sampling, r: &Renderer, p: &mut Painter, w: 
     }
 }
 
+/// [re:155b84]: the file as 1, 2, 4 or 8 bars of 4/4 within 90..180 BPM (v1
+/// adds 0.5 twice before truncating), else 0.
+pub(crate) fn guess_bpm(frames: f32, sample_rate: f32) -> f32 {
+    let secs = if sample_rate > 0.0 { frames / sample_rate } else { 0.0 };
+    let mut bars = 1.0f32;
+    loop {
+        let mut v = 60.0 / (secs / (bars * 4.0)) + 0.5;
+        v = if v >= 0.0 { v + 0.5 } else { v - 0.5 };
+        let v = v as i32 as f32;
+        if (90.0..=180.0).contains(&v) {
+            return v;
+        }
+        bars += bars;
+        if bars > 8.0 {
+            return 0.0;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn guess_bpm_as_v1() {
+        // 2 s: 1 bar → 120, plus v1's extra 0.5 rounding → 121.
+        assert_eq!(super::guess_bpm(88200.0, 44100.0), 121.0);
+        // 8 s: 4 bars → 120 → 121; 0.5 s: nothing in 90..180 up to 8 bars.
+        assert_eq!(super::guess_bpm(352800.0, 44100.0), 121.0);
+        assert_eq!(super::guess_bpm(100.0, 44100.0), 0.0);
+    }
+
     #[test]
     fn envelope_handles_and_drag() {
         crate::app::test_setup();
