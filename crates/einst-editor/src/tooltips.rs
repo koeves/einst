@@ -177,7 +177,7 @@ impl Editor {
         }
         if c.overload == "EditorPreviewWaveEditor" {
             let ox = self.app.origin(path).0 as f32;
-            return self.slicer.wave_tooltip(path, self.app.mouse_pos().0 - ox, c.rect.w as f32).map(|t| (t, Pos::Below));
+            return self.slicer.wave_tooltip(&self.model, path, self.app.mouse_pos().0 - ox, c.rect.w as f32).map(|t| (t, Pos::Below));
         }
         if c.overload == "LayerWaveDisplay" {
             let (ox, oy) = self.app.origin(path);
