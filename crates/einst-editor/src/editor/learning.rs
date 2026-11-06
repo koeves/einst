@@ -133,6 +133,18 @@ impl Editor {
         if let Some(t) = self.editor_binding_target(&path, &ctrl) {
             return Some(t);
         }
+        // [re:c8c512]: the browser footer's preview volume and stop.
+        if self.ancestors(&path).iter().any(|a| a == "BrowserTabs") {
+            let found = match ctrl.name.as_str() {
+                "PreviewVolumeKnob" => Some(("Preview Volume", dreist_engine::binding::id::SET_PREVIEW_VOLUME, "Continuous")),
+                "StopButton" => Some(("Stop preview", dreist_engine::binding::id::STOP_PREVIEW, "Latching")),
+                _ => None,
+            };
+            if let Some((name, kind, k)) = found {
+                let proto = dreist_engine::binding::Message::new(kind, &[], &[0.0, 0.0, 0.0]);
+                return Some(learn::Target { path, proto, stuffer: 0, name: name.into(), group: "Browser".into(), kind: k });
+            }
+        }
         // [re:8b4856]: the scene page's trigger buttons.
         if let Some((name, kind)) = match ctrl.name.as_str() {
             "TriggerNextSceneButton" => Some(("Trigger next Scene", dreist_engine::binding::id::SCENE_TRIGGER_NEXT)),

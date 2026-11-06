@@ -35,6 +35,10 @@ pub const TABLE: &[EditorBinding] = &[
     b("BrowserTabs", "InteractionModeButton", "Browser", "Auto Mode", "Trigger", 0x15c),
     b("BrowserTabs", "HitLoopModeButton", "Browser", "Slice Mode", "Trigger", 0x15d),
     b("BrowserTabs", "PreviewButton", "Browser", "Preview", "Trigger", 0x15e),
+    // [re:c8c512]: v1's lock buttons (engine messages there; here the
+    // editor locks the pads / patterns).
+    b("BrowserTabs", "LockPadsButton", "Browser", "Lock all pads", "Trigger", 0x84),
+    b("BrowserTabs", "LockPatternsButton", "Browser", "Lock all patterns", "Trigger", 0x85),
     b("BrowserTabs", "NextFileButton", "Browser", "Next file", "Trigger", 0x155),
     b("BrowserTabs", "PrevFileButton", "Browser", "Previous file", "Trigger", 0x156),
     b("BrowserTabs", "NextLocnButton", "Browser", "Next location", "Trigger", 0x157),
