@@ -5,9 +5,10 @@
         <CtrlTableView name="InputTable" rect="6, 22, 231, 270" style="GlobalTableStyle" />
         <CtrlLabel name="CtrlLabel" rect="250, 5, 150, 15" style="ModalLabelStyle" text="MIDI Outputs" />
         <CtrlTableView name="OutputTable" rect="243, 22, 231, 270" style="GlobalTableStyle" />
-        <CtrlButton name="CheckBox" rect="200, 304, 14, 15" optIsMomentary="false" renderer="CheckBoxButtonRenderer" style="ModalCheckButtonStyle" text="" />
+        <CtrlButton name="CheckBox" rect="260, 304, 14, 15" optIsMomentary="false" renderer="CheckBoxButtonRenderer" style="ModalCheckButtonStyle" text="" />
         <CtrlButton name="Refresh" rect="6, 304, 60, 17" displayName="Look for MIDI devices again" optIsMomentary="true" style="ModalMomentaryButtonStyle" text="Rescan" />
-        <CtrlButton name="Sync" rect="70, 304, 75, 17" displayName="Send MIDI clock to the outputs" optIsMomentary="false" style="ModalLatchingButtonStyle" text="Send Clock" />
+        <CtrlLabel name="CtrlLabel" rect="74, 305, 120, 15" style="ModalLabelRightAlignedStyle" text="Sync to MIDI clock" />
+        <CtrlButton name="Sync" rect="198, 304, 14, 15" displayName="Follow the MIDI clock of the input" optIsMomentary="false" renderer="CheckBoxButtonRenderer" style="ModalCheckButtonStyle" text="" />
         <CtrlButton name="Cancel" rect="360, 304, 55, 17" displayName="Discard the changes" optIsMomentary="true" style="ModalMomentaryButtonStyle" text="Cancel" />
         <CtrlButton name="Close" rect="419, 304, 55, 17" displayName="Keep the changes" optIsMomentary="true" style="ModalMomentaryButtonStyle" text="OK" />
     </CtrlPanel>

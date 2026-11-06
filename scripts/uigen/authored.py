@@ -88,15 +88,17 @@ def audio_options():
 
 def midi_options():
     """MIDI device dialog (480 x 330): inputs and outputs side by side,
-    then Rescan, Send Clock, Cancel and OK."""
+    then Rescan, v1's "Sync to MIDI clock" check box, Cancel and OK."""
     panel = E("CtrlPanel", {"name": "CtrlPanel", "rect": "0, 0, 480, 330", "style": "ModalPanelStyle"}, [
         _label(7, 5, 150, "MIDI Inputs"),
         _table("InputTable", 6, 22, 231, 270),
         _label(250, 5, 150, "MIDI Outputs"),
         _table("OutputTable", 243, 22, 231, 270),
-        _check_template(200, 304),
+        _check_template(260, 304),
         _button("Refresh", 6, 304, 60, "Rescan", display="Look for MIDI devices again"),
-        _button("Sync", 70, 304, 75, "Send Clock", momentary=False, display="Send MIDI clock to the outputs"),
+        _label(74, 305, 120, "Sync to MIDI clock", "ModalLabelRightAlignedStyle"),
+        E("CtrlButton", {"name": "Sync", "rect": "198, 304, 14, 15", "optIsMomentary": "false", "renderer": "CheckBoxButtonRenderer",
+                         "style": "ModalCheckButtonStyle", "text": "", "displayName": "Follow the MIDI clock of the input"}),
         _button("Cancel", 360, 304, 55, "Cancel", display="Discard the changes"),
         _button("Close", 419, 304, 55, "OK", display="Keep the changes"),
     ])
