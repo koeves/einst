@@ -471,6 +471,7 @@ impl Editor {
         if matches!(ev, UiEvent::Dropped { .. } | UiEvent::Mouse { kind: dreist_gui::app::MouseKind::Up, .. }) {
             self.pads.end_drag_flash();
             self.set_drop_highlights(None, None);
+            self.drag_dwell = None;
         }
         if let UiEvent::Shortcut { key, cmd, shift, alt, ctrl } = ev {
             if self.accelerator(key, accel::Mods { shift: *shift, cmd: *cmd, alt: *alt, ctrl: *ctrl }) {

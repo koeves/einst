@@ -53,6 +53,13 @@ pub(crate) struct DropHighlights {
     tick: Option<std::time::Instant>,
 }
 
+/// Where a drag dwells.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum Dwell {
+    Engine(usize),
+    Pads,
+}
+
 /// What a drag started on.
 #[derive(PartialEq)]
 enum Source {
@@ -153,6 +160,52 @@ impl Editor {
             _ => return,
         };
         self.pads.drag_flash(&self.app, &self.model, what, x, y);
+    }
+
+    /// [re:19c270] / [re:166e34]: dwelling 25 ticks (1/30 s) during a drag
+    /// over an engine selector selects that engine ([re:39c385]); entering
+    /// the pads starts the same wait, then the Pad / Layers page shows
+    /// ([re:8135df], `e_switchToPadLayersPanel`).
+    pub(crate) fn drag_dwell_over(&mut self, from: &[usize], to: &[usize]) {
+        let over = match self.drop_target(to) {
+            Some(Target::Engine(i)) => Some(Dwell::Engine(i)),
+            // A pad drag starts inside the pads: no entering.
+            _ if self.pads.in_matrix(to) && !self.pads.in_matrix(from) => Some(Dwell::Pads),
+            _ => None,
+        };
+        if over.as_ref() != self.drag_dwell.as_ref().map(|d| &d.0) {
+            self.drag_dwell = over.map(|o| (o, std::time::Instant::now()));
+        }
+    }
+
+    /// The dwell's action once its 25 ticks are up.
+    pub(crate) fn animate_drag_dwell(&mut self) -> bool {
+        let Some((d, at)) = self.drag_dwell.clone() else { return false };
+        if at.elapsed().as_secs_f32() < 25.0 / 30.0 {
+            return false;
+        }
+        // Fired: the dwell stays until the pointer moves to another target.
+        self.drag_dwell = Some((d.clone(), at + std::time::Duration::from_secs(3600)));
+        match d {
+            Dwell::Engine(i) => {
+                let e = i.min(crate::model::ENGINES - 1);
+                if self.model.engine == e {
+                    return false;
+                }
+                self.model.engine = e;
+                self.model.engine_sel = 1 << e;
+                self.model.doc.set("CurrentEngine", e);
+                self.outbox.push(Command::SelectEngine(e));
+            }
+            Dwell::Pads => {
+                if self.model.editor_tab == crate::front::PADS_PAGE {
+                    return false;
+                }
+                self.model.editor_tab = crate::front::PADS_PAGE;
+            }
+        }
+        self.sync();
+        true
     }
 
     /// Pattern key / engine selector drop highlights while dragging.

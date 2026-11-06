@@ -4603,3 +4603,26 @@ fn mapping_page_turns_learn_on() {
     ed.handle(&UiEvent::Clicked { path: browse, name: String::new(), id: 0, on: true });
     assert!(!ed.learn.active);
 }
+
+/// A drag dwelling on an engine selector selects that engine, and entering
+/// the pads shows the Pad / Layers page (v1, 25 ticks).
+#[test]
+fn drag_dwell_selects_engine_and_shows_pads() {
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.model.editor_tab = front::PATTERN_PAGE;
+    ed.sync();
+    let from = ed.app.root.path_of("PatternSelectors").map(|p| [p, vec![0]].concat()).expect("pattern keys");
+    let sel = [ed.header.selectors.clone().unwrap(), vec![3]].concat();
+    ed.handle(&UiEvent::DragOver { from: from.clone(), to: sel, x: 0.0, y: 0.0 });
+    ed.animate();
+    assert_eq!(ed.model.engine, 0, "not yet");
+    std::thread::sleep(std::time::Duration::from_millis(900));
+    ed.animate();
+    assert_eq!(ed.model.engine, 3);
+    let pad = [ed.pads_matrix().unwrap(), vec![0]].concat();
+    ed.handle(&UiEvent::DragOver { from, to: pad, x: 0.0, y: 0.0 });
+    std::thread::sleep(std::time::Duration::from_millis(900));
+    ed.animate();
+    assert_eq!(ed.model.editor_tab, front::PADS_PAGE);
+}
