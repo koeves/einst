@@ -1059,7 +1059,7 @@ version = "0.1.1"
 
 [[package]]
 name = "einst"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dreist-dsp",
  "dreist-engine",
@@ -1073,14 +1073,14 @@ dependencies = [
 
 [[package]]
 name = "einst-dsp"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dreist-dsp",
 ]
 
 [[package]]
 name = "einst-editor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dreist-dsp",
  "dreist-engine",
@@ -1095,7 +1095,7 @@ dependencies = [
 
 [[package]]
 name = "einst-formats"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dreist-dsp",
  "dreist-engine",
@@ -1105,7 +1105,7 @@ dependencies = [
 
 [[package]]
 name = "einst-plugin"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap-sys",
  "cpal",
@@ -3817,7 +3817,7 @@ checksum = "163b33ed8786455e2fa5d72f554057ce3f3182425434f756cd39c99839d88e23"
 
 [[package]]
 name = "xtask"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "nih_plug_xtask",
 ]
