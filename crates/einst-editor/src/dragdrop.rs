@@ -1,27 +1,27 @@
-//! Drag and drop between controls ([re:4dff70] → the
+//! Drag and drop between controls ([re:3d6549] → the
 //! target's drop handler). Sources: a pad ([re:2d30eb]), a pattern
-//! selector key ([re:2aecb8]) and the browser file list
+//! selector key ([re:561273]) and the browser file list
 //! ([re:fb6b2b], the selected entries).
 //! Modifier flags as [re:77e545]
 //! (shift 1, ctrl 2, alt 4, cmd 8).
 //!
-//! - [re:dd2ce9]: nothing on a locked pad.
-//!   Pad onto pad: alt copies ([re:669193], 0x56
-//!   `e_setPad`), otherwise swaps ([re:206406], 0x54); the target is
+//! - [re:3d06b7]: nothing on a locked pad.
+//!   Pad onto pad: alt copies ([re:3d06b7], 0x56
+//!   `e_setPad`), otherwise swaps ([re:3d06b7], 0x54); the target is
 //!   selected. v1 has no alt+shift move.
-//!   Browser files: one file → [re:3448d7]
-//!   [re:def93d] mode 9 (layer 0) / 10 with alt (the first layer without a
+//!   Browser files: one file → [re:4a45a2]
+//!   [re:4a45a2] mode 9 (layer 0) / 10 with alt (the first layer without a
 //!   sample, "No available layers on selected pad!" when there is none);
 //!   several audio files → consecutive pads from the target (alt: layers
-//!   0.. of the target, [re:2a8156]).
-//! - [re:98f79a] / [re:efb170]
-//!   [re:c38770]: audio files onto the selected pad from that layer on (when
+//!   0.. of the target, [re:4a0eaf]).
+//! - [re:f23396] / [re:f23396]
+//!   [re:f23396]: audio files onto the selected pad from that layer on (when
 //!   they fit in 8 layers); not when the pad or layer is locked.
-//!   [re:b203da]: the same from layer 0.
-//! - [re:2bfb64]: key onto key — alt copies, otherwise
+//!   [re:3d06b7]: the same from layer 0.
+//! - [re:561273]: key onto key — alt copies, otherwise
 //!   swaps (v1: no move), then selects the target; one
 //!   pattern file loads into that slot.
-//! - [re:9ddda2]: one engine file (v1 takes no kits) loads into the
+//! - [re:0fbd59]: one engine file (v1 takes no kits) loads into the
 //!   engine under the pointer, which is
 //!   selected.
 
@@ -37,13 +37,13 @@ use crate::{Editor, padmenu, pads, patmenu};
 
 /// Drop-target highlights other than the pads.
 ///
-/// - [re:435cd9]: another key, or one browser
+/// - [re:0aa494]: another key, or one browser
 ///   pattern file (a single item), sets the highlight
 ///   (cleared on drag exit / drop); the timer tick
-///   [re:e2c2f1] steps the highlight alpha by 25 per tick, back to 0
-///   past 120; draw layer 3 [re:e0363b] fills the bounds in
+///   [re:7cd143] steps the highlight alpha by 25 per tick, back to 0
+///   past 120; draw layer 3 [re:7cd143] fills the bounds in
 ///   StandardControlHighlight (set in the constructor) at that alpha.
-/// - [re:20910b]: remembers the selector
+/// - [re:19c270]: remembers the selector
 ///   under the pointer (−1 on drag exit); drawing fills its rect.
 #[derive(Default)]
 pub(crate) struct DropHighlights {
@@ -96,7 +96,7 @@ fn all_audio(files: &[PathBuf]) -> bool {
 
 impl Editor {
     fn drag_source(&self, from: &[usize]) -> Option<Source> {
-        // Files from Finder ([re:f27b3f] → [re:a86cb4]
+        // Files from Finder ([re:3d6549] → [re:3d6549]
         // with the pasteboard's file names): the browser files' targets.
         if from.is_empty() {
             return self.external_drag.clone().filter(|f| !f.is_empty()).map(Source::Files);
