@@ -1,22 +1,22 @@
-//! Effect chain panel (v1 `EffectChain.skin`, [re:e04aee]): six fixed
+//! Effect chain panel (v1 `EffectChain.skin`, [re:663534]): six fixed
 //! slots (`EffectPanel.skin`: type and preset menus, active, mix, output
 //! level) of which four show, scrolled by the slot bar, each holding its
 //! effect's own skin (`Effects/<name>.skin`).
 //!
-//! [re:0e72ae] binds `Control<n>` to effect
+//! [re:5a508e] binds `Control<n>` to effect
 //! parameter n−1 (up to 12); changes post `e_setFXParameter` 0x59 with index
 //! [engine, pad, layer, slot] and values [parameter, source, value]
-//! ([re:b5d4be]). Mix/output post 0x5c/0x5d with values [0, value, source].
+//! ([re:b2575e]). Mix/output post 0x5c/0x5d with values [0, value, source].
 //! A split fader sets the two parameters of the caption panels above (high)
 //! and below (low) it.
 //!
 //! The slot's type menu: Remove effect, then one submenu per category
-//! ([re:cf5f13], [re:63da62] table [re:b06dc6]); an empty slot's offers the
-//! category submenus ([re:57c692]). The preset menu ([re:ea87a2]): Save
+//! ([re:364345], [re:2b5598] table [re:2b5598]); an empty slot's offers the
+//! category submenus ([re:0531cf]). The preset menu ([re:41a672]): Save
 //! preset, Save as default, Revert to default, the type's presets (user
 //! folder first, then system `Effects/<Type>/*.fxpreset`). Choosing a type
 //! posts `e_setEffect` (100) [engine, pad, layer] with the slot and a new
-//! `Effect` loaded from the type's `Default.fxpreset` ([re:769021]); the port
+//! `Effect` loaded from the type's `Default.fxpreset` ([re:02a5ef]); the port
 //! edits the document and rebuilds. Submenus open as a second menu.
 
 use dreist_engine::binding::id;
@@ -36,7 +36,7 @@ use dreist_formats::params::effect_category as category;
 fn preset_dirs(resources: &std::path::Path, kind: usize) -> Vec<std::path::PathBuf> {
     let name = EFFECT_TYPES[kind];
     let mut v = Vec::new();
-    // [re:f15e15].
+    // [re:3b4eea].
     v.push(crate::options::documents_dir().join("Effects").join(name));
     if let Some(r) = resources.parent() {
         v.push(r.join("Effects").join(name));
@@ -44,8 +44,8 @@ fn preset_dirs(resources: &std::path::Path, kind: usize) -> Vec<std::path::PathB
     v
 }
 
-/// The type's presets [re:1598f6]: user presets, then system ones;
-/// the folder scan [re:53368c] descends into subfolders
+/// The type's presets [re:a50ec4]: user presets, then system ones;
+/// the folder scan [re:a7b56c] descends into subfolders
 /// and skips `Default.fxpreset` (the type's default, not a preset).
 pub fn presets(resources: &std::path::Path, kind: usize) -> Vec<std::path::PathBuf> {
     fn scan(d: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
@@ -109,19 +109,19 @@ enum Action {
     /// Type menu Save preset / Save as default.
     SavePreset,
     SaveDefault,
-    /// Chain menu ([re:e04aee] [re:3687bc]).
+    /// Chain menu ([re:663534] [re:90cff5]).
     ChainSave,
     ChainClear,
     ChainLoad(std::path::PathBuf),
     /// A preset folder (the tokenised menu's submenu).
     ChainFolder(std::path::PathBuf),
-    /// [re:a86ca5] / [re:57c692].
+    /// [re:b6dac9] / [re:0531cf].
     EffectCut,
     EffectCopy,
     EffectPaste,
 }
 
-/// The effect clipboard ([re:e066f8]).
+/// The effect clipboard ([re:8a8bb9]).
 static EFFECT_CLIPBOARD: std::sync::Mutex<Option<Node>> = std::sync::Mutex::new(None);
 
 fn effect_clipboard() -> Option<Node> {
@@ -131,21 +131,21 @@ fn effect_clipboard() -> Option<Node> {
 /// A file the editor should ask for and write.
 #[derive(Clone, Debug, PartialEq)]
 pub enum SaveRequest {
-    /// [re:7b9693].
+    /// [re:d9c973].
     Chain(Target),
     /// An effect preset (`.fxpreset`) of the slot, in the type's user folder.
     Effect(Target, usize, usize),
 }
 
-/// [re:3cc799] /
-/// [re:e73ad8]: "Effect Chains" under the user documents folder and the
+/// [re:585af0] /
+/// [re:db510f]: "Effect Chains" under the user documents folder and the
 /// resources.
 pub fn chain_dirs(resources: &std::path::Path) -> (Option<std::path::PathBuf>, Option<std::path::PathBuf>) {
     let user = Some(crate::options::documents_dir().join("Effect Chains"));
     (user, resources.parent().map(|r| r.join("Effect Chains")))
 }
 
-/// [re:f94c3a]: user `.fxchain` files, then
+/// [re:33c153]: user `.fxchain` files, then
 /// system ones (folders scanned recursively, sorted).
 pub fn chain_presets(resources: &std::path::Path) -> Vec<std::path::PathBuf> {
     fn scan(d: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
@@ -168,7 +168,7 @@ pub fn chain_presets(resources: &std::path::Path) -> Vec<std::path::PathBuf> {
     out
 }
 
-/// The doc chain for a `.fxchain` file ([re:8e8a6f]): effects
+/// The doc chain for a `.fxchain` file ([re:2c02b0]): effects
 /// with `Parameter<n>` renamed to the document's names, `ChainPresetName`
 /// = the file path.
 pub fn load_chain(path: &std::path::Path) -> Option<Node> {
@@ -219,7 +219,7 @@ pub fn chain_name(chain: &Node) -> Option<String> {
 }
 
 /// Write a preset file: `<root>` around `node` (the document format, as
-/// [re:a43b77] writes the current serializer's).
+/// [re:bdd777] writes the current serializer's).
 pub fn save_preset_file(path: &std::path::Path, node: &Node) -> std::io::Result<()> {
     let mut root = Node::new("root", None);
     root.children.push(node.clone());
@@ -555,7 +555,7 @@ impl FxPanel {
             }
         }
         // Chain header: Active / Mix, the preset name and the next /
-        // previous buttons [re:100883] — prev / next enabled with two or
+        // previous buttons [re:e9c3be] — prev / next enabled with two or
         // more presets while the chain is active.
         let chain = chain_node(model, t);
         let chain_active = chain.as_ref().and_then(|c| c.attr("IsActive")).map(str::trim) != Some("false");
@@ -631,7 +631,7 @@ impl FxPanel {
         });
     }
 
-    /// The slot bar ([re:faf56f] `EditorEffectPanelScrollbar`): one item
+    /// The slot bar ([re:663534] `EditorEffectPanelScrollbar`): one item
     /// per slot with its effect's name, the shown slots lit.
     pub fn draw(&self, r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) -> bool {
         use dreist_gui::paint::RectF;
@@ -685,8 +685,8 @@ impl FxPanel {
         Some(crate::model::modulation_mask(node.as_ref(), &key))
     }
 
-    /// An effect parameter knob's tooltip ([re:947faf]
-    ///  [re:9c30fa]): "<param>: <value text>"
+    /// An effect parameter knob's tooltip ([re:c57189]
+    ///  [re:c57189]): "<param>: <value text>"
     /// and, with a transmod source shown and a non-zero depth, " -> " and
     /// the modulated value.
     pub fn tooltip(&self, app: &App, model: &Model, path: &[usize], source: Option<usize>) -> Option<String> {
@@ -712,8 +712,8 @@ impl FxPanel {
         Some(text)
     }
 
-    /// A knob double click's reset value: [re:375f19]
-    /// [re:759587] (Mix 0.5, Trim / Output 1.0) and [re:2f9e16]
+    /// A knob double click's reset value: [re:1f365c]
+    /// [re:1f365c] (Mix 0.5, Trim / Output 1.0) and [re:2f9e16]
     /// [re:6a5c33] (the value the type's default preset gave the
     /// parameter, [re:1cda27]).
     pub fn reset_value(&self, app: &App, path: &[usize], name: &str) -> Option<f32> {
@@ -802,7 +802,7 @@ impl FxPanel {
         CATEGORIES.iter().enumerate().map(|(i, c)| (format!("{c} ▸"), Action::Category(i))).collect()
     }
 
-    /// The slot's preset menu ([re:ea87a2], v1's [re:41a672]): Save preset,
+    /// The slot's preset menu ([re:41a672], v1's [re:41a672]): Save preset,
     /// Save as default; Revert to default, Rescan presets; the type's
     /// presets.
     fn type_menu(&self, kind: usize, current: Option<&str>) -> Vec<(String, Action)> {
@@ -955,9 +955,9 @@ impl FxPanel {
                 return true;
             }
             // Right press on an effect panel's background: Cut / Copy /
-            // Paste ([re:a86ca5]; not over
+            // Paste ([re:b6dac9]; not over
             // its controls); on an empty slot's Add button: Paste
-            // ([re:57c692] [re:4bab0b]).
+            // ([re:0531cf] [re:f54923]).
             // The row scrolls by slots: the wheel over it, a press or drag
             // on the slot bar.
             UiEvent::Wheel { path, dy, .. } if path.starts_with(&self.host) => {
@@ -995,14 +995,16 @@ impl FxPanel {
                 return true;
             }
             // Right press on an effect panel's background: Cut / Copy /
-            // Paste ([re:a86ca5]; not over its controls); on an empty slot:
-            // Paste ([re:57c692] [re:4bab0b]).
+            // Paste ([re:b6dac9]; not over its controls); on an empty slot:
+            // Paste ([re:0531cf] [re:f54923]).
             UiEvent::RightClicked { path, .. } | UiEvent::Mouse { path, kind: dreist_gui::app::MouseKind::RightDown, .. } if path.starts_with(&self.host) => {
                 let Some(c) = app.ctrl(path) else { return false };
                 let paste = dreist_gui::menu::item("Paste", effect_clipboard().is_some());
                 let interactive = matches!(c.class.as_str(), "CtrlButton" | "CtrlKnob" | "CtrlPopupButton" | "CtrlTransmodKnob" | "CtrlPolyPlot" | "CtrlSlider" | "CtrlRangeSlider");
                 let Some((slot, kind)) = self.slot_of(app, path).filter(|_| !interactive) else { return false };
-                let items = if kind == 0 { vec![(paste, Action::EffectPaste)] } else { vec![("Cut".into(), Action::EffectCut), ("Copy".into(), Action::EffectCopy), (paste, Action::EffectPaste)] };
+                // [re:f54923]: Cut / Copy (with an effect) and Paste.
+                let has = kind != 0;
+                let items = vec![(dreist_gui::menu::item("Cut", has), Action::EffectCut), (dreist_gui::menu::item("Copy", has), Action::EffectCopy), (paste, Action::EffectPaste)];
                 self.open_menu(app, path, Some(slot), items);
                 return true;
             }
@@ -1015,9 +1017,9 @@ impl FxPanel {
                 out.push(msg(id::SET_FX_PARAMETER, &[e, p, l, slot as i32], &[(n - 1) as f32, 0.0, *value]));
                 return true;
             }
-            // Option parameters ([re:0e72ae]:
+            // Option parameters ([re:5a508e]:
             // popup items from the parameter's option strings;
-            // [re:f8185c] sends the value item/(count − 1)).
+            // [re:5a508e] sends the value item/(count − 1)).
             UiEvent::Clicked { path, name, .. } if path.starts_with(&self.host) && name.starts_with("Control") && app.ctrl(path).is_some_and(|c| c.class == "CtrlPopupButton") => {
                 let (Some((slot, kind)), Some(n)) = (self.slot_of(app, path), name.strip_prefix("Control").and_then(|n| n.parse::<usize>().ok())) else { return false };
                 let Some(items) = effect_option_strings(kind, n - 1) else { return true };
@@ -1026,7 +1028,7 @@ impl FxPanel {
                 self.open_menu(app, path, Some(slot), list);
                 return true;
             }
-            // Chain preset menu and stepping ([re:e04aee]).
+            // Chain preset menu and stepping ([re:663534]).
             UiEvent::Clicked { path, name, .. } if path.starts_with(&self.host) && matches!(name.as_str(), "PresetCombo" | "PresetPrev" | "PresetNext") && self.slot_of(app, path).is_none() => {
                 let current = chain_current(model, t);
                 if name == "PresetCombo" {
@@ -1072,7 +1074,7 @@ impl FxPanel {
                 return true;
             }
             // The chain header's own Active button / Mix knob
-            // ([re:6929fb]): 0x60 / 0x62 [e, p, l] [value].
+            // ([re:e31ebb]): 0x60 / 0x62 [e, p, l] [value].
             UiEvent::Clicked { path, name, on, .. } if name == "ActiveButton" && path.starts_with(&self.host) && self.slot_of(app, path).is_none() => {
                 out.push(msg(id::SET_FX_CHAIN_ACTIVE, &[e, p, l], &[*on as i32 as f32]));
                 return true;
@@ -1119,7 +1121,7 @@ impl FxPanel {
 }
 
 /// Show / hide the controls an effect panel folds away
-/// ([re:375f19]): Active, Next / Last preset and the knob labeller.
+/// ([re:1f365c]): Active, Next / Last preset and the knob labeller.
 pub fn fold_controls(panel: &mut Ctrl, show: bool) {
     fn walk(c: &mut Ctrl, show: bool) {
         for k in &mut c.children {
