@@ -136,9 +136,9 @@ impl Editor {
     /// [re:bd68bd] → [re:442dbb]
     /// for the selected engine's current pattern. With option `AutoMIDICC`
     /// (default on) graphs that have data but no MIDI binding get one on a
-    /// free CC of the engine's channel ([re:1e3bfb]: 1..127
+    /// free CC of the engine's channel ([re:521ed5]: 1..127
     /// without bindings, skipping 7 and 10;
-    /// [re:1579c8]).
+    /// [re:b99595]).
     pub fn save_pattern_midi(&mut self, path: &std::path::Path) -> bool {
         let cur = self.model.current_pattern(self.model.engine);
         self.save_pattern_midi_of(path, cur)
@@ -244,7 +244,7 @@ impl Editor {
         true
     }
 
-    /// [re:580c5e] into
+    /// [re:736dd8] into
     /// `<user swing folder>/<file stem>.swingtemplate`.
     pub fn import_midi_template(&mut self, file: &std::path::Path) -> Option<std::path::PathBuf> {
         let bytes = std::fs::read(file).ok()?;

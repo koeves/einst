@@ -1,6 +1,6 @@
 //! The wave display's timeline strip ([re:a2cbaa]
 //! [re:ad103f], layout [re:d9085e], right click
-//! [re:86971c], timeline mode [re:e959cc]). See the dreist-re GUI notes (Wave
+//! [re:a4b4e4], timeline mode [re:180629]). See the dreist-re GUI notes (Wave
 //! display timeline).
 //!
 //! Areas: the timeline 0..15, the marker strip 15..30 (both filled with

@@ -1,12 +1,12 @@
 //! MIDI learn ([re:99f0ce]..): the header LearnButton toggles
-//! learn mode ([re:0a426b]).
+//! learn mode ([re:f00b25]).
 //!
 //! - In learn mode every learnable control gets corner brackets a quarter of
 //!   its size in `LearnTargetColour`, its binding text in `LearnTextColour`,
-//!   and the current target a 2 px outline ([re:0d813b]).
+//!   and the current target a 2 px outline ([re:22b95d]).
 //! - A left click picks the target instead of operating the control
-//!   ([re:09992a]) and sends `e_setTargetLearnBinding`
-//!   (0xd) with the control's binding ([re:c7fdf4]); the
+//!   ([re:be689e]) and sends `e_setTargetLearnBinding`
+//!   (0xd) with the control's binding ([re:c89236]); the
 //!   next MIDI CC is bound to it.
 //! - A right click does nothing but on the mapping table, as v1
 //!   ([re:318e14]); host parameters are bound from the Host parameters panel.

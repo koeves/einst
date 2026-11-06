@@ -12,7 +12,7 @@
 //! is the same.
 //!
 //! [re:5939a7] (Comb Filter, v2: `Voice::PrepareStream` [re:72902e],
-//! `ProcessBuffer` [re:e9754c]): tuned feedback comb with cubic-interpolated
+//! `ProcessBuffer` [re:f216da]): tuned feedback comb with cubic-interpolated
 //! taps, saturated input, clipped feedback and audio-rate phase/frequency
 //! modulation from its `ModIn` port. The effect runs it dual-mono
 //! ([re:7441ff]): one instance per channel, each fed its

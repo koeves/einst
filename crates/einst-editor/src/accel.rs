@@ -1,7 +1,7 @@
 //! Keyboard shortcuts ([re:a191fd], ev_16eeb3a7…, ev_ce262c09…,
 //! ev_68554242…).
 //!
-//! [re:3b32b8] hands each key to
+//! [re:9db09e] hands each key to
 //! [re:9454a7], which looks the key up in
 //! the accelerator table (the menus' key equivalents) and
 //! runs the entry's function [re:df170c]:
@@ -12,7 +12,7 @@
 //!   (default off), except the browser arrows 0x24–0x27.
 //!
 //! The standalone app also carries the table as its menu bar's key
-//! equivalents ([re:c60fcb]; [re:80cba3] runs
+//! equivalents ([re:c60fcb]; [re:ed265e] runs
 //! the function regardless of the options), so there every entry works.
 
 /// Modifier set of an entry (shift, command, option, control).

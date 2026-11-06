@@ -27,8 +27,8 @@
 //! Mode 6 (pink) calls init with mode 11 where Dreist passes 10; v1's init
 //! treats 10 and 11 alike (re-seed only), so this changes nothing.
 //!
-//! [re:691de1] (Ring Mod, kind 24; `Voice::Reset` [re:4bb22f],
-//! `Voice::ProcessBuffer` [re:66c1f6]): soft-clipped input times a carrier at
+//! [re:691de1] (Ring Mod, kind 24; `Voice::Reset` [re:444071],
+//! `Voice::ProcessBuffer` [re:d5dbeb]): soft-clipped input times a carrier at
 //! `2^Pitch · tune` Hz (clamp 0.5 cycles/sample): sine ([re:19db55]),
 //! triangle, saw, pulse, parabola, white or pink sample-and-hold, wet/dry.
 

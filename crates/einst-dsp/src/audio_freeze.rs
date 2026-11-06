@@ -14,7 +14,7 @@
 //! - the grain time in seconds 2^(v − 1) is v1's [`fast_exp2`](crate::fast_exp2).
 //!
 //! [re:4f768c] (Audio Freezer, kind 38, dual-mono; `Reset`
-//! [re:0eea55], `SetMaxDelay` [re:144838], `ProcessBuffer` [re:c43ffb]): while the
+//! [re:4be122], `SetMaxDelay` [re:144838], `ProcessBuffer` [re:8b3e7f]): while the
 //! gate is off the input is recorded into a loop buffer; when it opens the
 //! loop length is latched (`LoopLength` beats) and, at the next 16th-note
 //! boundary, playback switches to grains read from the frozen loop: each

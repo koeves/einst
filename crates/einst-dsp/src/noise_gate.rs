@@ -16,8 +16,8 @@
 //!
 //! The side-chain inputs are not modelled (as in Dreist).
 //!
-//! [re:8fc789] (Noise Gate, kind 11; `Voice::Reset` [re:fa4788],
-//! `Voice::ProcessBuffer` [re:bacb48]): key = band-passed (LP/HP one-poles)
+//! [re:8fc789] (Noise Gate, kind 11; `Voice::Reset` [re:b182fb],
+//! `Voice::ProcessBuffer` [re:0fea77]): key = band-passed (LP/HP one-poles)
 //! input, peak envelope with release, hold counter with hysteresis, gain
 //! attack/release; Preview outputs the key.
 

@@ -1,4 +1,4 @@
-//! Effect parameter value texts ([re:49bafb]):
+//! Effect parameter value texts ([re:485d3f]):
 //! the front parameter's node port value x = min + (max − min)·v (v not
 //! clamped) through the port's converter's text conversion (catalogue in
 //! the dreist-re GUI notes). Generated from the RE table; one row per

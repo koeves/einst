@@ -79,7 +79,7 @@ pub enum EditorRequest {
     Duplicate,
 }
 
-/// [re:8a256e]: the `.patterntemplate`
+/// [re:24173a]: the `.patterntemplate`
 /// files of `<Resources>/Pattern Templates` as (name, steps on/off).
 pub fn pattern_templates(resources: &std::path::Path) -> Vec<(String, Vec<bool>)> {
     let dir = resources.parent().unwrap_or(resources).join("Pattern Templates");

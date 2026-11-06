@@ -193,7 +193,7 @@ impl Editor {
                 true
             }
             // [re:c39372] → the export job; the panel stays
-            // open with its progress ([re:d6b539]).
+            // open with its progress ([re:ece5dd]).
             Request::ExportAudio => {
                 if let Some(p) = self.dialog(Dialog::ExportAudio) {
                     let p = if p.extension().is_none() { p.with_extension("wav") } else { p };
