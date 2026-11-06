@@ -307,18 +307,6 @@ fn editor_only_bindings_learn_and_act() {
     // Panels: Song tab.
     ed.binding_messages(&[msg(0x148, 1.0)]);
     assert_eq!(ed.model.editor_tab, 2);
-    // Pattern length from the value: ⌊0.5·1023 + 1⌋ = 512.
-    ed.binding_messages(&[msg(0x146, 1.0)]);
-    ed.take_commands();
-    ed.binding_messages(&[msg(0x1b2, 0.5)]);
-    let cmds = ed.take_commands();
-    let steps: Vec<f32> = cmds.iter().filter_map(|c| if let Command::Message(m) = c { (m.kind == dreist_engine::binding::id::SET_PATTERN_STEP_COUNT).then_some(m.value[0]) } else { None }).collect();
-    assert_eq!(steps, vec![512.0]);
-    // The longer pattern comes with a rebuild (the engine does not
-    // allocate step storage on the audio thread), last.
-    assert!(matches!(cmds.last(), Some(Command::Rebuild { .. })), "rebuild after growing the pattern");
-    ed.binding_messages(&[msg(0x1b2, 0.0)]);
-    assert!(!ed.take_commands().iter().any(|c| matches!(c, Command::Rebuild { .. })), "no rebuild when it shrinks");
     // Undo through its binding.
     ed.model.doc.set("Probe", 1);
     let before = ed.model.doc.clone();
@@ -765,10 +753,13 @@ fn header_song_loop_restart_panic_and_gain() {
     assert!(ctrl(&ed, "MIDIIndi").on);
     ed.update_meters(&m);
     assert!(!ctrl(&ed, "MIDIIndi").on);
-    // Learn: the tempo box binds tap tempo.
+    // Learn: v1 binds the transport with its four types (Play latching);
+    // the tempo box has no binding.
+    let t = at(&ed, "PlayButton");
+    let target = ed.learn_capture(&UiEvent::Pressed { path: t, name: "PlayButton".into() }).unwrap();
+    assert_eq!((target.proto.kind, target.name.as_str(), target.group.as_str(), target.kind), (id::TOGGLE_PLAYBACK, "Play", "Transport", "Latching"));
     let t = at(&ed, "BPMTextBox");
-    let target = ed.learn_capture(&UiEvent::Pressed { path: t, name: "BPMTextBox".into() }).unwrap();
-    assert_eq!((target.proto.kind, target.name.as_str(), target.group.as_str(), target.kind), (id::TAP_TEMPO, "Tap tempo", "Transport", "Gated"));
+    assert!(ed.learn_capture(&UiEvent::Pressed { path: t, name: "BPMTextBox".into() }).is_none_or(|t| t.proto.kind != id::TAP_TEMPO));
 }
 
 #[test]

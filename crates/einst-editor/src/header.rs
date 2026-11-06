@@ -113,18 +113,20 @@ pub(crate) const MASTER_GAIN: &str = "MasterSlider";
 /// header control: (path, name, type, message, value slot or none).
 pub(crate) fn binding_for(name: &str) -> Option<(&'static str, &'static str, &'static str, u32)> {
     Some(match name {
+        // [re:56f145]: the master gain and pitch.
         MASTER_GAIN => ("Global", "Gain", "Continuous", id::SET_MASTER_CHANNEL_GAIN),
-        "PlayButton" => ("Transport", "Play", "Gated", id::TOGGLE_PLAYBACK),
-        "RecButton" => ("Transport", "Record", "Gated", id::TOGGLE_RECORD),
-        "MetroButton" => ("Transport", "Metronome", "Gated", id::TOGGLE_METRONOME),
-        "QuantizeButton" => ("Transport", "Quantize", "Gated", id::TOGGLE_QUANTIZE),
-        "PanicButton" => ("Transport", "Panic", "Continuous", id::PANIC),
+        "MasterPitch" => ("Global", "Pitch", "Continuous", id::SET_MASTER_CHANNEL_TUNE),
+        // [re:a54ccb]: v1's four binding types (no Gated).
+        "PlayButton" => ("Transport", "Play", "Latching", id::TOGGLE_PLAYBACK),
+        "RecButton" => ("Transport", "Record", "Latching", id::TOGGLE_RECORD),
+        "MetroButton" => ("Transport", "Metronome", "Latching", id::TOGGLE_METRONOME),
+        "QuantizeButton" => ("Transport", "Quantize", "Latching", id::TOGGLE_QUANTIZE),
+        "PanicButton" => ("Transport", "Panic", "Trigger", id::PANIC),
         "RetroButton" => ("Transport", "Retro", "Trigger", id::GRAB_RETRO_RECORDING),
-        "SongButton" => ("Transport", "Song", "Continuous", id::SONG_SET_ACTIVE),
-        "LoopButton" => ("Transport", "Loop", "Gated", id::SONG_SET_INTERNAL_LOOP_ACTIVE),
-        "RestartButton" => ("Transport", "Restart", "Continuous", id::RETURN_TO_ZERO),
+        "SongButton" => ("Transport", "Song", "Latching", id::SONG_SET_ACTIVE),
+        "LoopButton" => ("Transport", "Loop", "Latching", id::SONG_SET_INTERNAL_LOOP_ACTIVE),
+        "RestartButton" => ("Transport", "Restart", "Latching", id::RETURN_TO_ZERO),
         "MetroVol" => ("Transport", "Metronome Volume", "Continuous", id::SET_METRONOME_LEVEL),
-        "BPMTextBox" => ("Transport", "Tap tempo", "Gated", id::TAP_TEMPO),
         _ => return None,
     })
 }

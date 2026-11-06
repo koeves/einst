@@ -11,19 +11,10 @@ impl Editor {
     /// An editor-only binding for the control at `path` (`editbind`), if any.
     pub(crate) fn editor_binding_target(&self, path: &[usize], ctrl: &Ctrl) -> Option<learn::Target> {
         let anc = self.ancestors(path);
-        let parent = anc.last().cloned().unwrap_or_default();
         let e = self.model.engine;
         let found = editbind::TABLE.iter().find(|b| b.control == ctrl.name && anc.iter().any(|a| a == b.scope)).map(|b| (b.group.to_string(), b.name.to_string(), b.kind, b.id));
-        let found = found.or_else(|| match parent.as_str() {
-            // The tab buttons' index in their group is the page.
-            "MainTabButtons" => editbind::EDITOR_TABS.iter().find(|t| Some(&t.0) == path.last()).map(|t| ("Panels".to_string(), t.1.to_string(), "Trigger", t.2)),
-            "BrowserTabButtons" => editbind::UTILITY_TABS.iter().find(|t| Some(&t.0) == path.last()).map(|t| ("Panels".to_string(), t.1.to_string(), "Trigger", t.2)),
-            "ModeGroup" if !anc.iter().any(|a| a == "ToolBar") => {
-                let i = *path.last()?;
-                editbind::MIXER_MODES.get(i).map(|m| ("Mixer".to_string(), m.0.to_string(), "Trigger", m.1))
-            }
-            _ => None,
-        })?;
+        // v1 has no bindings for the page tabs or the mixer modes.
+        let found = found?;
         let (group, name, kind, id) = found;
         let group = if group == "Engine" { format!("Engine {}", e + 1) } else { group };
         let mut proto = dreist_engine::binding::Message::new(id, &[], &[0.0, 0.0, 0.0]);
@@ -141,6 +132,15 @@ impl Editor {
         let ctrl = self.app.ctrl(&path)?.clone();
         if let Some(t) = self.editor_binding_target(&path, &ctrl) {
             return Some(t);
+        }
+        // [re:8b4856]: the scene page's trigger buttons.
+        if let Some((name, kind)) = match ctrl.name.as_str() {
+            "TriggerNextSceneButton" => Some(("Trigger next Scene", dreist_engine::binding::id::SCENE_TRIGGER_NEXT)),
+            "TriggerPrevSceneButton" => Some(("Trigger previous Scene", dreist_engine::binding::id::SCENE_TRIGGER_PREV)),
+            _ => None,
+        } {
+            let proto = dreist_engine::binding::Message::new(kind, &[], &[0.0, 0.0, 0.0]);
+            return Some(learn::Target { path, proto, stuffer: 0, name: name.into(), group: "Scenes".into(), kind: "Momentary" });
         }
         let front = ["Transport", "MasterControls", "EditorEngineSelectors"].iter().filter_map(|n| self.app.root.path_of(n)).any(|h| path.starts_with(&h));
         if let Some((group, name, kind, msg_id)) = front.then(|| header::binding_for(&ctrl.name)).flatten() {
