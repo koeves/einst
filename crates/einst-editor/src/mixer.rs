@@ -553,36 +553,29 @@ impl Mixer {
         })
     }
 
-    /// The strip knob tooltip ([re:b0a103] [re:bf3ba5] and the derived
-    /// strips): Decibels "Gain", Pan "Pan", Percent "Send n", Semitones
-    /// "Pitch"; the master gain is a DB15 provider of its display name.
+    /// The strip knob tooltip, by v1's providers under the control's
+    /// display name ([re:074e2e], [re:625194], [re:eab727], [re:3ec96a],
+    /// [re:7fd462]): gain DB15, pan Pan, sends and swing LongPercentage,
+    /// the engine pitch CoarsePitch; aux and master strips only the gain.
     pub fn tooltip(&self, app: &App, model: &Model, path: &[usize], source: Option<(&str, usize)>) -> Option<String> {
-        use crate::conv::{Conv, db15_text, transmod_text};
+        use crate::conv::{coarse_pitch_text, db15_text, long_percent_text, pan_text};
         if let Some(f) = self.fx.as_ref().filter(|f| f.contains(app, path)) {
             return f.tooltip(app, model, path, source.map(|(_, s)| s));
         }
         let (ch, name) = self.hit(app, path)?;
         let c = app.ctrl(path)?;
-        let v = c.value;
-        let (conv, label) = match name.as_str() {
-            "GainSlider" => (Conv::Decibels, "Gain".to_string()),
-            "PanKnob" => (Conv::Pan, "Pan".into()),
-            "Pitch" => (Conv::Semitones, "Pitch".into()),
-            "SwingKnob" => (Conv::Percent, "Swing".into()),
-            n => (Conv::Percent, format!("Send {}", n.strip_prefix("SendKnob")?.parse::<usize>().ok()? + 1)),
-        };
-        match ch {
-            Channel::Master if name == "GainSlider" => return Some(db15_text(&c.display_name, v)),
-            Channel::Master | Channel::Aux(_) => return (name == "GainSlider").then(|| conv.named(&label, v)),
-            _ => {}
+        let (v, label) = (c.value, c.display_name.as_str());
+        if matches!(ch, Channel::Master | Channel::Aux(_)) && name != "GainSlider" {
+            return None;
         }
-        if name == "SwingKnob" {
-            return Some(conv.named(&label, v));
-        }
-        let node = Self::node(model, ch);
-        let key = Self::param_key(ch, &name)?;
-        let src = source.map(|(l, s)| (l, node.and_then(|n| dreist_engine::engine::doc::attr_name(&key, s).and_then(|a| n.f32(&a))).unwrap_or(0.0)));
-        Some(transmod_text(conv, &label, v, src))
+        Some(match name.as_str() {
+            "GainSlider" => db15_text(label, v),
+            "PanKnob" => format!("{label}: {}", pan_text(v)),
+            "Pitch" => coarse_pitch_text(label, v),
+            "SwingKnob" => long_percent_text(label, v),
+            n if n.starts_with("SendKnob") => long_percent_text(label, v),
+            _ => return None,
+        })
     }
 
     /// A knob double click's reset value: the chain's effects, then

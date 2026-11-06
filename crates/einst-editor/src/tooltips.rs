@@ -1,17 +1,17 @@
-//! Tooltip texts ([re:36b15b]s, the panels' tooltip lambdas
+//! Tooltip texts ([re:5e5dd2]s, the panels' tooltip lambdas
 //! and per-control text overrides): asked of the control under the
 //! pointer, then its parents, after each pointer event
 //! ([re:eb2a9b]). Controls without a provider show
 //! none (there is no generic fallback); static texts are the skin
-//! `displayName`s of the controls given a [re:06bacf].
+//! `displayName`s of the controls given a [re:d9055d].
 
 use dreist_gui::Ctrl;
 use dreist_gui::tooltip::Pos;
 
 use crate::Editor;
-use crate::conv::{Conv, bool_text, db15, db15_text, depth_text, long_percent_text, midi_text, transmod_text};
+use crate::conv::{Conv, bool_text, db15, db15_text, depth_text, long_percent_text, midi_text};
 
-/// Buttons given a [re:38d526] ("N: On" / "N: Off"; the
+/// Buttons given a [re:103540] ("N: On" / "N: Off"; the
 /// controls connected to a provider).
 const BOOL_BUTTONS: [&str; 33] = [
     "Mute", "Solo", "MuteButton", "SoloButton", "QuantizeButton", "PlayButton", "RecButton", "RecordButton", "LearnButton", "MetroButton", "SongButton", "LoopButton", "PrePostButton", "PrePost",
@@ -97,32 +97,15 @@ impl Editor {
         let v = c.value;
         let name = c.name.as_str();
         let src = self.tooltip_source();
-        // Layer panel ([re:7eb9d2]).
-        if let Some(par) = self.inspector.layer_param_at(path, name) {
-            let e = self.model.engine;
-            let label = crate::transmod::camel_words(par.enum_name());
-            if c.class == "CtrlButton" || c.class == "CtrlPopupButton" {
-                if c.class == "CtrlPopupButton" {
-                    return None;
-                }
-                // Conversion handler [re:fbe4f3].
-                if name == "TimestretchMode" {
-                    return below(format!("{}: {}", c.display_name, if c.on { "Low CPU Mode (Fast)" } else { "High Precision Mode" }));
-                }
-                return below(Conv::OnOff.named(&label, if c.on { 1.0 } else { 0.0 }));
+        // Layer and pad controls: v1's per-control providers under the
+        // skin display name; a layer parameter without one shows none.
+        if self.inspector.in_layer_or_pad_controls(path) || self.inspector.is_v2a(path, name) {
+            if let Some(t) = crate::conv::v1_layer_tooltip(name, &c.display_name, v, c.on) {
+                return below(t);
             }
-            let predelay_ms = crate::options::Options::load().bool("PreDelayInMsec", true);
-            let node = self.model.layer_node(e, self.model.pad[e], self.model.layer[e]);
-            let s = src
-                .as_ref()
-                .filter(|_| c.class == "CtrlTransmodKnob")
-                .map(|(l, s)| (l.as_str(), node.and_then(|n| dreist_engine::engine::doc::attr_name(par.name(), *s).and_then(|a| n.f32(&a))).unwrap_or(0.0)));
-            return below(transmod_text(Conv::layer(par, predelay_ms), &label, v, s));
-        }
-        // [re:fe83c5] [re:9ac3aa].
-        if self.inspector.is_v2a(path, name) {
-            let r = v * 100.0;
-            return below(format!("Velocity To Amplitude: {}%", (r + if r < 0.0 { -0.5 } else { 0.5 }) as i64));
+            if self.inspector.layer_param_at(path, name).is_some() {
+                return None;
+            }
         }
         if let Some(t) = self.transmod.knob_tooltip(&self.app, &self.model, path, src.as_ref().map(|(l, s)| (l.as_str(), *s))) {
             return Some((t, Pos::Above));
@@ -134,17 +117,19 @@ impl Editor {
             return Some((t, pos));
         }
         match name {
-            // [re:4139f8] [re:f8b6cc].
-            "MasterSlider" => return below(Conv::Decibels.named("Master Level", v)),
-            // [re:45e9a3], [re:bc7b1d].
-            "EngineSwingDepthKnob" => return below(Conv::Percent.named("Swing Depth", v)),
+            // [re:5cdc6f]: DB15 / CoarsePitch under the display name.
+            "MasterSlider" => return below(db15_text(&c.display_name, v)),
+            "MasterPitch" => return below(crate::conv::coarse_pitch_text(&c.display_name, v)),
+            // [re:0592a8].
+            "EngineSwingDepthKnob" => return below(long_percent_text(&c.display_name, v)),
+            // v2 only (no such control in v1).
             "VarianceKnob" => return below(Conv::Depth.named("Variance", v)),
             "ScaleKnob" | "CompKnob" | "RandKnob" => return below(depth_text(&c.display_name, v)),
             "InstoSlider" | "Sensitivity" => return below(long_percent_text(&c.display_name, v)),
             "FullLevelKnob" => return below(midi_text(&c.display_name, v)),
-            // [re:b3e82a].
-            "MixKnob" => return below(Conv::Percent.named("Mix", v)),
-            "OutputKnob" => return below(Conv::Percent.named("Level", v)),
+            // [re:85987b]: LongPercentage under the display name.
+            "MixKnob" | "OutputKnob" => return below(long_percent_text(&c.display_name, v)),
+            // v2 only.
             "TrimKnob" => return below(Conv::Percent.named("Trim", v)),
             // [re:9fbf48] (with the start one above).
             "StartThresholdSlider" => return Some((format!("Start threshold: {}", db15(v)), Pos::Above)),
@@ -152,15 +137,9 @@ impl Editor {
             "PreviewVolume" | "PreviewVolumeKnob" if !c.display_name.is_empty() => return below(db15_text(&c.display_name, v)),
             // [re:948d61].
             "SliceMode" => return below("If enabled, transients are detected and used to slice the file. If disabled the audio file is divided in to equal sections".into()),
-            // [re:6278e9].
-            "PrevLocnButton" | "NextLocnButton" => {
-                let b = self.browser.as_ref()?;
-                let (prefix, loc) = if name == "PrevLocnButton" { ("Return to ", b.previous_location()) } else { ("Move to ", b.next_location()) };
-                return below(loc.map(|l| format!("{prefix}{}", l.display())).unwrap_or_default());
-            }
             _ => {}
         }
-        // [re:284b3d] (macros; sources above).
+        // v2 only: macros ([re:284b3d]; sources above).
         if let Some(k) = name.strip_prefix("Macro").and_then(|k| k.parse::<usize>().ok()).filter(|_| c.class.contains("Knob")) {
             return below(Conv::Percent.named(&format!("Macro {k}"), v));
         }
@@ -201,7 +180,7 @@ impl Editor {
     }
 }
 
-/// [re:06bacf] / [re:38d526] on buttons that carry a
+/// [re:d9055d] / [re:103540] on buttons that carry a
 /// display name.
 fn generic(c: &Ctrl) -> Option<(String, Pos)> {
     if !matches!(c.class.as_str(), "CtrlButton" | "CtrlPopupButton") || c.display_name.is_empty() {
@@ -215,10 +194,10 @@ fn generic(c: &Ctrl) -> Option<(String, Pos)> {
 }
 
 impl Editor {
-    /// [re:83aa80]: "<name> | Steps: n |
+    /// [re:812db4]: "<name> | Steps: n |
     /// Res: r | MIDI: <key> (Note: n)" (an unused slot: "Pattern n", 16,
-    /// 1/16); the note is [re:49f15a]
-    /// [re:f6d33e] = 12 + pattern.
+    /// 1/16); the note is [re:e0f870]
+    /// [re:e0f870] = 12 + pattern.
     fn pattern_selector_tooltip(&self, n: usize) -> String {
         let e = self.model.engine;
         let node = self.model.pattern_node(e, n);
