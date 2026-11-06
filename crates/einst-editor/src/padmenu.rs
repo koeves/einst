@@ -1,4 +1,4 @@
-//! Pad right-click menu ([re:e45225]):
+//! Pad right-click menu ([re:9cd713]):
 //! cut / copy / paste (with the pad's track), clear pad / all pads / a
 //! layer, lock pad / unlock all / lock track and pad, swap / copy / move
 //! to another pad, clone up / down / centred, the layer sample paths, and
@@ -23,7 +23,7 @@ use crate::model::Model;
 pub const LAYERS: usize = 8;
 pub const PADS: usize = 64;
 
-/// [re:c1ed56]: transparent, then 63
+/// [re:50a1f8]: transparent, then 63
 /// colours (8 × 8 grid in the original).
 pub const COLOURS: [&str; 63] = [
     "#242424", "#585858", "#8a8a8a", "#b1b1b1", "#cfcfcf", "#e7e7e7", "#f5f5f5", "#0080ff", "#2576c6", "#3d71a4", "#4b6c8d", "#5a7188", "#475767", "#174f87", "#063563", "#9600ff", "#8018c9",
@@ -32,7 +32,7 @@ pub const COLOURS: [&str; 63] = [
     "#ccc03c", "#a09b5f", "#998e13", "#645d09", "#f48111", "#e0954c", "#eab683", "#bc8d5f", "#c9792b", "#bd630b", "#9f5813", "#79430e",
 ];
 
-/// The colour menu's single grid item ([re:51f1e7]
+/// The colour menu's single grid item ([re:731afb]
 /// `(colours, 8, 8, ..)`): transparent then [`COLOURS`];
 /// cell i picks colour index i.
 pub fn colour_grid_item() -> String {
@@ -155,7 +155,7 @@ pub(crate) fn put_pad(model: &mut Model, e: usize, p: usize, mut node: Node) {
     }
 }
 
-/// "Save layer sample..." (pad menu lambda [re:319fbe]): the
+/// "Save layer sample..." (pad menu lambda [re:9cd713]): the
 /// layer's audio cropped to its start / end markers, written as a 24-bit
 /// WAV with the file's channel count ([re:12499e]).
 pub fn save_layer_sample(model: &Model, e: usize, p: usize, l: usize, dst: &std::path::Path) -> Result<(), String> {
@@ -203,7 +203,7 @@ pub fn clone_pad(model: &mut Model, e: usize, p: usize, dir: Clone) {
 
 /// Locked pads and patterns survive loading another project
 /// ([re:69fc26] skips locked pads; the pattern
-/// copy goes through [re:f12986]). Sample paths of carried
+/// copy goes through [re:ed83b9]). Sample paths of carried
 /// pads are made absolute against the old project's samples folder.
 pub fn carry_locked(old: &Node, old_samples: Option<&std::path::Path>, new: &mut Node) {
     let locked = |c: &Node| matches!(c.class.as_str(), "Pad" | "StepPattern") && c.locked();
