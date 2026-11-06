@@ -88,6 +88,13 @@ pub fn check_screens(name: &str) {
         ed.sync();
         record(&mut golden, &format!("page-{}", page.to_ascii_lowercase().replace([' ', '/'], "")), &mut ed);
     }
+    // The pattern page in v1's multi graph view.
+    let mut ed = editor().unwrap();
+    if let Some(pp) = ed.pattern.as_mut() {
+        pp.multi = false;
+    }
+    ed.sync();
+    record(&mut golden, "pattern-multigraph", &mut ed);
     // The browser column's mapping page.
     let mut ed = editor().unwrap();
     ed.model.utility_tab = crate::front::MAPPING_PAGE;

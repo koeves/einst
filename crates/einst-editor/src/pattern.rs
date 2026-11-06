@@ -172,6 +172,8 @@ pub struct PatternPanel {
     /// MultiTrack lanes per (engine, track) ([re:b8d7a4])
     /// and the tracks whose automation is open ([re:f3a3ad]).
     auto_lanes: std::collections::HashMap<(usize, usize), Vec<usize>>,
+    /// The multi graph view's lane choices by slot ([re:725561]).
+    graph_lanes: Vec<usize>,
     auto_open: std::collections::HashSet<(usize, usize)>,
     /// `AutomationControls.skin` for MultiTrack lane rows.
     auto_template: Option<Ctrl>,
@@ -668,6 +670,21 @@ impl GridLayout {
         lay
     }
 
+    /// v1's multi graph view ([re:725561], `SetupControlsBasedOnZoomRatio`
+    /// without the multi-track flag): only `track`, 20 px high, then a
+    /// 75 px graph lane per entry of `lanes` (as many as fit).
+    pub fn compute_graphs(model: &Model, pat: &PatternData, w: i32, h: i32, track: usize, lanes: &[usize]) -> GridLayout {
+        let mut lay = GridLayout::compute(model, pat, w, h);
+        lay.top_track = track;
+        lay.first_row = 0;
+        lay.tracks = 1;
+        lay.total_tracks = 1;
+        lay.row_h = 20.0;
+        lay.track_y = vec![0.0];
+        lay.graphs = lanes.iter().enumerate().map(|(slot, &lane)| GraphRow { track, slot, lane, y: 20.0 + 75.0 * slot as f32, h: 75.0 }).collect();
+        lay
+    }
+
     /// The track shown on visible row `row`.
     pub fn track(&self, row: usize) -> usize {
         self.top_track.saturating_sub(row)
@@ -906,6 +923,7 @@ impl PatternPanel {
             swing_knob_menu: false,
             multi: crate::options::Options::load().string("PatternEditorViewMode", "MultiTrack") != "SingleGraph",
             auto_lanes: Default::default(),
+            graph_lanes: Vec::new(),
             auto_open: Default::default(),
             auto_template,
             auto_ctx: None,
@@ -1093,7 +1111,14 @@ impl PatternPanel {
 
     fn layout_of(&self, model: &Model, pat: &PatternData, w: i32, h: i32) -> GridLayout {
         let e = model.engine;
-        if self.multi { GridLayout::compute_multi(model, pat, w, h, &|t| self.lanes(e, t)) } else { GridLayout::compute(model, pat, w, h) }
+        if self.multi { GridLayout::compute_multi(model, pat, w, h, &|t| self.lanes(e, t)) } else { GridLayout::compute_graphs(model, pat, w, h, model.pad[e], &self.graph_lane_list(h)) }
+    }
+
+    /// The multi graph view's lanes ([re:725561]): (h − 20) / 75 of them,
+    /// slot i showing its chosen graph, by default graph i.
+    fn graph_lane_list(&self, h: i32) -> Vec<usize> {
+        let n = ((h - 20) / 75).max(1) as usize;
+        (0..n).map(|i| self.graph_lanes.get(i).copied().unwrap_or(i)).collect()
     }
 
     /// Lanes shown under track `t` (none unless its automation is open).
@@ -1119,7 +1144,8 @@ impl PatternPanel {
     fn apply_view(&self, app: &mut App) {
         let Some(sp) = self.splitter.as_ref().and_then(|p| app.ctrl_mut(p)) else { return };
         let (h, dim) = (sp.rect.h, sp.attr_i32("intSplitterDim", 1));
-        let lower = if self.multi { 0 } else { sp.attr_i32("intMaxSize1", 75) };
+        // v1's multi graph view stacks its lanes in the grid itself.
+        let lower = 0;
         sp.set_attr("intSplitPosition", (h - lower - dim).max(0).to_string());
         sp.layout_splitter();
     }
@@ -1614,9 +1640,17 @@ impl PatternPanel {
                     _ => return false,
                 };
                 model.pattern_view[e].lane = lane;
-                // A MultiTrack lane row's combo changes that lane.
+                // A lane row's combo changes that lane (the multi graph
+                // view's slot, else the MultiTrack track's lane).
                 if let Some((t, slot)) = self.auto_ctx.take() {
-                    if let Some(l) = self.auto_lanes.get_mut(&(e, t)).and_then(|v| v.get_mut(slot)) {
+                    if !self.multi {
+                        if self.graph_lanes.len() <= slot {
+                            let n = self.graph_lanes.len();
+                            self.graph_lanes.extend(n..=slot);
+                        }
+                        self.graph_lanes[slot] = lane;
+                        self.rows_sig.clear();
+                    } else if let Some(l) = self.auto_lanes.get_mut(&(e, t)).and_then(|v| v.get_mut(slot)) {
                         *l = lane;
                     }
                 }
@@ -2247,6 +2281,9 @@ impl PatternPanel {
             return Some((model.pad[e], model.pattern_view[e].lane));
         }
         let (t, slot) = self.auto_slot_of(app, path)?;
+        if !self.multi {
+            return Some((t, self.graph_lanes.get(slot).copied().unwrap_or(slot)));
+        }
         Some((t, self.auto_lanes.get(&(e, t)).and_then(|v| v.get(slot)).copied().unwrap_or(0)))
     }
 
@@ -2551,7 +2588,11 @@ impl PatternPanel {
         let s = r.styles;
         let e = model.engine;
         let pat = self.drawn_pattern(model);
-        let lay = if self.multi { GridLayout::compute_multi(model, &pat, c.rect.w, c.rect.h, &|t| self.lanes(e, t)) } else { GridLayout::compute(model, &pat, c.rect.w, c.rect.h) };
+        let lay = if self.multi {
+            GridLayout::compute_multi(model, &pat, c.rect.w, c.rect.h, &|t| self.lanes(e, t))
+        } else {
+            GridLayout::compute_graphs(model, &pat, c.rect.w, c.rect.h, model.pad[e], &self.graph_lane_list(c.rect.h))
+        };
         let (w, h) = ((lay.step_range().end as f32 - lay.first_step as f32) * lay.step_w, c.rect.h as f32);
         let fill = grid_colour(s, "colFill");
         let alt = grid_colour(s, "colAltFill");
