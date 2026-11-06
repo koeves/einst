@@ -169,8 +169,10 @@ impl Slicer {
             sensitivity: 0.5,
             divisions: 16,
             auto_tempo: true,
-            multi_layer: false,
-            classify: false,
+            // Remembered as v1's `AllocatorMultiLayers` (off) and
+            // `AllocatorAnalyze` (on) ([re:c28f9b] [re:8aad4c]).
+            multi_layer: crate::options::Options::load().bool("AllocatorMultiLayers", false),
+            classify: crate::options::Options::load().bool("AllocatorAnalyze", true),
             auto_load: false,
             browser_modes: None,
             file_bpm: 0.0,
@@ -655,12 +657,14 @@ impl Slicer {
                     // allocated in order.
                     "AnalyzeButton" => {
                         self.classify = *on;
+                        save_flag("AllocatorAnalyze", *on);
                         self.classify_slices();
                         self.update_pattern();
                         self.edited(model, out);
                     }
                     "MultiLayersButton" => {
                         self.multi_layer = *on;
+                        save_flag("AllocatorMultiLayers", *on);
                         self.update_pattern();
                         self.edited(model, out);
                     }
@@ -1172,6 +1176,15 @@ fn load_region(model: &mut Model, e: usize, p: usize, l: usize, file: &Path, (s0
     true
 }
 
+/// Remember a slicer button state.
+fn save_flag(key: &str, on: bool) {
+    let mut o = crate::options::Options::load();
+    o.set(key, on);
+    if !cfg!(test) {
+        o.save();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1185,6 +1198,7 @@ mod tests {
         s.mode = 1;
         s.divisions = 4;
         s.auto_tempo = false;
+        s.classify = false;
         s.view = (0, 44100);
         assert_eq!(s.slice_span(500), Some((0, 44100)), "no slices: whole region");
         s.reslice();
