@@ -110,6 +110,8 @@ pub struct Slicer {
     bar_drag: Option<(u8, f32)>,
     /// The slice whose context menu is open.
     menu: Option<usize>,
+    /// Where the last extraction put each slice: (slice start, engine, pad, layer).
+    placed: Vec<(u32, usize, usize, usize)>,
     /// The document when the panel opened (Cancel restores it).
     snapshot: Option<Node>,
     extracted: bool,
@@ -155,6 +157,7 @@ impl Slicer {
             view_drag: None,
             chopped: false,
             menu: None,
+            placed: Vec::new(),
             snapshot: None,
             extracted: false,
             pattern: SlicedPattern { steps: 16, hits: Vec::new() },
@@ -467,6 +470,18 @@ impl Slicer {
         Some((live[i].max(start), next.min(end)))
     }
 
+    /// [re:8402ce]: over the wave, a slice that the last extraction loaded
+    /// names its place and type.
+    pub fn wave_tooltip(&self, path: &[usize], x: f32, w: f32) -> Option<String> {
+        if !self.mine(path) {
+            return None;
+        }
+        let i = self.slice_of(self.frame_at(x, w))?;
+        let &(_, e, p, l) = self.placed.iter().rev().find(|t| t.0 == self.slices[i].start)?;
+        let kind = slice::SLICE_TYPE_NAMES.get(self.slices[i].kind as usize).unwrap_or(&"No type");
+        Some(format!("Slice {} - Engine {} Pad {} Layer {} Type {kind}", i + 1, e + 1, p + 1, l + 1))
+    }
+
     /// The slice a frame lies in (the last one starting at or before it).
     fn slice_of(&self, frame: u32) -> Option<usize> {
         self.slices.iter().rposition(|s| s.start <= frame)
@@ -477,6 +492,7 @@ impl Slicer {
         self.snapshot = None;
         self.audio = None;
         self.menu = None;
+        self.placed.clear();
     }
 
     /// Frame under a wave-editor x.
@@ -828,6 +844,7 @@ impl Slicer {
             load_region(model, e, p, l, &file, (s0, s1, frames, sr), name);
         };
         if what != Extract::Pattern {
+            self.placed.clear();
             if usable.len() < 2 {
                 let p = model.pad[e];
                 load(model, p, 0, 0, frames, "");
@@ -842,6 +859,7 @@ impl Slicer {
                     for (l, slot) in row.iter().enumerate() {
                         match slot {
                             Some((k, si)) => {
+                                self.placed.push((self.slices[*si].start, e, p, l));
                                 let (s0, s1) = slice::slice_markers(&usable, *k, end);
                                 load(model, p, l, s0, s1, &format!("{stem} {}", si + 1));
                             }
@@ -1112,5 +1130,11 @@ mod tests {
         s.slices[1] = SlicePoint { kind: 3, ..SlicePoint::manual(sr as u32, true) };
         s.classify_slices();
         assert_eq!(s.slices[1].kind, 3);
+        // The tooltip names an extracted slice's place and type.
+        s.placed = vec![(sr as u32, 0, 9, 0)];
+        s.overlay = Some(vec![7]);
+        let path = [7, 0];
+        assert_eq!(s.wave_tooltip(&path, 300.0, 400.0).as_deref(), Some("Slice 2 - Engine 1 Pad 10 Layer 1 Type Hihat"));
+        assert_eq!(s.wave_tooltip(&path, 10.0, 400.0), None);
     }
 }
