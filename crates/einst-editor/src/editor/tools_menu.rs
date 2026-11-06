@@ -23,21 +23,24 @@ pub(crate) enum MainAction {
 impl Editor {
     fn main_items(&self) -> Vec<(String, MainAction)> {
         use MainAction::*;
+        // v1's Grid menu ([re:3695e4]): About, Preferences, Reset, the
+        // default preset items (Clear only when there is one); then the
+        // port's own items.
+        let has_default = crate::options::default_preset().is_some_and(|p| p.is_file());
         vec![
+            (format!("About {}", crate::product()), About),
+            (String::new(), None),
             ("Preferences".into(), Preferences),
-            ("Transport options ▸".into(), TransportOptions),
             (String::new(), None),
             (format!("Reset {}", crate::product()), Reset),
             ("Save as default preset".into(), SaveDefault),
-            ("Clear default preset".into(), ClearDefault),
+            (dreist_gui::menu::item("Clear default preset", has_default), ClearDefault),
             (String::new(), None),
+            ("Transport options ▸".into(), TransportOptions),
             ("Find missing files...".into(), FindMissing),
             ("Export as audio...".into(), Export),
             ("Show MIDI console".into(), MidiConsole),
-            (String::new(), None),
             ("Reset UI scale to 100%".into(), ResetScale),
-            (String::new(), None),
-            (format!("About {}", crate::product()), About),
         ]
     }
 

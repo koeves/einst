@@ -1275,8 +1275,8 @@ fn header_options_menu() {
     let ob = front_path(&ed, "UtilityControls", "GridButton");
     let open = |ed: &mut Editor| {
         ed.handle(&UiEvent::Clicked { path: ob.clone(), name: "GridButton".into(), id: 0, on: false });
-        assert!(ed.app.menu.as_ref().is_some_and(|m| m.items[1].starts_with("Transport options")));
-        ed.handle(&UiEvent::MenuSelected { anchor: ob.clone(), name: "GridButton".into(), index: 1 });
+        assert!(ed.app.menu.as_ref().is_some_and(|m| m.items[8].starts_with("Transport options")));
+        ed.handle(&UiEvent::MenuSelected { anchor: ob.clone(), name: "GridButton".into(), index: 8 });
         ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap_or_default()
     };
     let pick = |ed: &mut Editor, index: usize| {
