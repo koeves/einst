@@ -81,11 +81,12 @@ pub fn native_dialogs() -> crate::DialogFn {
             .set_directory(start)
             .set_file_name(format!("{name}.wav"))
             .save_file(),
+        // [re:697e72]: from the documents folder.
         crate::Dialog::SaveSample(name) => rfd::FileDialog::new()
             .set_title("Please select the location to save to")
-            .add_filter("Sample files", &["wav"])
+            .add_filter(format!("{} sample files", crate::product()), &["wav"])
             .set_file_name(name)
-            .set_directory(crate::modal::default_documents())
+            .set_directory(crate::options::documents_dir())
             .save_file(),
         crate::Dialog::SaveChainPreset => {
             let mut d = rfd::FileDialog::new().set_title("Please select the location to save to").add_filter("FX chain preset files", &["fxchain"]).set_file_name("New Preset.fxchain");
