@@ -472,14 +472,36 @@ impl Slicer {
 
     /// [re:8402ce]: over the wave, a slice that the last extraction loaded
     /// names its place and type.
-    pub fn wave_tooltip(&self, path: &[usize], x: f32, w: f32) -> Option<String> {
+    pub fn wave_tooltip(&self, model: &Model, path: &[usize], x: f32, w: f32) -> Option<String> {
         if !self.mine(path) {
             return None;
         }
         let i = self.slice_of(self.frame_at(x, w))?;
-        let &(_, e, p, l) = self.placed.iter().rev().find(|t| t.0 == self.slices[i].start)?;
+        let (e, p, l) = self.slice_place(model, i)?;
         let kind = slice::SLICE_TYPE_NAMES.get(self.slices[i].kind as usize).unwrap_or(&"No type");
         Some(format!("Slice {} - Engine {} Pad {} Layer {} Type {kind}", i + 1, e + 1, p + 1, l + 1))
+    }
+
+    /// Where slice `i` is loaded: the engine, pad and layer holding this
+    /// file from the slice's start (as extracted here, or found in the
+    /// document).
+    fn slice_place(&self, model: &Model, i: usize) -> Option<(usize, usize, usize)> {
+        let sl = self.slices.get(i).filter(|s| !s.deleted)?;
+        if let Some(&(_, e, p, l)) = self.placed.iter().rev().find(|t| t.0 == sl.start) {
+            return Some((e, p, l));
+        }
+        let file = self.file.as_ref()?;
+        let pads = dreist_dsp::rules::get().slice_pads.max(1);
+        (0..crate::model::ENGINES).find_map(|e| {
+            (0..pads).find_map(|p| {
+                (0..crate::model::LAYERS)
+                    .find(|&l| {
+                        model.layer_sample(e, p, l).as_deref() == Some(file.as_path())
+                            && model.layer_node(e, p, l).and_then(|n| n.child("AudioFileMarkers", "StartEndMarkers")).and_then(|m| m.u32("StartSample")) == Some(sl.start)
+                    })
+                    .map(|l| (e, p, l))
+            })
+        })
     }
 
     /// The slice a frame lies in (the last one starting at or before it).
@@ -945,6 +967,29 @@ impl Slicer {
                     p.fill_rect(RectF::new(x0, WAVE_TOP, (x1 - x0).max(0.0), h - WAVE_TOP), colour(r, "WaveEditorSelectionColour", amber.with_alpha(0.3)));
                 }
                 crate::sampler::draw_wave(p, area, &a.buckets, BUCKET, v0 as f64, v1 as f64, ink, (0.0, w));
+                // [re:a866d6]: slices on no pad are dimmed with the background
+                // (alpha 120); [re:da2093]: with Classify a 10 px strip at
+                // the bottom in the slice type's colour ([re:1f723d]).
+                let bg = Colour { a: 120, ..crate::sampler::wave(r, "colFill", Colour::rgba(178, 170, 158, 255)) };
+                let types = ["", "KickOverlayColour", "SnareOverlayColour", "HihatOverlayColour", "PercOverlayColour"];
+                for i in 0..self.slices.len() {
+                    if self.slices[i].deleted {
+                        continue;
+                    }
+                    let (s0, s1) = slice::slice_markers(&self.slices, i, self.analysis.end);
+                    if s1 <= v0 || s0 >= v1 {
+                        continue;
+                    }
+                    let (x0, x1) = (self.x_of(s0.max(v0), w), self.x_of(s1.min(v1), w));
+                    if self.slice_place(model, i).is_none() {
+                        p.fill_rect(RectF::new(x0, WAVE_TOP, (x1 - x0).max(0.0), h - WAVE_TOP), bg);
+                    }
+                    if let Some(name) = types.get(self.slices[i].kind as usize).filter(|n| self.classify && !n.is_empty()) {
+                        if let Some(col) = r.styles.colours.get(*name).copied() {
+                            p.fill_rect(RectF::new(x0, h - 10.0, (x1 - x0).max(0.0), 10.0), col);
+                        }
+                    }
+                }
                 let line = colour(r, "PreviewEditorSliceMarkerColour", ink);
                 let dim = crate::sampler::wave(r, "colLineDisabled", ink.with_alpha(0.4));
                 for (i, sl) in self.slices.iter().enumerate() {
@@ -1134,7 +1179,8 @@ mod tests {
         s.placed = vec![(sr as u32, 0, 9, 0)];
         s.overlay = Some(vec![7]);
         let path = [7, 0];
-        assert_eq!(s.wave_tooltip(&path, 300.0, 400.0).as_deref(), Some("Slice 2 - Engine 1 Pad 10 Layer 1 Type Hihat"));
-        assert_eq!(s.wave_tooltip(&path, 10.0, 400.0), None);
+        let model = Model::new(crate::project::new_document());
+        assert_eq!(s.wave_tooltip(&model, &path, 300.0, 400.0).as_deref(), Some("Slice 2 - Engine 1 Pad 10 Layer 1 Type Hihat"));
+        assert_eq!(s.wave_tooltip(&model, &path, 10.0, 400.0), None);
     }
 }
