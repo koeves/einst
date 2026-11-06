@@ -59,7 +59,7 @@ pub fn effect_menu(category: usize) -> Vec<usize> {
 /// from the sample that reaches it ([re:fece0b], [re:093661]); the aux
 /// send summing ([re:99f309]); and the timestretch ratio from the layer's
 /// source and destination BPM ([re:d8985e]); and the pattern MIDI export
-/// ([re:aa2636]).
+/// ([re:aa2636]); and v1's default MIDI map ([re:7ac22b] [re:167f2c]).
 pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules {
     sampler_auto_stop_seconds: 1.0,
     envelope_v1_ends: true,
@@ -71,6 +71,7 @@ pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules {
     sends_v1: true,
     timestretch_v1: true,
     midi_export_v1: true,
+    midi_map_v1: true,
 };
 
 /// Install Einst's profile, effect nodes, v1's fast 2^x, rules and voice

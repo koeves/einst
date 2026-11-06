@@ -180,3 +180,19 @@ fn v1_voice_paths_match_einsts_goldens() {
     assert!(failures.is_empty(), "{}", failures.join("\n"));
     golden.finish();
 }
+
+/// v1's default MIDI map: 16 pads on notes 36–51, note repeat / erase on
+/// notes 54 / 56, scenes 0–71.
+#[test]
+fn midi_map_is_v1s() {
+    setup();
+    use dreist_engine::live::{MapItem, MidiMap};
+    let m = MidiMap::default();
+    assert!(matches!(m.get(0, 51), MapItem::Pad { pad: 15, .. }));
+    assert!(matches!(m.get(0, 52), MapItem::None));
+    assert!(matches!(m.get(0, 54), MapItem::Function { function: 3, .. }));
+    assert!(matches!(m.get(0, 56), MapItem::Function { function: 4, .. }));
+    assert!(matches!(m.get(0, 102), MapItem::None));
+    assert!(matches!(m.get(10, 71), MapItem::Scene { scene: 71 }));
+    assert!(matches!(m.get(10, 72), MapItem::None));
+}
