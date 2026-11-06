@@ -175,6 +175,12 @@ fn filter_types(algorithm: usize) -> Vec<String> {
 
 use crate::mixer::output_index;
 
+/// v1's Choke menu (its label table): the commons cut mode indices in
+/// v1's order (no "Pad", no global groups 3–8).
+const V1_CUT_MODES: [usize; 9] = [0, 1, 3, 4, 5, 6, 7, 8, 9];
+/// v1's Play mode menu: One shot, Gated, Looping (no "Length bound").
+const V1_PLAY_MODES: [usize; 3] = [0, 2, 3];
+
 /// Index of a layer's stored mode (display name, or enum name) in `labels` / `names`.
 fn mode_index(node: Option<&dreist_formats::Node>, key: &str, labels: &[&str], names: &[&str], default: usize) -> usize {
     let v = node.and_then(|n| n.attr(key)).map(str::trim);
@@ -981,12 +987,14 @@ impl Inspector {
                     "CutModeCombo" => {
                         use dreist_dsp::voices::{CUT_MODE_LABELS, CUT_MODE_NAMES};
                         let i = mode_index(node, "CutMode", &CUT_MODE_LABELS, &CUT_MODE_NAMES, 1);
-                        self.open(app, path, owned(&CUT_MODE_LABELS), Some(i), Menu::Choke);
+                        let labels: Vec<String> = V1_CUT_MODES.iter().map(|&k| CUT_MODE_LABELS[k].to_string()).collect();
+                        self.open(app, path, labels, V1_CUT_MODES.iter().position(|&k| k == i), Menu::Choke);
                     }
                     "PlayModeCombo" => {
                         use dreist_dsp::voice::{PLAYBACK_MODE_LABELS, PLAYBACK_MODE_NAMES};
                         let i = mode_index(node, "PlaybackMode", &PLAYBACK_MODE_LABELS, &PLAYBACK_MODE_NAMES, 0);
-                        self.open(app, path, owned(&PLAYBACK_MODE_LABELS), Some(i), Menu::PlayMode);
+                        let labels: Vec<String> = V1_PLAY_MODES.iter().map(|&k| PLAYBACK_MODE_LABELS[k].to_string()).collect();
+                        self.open(app, path, labels, V1_PLAY_MODES.iter().position(|&k| k == i), Menu::PlayMode);
                     }
                     "FilterAlgoButton" => self.open(app, path, owned(&FILTER_ALGORITHMS), Some(algorithm), Menu::FilterAlgorithm),
                     "FilterModeKnob" => {
@@ -1020,8 +1028,8 @@ impl Inspector {
                 match menu {
                     Menu::LayerOutput => out.push(msg(id::SET_LAYER_OUTPUT, &idx, &[crate::mixer::output_location(i)])),
                     Menu::PadOutput => out.push(msg(id::SET_PAD_OUTPUT, &ep, &[crate::mixer::output_location(i)])),
-                    Menu::Choke => out.push(msg(id::SET_LAYER_CUT_MODE, &idx, &[i as f32])),
-                    Menu::PlayMode => out.push(msg(id::SET_LAYER_PLAY_MODE, &idx, &[i as f32])),
+                    Menu::Choke => out.push(msg(id::SET_LAYER_CUT_MODE, &idx, &[V1_CUT_MODES.get(i).copied().unwrap_or(1) as f32])),
+                    Menu::PlayMode => out.push(msg(id::SET_LAYER_PLAY_MODE, &idx, &[V1_PLAY_MODES.get(i).copied().unwrap_or(0) as f32])),
                     Menu::FilterAlgorithm => out.push(param(LayerParam::FilterAlgorithm, i.min(3) as f32 / 3.0)),
                     Menu::FilterType => {
                         let algorithm = ((model.layer_param(e, p, l, LayerParam::FilterAlgorithm) * 3.0).round() as usize).min(3);
