@@ -157,13 +157,17 @@
     <CtrlStyle name="GridRowSelectedStyle" colFill="RowSelected" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="GridPositionStyle" colFill="PlayPosition" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="StepOnStyle" colBorder="StepEdge" colFill="StepOn" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="0" />
-    <CtrlStyle name="SongLaneStyle" colFill="LcdLight" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongLaneStyle" colFill="Lane" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="SongLaneAltStyle" colFill="LaneAlt" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="SongLaneSelectedStyle" colFill="RowSelected" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongLaneSelectedStyle" colFill="LaneSelected" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="SongPartBodyStyle" colBorder="LaneFoot" colFill="LcdLight" enumTextHorizontalAlign="center" font="Sans10Bold" optDrawBorder="true" parentStyle0="BaseLabelStyle" realCornerRounding="0" />
     <CtrlStyle name="SongPartSelectedBodyStyle" colAltFill="PartHatch" colFill="PartSelected" parentStyle0="SongPartBodyStyle" />
     <CtrlStyle name="SongPartFootStyle" colFill="LaneFoot" colText="LaneFootMark" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="SongBarDotStyle" colFill="BarDot" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongBarLineStyle" colAltFill="BarLineMajor" colFill="BarLine" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongRulerStyle" colBorder="RulerEdge" colFill="Ruler" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongMarkerStyle" colFill="Ink" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongScrollStyle" colAltFill="LaneFoot" colBorder="Ink" colFill="#D7DFE4" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="TrackNameStyle" colBorder="InkSoft" colFill="LcdLight" font="Sans10" optDrawBorder="true" parentStyle0="BaseLabelStyle" realTextOffset="3" />
     <CtrlStyle name="TrackArrowStyle" colText="InkMid" font="Sans9" parentStyle0="LcdFlatButtonStyle" />
     <CtrlStyle name="TrackNumberStyle" enumTextHorizontalAlign="center" font="Sans24" parentStyle0="BaseLabelStyle" />
@@ -197,7 +201,7 @@
     <CtrlStyle name="StepSelectionStyle" colFill="AmberSoft" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="SongPartRecordingStyle" colBorder="Ink" colFill="RecordingPart" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="SongPartRetroStyle" colBorder="RetroEdge" colFill="RetroPart" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="SongLoopStyle" colFill="AmberTint" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SongLoopStyle" colFill="Ink" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="TooltipStyle" colBorder="ToolTipBorderColour" colFill="ToolTipPanelColour" colText="ToolTipTextColour" enumDisabledDrawMode="NormalDrawing" optDrawBorder="true" parentStyle0="BaseStyle" />
     <CtrlOptionMenuStyle name="MenuStyle" colAltFill="Amber" colBorder="Ink" colDivider="InkSoft" colFill="LcdLight" colSubMenuArrow="Ink" colText="Ink" optDrawBorder="true" optDrawShadow="true" parentStyle0="BaseStyle" realCornerRounding="3" />
     <!-- From v1 GlobalStyles.skin -->
@@ -220,8 +224,8 @@
     <CtrlStyle name="LEDKnobLargeLR" enumDialAlign="Center" parentStyle0="LcdKnobLargeStyle" />
     <CtrlStyle name="LEDKnobLargeC" enumDialAlign="Center" parentStyle0="LcdKnobLargeStyle" />
     <CtrlStyle name="LargeSpinnerStyle" enumDialAlign="Center" parentStyle0="SpinnerStyle" />
-    <CtrlStyle name="ZoomInButtonStyle" colBorder="Ink" font="Icons8" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="ZoomOutButtonStyle" colBorder="Ink" font="Icons8" parentStyle0="LcdIconButtonStyle" />
+    <CtrlStyle name="ZoomInButtonStyle" colBorder="Ink" colFill="LcdLight" font="Icons8" parentStyle0="LcdIconButtonStyle" realCornerRounding="0" realGradientShade="0" />
+    <CtrlStyle name="ZoomOutButtonStyle" colBorder="Ink" colFill="LcdLight" font="Icons8" parentStyle0="LcdIconButtonStyle" realCornerRounding="0" realGradientShade="0" />
     <CtrlStyle name="LinkSmallButtonStyle" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="LinkLargeButtonStyle" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="ZoomOffButtonStyle" colBorder="Ink" font="Icons8" parentStyle0="LcdIconButtonStyle" />
@@ -516,18 +520,18 @@
     <!-- From v1 Song/SongPanel.skin -->
     <CtrlStyle name="SongBlackoutPanelStyle" colBorder="Transparent" colFill="0, 0, 0, 100" font="Sans12" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="BlackoutTextStyle" colText="#FFFFFF" enumTextHorizontalAlign="center" font="Sans20" parentStyle0="BaseLabelStyle" />
-    <CtrlStyle name="SongSelectButtonStyle" font="Sans10" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="SongDrawButtonStyle" font="Sans10" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="SongEraseButtonStyle" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="SongMultiButtonStyle" font="Sans10" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="SongSelectButtonStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" font="Sans10" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
+    <CtrlStyle name="SongDrawButtonStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" font="Sans10" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
+    <CtrlStyle name="SongEraseButtonStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" font="Sans10" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
+    <CtrlStyle name="SongMultiButtonStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" font="Sans10" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
     <CtrlStyle name="SongPartMomentaryButtonStyle" colAltText="#000000" colFill="Transparent" font="Sans10" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="SongDrawPopupButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
+    <CtrlStyle name="SongDrawPopupButtonStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" font="Icons8" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
     <CtrlStyle name="SongPartNextButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
     <CtrlStyle name="SongPartPrevButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
     <CtrlStyle name="SongPartPopupButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
     <CtrlStyle name="SongPatternEditBoxStyle" font="Sans10" parentStyle0="BaseTextBoxStyle" />
-    <CtrlStyle name="SongDrawPopupButtonStyleCopy0" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
-    <CtrlStyle name="SongPenPopupButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
+    <CtrlStyle name="SongDrawPopupButtonStyleCopy0" colBorder="InkMid" colFill="LcdLight" colText="InkMid" font="Icons8" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
+    <CtrlStyle name="SongPenPopupButtonStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" font="Icons8" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
     <!-- From v1 Song/SongPatternPopupPanel.skin -->
     <CtrlStyle name="SongPatternSelectorStyleNotAllocated" parentStyle0="PatternKeyStyle" />
     <CtrlStyle name="SongSelectorStyleAllocated" parentStyle0="PatternKeyAllocatedStyle" />
@@ -535,12 +539,12 @@
     <CtrlStyle name="SongSelectorStyleSelected" parentStyle0="PatternKeySelectedStyle" />
     <CtrlStyle name="SongPatternPopupPanelStyle" colFill="255, 255, 255, 150" font="Sans12" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <!-- From v1 Tools/PatternToolsPanel.skin -->
-    <CtrlStyle name="PenToolStyle" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="PenToolStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
     <CtrlStyle name="BrushToolStyle" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="DeleteToolStyle" parentStyle0="LcdIconButtonStyle" />
+    <CtrlStyle name="DeleteToolStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
     <CtrlStyle name="VelocityToolStyle" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="SelectionToolStyle" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="MultiToolStyle" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="SelectionToolStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
+    <CtrlStyle name="MultiToolStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
     <!-- From v1 Transport/Transport.skin -->
     <CtrlStyle name="RetroButtonStyle" colAltText="HwRedOn" colText="HwRed" parentStyle0="HwIconButtonStyle" />
     <CtrlStyle name="PlayButtonStyle" font="Icons22" parentStyle0="HwPlayButtonStyle" />

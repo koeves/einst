@@ -94,6 +94,10 @@ RECT_FIXES = {
     # Slice like the row's other pairs, ending at the row's right edge.
     ("Sampler/SamplerPanel.skin", "SendToPadButton"): [711, 19, 50, 17],
     ("Sampler/SamplerPanel.skin", "SendAllToPadsButton"): [762, 19, 50, 17],
+    # The song track numbers drew 3.5 px left of v1's (v1-song.png: digit
+    # centres at x 339.5 in the 48 px header; Liberation Sans' digits sit
+    # further left in the advance than Arial's).
+    ("Song/SongTrackHeaderPanel.skin", "TrackNumberLabel"): [17, 8, 20, 24],
 }
 
 # Controls added to a skin's top panel: rel -> controls. The slicer's
@@ -103,6 +107,13 @@ EXTRA = {
     "Preview/PreviewPanel.skin": lambda: [
         E("CtrlPanel", {"name": "PreviewZoomSlider", "rect": "8, 327, 772, 12", "overloadClass": "WaveDisplayZoomSlider",
                         "displayName": "Drag to scroll, drag an edge to zoom", "style": "WaveDisplayZoomSliderStyle"}),
+    ],
+    # The song lanes' horizontal scroll bar (v1-song.png: under the lanes,
+    # left of the zoom buttons; v1's scroll view drew it), drawn by the
+    # editor (`SongHScroll`).
+    "Song/SongPanel.skin": lambda: [
+        E("CtrlScrollBar", {"name": "HorizontalScrollBar", "rect": "52, 380, 734, 11", "overloadClass": "SongHScroll",
+                            "style": "SongScrollStyle"}),
     ],
 }
 
