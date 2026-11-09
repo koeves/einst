@@ -79,8 +79,8 @@ pub struct Take {
     pub end: u32,
     /// "Take n" (numbered in recording order).
     pub number: usize,
-    /// (min, max) per [`BUCKET`] frames of both channels.
-    buckets: Vec<(f32, f32)>,
+    /// (min, max) per [`BUCKET`] frames, per channel.
+    buckets: Vec<Vec<(f32, f32)>>,
 }
 
 impl Take {
@@ -92,7 +92,8 @@ impl Take {
     }
 
     fn overview(&mut self) {
-        self.buckets = self.left.chunks(BUCKET).zip(self.right.chunks(BUCKET)).map(|(l, r)| crate::model::bucket(l, r)).collect();
+        let peaks = |ch: &[f32]| ch.chunks(BUCKET).map(|c| crate::model::bucket(c, c)).collect::<Vec<_>>();
+        self.buckets = vec![peaks(&self.left), peaks(&self.right)];
     }
 
     pub fn frames(&self) -> u32 {
@@ -312,6 +313,15 @@ pub(crate) fn draw_ruler(r: &Renderer, p: &mut Painter, w: f32, start_s: f64, le
         }
         p.line(x + 0.5, 0.0, x + 0.5, RULER, ink, 1.0);
         p.text(RectF::new(x + 2.0, 0.0, 60.0, RULER), &label, ink, &font, HAlign::Left, VAlign::Center);
+    }
+}
+
+/// [re:bca59e]: one lane per channel, stacked top to bottom in `area`.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn draw_lanes(p: &mut Painter, area: RectF, channels: &[Vec<(f32, f32)>], per: usize, v0: f64, v1: f64, col: Colour, cols: (f32, f32)) {
+    let lh = area.h / channels.len().max(1) as f32;
+    for (k, ch) in channels.iter().enumerate() {
+        draw_wave(p, RectF::new(area.x, area.y + lh * k as f32, area.w, lh), ch, per, v0, v1, col, cols);
     }
 }
 
@@ -932,9 +942,9 @@ impl Sampler {
             let (xs, xe) = (self.x_of(t.start, w), self.x_of(t.end, w));
             let (a, b) = (xs.clamp(0.0, w).floor(), xe.clamp(0.0, w).ceil());
             let dim = wave(r, "colLineDisabled", ink.with_alpha(0.4));
-            draw_wave(p, area, &t.buckets, BUCKET, v0, v1, dim, (0.0, a));
-            draw_wave(p, area, &t.buckets, BUCKET, v0, v1, ink, (a, b));
-            draw_wave(p, area, &t.buckets, BUCKET, v0, v1, dim, (b, w));
+            draw_lanes(p, area, &t.buckets, BUCKET, v0, v1, dim, (0.0, a));
+            draw_lanes(p, area, &t.buckets, BUCKET, v0, v1, ink, (a, b));
+            draw_lanes(p, area, &t.buckets, BUCKET, v0, v1, dim, (b, w));
             for (x, name, start) in [(xs, "WaveEditorStartMarkerColour", true), (xe, "WaveEditorEndMarkerColour", false)] {
                 if !(-6.0..=w + 6.0).contains(&x) {
                     continue;
@@ -947,6 +957,7 @@ impl Sampler {
             }
         } else {
             draw_ruler(r, p, w, 0.0, 1.0, self.timeline_beats, model.tempo());
+            crate::timeline::draw_no_audio(p, r.styles, "WaveDisplayStyle", area);
         }
         p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), wave(r, "colTimelineMarkers", ink), 1.0);
         true

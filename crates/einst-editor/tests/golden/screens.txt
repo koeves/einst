@@ -13,11 +13,11 @@ modal-preferences 24dc711097435f79
 page-enginemixer e64ab0e65ac8e3da
 page-globalmixer 3d56076732129ea5
 page-layermixer e7fb69d71dc439ca
-page-padlayers cc8ebdc451d889c2
+page-padlayers 96ca911c5b90c308
 page-padmixer dfb7df627f97d096
 page-pattern d9e42d792cefa3bc
-page-sampler 0284a6ae18d406f1
+page-sampler d77fadd3fe98efaa
 page-scene 20535a3c3d25eace
 page-song ded6dde86b8bde3c
 pattern-multigraph a62747742f6f7b27
-slicer edd9bdd0441626f3
+slicer f64273d024f1dfa3

@@ -19,6 +19,14 @@ pub const STRIP: f32 = 15.0;
 /// Top of the waveform area (timeline + marker strip).
 pub const WAVE_TOP: f32 = 30.0;
 
+/// [re:627879]: a wave display with nothing loaded says so, centred, in the
+/// large font (`fontNoAudio`, `colNoAudioText` of `style`).
+pub fn draw_no_audio(p: &mut Painter, s: &StyleSheet, style: &str, r: RectF) {
+    let font = s.font_attr(style, "fontNoAudio");
+    let text = s.colour(style, "colNoAudioText", Colour::rgba(18, 25, 60, 255));
+    p.text(r, "No audio file loaded", text, &font, HAlign::Center, VAlign::Center);
+}
+
 pub fn option_key(prefix: &str) -> String {
     format!("{prefix}WaveDisplayTimelineMode")
 }
