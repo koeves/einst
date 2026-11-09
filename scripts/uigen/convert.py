@@ -452,8 +452,8 @@ class Converter:
                 out.pop("font", None)  # the glyph needs the parent's icon font
             out.update(look["attrs"])
             ctrl.update(look["ctrl"])
-            if parent == "CheckBoxStyle":
-                cls, parent = "CheckBoxButtonRendererStyle", "CheckBoxStyle"
+            if theme.STYLE_CLASS.get(parent) == "CheckBoxButtonRendererStyle":
+                cls = "CheckBoxButtonRendererStyle"
         attrs = {"name": name, "parentStyle0": parent}
         attrs.update(out)
         attrs.update(theme.STYLE_OVERRIDES.get(name, {}))

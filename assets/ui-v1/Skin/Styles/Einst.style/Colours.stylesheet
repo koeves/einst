@@ -234,6 +234,7 @@
     <VColour name="ModalField" colour="#F3F3F3" />
     <VColour name="ModalOn" colour="#BDC4CD" />
     <VColour name="ModalList" colour="#FAFAFA" />
+    <VColour name="ModalTick" colour="#A8B0C8" />
     <VColour name="PanelDarkest" colour="#3A3B3E" />
     <VColour name="StandardControlBackground" colour="#DEE5ED" />
     <VColour name="StandardControlBorder" colour="#12193C" />

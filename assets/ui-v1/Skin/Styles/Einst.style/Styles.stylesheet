@@ -146,7 +146,10 @@
     <CtrlStyle name="ModalFieldStyle" colBorder="Ink" colFill="ModalField" parentStyle0="BaseTextBoxStyle" />
     <CtrlStyle name="ModalListStyle" colBorder="Ink" colFill="ModalList" colRowAlt="ModalGroup" colText="Ink" font="Sans10" parentStyle0="BaseTableStyle" />
     <CtrlStyle name="ModalProgressStyle" colAltBorder="Ink" colAltFill="InkMid" colBorder="Ink" colFill="ModalField" optDrawBorder="true" parentStyle0="BaseStyle" />
+    <CtrlStyle name="AboutArtStyle" colFill="#F5F5F5" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="AboutWordmarkStyle" colText="Ink" enumTextHorizontalAlign="center" font="Sans48Bold" parentStyle0="BaseLabelStyle" realLetterSpacing="-1" realTextScaleX="0.88" />
     <CheckBoxButtonRendererStyle name="CheckBoxStyle" colAltBorder="Ink" colAltFill="LcdLight" colBorder="Ink" colFill="LcdLight" colTick="Ink" parentStyle0="BaseStyle" realCornerRounding="2" realTickInset="3" realTickLineWidth="2" />
+    <CheckBoxButtonRendererStyle name="ModalCheckBoxStyle" colAltFill="#FFFFFF" colFill="#FFFFFF" colTick="ModalTick" colTickOutline="Ink" parentStyle0="CheckBoxStyle" realBorderWidth="2" realCornerRounding="1" realTickInset="2" realTickLineWidth="3" />
     <CtrlStyle name="TimelineStyle" colBorder="Ink" colFill="LcdLight" optDrawBorder="true" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="TimelineLabelStyle" font="Sans9Bold" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="TimelineTickStyle" colFill="InkMid" parentStyle0="BasePanelStyle" />
@@ -246,7 +249,7 @@
     <CtrlStyle name="StandardSubtractButtonStyle" parentStyle0="LcdIconButtonStyle" />
     <CtrlStyle name="StandardAddButtonStyle" parentStyle0="LcdIconButtonStyle" />
     <CheckBoxButtonRendererStyle name="StandardCheckButtonStyle" parentStyle0="CheckBoxStyle" />
-    <CheckBoxButtonRendererStyle name="ModalCheckButtonStyle" parentStyle0="CheckBoxStyle" />
+    <CheckBoxButtonRendererStyle name="ModalCheckButtonStyle" parentStyle0="ModalCheckBoxStyle" />
     <CtrlStyle name="x2ButtonStyle" font="Sans11" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="Div2ButtonStyle" font="Sans11" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="RadioButtonLeftStyle" font="Sans10" optRoundBottomRight="false" optRoundTopRight="false" parentStyle0="LcdRadioStyle" realCornerRounding="8" />
@@ -329,7 +332,7 @@
     <CtrlStyle name="SongTrackPanelSelectedStyle" colBorder="Transparent" colFill="232, 204, 91, 80" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="SongTrackPanelPreviewingStyle" colBorder="Transparent" colFill="200, 0, 0, 100" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <!-- From v1 About/AboutPanel.skin -->
-    <CtrlStyle name="AboutPanelStyle" colBorder="Amber" colFill="Ink" parentStyle0="LcdPanelStyle" realCornerRounding="6" />
+    <CtrlStyle name="AboutPanelStyle" colFill="#000000" optDrawBorder="false" parentStyle0="LcdPanelStyle" realCornerRounding="0" />
     <CtrlStyle name="AboutLabelStyle" colText="#FFFFFF" font="Sans10Bold" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="AboutRightLabel" colText="#FFFFFF" enumTextHorizontalAlign="right" font="Sans10Bold" parentStyle0="BaseLabelStyle" />
     <!-- From v1 Browser/Footer.skin -->

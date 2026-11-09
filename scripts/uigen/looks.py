@@ -217,7 +217,8 @@ BUTTONS = [
     (r"^LEDSubtractButton", L("LcdIconButtonStyle", text=G["minus"])),
     (r"^LEDClear", L("LcdIconButtonStyle", text=G["close"])),
     (r"^LEDLock", L("LcdIconButtonStyle", text=G["lock"])),
-    (r"^(LEDCheck|ModalCheckBox)", L("CheckBoxStyle", text="", ctrl=CHECK)),
+    (r"^LEDCheck", L("CheckBoxStyle", text="", ctrl=CHECK)),
+    (r"^ModalCheckBox", L("ModalCheckBoxStyle", text="", ctrl=CHECK)),
     # (v1's `LEDZoom{In,Out}`: square, flat, a navy frame and glyph)
     (r"^LEDZoomIn", L("LcdIconButtonStyle", text=G["plus"], font=icon_font(8), realCornerRounding="0", colBorder="Ink", realGradientShade="0",
                       colFill="LcdLight")),
@@ -342,7 +343,10 @@ PREVIEW_BEZEL = [("inside", 1, 2, -8, -4, "LcdBezelStyle"), ("inside", 5, 9, -15
 
 PANELS = [
     (r"^Background", L("ChassisStyle")),
-    (r"^AboutBackground", L("LcdPanelStyle", colFill="Ink", colBorder="Amber", realCornerRounding="6")),
+    # (v1's AboutBackground art: a light artwork band over the top 262 px,
+    # black below it; the band carries Einst's wordmark, modal.rs)
+    (r"^AboutBackground", L("LcdPanelStyle", colFill="#000000", optDrawBorder="false", realCornerRounding="0",
+                            decor=[("inside", 0, 0, 654, 262, "AboutArtStyle")])),
     # (v1: the chain on a dark frame that shows between and under the
     # effect panels)
     (r"^FXGlobalBackground", L("LcdPanelStyle", colFill="InkMid", colBorder="Ink", optDrawBorder="true", realCornerRounding="3")),
