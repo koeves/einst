@@ -109,6 +109,73 @@ pub fn badge(ext: &str) -> String {
     .into()
 }
 
+/// The overload of the browser header / footer buttons whose v1 art is a
+/// picture (drawn over the button's face by [`draw_button`]).
+pub const BUTTON_OVERLOAD: &str = "BrowserButtonIcon";
+
+/// A browser header / footer button's icon after v1's bitmaps (measured,
+/// own drawing), centred in the control, in its style's text colour
+/// (colAltText while latched): EnterButton / ParentButton an arrow into /
+/// out of a small folder, PreviewButton a play triangle in a ring,
+/// LockPadsButton / LockPatternsButton a padlock with a pad grid / step
+/// rows, SearchOptionsButton a magnifier with a small down triangle, the
+/// preview volume icon a rising wedge.
+pub fn draw_button(r: &Renderer, p: &mut Painter, c: &dreist_gui::Ctrl) {
+    let s = r.styles;
+    let ink = s.colour(&c.style, if c.on { "colAltText" } else { "colText" }, Colour::BLACK);
+    let face = s.colour(STYLE, "colFill", Colour::WHITE);
+    let (w, h) = (c.rect.w as f32, c.rect.h as f32);
+    let (cx, cy) = ((w / 2.0).floor(), (h / 2.0).floor());
+    let padlock = |p: &mut Painter, x: f32| {
+        p.stroke_rounded(RectF::new(x + 1.5, cy - 5.5, 5.0, 6.0), 2.5, [true, true, false, false], ink, 1.5);
+        p.fill_rounded(RectF::new(x, cy - 1.0, 8.0, 7.0), 1.0, [true; 4], ink);
+    };
+    match c.name.as_str() {
+        "EnterButton" | "ParentButton" => {
+            let (fx, fy) = (cx - 1.0, cy - 4.0);
+            p.fill_rect(RectF::new(fx, fy + 1.0, 10.0, 8.0), face);
+            p.polyline(&[(fx + 0.5, fy + 9.5), (fx + 0.5, fy + 0.5), (fx + 4.0, fy + 0.5), (fx + 5.0, fy + 1.5), (fx + 10.5, fy + 1.5), (fx + 10.5, fy + 9.5), (fx + 0.5, fy + 9.5)], ink, 1.0);
+            if c.name == "EnterButton" {
+                p.fill_ellipse(RectF::new(cx - 11.0, cy - 1.5, 3.0, 3.0), ink);
+                p.line(cx - 8.0, cy, cx + 3.0, cy, ink, 2.0);
+                p.fill_polygon(&[(cx + 1.0, cy - 3.5), (cx + 5.0, cy), (cx + 1.0, cy + 3.5)], ink);
+            } else {
+                p.fill_ellipse(RectF::new(cx + 2.0, cy - 1.5, 3.0, 3.0), ink);
+                p.line(cx - 7.0, cy, cx + 3.0, cy, ink, 2.0);
+                p.fill_polygon(&[(cx - 6.0, cy - 3.5), (cx - 10.0, cy), (cx - 6.0, cy + 3.5)], ink);
+            }
+        }
+        "PreviewButton" => {
+            p.stroke_ellipse(RectF::new(cx - 7.0, cy - 7.0, 14.0, 14.0), ink, 2.0);
+            p.fill_polygon(&[(cx - 2.0, cy - 4.0), (cx + 4.0, cy), (cx - 2.0, cy + 4.0)], ink);
+        }
+        "LockPadsButton" => {
+            padlock(p, cx - 13.0);
+            for k in 0..16 {
+                let (i, j) = ((k % 4) as f32, (k / 4) as f32);
+                p.fill_rect(RectF::new(cx - 1.0 + i * 3.5, cy - 6.0 + j * 3.5, 2.0, 2.0), ink);
+            }
+        }
+        "LockPatternsButton" => {
+            padlock(p, cx - 13.0);
+            for j in 0..3 {
+                for i in 0..4 {
+                    p.fill_rect(RectF::new(cx - 1.0 + i as f32 * 3.5, cy - 4.0 + j as f32 * 4.0, 2.5, 2.0), ink);
+                }
+            }
+        }
+        "SearchOptionsButton" => {
+            p.stroke_ellipse(RectF::new(1.0, 1.0, 6.0, 6.0), ink, 1.5);
+            p.line(6.0, 6.0, 9.0, 9.5, ink, 2.0);
+            p.fill_polygon(&[(9.0, 2.0), (14.0, 2.0), (11.5, 5.0)], ink);
+        }
+        _ => {
+            // The preview volume icon.
+            p.fill_polygon(&[(0.0, h), (w, h), (w, 0.0)], ink);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

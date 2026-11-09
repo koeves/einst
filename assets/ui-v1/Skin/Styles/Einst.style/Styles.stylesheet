@@ -26,6 +26,8 @@
     <CtrlStyle name="ScreenLcdStyle" colBevelDark="255, 255, 255, 90" colBevelLight="0, 0, 0, 110" colFill="Lcd" optBevel="true" parentStyle0="BasePanelStyle" realCornerRounding="9" />
     <CtrlStyle name="ScreenShadeTopStyle" colFill="0, 0, 0, 80" colFillGradientTo="0, 0, 0, 0" optRoundBottomLeft="false" optRoundBottomRight="false" parentStyle0="BasePanelStyle" realCornerRounding="9" />
     <CtrlStyle name="ScreenShadeLeftStyle" colFill="0, 0, 0, 70" colFillGradientTo="0, 0, 0, 0" enumGradientDirection="Horizontal" optRoundBottomRight="false" optRoundTopRight="false" parentStyle0="BasePanelStyle" realCornerRounding="9" />
+    <CtrlStyle name="WellShadowTopStyle" colFill="0, 0, 0, 100" colFillGradientTo="0, 0, 0, 0" optRoundBottomLeft="false" optRoundBottomRight="false" parentStyle0="BasePanelStyle" realCornerRounding="9" />
+    <CtrlStyle name="WellShadowLeftStyle" enumGradientDirection="Horizontal" optRoundBottomLeft="true" optRoundTopRight="false" parentStyle0="WellShadowTopStyle" />
     <CtrlStyle name="StatusStripStyle" colBorder="StripFrame" colFill="Strip" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="3" />
     <CtrlStyle name="LogoStyle" colAltFill="AmberSoft" colFill="Amber" enumDisabledDrawMode="NormalDrawing" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="GlyphLabelStyle" colText="InkMid" enumTextHorizontalAlign="center" font="Icons12" parentStyle0="BaseLabelStyle" />
@@ -171,7 +173,7 @@
     <CtrlStyle name="TrackNameStyle" colBorder="InkSoft" colFill="LcdLight" font="Sans10" optDrawBorder="true" parentStyle0="BaseLabelStyle" realTextOffset="3" />
     <CtrlStyle name="TrackArrowStyle" colText="InkMid" font="Sans9" parentStyle0="LcdFlatButtonStyle" />
     <CtrlStyle name="TrackNumberStyle" enumTextHorizontalAlign="center" font="Sans24" parentStyle0="BaseLabelStyle" />
-    <CtrlStyle name="BrowserCrumbStyle" colAltFill="Crumb" colAltText="Ink" colBorder="LcdEdge" colFill="LcdFace" enumShape="Arrow" font="Sans10" parentStyle0="BaseButtonStyle" realArrowDepth="6" realCornerRounding="0" realGradientShade="0.1" />
+    <CtrlStyle name="BrowserCrumbStyle" colAltBorder="CrumbLow" colAltFill="Crumb" colAltText="Ink" colBorder="CrumbTop" colFill="CrumbFace" colSeparator="Ink" enumShape="Arrow" font="Sans10" parentStyle0="BaseButtonStyle" realArrowDepth="6" realCornerRounding="0" realGradientShade="0.1" />
     <CtrlStyle name="BrowserTreeHeadStyle" font="Sans10" parentStyle0="BaseLabelStyle" realTextOffset="7" />
     <CtrlStyle name="BrowserTreeItemStyle" font="Sans10" parentStyle0="BaseLabelStyle" realTextOffset="35" />
     <CtrlStyle name="BrowserTreeSelectedStyle" colFill="BrowserTreeSel" colText="LcdLight" parentStyle0="BrowserTreeItemStyle" />
@@ -179,13 +181,14 @@
     <CtrlStyle name="BrowserIconStyle" colAltFill="IconDark" colBorder="IconLine" colFill="IconFace" colText="Ink" font="Sans7Bold" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="BrowserIconSelectedStyle" parentStyle0="BrowserIconStyle" />
     <CtrlStyle name="BrowserSplitStyle" colAltBorder="BrowserSplit" colFill="BrowserSplit" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="BrowserNavKeyStyle" colAltBorder="Transparent" colAltFill="NavKeyDown" colAltText="Ink" colBorder="Transparent" colFill="NavKey" colText="Ink" font="Icons8" parentStyle0="LcdButtonStyle" realCornerRounding="1" realGradientShade="0" />
     <CtrlStyle name="BrowserTreeBackStyle" colFill="BrowserTreeBack" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="BrowserListSplitStyle" colAltBorder="#7A8090" colFill="#BCC1CB" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="BrowserListSplitStyle" colAltBorder="LcdDim" colBorder="#FFFFFF" colFill="Ink" optDrawBorder="true" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="BrowserListHeaderStyle" colBorder="BrowserHeaderDividerColour" colFill="BrowserHeader" colText="BrowserHeaderTextColour" font="Sans10" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="BrowserParentStyle" colBorder="InkSoft" colFill="LcdLight" font="Sans10" parentStyle0="BaseButtonStyle" realCornerRounding="0" />
-    <CtrlTableViewStyle name="BrowserListStyle" colBorder="InkSoft" colColumnDivider="InkSoft" colFill="BrowserList" colHeaderDivider="InkMid" colHeaderFill="BrowserHeader" colRow="BrowserList" colRowAlt="BrowserList" colRowDivider="InkSoft" colSelectedText="Ink" colSelection="BrowserSel" font="Sans10" intHeaderHeight="17" intRowHeight="25" optAltRowColours="true" optColumnDividers="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
+    <CtrlTableViewStyle name="BrowserListStyle" colBorder="InkSoft" colColumnDivider="Ink" colFill="BrowserList" colHeaderDivider="InkMid" colHeaderFill="BrowserHeader" colRow="BrowserRow" colRowAlt="BrowserRowAlt" colRowDivider="Ink" colRowHighlight="BrowserRowLight" colSelectedText="Ink" colSelection="BrowserSel" font="Sans10" intHeaderHeight="17" intRowHeight="25" optAltRowColours="true" optColumnDividers="true" optRowDividers="true" parentStyle0="BaseTableStyle" />
     <CtrlStyle name="BrowserBadgeStyle" colBorder="InkMid" colFill="LcdLight" font="Sans7Bold" parentStyle0="BaseButtonStyle" realCornerRounding="2" />
-    <CtrlStyle name="BrowserScrollStyle" colFill="Ink" parentStyle0="BasePanelStyle" realCornerRounding="2" />
+    <CtrlStyle name="BrowserScrollStyle" colAltFill="BrowserScrollTrack" colFill="Ink" parentStyle0="BasePanelStyle" realCornerRounding="2" />
     <CtrlStyle name="WaveDisplayStyle" colAltFill="WaveBack" colAmpEnvelopeBack="EnvAmpBack" colCenterLine="Ink" colEndMarker="WaveMarker" colEnvelopeGrab="InkMid" colEnvelopeHandle="EnvHandle" colEnvelopeHandleBorder="EnvHandleEdge" colEnvelopeLine="EnvLine" colFill="WaveBack" colFreeEnvelopeBack="EnvFreeBack" colLine="Ink" colLineDisabled="WaveDisabled" colLineLooping="InkMid" colLoopEndMarker="WaveLoopMarker" colLoopMarkerFill="WaveLoopMarkerFill" colLoopStartMarker="WaveLoopMarker" colMarkerEdge="WaveMarkerEdge" colMarkerFill="WaveMarkerFill" colMarkerStrip="InkSoft" colNoAudioText="Ink" colOutsideFill="WaveOutside" colStartMarker="WaveMarker" colText="LcdLight" colTimelineBackground="LcdDim" colTimelineMarkers="Ink" colTimelineText="Ink" colTitleFill="WaveTitle" font="Sans9Bold" fontNoAudio="Sans20" fontTimeline="Sans8" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="WaveDisplayZoomSliderStyle" colAltFill="LcdFace" colBorder="Ink" colFill="InkSoft" colTrack="LcdDim" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="VSplitStyle" colAltBorder="SplitTickBar" colAltFill="AmberSoft" colBorder="SplitTick" colFill="SplitGraph" colHandle="Ink" parentStyle0="BasePanelStyle" />
@@ -207,7 +210,7 @@
     <CtrlStyle name="TooltipStyle" colBorder="ToolTipBorderColour" colFill="ToolTipPanelColour" colText="ToolTipTextColour" enumDisabledDrawMode="NormalDrawing" optDrawBorder="true" parentStyle0="BaseStyle" />
     <CtrlOptionMenuStyle name="MenuStyle" colAltFill="Amber" colBorder="Ink" colDivider="InkSoft" colFill="LcdLight" colSubMenuArrow="Ink" colText="Ink" optDrawBorder="true" optDrawShadow="true" parentStyle0="BaseStyle" realCornerRounding="3" />
     <!-- From v1 GlobalStyles.skin -->
-    <CtrlStyle name="BrowserHeaderViewOptionsButtonStyle" parentStyle0="LcdFlatIconButtonStyle" />
+    <CtrlStyle name="BrowserHeaderViewOptionsButtonStyle" colAltText="Ink" colText="Ink" font="Sans9" parentStyle0="LcdFlatIconButtonStyle" />
     <CtrlStyle name="BrowserParentNavigationButtonStyle" font="Sans10" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="BrowserTreeStyle" colBorder="Transparent" colFill="Transparent" font="Sans10" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="BrowserPanelStyle" colBorder="Transparent" colFill="Transparent" optDrawBorder="false" parentStyle0="BasePanelStyle" />
@@ -332,22 +335,22 @@
     <!-- From v1 Browser/Footer.skin -->
     <CtrlStyle name="FooterLatchingButtonStyle" font="Sans10" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="StopButtonStyle" font="Icons14" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="AutoButtonStyle" font="Sans8Bold" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="LockPadsStyle" font="Sans10Bold" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="LockPatternStyle" font="Sans10Bold" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="AutoButtonStyle" font="Sans11" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="LockPadsStyle" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="LockPatternStyle" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="PreviewVolIconStyle" parentStyle0="BaseImageStyle" />
     <!-- From v1 Browser/Header.skin -->
-    <CtrlStyle name="SearchBoxStyle" font="Sans10" parentStyle0="BaseTextBoxStyle" />
+    <CtrlStyle name="SearchBoxStyle" colBorder="Transparent" colFill="Transparent" font="Sans10" optSearchIcon="false" parentStyle0="BaseTextBoxStyle" realGradientShade="0" />
     <CtrlStyle name="AdvancedFindButtonStyle" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="SearchOptionsStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
-    <CtrlStyle name="BrowserNextFileButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
-    <CtrlStyle name="BrowserPrevFileButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
-    <CtrlStyle name="BrowserNextLocationButtonStyle" parentStyle0="LcdFlatIconButtonStyle" />
-    <CtrlStyle name="BrowserPrevLocationButtonStyle" parentStyle0="LcdFlatIconButtonStyle" />
+    <CtrlStyle name="SearchOptionsStyle" parentStyle0="LcdFlatIconButtonStyle" />
+    <CtrlStyle name="BrowserNextFileButtonStyle" parentStyle0="BrowserNavKeyStyle" />
+    <CtrlStyle name="BrowserPrevFileButtonStyle" parentStyle0="BrowserNavKeyStyle" />
+    <CtrlStyle name="BrowserNextLocationButtonStyle" parentStyle0="BrowserNavKeyStyle" />
+    <CtrlStyle name="BrowserPrevLocationButtonStyle" parentStyle0="BrowserNavKeyStyle" />
     <CtrlStyle name="RefreshButtonStyle" font="Icons14" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="StupidImageStyle" parentStyle0="LcdFieldStyle" realCornerRounding="8" />
-    <CtrlStyle name="EnterButtonStyle" font="Icons14" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="BrowserParentButtonStyle" font="Icons14" parentStyle0="LcdIconButtonStyle" />
+    <CtrlStyle name="StupidImageStyle" colBorder="SearchEdge" colFill="SearchField" parentStyle0="LcdFieldStyle" realBorderWidth="2" realCornerRounding="3" />
+    <CtrlStyle name="EnterButtonStyle" parentStyle0="LcdIconButtonStyle" />
+    <CtrlStyle name="BrowserParentButtonStyle" parentStyle0="LcdIconButtonStyle" />
     <CtrlStyle name="NavButtonBackgroundStyle" parentStyle0="BaseImageStyle" />
     <!-- From v1 Effects/BreverbHall.skin -->
     <CtrlStyle name="BreverbPanelStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="BasePanelStyle" realCornerRounding="0" />
@@ -568,8 +571,7 @@
     <CtrlStyle name="GlueMicroImageStyle" colFill="InkMid" parentStyle0="LcdGlueStyle" />
     <CtrlStyle name="GlueSmallImageStyle" colFill="InkMid" parentStyle0="LcdGlueStyle" />
     <CtrlStyle name="GraphIconImageStyle" enumTextHorizontalAlign="left" font="Icons8" parentStyle0="ChassisGlyphLabelStyle" />
-    <CtrlStyle name="NavigationBackgroundImageStyle" parentStyle0="LcdFieldStyle" realCornerRounding="4" />
-    <CtrlStyle name="PreviewVolImageStyle" font="Icons10" parentStyle0="GlyphLabelStyle" />
+    <CtrlStyle name="NavigationBackgroundImageStyle" colFill="NavPlate" optDrawBorder="false" parentStyle0="LcdFieldStyle" realCornerRounding="3" />
     <CtrlStyle name="SendArrowImageStyle" colText="LcdDim" enumTextHorizontalAlign="left" font="Sans24" parentStyle0="GlyphLabelStyle" />
     <CtrlStyle name="SwingIconImageStyle" font="Icons12" parentStyle0="ChassisGlyphLabelStyle" />
     <CtrlStyle name="TriggerImageViewStyleImageStyle" parentStyle0="LcdFieldStyle" realCornerRounding="3" />

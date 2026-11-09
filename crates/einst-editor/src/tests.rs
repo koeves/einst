@@ -2825,7 +2825,7 @@ fn drag_and_drop_pads_patterns_and_browser_files() {
     }
     ed.browser.as_mut().unwrap().browse(dir.clone());
     let list = by(&ed, &|k| k.overload == "BrowserFileList");
-    let down = |ed: &mut Editor, row: f32| ed.handle(&UiEvent::Mouse { path: list.clone(), overload: "BrowserFileList".into(), kind: MouseKind::Down, x: 5.0, y: row * 18.0 + 2.0 });
+    let down = |ed: &mut Editor, row: f32| ed.handle(&UiEvent::Mouse { path: list.clone(), overload: "BrowserFileList".into(), kind: MouseKind::Down, x: 5.0, y: row * 25.0 + 2.0 });
     down(&mut ed, 0.0);
     ed.app.mods = Mods { cmd: true, ..Mods::default() };
     down(&mut ed, 2.0);
@@ -3178,7 +3178,7 @@ fn browser_preview_starts_on_the_press_and_reuses_decoded_files() {
     let Some(list) = browser_list(&mut ed, &dir) else { return };
     ed.browser.as_mut().unwrap().set_preview_mode(true);
     ed.browser.as_mut().unwrap().set_slice_mode(false);
-    let ev = |kind, row: f32| UiEvent::Mouse { path: list.clone(), overload: "BrowserFileList".into(), kind, x: 5.0, y: row * 18.0 + 2.0 };
+    let ev = |kind, row: f32| UiEvent::Mouse { path: list.clone(), overload: "BrowserFileList".into(), kind, x: 5.0, y: row * 25.0 + 2.0 };
     let preview = |cmds: Vec<Command>| {
         cmds.into_iter().find_map(|c| match c {
             Command::Preview(Some(d)) => Some(d),
@@ -3233,7 +3233,7 @@ fn browser_menu_acts_on_the_selection() {
         None
     }
     let list = list.filter(|p| ed.app.ctrl(p).is_some_and(|c| c.overload == "BrowserFileList")).or_else(|| by(&ed.app.root, &mut Vec::new())).unwrap();
-    let ev = |kind, row: f32| UiEvent::Mouse { path: list.clone(), overload: "BrowserFileList".into(), kind, x: 5.0, y: row * 18.0 + 2.0 };
+    let ev = |kind, row: f32| UiEvent::Mouse { path: list.clone(), overload: "BrowserFileList".into(), kind, x: 5.0, y: row * 25.0 + 2.0 };
     ed.handle(&ev(MouseKind::Down, 0.0));
     ed.app.mods = Mods { cmd: true, ..Mods::default() };
     ed.handle(&ev(MouseKind::Down, 1.0));
@@ -3275,7 +3275,7 @@ fn browser_source_list_item_menu() {
     let list = by(&ed.app.root, &mut Vec::new()).unwrap();
     let row = |ed: &Editor, label: &str| ed.browser.as_ref().unwrap().source_row(label);
     let menu = |ed: &mut Editor, r: usize, label: &str| {
-        ed.handle(&UiEvent::Mouse { path: list.clone(), overload: "BrowserSourceList".into(), kind: MouseKind::RightDown, x: 5.0, y: r as f32 * 25.0 + 3.0 });
+        ed.handle(&UiEvent::Mouse { path: list.clone(), overload: "BrowserSourceList".into(), kind: MouseKind::RightDown, x: 5.0, y: r as f32 * 20.0 + 3.0 });
         let items = ed.app.menu.as_ref().expect("menu").items.clone();
         let i = items.iter().position(|s| s.ends_with(label)).unwrap_or_else(|| panic!("{label} in {items:?}"));
         ed.handle(&UiEvent::MenuSelected { anchor: list.clone(), name: String::new(), index: i });
@@ -3305,7 +3305,7 @@ fn browser_source_list_item_menu() {
     assert!(row(&ed, &new).is_none());
     // Places rows offer Reveal only.
     let (r, _) = row(&ed, "Home").unwrap();
-    ed.handle(&UiEvent::Mouse { path: list.clone(), overload: "BrowserSourceList".into(), kind: MouseKind::RightDown, x: 5.0, y: r as f32 * 25.0 + 3.0 });
+    ed.handle(&UiEvent::Mouse { path: list.clone(), overload: "BrowserSourceList".into(), kind: MouseKind::RightDown, x: 5.0, y: r as f32 * 20.0 + 3.0 });
     assert_eq!(ed.app.menu.as_ref().unwrap().items, vec!["Reveal \"Home\" in Finder".to_string()]);
     let _ = std::fs::remove_dir_all(&dir);
 }
