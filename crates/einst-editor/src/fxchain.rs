@@ -380,7 +380,7 @@ pub(crate) fn effects(model: &Model, t: Target) -> Vec<(usize, usize, Node)> {
 /// holding the six slots (`EffectChainFX.skin`, `EffectPanel.skin` each),
 /// four at a time.
 pub struct FxPanel {
-    host: Vec<usize>,
+    pub(crate) host: Vec<usize>,
     /// The six slot panels.
     slots: Vec<Vec<usize>>,
     /// The row of slots inside the scroll view.
@@ -493,6 +493,11 @@ impl FxPanel {
             let Some(slot) = app.ctrl_mut(path) else { continue };
             slot.set_attr("fxKind", kind.to_string());
             slot.style = if kind == 0 { "EffectPanelBackgroundNoFX" } else { "EffectPanelBackground" }.into();
+            // The card under the slot (the skin's decor, scripts/uigen
+            // looks.py): dark when empty.
+            if let Some(card) = slot.children.iter_mut().find(|k| matches!(k.style.as_str(), "FxCardStyle" | "FxCardEmptyStyle")) {
+                card.style = if kind == 0 { "FxCardEmptyStyle" } else { "FxCardStyle" }.into();
+            }
             if let Some(setup) = slot.find_mut("SetupPanel") {
                 for k in setup.children.iter_mut() {
                     if SLOT_CONTROLS.contains(&k.name.as_str()) {
@@ -644,11 +649,17 @@ impl FxPanel {
         let iw = (w / SLOTS as f32).floor();
         let scroll = c.text.split('|').next().and_then(|v| v.parse::<usize>().ok()).unwrap_or(self.scroll);
         for (i, label) in self.labels.borrow().iter().enumerate() {
-            let rc = RectF::new(i as f32 * iw + 1.0, 4.0, iw - 2.0, h - 8.0);
+            // (v1: items the bar's full height bar a 2 px top and 1 px bottom
+            // margin, shaded top to bottom)
+            let rc = RectF::new(i as f32 * iw + 1.0, 2.0, iw - 2.0, h - 3.0);
             // `FxSlotItemStyle`, the shown slots `FxSlotItemLitStyle`.
             let st = if (scroll..scroll + VISIBLE_SLOTS).contains(&i) { "FxSlotItemLitStyle" } else { "FxSlotItemStyle" };
             let text = s.colour(st, "colText", dreist_gui::Colour::rgba(18, 25, 60, 255));
-            p.fill_rect(rc, s.colour(st, "colFill", dreist_gui::Colour::rgba(200, 205, 215, 255)));
+            let fill = s.colour(st, "colFill", dreist_gui::Colour::rgba(200, 205, 215, 255));
+            match (s.raw(st, "colFillGradientTo").map(|v| s.parse_colour(v)), dreist_gui::paint::rounded_rect_path(rc, 0.0, [false; 4])) {
+                (Some(to), Some(path)) => p.fill_path_gradient(&path, fill, dreist_gui::paint::Gradient { to, horizontal: false, radial: None }),
+                _ => p.fill_rect(rc, fill),
+            }
             p.stroke_rect(rc.inset(0.5), s.colour(st, "colBorder", text), 1.0);
             p.text(RectF::new(rc.x + 2.0, rc.y, rc.w - 4.0, rc.h), label, text, &s.font(st), HAlign::Center, VAlign::Center);
         }

@@ -15,8 +15,9 @@ the rules below to a look, which is
 - `decor`: unnamed panels standing in for the parts of a bitmap one style
   cannot draw (the screen inside a bezel, knob bodies), each
   `(where, x, y, w, h, style)`: `inside` the control (its first children)
-  or `behind` it (siblings drawn before it); x, y relative to the control
-  (a negative y from its bottom), w, h below 1 relative to its size,
+  or `behind` it (siblings drawn before it, placed on v1's rect, before
+  any `inset`); x, y relative to the control (a negative y from its
+  bottom), w, h below 1 relative to its size,
 - `inset`: `(left, top, right, bottom)` taken off the rect of every
   control using the look: the part of v1's bitmap the art filled (round
   engine buttons, knob dials, pattern keys had transparent margins).
@@ -58,6 +59,10 @@ CHECK = {"renderer": "CheckBoxButtonRenderer"}
 MIDI_ICON = [("inside", 7, 5, 16, 16, "MidiDiscStyle")] + [
     ("inside", round(15 + 4.6 * math.cos(math.radians(a)) - 1), round(13 - 4.6 * math.sin(math.radians(a)) - 1), 3, 3, "MidiPinStyle")
     for a in (180, 135, 90, 45, 0)]
+
+# The layer / pad mixers' MIX / SEND tabs: each with its part of the ink
+# spine right of its face (behind it: the face is inset off the spine).
+SIDE_TAB_SPINE = [("behind", 34, 0, 12, 0, "LcdSideTabSpineStyle")]
 
 # ---------------------------------------------------------------- buttons
 
@@ -119,11 +124,17 @@ BUTTONS = [
     (r"^PatternButtonSelected", L("PatternKeySelectedStyle", **KEY)),
     # LCD buttons.
     (r"^LED(Standard|Link)Button|^LinkButton", L("LcdButtonStyle")),
-    (r"^LEDSmallButton", L("LcdIconButtonStyle", text=G["power"])),
+    # (v1: an ink disc when on, a grey one with an ink edge when off, with
+    # an upright slot through it; 16 x 17 ovals, the chain's 24 px round)
+    (r"^LEDSmallButton", L("LcdRoundToggleStyle", text="", realCornerRounding="8", realGlyphWidth="4", realGlyphHeight="11")),
     # (v1's mute / solo bitmaps: a 2 px frame a pixel above and below the cell)
     (r"^LEDMuteButton", L("LcdMuteButtonStyle", inset=(0, -1, 0, -1))),
     (r"^LEDSoloButton", L("LcdSoloButtonStyle", inset=(0, -1, 0, -1))),
-    (r"^LED(Ultra|Large)?MenuButton|^LEDEffectCombo|^DragEditButton", L("LcdMenuButtonStyle", ctrl=POPUP)),
+    # (the chain preset menu, 24 px high: v1's small arrow ~7 px in)
+    (r"^LEDEffectCombo", L("LcdMenuButtonStyle", ctrl=POPUP, realPopupArrowSize="0.2", realPopupArrowBoxWidth="14")),
+    # (the effect slots' type / preset menus, 17 px high: v1's 5 px arrow)
+    (r"^LEDUltraMenuButton", L("LcdMenuButtonStyle", ctrl=POPUP, realPopupArrowSize="0.3")),
+    (r"^LED(Large)?MenuButton|^DragEditButton", L("LcdMenuButtonStyle", ctrl=POPUP)),
     # (v1: the selected segment mid grey with dark text, the outer ends pills)
     (r"^LEDRadio(Large|Micro)Left", L("LcdRadioStyle", realCornerRounding="8", optRoundTopRight="false", optRoundBottomRight="false")),
     (r"^LEDRadio(Large|Micro)Center", L("LcdRadioStyle", realCornerRounding="0")),
@@ -141,13 +152,16 @@ BUTTONS = [
     (r"^LEDNoZoom", L("LcdIconButtonStyle", text=G["ring"], font=icon_font(8))),
     (r"^LEDDiv2", L("LcdButtonStyle", text="÷2", font=text_font(11))),
     (r"^LEDx2", L("LcdButtonStyle", text="×2", font=text_font(11))),
-    (r"^LEDM(Mix|Send|Setup)Button", L("LcdSideTabStyle", upper=True)),
-    (r"^LED(Mix|Send|Setup)Button", L("LcdBigButtonStyle", upper=True)),
-    (r"^LargePowerButton", L("LcdPowerButtonStyle", text=G["power"])),
-    (r"^LargePresetBackButton", L("LcdFlatIconButtonStyle", text=G["left"])),
-    (r"^LargePresetNextButton", L("LcdFlatIconButtonStyle", text=G["right"])),
-    (r"^PrevPresetButton", L("LcdFlatIconButtonStyle", text=G["left"], font=icon_font(8))),
-    (r"^NextPresetButton", L("LcdFlatIconButtonStyle", text=G["right"], font=icon_font(8))),
+    # Mixer view tabs (v1, 46 x 49: a 34 px face, then the ink spine; the
+    # engine mixer's group draws one spine for its three, convert.py).
+    (r"^LEDM(Mix|Send|Setup)Button", L("LcdSideTabStyle", upper=True, inset=(0, 2, 12, 2))),
+    (r"^LED(Mix|Send|Setup)Button", L("LcdSideTabStyle", upper=True, inset=(0, 2, 12, 2), decor=SIDE_TAB_SPINE)),
+    (r"^LargePowerButton", L("LcdRoundToggleStyle", text="", realCornerRounding="12", realGlyphWidth="4", realGlyphHeight="16")),
+    # (v1: filled grey triangles with an ink edge, ink when pressed)
+    (r"^LargePresetBackButton", L("LcdTriangleButtonStyle", text="", enumGlyph="TriangleLeft")),
+    (r"^LargePresetNextButton", L("LcdTriangleButtonStyle", text="", enumGlyph="TriangleRight")),
+    (r"^PrevPresetButton", L("LcdTriangleButtonStyle", text="", enumGlyph="TriangleLeft")),
+    (r"^NextPresetButton", L("LcdTriangleButtonStyle", text="", enumGlyph="TriangleRight")),
     # Pattern and song tools.
     (r"^PenPopupTool", L("LcdFlatIconButtonStyle", text=G["chev_down"], font=icon_font(8))),
     (r"^PenTool", L("LcdButtonStyle", text="✎", font=text_font(12))),
@@ -219,12 +233,19 @@ FLAT_BUTTON = L("LcdButtonStyle")
 # (2 px down, 13 px high; the bands of neighbouring strips meet).
 STRIP_HEAD = [("inside", 0, 2, 0, 13, "LcdStripHeadStyle")]
 
+FX_CARD = [("inside", 1, 2, -2, -4, "FxCardEmptyStyle"), ("inside", 3, 4, -6, 38, "FxCardHeadStyle")]
+
 PANELS = [
     (r"^Background", L("ChassisStyle")),
     (r"^AboutBackground", L("LcdPanelStyle", colFill="Ink", colBorder="Amber", realCornerRounding="6")),
-    (r"^FXGlobalBackground", L("LcdPanelStyle", colFill="LcdMid")),
-    (r"^ChainHeader", L("LcdHeaderStyle")),
-    (r"^FXPanelBackground", L("LcdPanelStyle")),
+    # (v1: the chain on a dark frame that shows between and under the
+    # effect panels)
+    (r"^FXGlobalBackground", L("LcdPanelStyle", colFill="InkMid", colBorder="Ink", optDrawBorder="true", realCornerRounding="3")),
+    (r"^ChainHeader", L("LcdHeaderStyle", colFill="LcdMid", colBorder="InkMid", realCornerRounding="0")),
+    # (v1, 199 x 196: a card 1 px in at the sides, 2 px at the top and
+    # bottom, with a darker band behind the slot's menus; empty slots all
+    # dark. fxchain.rs switches the card's style.)
+    (r"^FXPanelBackground", L("BasePanelStyle", colFill="Transparent", optDrawBorder="false", decor=FX_CARD)),
     (r"^BreverbBackground", L("BasePanelStyle")),
     (r"^(MiniChannel|Pad|Aux)Background(Even)", L("LcdRowEvenStyle", realCornerRounding="3", decor=STRIP_HEAD)),
     (r"^(MiniChannel|Pad|Aux)Background(Odd)", L("LcdRowOddStyle", realCornerRounding="3", decor=STRIP_HEAD)),
@@ -293,16 +314,23 @@ TRACK = {"colFill": "LcdFace"}
 SLIDERS = [
     (r"^(HARDVU|EngineVU)", L("StripMeterStyle", **LED)),
     (r"VU", L("LcdMeterStyle", inset=(0, 0, 1, 0))),  # (v1's LCD meters: plain 3 px bars in 4 px rects)
-    (r"PanBase", L("LcdPanStyle", ctrl={"realTrackInset": "0.0"}, **TRACK)),
-    (r"^LEDSmVSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="15", **TRACK)),
+    # (v1's pan thumb: a dark block, a light line across its middle)
+    (r"PanBase", L("LcdPanStyle", ctrl={"realTrackInset": "0.0"}, realHandleRounding="1", enumGripShape="Across", intGripLines="1", **TRACK)),
+    # (v1's mixer fader cap: dark, a light line across its middle)
+    (r"^LEDSmVSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="15", intGripLines="1", enumGripShape="Across",
+                             **TRACK)),
     (r"^LEDFatSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="20", **TRACK)),
     (r"", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, **TRACK)),
 ]
 
 # ---------------------------------------------------------------- meters and plots (imBackground)
 
-METER = L("LcdPlotStyle", colAltBorder="InkMid", colLine="Ink")
-PLOT = L("LcdPlotStyle", colLine="Ink")
+# (v1's meter and plot bitmaps, 107 x 50: a 2 px ink frame with 5 px
+# corners; the gain-reduction meter has a dark band along the bottom with
+# a bump under the needle's pivot, a thin grey scale and small grey labels)
+METER = L("LcdPlotStyle", colAltBorder="InkSoft", colLine="Ink", colBorder="Ink", realBorderWidth="2", realCornerRounding="5",
+          colBaseBand="InkMid", realBaseBandHeight="5", intTicks="0", colText="60, 60, 60, 255", font=text_font(8))
+PLOT = L("LcdPlotStyle", colLine="Ink", colBorder="Ink", realBorderWidth="2", realCornerRounding="5")
 
 # ---------------------------------------------------------------- image views (`image=`)
 
@@ -318,7 +346,7 @@ IMAGES = [
     # The wordmark in the logo's place (lower-case, as v1's): text, not art.
     (r"^Logo$", L("WordmarkStyle", text="einst.", cls="CtrlLabel")),
     (r"^SendArrow$", L("GlyphLabelStyle", text=G["right"], cls="CtrlLabel", font=icon_font(8))),
-    (r"^Glue", L("LcdGlueStyle")),
+    (r"^Glue", L("LcdGlueStyle", colFill="InkMid")),  # (v1's mixer glue: the chain frame's colour)
     (r"^(Pad|Layer)Glue$", L("LcdGlueStyle")),
     (r"^NavigationBackground$", L("LcdFieldStyle", realCornerRounding="4")),
     (r"^GraphMarkers$", L("LcdRulerStyle", ctrl={"overloadClass": "VelocityRuler"})),  # (labelled by the editor)

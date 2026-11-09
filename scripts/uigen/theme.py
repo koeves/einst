@@ -149,6 +149,11 @@ COLOURS = {
     "StepEdge": (51, 55, 92),
     "FxSlotLit": (204, 210, 220),
     "FxSlotDim": (122, 127, 142),
+    # v1's effect panels: the card's edge (ink over the chain's frame, and
+    # a mid line inside it), the slot bar items' shading.
+    "FxCardEdge": (52, 59, 90),
+    "FxSlotLitTop": (181, 185, 196),
+    "FxSlotLitLow": (220, 229, 238),
     "LaneAlt": (204, 211, 221),
     "PartSelected": (237, 224, 179),
     # Song lanes (round 4, measured): the navy lane foot and its ticks, the
@@ -193,7 +198,7 @@ COLOURS = {
     "StripSelected": (69, 74, 100),
     "StripHead": (64, 69, 94),
     "StripHeadEdge": (18, 23, 44),
-    "StripSelectedEdge": (78, 83, 106),
+    "StripSelectedEdge": (18, 25, 60),
     "LcdGroove": (138, 145, 160),
     "StripOdd": (189, 196, 209),
     "StripEven": (158, 166, 181),
@@ -341,14 +346,21 @@ def base_styles():
     st("LcdRowEvenStyle", "BasePanelStyle", colFill="StripEven", colBorder="InkSoft", optDrawBorder="true", realCornerRounding="2")
     st("LcdRowOddStyle", "LcdRowEvenStyle", colFill="StripOdd")
     st("LcdRowSelectedStyle", "LcdRowEvenStyle", colFill="AmberSoft", colBorder="Ink")
-    st("LcdStripSelectedStyle", "LcdRowEvenStyle", colFill="StripSelected", colBorder="StripSelectedEdge")
+    st("LcdStripSelectedStyle", "LcdRowEvenStyle", colFill="StripSelected", colBorder="StripSelectedEdge", realBorderWidth="2")
     st("LcdGlueStyle", "BasePanelStyle", colFill="StripHead")
+    # (the selected mixer strip's name: light on its dark fill)
+    st("StripNameSelectedStyle", "StandardLabelCenteredStyle", colText="LcdMid")
     st("LcdStripHeadStyle", "BasePanelStyle", colFill="StripHead", colBorder="StripHeadEdge", optDrawBorder="true", realBorderWidth="2")
     # (the velocity ruler over the split lanes: ticks every 16, labels
     # every 32; drawn by the editor, `VelocityRuler`)
     st("LcdRulerStyle", "BasePanelStyle", colFill="LcdDim", realCornerRounding="1", colText="Ink", colTick="InkMid", font=text_font(7, True))
     st("LcdFieldStyle", "BasePanelStyle", colFill="LcdLight", colBorder="Ink", optDrawBorder="true", realCornerRounding="2")
     st("LcdPlotStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkMid", optDrawBorder="true", realCornerRounding="2")
+    # Effect panels (v1): a card with a 2 px edge and a darker band behind
+    # the slot's menus; an empty slot is dark all over.
+    st("FxCardStyle", "BasePanelStyle", colFill="Lcd", colBorder="FxCardEdge", optDrawBorder="true", realBorderWidth="2")
+    st("FxCardEmptyStyle", "FxCardStyle", colFill="LcdDim")
+    st("FxCardHeadStyle", "BasePanelStyle", colFill="LcdDim")
 
     # LCD buttons.
     st("LcdButtonStyle", "BaseButtonStyle", colFill="LcdFace", colBorder="LcdEdge", colAltFill="LcdOn", colAltBorder="Ink",
@@ -368,9 +380,20 @@ def base_styles():
     st("LcdMenuButtonStyle", "LcdButtonStyle", enumTextHorizontalAlign="left", realTextOffset="5",
        realPopupArrowBoxWidth="10", optPopupDivider="false")
     st("LcdBigButtonStyle", "LcdButtonStyle", font=text_font(11, True), realCornerRounding="3")
-    st("LcdSideTabStyle", "LcdBigButtonStyle", colFill="InkMid", colBorder="Ink", colText="LcdLight", colAltFill="Ink",
-       colAltBorder="Ink", colAltText="LcdLight", font=text_font(10, True), realTextSlant="14")
+    # (v1's mixer view tabs: a grey face with ink letters, ink with grey
+    # letters when on, merging into the ink spine on their right)
+    st("LcdSideTabStyle", "LcdBigButtonStyle", colFill="LcdDim", colText="Ink", colAltFill="Ink", colAltText="LcdDim",
+       optDrawBorder="false", realGradientShade="0", font=text_font(10, True), realTextSlant="14", realTextScaleX="0.9", optRoundTopRight="false",
+       optRoundBottomRight="false")
+    st("LcdSideTabSpineStyle", "BasePanelStyle", colFill="Ink")
     st("LcdPowerButtonStyle", "LcdIconButtonStyle", font=icon_font(14), colAltFill="Amber", colAltText="Ink", realCornerRounding="3")
+    # (v1's latching toggles: a disc, ink when on, grey with an ink edge
+    # when off, an upright slot through it)
+    st("LcdRoundToggleStyle", "LcdButtonStyle", colFill="InkSoft", colBorder="Ink", colAltFill="Ink", colAltBorder="Ink",
+       realGradientShade="0", enumGlyph="Bar", colGlyph="LcdLight", colGlyphBorder="Ink")
+    # (v1's preset arrows: grey triangles with an ink edge, ink pressed)
+    st("LcdTriangleButtonStyle", "LcdButtonStyle", colFill="Transparent", colBorder="Transparent", colAltFill="Transparent",
+       colAltBorder="Transparent", optDrawBorder="false", colGlyph="InkSoft", colAltGlyph="Ink", colGlyphBorder="Ink")
     st("LcdFlatButtonStyle", "LcdButtonStyle", colFill="Transparent", colBorder="Transparent", colText="InkMid",
        colAltFill="Transparent", colAltBorder="Transparent", colAltText="Ink")
     st("LcdFlatIconButtonStyle", "LcdFlatButtonStyle", font=icon_font(10))
@@ -479,7 +502,11 @@ def base_styles():
        enumGradientDirection="Radial", realGradientRadius="0.62")
     st("LcdPanStyle", "LcdFaderStyle", realHandleLength="9", realHandleInset="1", colBorder="Transparent", intGripLines="1",
        enumGripShape="Along", realHandleRounding="3")
-    st("LcdRangeStyle", "LcdFaderStyle", realHandleLength="9", colFillHighlight="InkSoft", intGripLines="1")
+    # (v1's delay cut split fader: a grey pill with an ink edge and a dark
+    # line through it, the range light, ▼ / ▲ markers for the two cuts)
+    st("LcdRangeStyle", "LcdFaderStyle", enumHandleShape="Triangles", realHandleLength="11", colFill="LcdDim", colFillHighlight="LcdLight",
+       colTrackBorder="Ink", colGroove="InkMid", realGrooveWidth="1", realGrooveInset="5", colAltFill="LcdLight", colAltBorder="Ink",
+       realCornerRounding="9")
     st("LcdScrollBarStyle", "BaseSliderStyle", colFill="LcdLight", colAltFill="InkMid")
     st("LcdMeterStyle", "BaseMeterStyle")
     st("StripMeterStyle", "BaseMeterStyle", colFill="ReadoutDim", colAltFill="Readout", colAltBorder="Readout")
@@ -578,7 +605,7 @@ def base_styles():
     # v1 (round 5): the shown slots light blue-grey, the others a darker
     # slate, both with a dark edge.
     st("FxSlotItemStyle", "BasePanelStyle", colFill="FxSlotDim", colBorder="Ink", colText="Ink", font=text_font(9))
-    st("FxSlotItemLitStyle", "FxSlotItemStyle", colFill="FxSlotLit")
+    st("FxSlotItemLitStyle", "FxSlotItemStyle", colFill="FxSlotLitTop", colFillGradientTo="FxSlotLitLow")
     # A layer row in a multiple selection (the primary row stays amber).
     st("SelectionButtonMultiStyle", "LcdRowSelectedStyle", colFill="RowSelected", realCornerRounding="0")
     # Pattern grid: past a track's length, its length marker (amber while

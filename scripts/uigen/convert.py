@@ -129,6 +129,14 @@ PANEL_DECOR = {
     "EditorPad": [("inside", 0, 0, 50, 42, "PadStyle")] + [("inside", 7 + 5 * i, 34, 3, 3, "PadLedStyle") for i in range(8)],
 }
 
+# Decor by (skin, control name), as the looks' decor. The engine mixer's
+# MIX / SEND / SETUP tabs share one dark spine down their right edge (v1's
+# tab bitmaps: 34 px faces, then 10 px of ink the full height; behind the
+# group, as the group's children are its buttons).
+NAMED_DECOR = {
+    ("MIxer/EngineMixerPanel.skin", "ModeGroup"): [("behind", 34, 0, 12, 0, "LcdSideTabSpineStyle")],
+}
+
 # Labels grow to fit their font (v1 drew label text unclipped; dreist-gui
 # clips to the rect): this many pixels above the font size, and centred
 # labels this much wider on each side.
@@ -537,6 +545,7 @@ class Converter:
             if st:
                 attrs["style"] = st
         rect = attrs.get("rect", [0, 0, 0, 0])
+        v1_rect = list(rect)
         out_before = []
         kids = []
         info = self.info.get(attrs.get("style", ""))
@@ -583,17 +592,19 @@ class Converter:
         if v1cls in ("CtrlKnob",) and info and info["look"] and info["look"]["parent"] in ("HardKnobStyle", "LcdKnobStyle"):
             if attrs.get("style", "").endswith("C"):
                 attrs["optCentered"] = "true"
-        decor = (look["decor"] if look else []) + PANEL_DECOR.get(ov, [])
+        decor = (look["decor"] if look else []) + PANEL_DECOR.get(ov, []) + NAMED_DECOR.get((source, attrs.get("name")), [])
         if decor:
             for where, x, y, w, h, st in decor:
-                w = w if w >= 1 else rect[2] + w
-                h = h if h >= 1 else rect[3] + h
-                y = y if y >= 0 else rect[3] + y
+                # (decor behind a control: on v1's rect, before any inset)
+                base = v1_rect if where == "behind" else rect
+                w = w if w >= 1 else base[2] + w
+                h = h if h >= 1 else base[3] + h
+                y = y if y >= 0 else base[3] + y
                 d = E("CtrlPanel", {"rect": [x, y, w, h], "style": st})
                 if where == "inside":
                     kids.append(d)
                 else:
-                    d.attrs["rect"] = [rect[0] + x, rect[1] + y, w, h]
+                    d.attrs["rect"] = [base[0] + x, base[1] + y, w, h]
                     out_before.append(d)
                 self.decor += 1
         if cls == "CtrlLabel" and v1cls == "CtrlLabel":

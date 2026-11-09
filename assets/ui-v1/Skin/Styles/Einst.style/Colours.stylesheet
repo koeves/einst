@@ -128,6 +128,9 @@
     <VColour name="StepEdge" colour="#33375C" />
     <VColour name="FxSlotLit" colour="#CCD2DC" />
     <VColour name="FxSlotDim" colour="#7A7F8E" />
+    <VColour name="FxCardEdge" colour="#343B5A" />
+    <VColour name="FxSlotLitTop" colour="#B5B9C4" />
+    <VColour name="FxSlotLitLow" colour="#DCE5EE" />
     <VColour name="LaneAlt" colour="#CCD3DD" />
     <VColour name="PartSelected" colour="#EDE0B3" />
     <VColour name="LaneFoot" colour="#2C304D" />
@@ -166,7 +169,7 @@
     <VColour name="StripSelected" colour="#454A64" />
     <VColour name="StripHead" colour="#40455E" />
     <VColour name="StripHeadEdge" colour="#12172C" />
-    <VColour name="StripSelectedEdge" colour="#4E536A" />
+    <VColour name="StripSelectedEdge" colour="#12193C" />
     <VColour name="LcdGroove" colour="#8A91A0" />
     <VColour name="StripOdd" colour="#BDC4D1" />
     <VColour name="StripEven" colour="#9EA6B5" />
