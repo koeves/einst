@@ -1393,7 +1393,7 @@ fn sampler_takes_join_the_take_list_and_go_to_pads() {
     let tone: Vec<f32> = (0..4410).map(|i| (i as f32 * 0.05).sin() * 2.0).collect();
     assert_eq!(ed.sampler_take(&tone, &tone, 44100.0), Some(0));
     assert_eq!(ed.sampler_take(&tone[..2000], &tone[..2000], 44100.0), Some(1));
-    assert_eq!((text(&ed, "TakeList").as_str(), text(&ed, "RecordStatus").as_str()), ("Take 2", "Idle (2 takes)"));
+    assert_eq!((text(&ed, "TakeList").as_str(), text(&ed, "RecordStatus").as_str()), ("Take 2", "Idle, Recorded: take 2, samples 2000  (total usage: 25.0KB)"));
     // Take picks the current take.
     let tl = sampler_path(&ed, "TakeList");
     ed.handle(&UiEvent::Clicked { path: tl.clone(), name: "TakeList".into(), id: 0, on: false });
