@@ -545,7 +545,7 @@ def base_styles():
        colLoopStartMarker="WaveLoopMarker", colLoopEndMarker="WaveLoopMarker", colMarkerHole="Ink", colTimelineBackground="LcdDim",
        colTimelineText="Ink", colTimelineMarkers="Ink", colAmpEnvelopeBack="EnvAmpBack", colFreeEnvelopeBack="EnvFreeBack",
        colEnvelopeLine="EnvLine", colEnvelopeHandle="LcdLight", colEnvelopeGrab="Amber", colTitleFill="WaveTitle", colText="LcdLight",
-       font=text_font(9, True), fontTimeline=text_font(8))
+       font=text_font(9, True), fontTimeline=text_font(8), fontNoAudio=text_font(20), colNoAudioText="Ink")
     # (track, thumb, its edge lines and grips, the grips' centres)
     st("WaveDisplayZoomSliderStyle", "BasePanelStyle", colTrack="LcdDim", colFill="InkSoft", colAltFill="LcdFace", colBorder="Ink")
     # Velocity split lanes: the split's area, the dragged handle, tick

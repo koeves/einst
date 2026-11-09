@@ -202,7 +202,8 @@ enum Menu {
 
 /// Min/max per bucket of a sample's left channel.
 struct Peaks {
-    buckets: Vec<(f32, f32)>,
+    /// (min, max) buckets per channel (left, then right of a stereo file).
+    buckets: Vec<Vec<(f32, f32)>>,
     frames: usize,
     /// File sample rate (envelope overlay times).
     rate: f32,
@@ -350,7 +351,8 @@ fn load_peaks(path: &std::path::Path) -> Option<Peaks> {
         return None;
     }
     let per = n.div_ceil(PEAK_BUCKETS).max(1);
-    let buckets = data.left.chunks(per).map(|c| c.iter().fold((f32::MAX, f32::MIN), |(lo, hi), &x| (lo.min(x), hi.max(x)))).collect();
+    let peaks = |ch: &[f32]| ch.chunks(per).map(|c| c.iter().fold((f32::MAX, f32::MIN), |(lo, hi), &x| (lo.min(x), hi.max(x)))).collect::<Vec<_>>();
+    let buckets = std::iter::once(peaks(&data.left)).chain(data.right.as_deref().map(peaks)).collect();
     let zeros = data.left.windows(2).enumerate().filter(|(_, w)| (w[0] <= 0.0) != (w[1] <= 0.0)).map(|(i, _)| i as u32 + 1).collect();
     Some(Peaks { buckets, frames: n, zeros, rate: data.sample_rate.max(1.0) })
 }
@@ -1497,6 +1499,7 @@ impl Inspector {
         p.line(0.0, wy + (h / 2.0).floor() + 0.5, w, wy + (h / 2.0).floor() + 0.5, centre.with_alpha(0.5), 1.0);
         let Some(path) = model.layer_sample(e, pad, l) else {
             p.fill_rect(RectF::new(0.0, 0.0, w, wy), wave_colour(s, "colTimelineBackground", purple));
+            crate::timeline::draw_no_audio(p, s, WAVE_STYLE, RectF::new(0.0, wy, w, h));
             return;
         };
         let mut cache = self.peaks.borrow_mut();
@@ -1505,8 +1508,17 @@ impl Inspector {
         let disabled = wave_colour(s, "colLineDisabled", line);
         let looping_col = wave_colour(s, "colLineLooping", line);
         let m = wave_markers(model, e, pad, l, pk.frames as u32);
-        let n = pk.buckets.len();
+        let n = pk.buckets[0].len();
         let cols = w as usize;
+        // [re:bca59e]: one lane per channel, stacked.
+        let lanes = pk.buckets.len().max(1);
+        let lh = h / lanes as f32;
+        if lanes > 1 {
+            for k in 0..lanes {
+                let y = wy + (lh * k as f32 + lh / 2.0).floor() + 0.5;
+                p.line(0.0, y, w, y, centre.with_alpha(0.5), 1.0);
+            }
+        }
         let (v0, vl) = self.view;
         let frac_of = |x: f32| v0 + x / w.max(1.0) * vl;
         for x in 0..cols {
@@ -1522,10 +1534,13 @@ impl Inspector {
             } else {
                 line
             };
-            let (lo, hi) = pk.buckets[a..b].iter().fold((f32::MAX, f32::MIN), |(l0, h0), (l1, h1)| (l0.min(*l1), h0.max(*h1)));
-            let y0 = wy + h / 2.0 - hi.clamp(-1.0, 1.0) * h / 2.0;
-            let y1 = wy + h / 2.0 - lo.clamp(-1.0, 1.0) * h / 2.0;
-            p.fill_rect(RectF::new(x as f32, y0, 1.0, (y1 - y0).max(1.0)), line);
+            for (k, ch) in pk.buckets.iter().enumerate() {
+                let (lo, hi) = ch[a.min(ch.len() - 1)..b.min(ch.len())].iter().fold((f32::MAX, f32::MIN), |(l0, h0), (l1, h1)| (l0.min(*l1), h0.max(*h1)));
+                let mid = wy + lh * k as f32 + lh / 2.0;
+                let y0 = mid - hi.clamp(-1.0, 1.0) * lh / 2.0;
+                let y1 = mid - lo.clamp(-1.0, 1.0) * lh / 2.0;
+                p.fill_rect(RectF::new(x as f32, y0, 1.0, (y1 - y0).max(1.0)), line);
+            }
         }
         // Timeline ([re:02b73a]) and the marker strip.
         let frames = pk.frames.max(1) as f32;

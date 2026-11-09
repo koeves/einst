@@ -64,8 +64,8 @@ pub enum Extract {
 struct Audio {
     /// The file, shared with the preview voice.
     data: std::sync::Arc<dreist_dsp::voice::SampleData>,
-    /// (min, max) per `BUCKET` frames.
-    buckets: Vec<(f32, f32)>,
+    /// (min, max) per `BUCKET` frames, per channel.
+    buckets: Vec<Vec<(f32, f32)>>,
 }
 
 /// [re:401f49]: the controls slicing disables (re-enabled after).
@@ -254,19 +254,9 @@ impl Slicer {
         if n == 0 {
             return false;
         }
-        let buckets = (0..n.div_ceil(BUCKET))
-            .map(|b| {
-                let s = &data.left[b * BUCKET..((b + 1) * BUCKET).min(n)];
-                let r = data.right.as_ref().map(|r| &r[b * BUCKET..((b + 1) * BUCKET).min(n)]);
-                let mut lo = s.iter().fold(f32::MAX, |a, &x| a.min(x));
-                let mut hi = s.iter().fold(f32::MIN, |a, &x| a.max(x));
-                if let Some(r) = r {
-                    lo = r.iter().fold(lo, |a, &x| a.min(x));
-                    hi = r.iter().fold(hi, |a, &x| a.max(x));
-                }
-                (lo, hi)
-            })
-            .collect();
+        // [re:bca59e]: a lane per channel.
+        let peaks = |ch: &[f32]| ch.chunks(BUCKET).map(|s| s.iter().fold((f32::MAX, f32::MIN), |(lo, hi), &x| (lo.min(x), hi.max(x)))).collect::<Vec<_>>();
+        let buckets = std::iter::once(peaks(&data.left)).chain(data.right.as_deref().map(peaks)).collect();
         let gsa = file.with_extension("gsa");
         let mut analysis = match &rex_c {
             Some(c) => {
@@ -1029,7 +1019,7 @@ impl Slicer {
                     let (x0, x1) = (self.x_of(s0, w), self.x_of(s1, w));
                     p.fill_rect(RectF::new(x0, WAVE_TOP, (x1 - x0).max(0.0), h - WAVE_TOP), colour(r, "WaveEditorSelectionColour", amber.with_alpha(0.3)));
                 }
-                crate::sampler::draw_wave(p, area, &a.buckets, BUCKET, v0 as f64, v1 as f64, ink, (0.0, w));
+                crate::sampler::draw_lanes(p, area, &a.buckets, BUCKET, v0 as f64, v1 as f64, ink, (0.0, w));
                 // [re:a866d6]: slices on no pad are dimmed with the background
                 // (alpha 120); [re:da2093]: with Classify a 10 px strip at
                 // the bottom in the slice type's colour ([re:1f723d]).
