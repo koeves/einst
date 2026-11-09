@@ -2632,11 +2632,11 @@ fn effect_chain_shows_four_of_six_slots_and_scrolls() {
     assert_eq!(ed.app.ctrl(&[row, vec![5]].concat()).unwrap().attr("fxKind"), Some(kind.to_string().as_str()));
 }
 
-/// v1's 64 scene slots: 16 on view, scrolled by page / row (and the view
+/// v1's 72 scene slots: 16 on view, scrolled by page / row (and the view
 /// control), the slots showing their scenes' key names; Clear All clears
-/// all 64; Snapshot next takes the next free slot and scrolls to it.
+/// all 72; Snapshot next takes the next free slot and scrolls to it.
 #[test]
-fn scene_page_scrolls_through_64_slots() {
+fn scene_page_scrolls_through_72_slots() {
     crate::app::test_setup();
     use dreist_engine::binding::id;
     let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
@@ -2662,12 +2662,13 @@ fn scene_page_scrolls_through_64_slots() {
     click(&mut ed, "PageUpButton");
     click(&mut ed, "PageUpButton");
     click(&mut ed, "PageUpButton");
-    assert_eq!(base(&ed), 12, "clamped at the last page");
-    assert_eq!((key(&ed, 0), key(&ed, 15)), ("C2".to_string(), "D#3".to_string()));
+    click(&mut ed, "PageUpButton");
+    assert_eq!(base(&ed), 14, "clamped at the last page");
+    assert_eq!((key(&ed, 0), key(&ed, 15)), ("G#2".to_string(), "B3".to_string()));
     assert!(!enabled(&ed, "PageUpButton") && enabled(&ed, "RowDownButton"));
     // The slots act on their shown scenes.
     let s15 = slot(&ed, 15);
-    assert_eq!(s15.attr("scene"), Some("63"));
+    assert_eq!(s15.attr("scene"), Some("71"));
     // The view control: a press on its bottom shows the first rows.
     let v = ed.app.root.path_of("ViewSlider").unwrap();
     let h = ed.app.ctrl(&v).unwrap().rect.h as f32;
@@ -2677,7 +2678,7 @@ fn scene_page_scrolls_through_64_slots() {
     ed.take_commands();
     click(&mut ed, "ClearAllButton");
     let cleared = ed.take_commands().iter().filter(|c| matches!(c, Command::Message(m) if m.kind == id::SCENE_CLEAR)).count();
-    assert_eq!(cleared, 64);
+    assert_eq!(cleared, 72);
     // Snapshot next: the next free slot, revealed.
     let mgr = ed.model.doc.child_mut_or_insert("SceneManager", "Scenes");
     for n in 0..20 {

@@ -17,7 +17,7 @@ page-padlayers cc8ebdc451d889c2
 page-padmixer dfb7df627f97d096
 page-pattern d9e42d792cefa3bc
 page-sampler 0284a6ae18d406f1
-page-scene 73776b12b0aa3508
+page-scene 20535a3c3d25eace
 page-song ded6dde86b8bde3c
 pattern-multigraph a62747742f6f7b27
 slicer edd9bdd0441626f3
