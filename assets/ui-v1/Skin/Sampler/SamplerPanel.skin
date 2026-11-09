@@ -17,7 +17,7 @@
             </CtrlPanel>
             <CtrlLabel name="CtrlLabel" rect="-57, 19, 132, 17" id="100000" style="StandardLabelRightAlignedStyle" text="Trigger Mode" />
             <CtrlButton name="ArmButton" rect="719, 23, 40, 41" displayName="Arm Recording" id="100027" optIsMomentary="true" overloadClass="FlashingButton" style="SamplerArmButtonStyle" text="ARM" />
-            <CtrlButton name="RecButton" rect="762, 23, 40, 41" displayName="Start Recording" id="100027" optIsMomentary="true" overloadClass="FlashingButton" style="SamplerRecButtonStyle" text="" />
+            <CtrlButton name="RecButton" rect="762, 23, 40, 41" displayName="Start Recording" id="100027" optIsMomentary="true" overloadClass="FlashingButton" style="SamplerRecButtonStyle" text="REC" />
             <CtrlLabel name="CtrlLabel" rect="579, 32, 136, 15" id="100000" style="StandardLabelCenteredStyle" text="Source" />
             <CtrlPanel name="SyncPanel" rect="262, 35, 310, 30" id="100005" style="EmptyPanelStyle">
                 <CtrlPanel name="BeatsPanel" rect="153, 10, 160, 21" id="100002" style="EmptyPanelStyle">

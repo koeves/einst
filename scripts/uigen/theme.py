@@ -219,6 +219,8 @@ COLOURS = {
     "RowEdge": (106, 112, 136),
     "GroupEdge": (94, 101, 126),
     "InsetEdge": (75, 76, 90),
+    "SamplerInsetEdge": (60, 67, 97),
+    "BigButtonText": (90, 97, 128),
     "BrowserSel": (158, 170, 186),
     "BrowserTreeSel": (108, 122, 152),
     "BrowserList": (228, 231, 236),
