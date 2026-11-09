@@ -124,9 +124,10 @@ BUTTONS = [
     (r"^LEDMuteButton", L("LcdMuteButtonStyle", inset=(0, -1, 0, -1))),
     (r"^LEDSoloButton", L("LcdSoloButtonStyle", inset=(0, -1, 0, -1))),
     (r"^LED(Ultra|Large)?MenuButton|^LEDEffectCombo|^DragEditButton", L("LcdMenuButtonStyle", ctrl=POPUP)),
-    (r"^LEDRadio(Large|Micro)Left", L("LcdButtonStyle", optRoundTopRight="false", optRoundBottomRight="false")),
-    (r"^LEDRadio(Large|Micro)Center", L("LcdButtonStyle", realCornerRounding="0")),
-    (r"^LEDRadio(Large|Micro)Right", L("LcdButtonStyle", optRoundTopLeft="false", optRoundBottomLeft="false")),
+    # (v1: the selected segment mid grey with dark text, the outer ends pills)
+    (r"^LEDRadio(Large|Micro)Left", L("LcdRadioStyle", realCornerRounding="8", optRoundTopRight="false", optRoundBottomRight="false")),
+    (r"^LEDRadio(Large|Micro)Center", L("LcdRadioStyle", realCornerRounding="0")),
+    (r"^LEDRadio(Large|Micro)Right", L("LcdRadioStyle", realCornerRounding="8", optRoundTopLeft="false", optRoundBottomLeft="false")),
     (r"^LEDAddButton", L("LcdIconButtonStyle", text=G["plus"])),
     (r"^LEDSubtractButton", L("LcdIconButtonStyle", text=G["minus"])),
     (r"^LEDClear", L("LcdIconButtonStyle", text=G["close"])),
@@ -253,11 +254,16 @@ TEXT_BOXES = [
 # (rule, look, fit): fit = how the square dial sits in v1's rect ("top"
 # for the hardware knobs, whose film frames carry a scale under the dial).
 KNOBS = [
-    (r"^HARDKnobLarge", L("HardKnobStyle", ctrl={"realDialThickness": "0.12"}, inset=(4, 12, 8, 20)), "top"),
+    # (v1: a light-blue value arc on the outer part of the dark ring)
+    (r"^HARDKnobLarge", L("HardKnobStyle", ctrl={"realDialThickness": "0.07"}, inset=(4, 12, 8, 20)), "top"),
     (r"^HARDKnobSmall", L("HardKnobSmallStyle", ctrl={"realDialThickness": "0.07"}, inset=(2, 1, 2, 5)), "top"),
-    (r"^LEDKnobLarge", L("LcdKnobStyle", ctrl={"realDialThickness": "0.10"}), "center"),
-    # (v1: a thin dark open ring with a pointer; measured 2 px on 17)
-    (r"^LEDKnob(Small|Micro)", L("LcdKnobStyle", ctrl={"realDialThickness": "0.13"}), "center"),
+    # (v1, 50 x 46 film: a 4 px 270-degree value arc, a gap, then a knob
+    # body: grey ring round a light face, with a short dark pointer)
+    (r"^LEDKnobLarge", L("LcdKnobLargeStyle", ctrl={"realDialThickness": "0.09"}), "center"),
+    # (v1, 24 x 26 / 17 x 17 films: no arc; a closed grey ring round a light
+    # face with a dark edge and a pointer)
+    (r"^LEDKnobSmall", L("LcdKnobSmallStyle", ctrl={"realDialThickness": "0.04"}), "center"),
+    (r"^LEDKnobMicro", L("LcdKnobMicroStyle", ctrl={"realDialThickness": "0.05"}), "center"),
     (r"^LEDSpinner", L("SpinnerStyle", ctrl={"realDialThickness": "0.2"}), "center"),
 ]
 

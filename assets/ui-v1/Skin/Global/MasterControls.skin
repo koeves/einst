@@ -14,13 +14,13 @@
         <CtrlPanel rect="11, 78, 43, 43" style="HardKnobRingStyle" />
         <CtrlPanel rect="10, 121, 3, 3" style="HardKnobMarkStyle" />
         <CtrlPanel rect="52, 121, 3, 3" style="HardKnobMarkStyle" />
-        <CtrlKnob name="MasterPitch" rect="11, 78, 43, 43" displayName="Master pitch" id="100000" optCentered="true" realDialThickness="0.12" style="HardKnobLargeC" />
+        <CtrlKnob name="MasterPitch" rect="11, 78, 43, 43" displayName="Master pitch" id="100000" optCentered="true" realDialThickness="0.07" style="HardKnobLargeC" />
         <CtrlPanel rect="72, 72, 55, 55" style="HardKnobHaloStyle" />
         <CtrlPanel rect="78, 104, 43, 34" style="HardKnobShadowStyle" />
         <CtrlPanel rect="78, 78, 43, 43" style="HardKnobRingStyle" />
         <CtrlPanel rect="77, 121, 3, 3" style="HardKnobMarkStyle" />
         <CtrlPanel rect="119, 121, 3, 3" style="HardKnobMarkStyle" />
-        <CtrlKnob name="MasterSlider" rect="78, 78, 43, 43" displayName="Master gain" id="100000" realDialThickness="0.12" style="HardKnobLargeLR" />
+        <CtrlKnob name="MasterSlider" rect="78, 78, 43, 43" displayName="Master gain" id="100000" realDialThickness="0.07" style="HardKnobLargeLR" />
         <CtrlLabel name="CtrlImageView" rect="28, 136, 12, 11" id="100000" legacyClass="CtrlImageView" style="ChassisGlyphLabelStyle" text="" />
         <CtrlLabel name="CtrlImageView" rect="95, 136, 12, 10" id="100001" legacyClass="CtrlImageView" style="ChassisGlyphLabelStyle" text="" />
     </CtrlPanel>

@@ -16,6 +16,12 @@ COLOURS = {
     "Ink": (18, 25, 60),
     "InkMid": (76, 83, 111),
     "InkSoft": (148, 155, 172),
+    # v1's LCD knobs: the arc's track and value, the body's ring and edge.
+    "KnobLcdTrack": (169, 176, 191),
+    "KnobLcdValue": (71, 77, 106),
+    "KnobLcdEdge": (57, 65, 95),
+    # v1's selected radio segment.
+    "RadioOn": (149, 156, 173),
     "Lcd": (210, 217, 227),
     "LcdLight": (222, 229, 237),
     "LcdMid": (199, 206, 217),
@@ -348,6 +354,8 @@ def base_styles():
     st("LcdButtonStyle", "BaseButtonStyle", colFill="LcdFace", colBorder="LcdEdge", colAltFill="LcdOn", colAltBorder="Ink",
        realGradientShade="0.08")
     st("LcdIconButtonStyle", "LcdButtonStyle", font=icon_font(10))
+    st("LcdRadioStyle", "LcdButtonStyle", colBorder="InkMid", colFill="LcdLight", realGradientShade="0", colAltFill="RadioOn",
+       colAltText="Ink", colAltBorder="InkMid")
     # (mute / solo: a near-white face in a grey frame, shaded at the bottom;
     # heavy dark-grey letters)
     st("LcdMuteButtonStyle", "LcdButtonStyle", colAltFill="MuteOn", colAltText="Ink", font=text_font(10, True), realCornerRounding="3",
@@ -438,11 +446,11 @@ def base_styles():
     # The large knob: a light halo, the dark ring (lit grey at the top) and a
     # face lit from the top left are panels behind it (looks.KNOB_BODY);
     # the knob draws the face and pointer.
-    st("HardKnobStyle", "BaseKnobStyle", colFill="Transparent", colFillHighlight="Transparent",
+    st("HardKnobStyle", "BaseKnobStyle", colFill="Transparent",
        colFace="KnobFace", colFaceGradientTo="KnobFaceLow", enumGradientDirection="Radial", realGradientCentreX="0.42",
-       realGradientCentreY="0.18", realGradientRadius="0.95", realFaceInset="-0.16",
-       colPointer="KnobPointer", realPointerStart="0.3", realPointerInset="3.3", optPointerDot="true", colAltFill="KnobDot",
-       colAltBorder="KnobDot")
+       realGradientCentreY="0.18", realGradientRadius="0.95",
+       colPointer="KnobPointer", realPointerStart="0.3", realPointerInset="3.3", optPointerDot="false", colAltFill="KnobDot",
+       colAltBorder="KnobDot", colFillHighlight="Readout", realFaceInset="2")
     st("HardKnobHaloStyle", "BasePanelStyle", colFill="KnobHalo", colFillGradientTo="KnobHaloLow", enumGradientDirection="Radial",
        realGradientRadius="0.5", realCornerRounding="100")
     st("HardKnobMarkStyle", "BasePanelStyle", colFill="KnobMark", realCornerRounding="100")
@@ -455,6 +463,13 @@ def base_styles():
        realPointerWidth="1.5", realPointerInset="1")
     # v1: a uniform dark ring (the value shows by the pointer), light face.
     st("LcdKnobStyle", "BaseKnobStyle", colFill="InkMid", colFillHighlight="InkMid")
+    st("LcdKnobLargeStyle", "BaseKnobStyle", colFill="KnobLcdTrack", colFillHighlight="KnobLcdValue", colFace="LcdLight",
+       colFaceGradientTo="LcdLight", realFaceInset="3", colFaceBorder="InkSoft", realFaceBorderWidth="3", colPointer="Ink",
+       realPointerWidth="2.5", realPointerStart="0.1", realPointerInset="6")
+    st("LcdKnobSmallStyle", "BaseKnobStyle", colFill="Transparent", colFillHighlight="Transparent",
+       colFace="LcdLight", colFaceGradientTo="LcdLight", realFaceInset="-1", colFaceBorder="InkSoft", realFaceBorderWidth="3",
+       colPointer="Ink", realPointerWidth="2", realPointerInset="3")
+    st("LcdKnobMicroStyle", "LcdKnobSmallStyle", realFaceBorderWidth="2", realPointerInset="2")
     st("SpinnerFaceStyle", "BaseKnobStyle")
     st("LcdKnobBodyStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkSoft", optDrawBorder="true", realCornerRounding="100")
     st("SpinnerStyle", "BaseKnobStyle", colFill="Transparent", colFillHighlight="InkSoft", optPointer="false", colFace="Transparent")

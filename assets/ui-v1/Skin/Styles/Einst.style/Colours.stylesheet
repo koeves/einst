@@ -4,6 +4,10 @@
     <VColour name="Ink" colour="#12193C" />
     <VColour name="InkMid" colour="#4C536F" />
     <VColour name="InkSoft" colour="#949BAC" />
+    <VColour name="KnobLcdTrack" colour="#A9B0BF" />
+    <VColour name="KnobLcdValue" colour="#474D6A" />
+    <VColour name="KnobLcdEdge" colour="#39415F" />
+    <VColour name="RadioOn" colour="#959CAD" />
     <VColour name="Lcd" colour="#D2D9E3" />
     <VColour name="LcdLight" colour="#DEE5ED" />
     <VColour name="LcdMid" colour="#C7CED9" />

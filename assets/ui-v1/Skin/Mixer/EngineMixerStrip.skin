@@ -8,7 +8,7 @@
             <CtrlButton name="MuteButton" rect="30, 29, 19, 19" displayName="Mute" id="100019" optIsMomentary="false" style="LEDMuteButtonStyle" text="M" />
             <CtrlButton name="SoloButton" rect="50, 29, 19, 19" displayName="Solo" id="100018" optIsMomentary="false" style="LEDSoloButtonStyle" text="S" />
             <CtrlLabel name="EnginePitchLabel" rect="18, 85, 30, 13" id="100013" style="StandardLabelStyle" text="Pitch" />
-            <CtrlKnob name="EnginePitchKnob" rect="18, 97, 20, 20" displayName="Engine Pitch" id="100003" realDialThickness="0.13" style="LEDKnobSmallLR" />
+            <CtrlKnob name="EnginePitchKnob" rect="18, 97, 20, 20" displayName="Engine Pitch" id="100003" realDialThickness="0.04" style="LEDKnobSmallLR" />
             <CtrlSlider name="GainSlider" rect="41, 63, 15, 75" displayName="Engine Gain" id="100003" realTrackInset="0.0" style="SmallVerticalFaderStyle" />
             <CtrlLevelStrip name="VUMeterLeft" rect="58, 63, 3, 75" id="100016" style="VU75Dark" />
             <CtrlLevelStrip name="VUMeterRight" rect="63, 63, 3, 75" id="100017" style="VU75Dark" />
@@ -18,16 +18,16 @@
             <CtrlLabel name="SwingDepthLabel" rect="58, 85, 30, 13" id="100013" style="StandardLabelStyle" text="Swing" />
             <CtrlLabel name="SwingLabel" rect="3, 50, 91, 15" id="100005" style="StandardLabelCenteredStyle" text="Swing Template" />
             <CtrlButton name="EngineSwingTemplateCombo" rect="11, 65, 75, 17" id="100004" optIsMomentary="true" renderer="PopupButtonRenderer" style="LEDLargeMenuButtonStyle" />
-            <CtrlKnob name="SwingKnob" rect="60, 97, 20, 20" displayName="Swing Template Depth" id="100000" realDialThickness="0.13" style="LEDKnobSmallLR" />
+            <CtrlKnob name="SwingKnob" rect="60, 97, 20, 20" displayName="Swing Template Depth" id="100000" realDialThickness="0.04" style="LEDKnobSmallLR" />
             <CtrlPopupButton name="OutputCombo" rect="11, 140, 75, 17" id="100010" legacyClass="CtrlComboBox" optSingleClickEdit="true" style="LEDComboBoxStyle" />
             <CtrlLabel name="SendLabel0" rect="56, 49, 35, 17" id="100013" style="StandardLabelStyle" text="S1" />
             <CtrlLabel name="SendLabel1" rect="56, 72, 35, 17" id="100013" style="StandardLabelStyle" text="S2" />
             <CtrlLabel name="SendLabel2" rect="56, 95, 35, 17" id="100013" style="StandardLabelStyle" text="S3" />
             <CtrlLabel name="SendLabel3" rect="56, 118, 35, 17" id="100013" style="StandardLabelStyle" text="S4" />
-            <CtrlKnob name="SendKnob0" rect="35, 49, 17, 17" displayName="Send 1" id="0" realDialThickness="0.13" style="LEDKnobMicroLR" />
-            <CtrlKnob name="SendKnob1" rect="35, 72, 17, 17" displayName="Send 2" id="1" realDialThickness="0.13" style="LEDKnobMicroLR" />
-            <CtrlKnob name="SendKnob2" rect="35, 95, 17, 17" displayName="Send 3" id="2" realDialThickness="0.13" style="LEDKnobMicroLR" />
-            <CtrlKnob name="SendKnob3" rect="35, 118, 17, 17" displayName="Send 4" id="3" realDialThickness="0.13" style="LEDKnobMicroLR" />
+            <CtrlKnob name="SendKnob0" rect="35, 49, 17, 17" displayName="Send 1" id="0" realDialThickness="0.05" style="LEDKnobMicroLR" />
+            <CtrlKnob name="SendKnob1" rect="35, 72, 17, 17" displayName="Send 2" id="1" realDialThickness="0.05" style="LEDKnobMicroLR" />
+            <CtrlKnob name="SendKnob2" rect="35, 95, 17, 17" displayName="Send 3" id="2" realDialThickness="0.05" style="LEDKnobMicroLR" />
+            <CtrlKnob name="SendKnob3" rect="35, 118, 17, 17" displayName="Send 4" id="3" realDialThickness="0.05" style="LEDKnobMicroLR" />
         </CtrlPanel>
     </CtrlPanel>
 </root>

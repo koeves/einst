@@ -7,7 +7,7 @@
         <CtrlButton name="LockPatternsButton" rect="140, 1, 35, 24" displayName="Lock / Unlock all patterns" id="100002" optIsMomentary="true" style="LockPatternStyle" text="Ptns" />
         <CtrlButton name="HitLoopModeButton" rect="188, 4, 50, 17" displayName="Slice audio files when clicked in browser" id="100007" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Slice" />
         <CtrlButton name="InteractionModeButton" rect="240, 4, 50, 17" displayName="Auto allocate files when clicked in browser" id="100004" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Auto load" />
-        <CtrlKnob name="PreviewVolumeKnob" rect="2, 4, 17, 17" displayName="Preview volume" id="100005" realDialThickness="0.13" style="LEDKnobMicroLR" />
+        <CtrlKnob name="PreviewVolumeKnob" rect="2, 4, 17, 17" displayName="Preview volume" id="100005" realDialThickness="0.05" style="LEDKnobMicroLR" />
         <CtrlLabel name="CtrlImageView" rect="22, 7, 12, 10" id="100000" legacyClass="CtrlImageView" style="PreviewVolImageStyle" text="" />
     </CtrlPanel>
 </root>

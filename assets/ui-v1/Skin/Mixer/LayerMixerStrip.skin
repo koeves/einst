@@ -14,9 +14,9 @@
         <CtrlLabel name="SendLabel1" rect="56, 72, 35, 17" id="100013" style="StandardLabelStyle" text="S2" />
         <CtrlLabel name="SendLabel2" rect="56, 95, 35, 17" id="100013" style="StandardLabelStyle" text="S3" />
         <CtrlLabel name="SendLabel3" rect="56, 118, 35, 17" id="100013" style="StandardLabelStyle" text="S4" />
-        <CtrlKnob name="SendKnob0" rect="35, 49, 17, 17" displayName="Send 1" id="0" realDialThickness="0.13" style="LEDKnobMicroLR" />
-        <CtrlKnob name="SendKnob1" rect="35, 72, 17, 17" displayName="Send 2" id="1" realDialThickness="0.13" style="LEDKnobMicroLR" />
-        <CtrlKnob name="SendKnob2" rect="35, 95, 17, 17" displayName="Send 3" id="2" realDialThickness="0.13" style="LEDKnobMicroLR" />
-        <CtrlKnob name="SendKnob3" rect="35, 118, 17, 17" displayName="Send 4" id="3" realDialThickness="0.13" style="LEDKnobMicroLR" />
+        <CtrlKnob name="SendKnob0" rect="35, 49, 17, 17" displayName="Send 1" id="0" realDialThickness="0.05" style="LEDKnobMicroLR" />
+        <CtrlKnob name="SendKnob1" rect="35, 72, 17, 17" displayName="Send 2" id="1" realDialThickness="0.05" style="LEDKnobMicroLR" />
+        <CtrlKnob name="SendKnob2" rect="35, 95, 17, 17" displayName="Send 3" id="2" realDialThickness="0.05" style="LEDKnobMicroLR" />
+        <CtrlKnob name="SendKnob3" rect="35, 118, 17, 17" displayName="Send 4" id="3" realDialThickness="0.05" style="LEDKnobMicroLR" />
     </CtrlPanel>
 </root>
