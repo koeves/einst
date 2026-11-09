@@ -209,9 +209,21 @@
     <VColour name="BigButtonText" colour="#5A6180" />
     <VColour name="BrowserSel" colour="#9EAABA" />
     <VColour name="BrowserTreeSel" colour="#6C7A98" />
-    <VColour name="BrowserList" colour="#E4E7EC" />
+    <VColour name="BrowserList" colour="#DBDEE8" />
+    <VColour name="BrowserRow" colour="#D3DAE3" />
+    <VColour name="BrowserRowAlt" colour="#C3CAD5" />
+    <VColour name="BrowserRowLight" colour="#F3FCFF" />
+    <VColour name="BrowserScrollTrack" colour="#C7D0D1" />
+    <VColour name="CrumbFace" colour="#DEE5EE" />
+    <VColour name="CrumbTop" colour="#585C7A" />
+    <VColour name="CrumbLow" colour="#AAB1C2" />
+    <VColour name="NavPlate" colour="#4C536F" />
+    <VColour name="SearchField" colour="#E4E9F0" />
+    <VColour name="SearchEdge" colour="#878FA3" />
+    <VColour name="NavKey" colour="#DDE3EC" />
+    <VColour name="NavKeyDown" colour="#A9B0BF" />
     <VColour name="BrowserHeader" colour="#DDE2E6" />
-    <VColour name="BrowserSplit" colour="#1F2245" />
+    <VColour name="BrowserSplit" colour="#12193C" />
     <VColour name="BrowserTreeBack" colour="#DEE3E9" />
     <VColour name="IconLine" colour="#404454" />
     <VColour name="IconFace" colour="#CCD1DA" />

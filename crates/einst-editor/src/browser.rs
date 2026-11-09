@@ -3,9 +3,10 @@
 //!
 //! - Source list ([re:f32dc0]):
 //!   the categories of [re:f32dc0] (Content,
-//!   Places, Drives, Favourites, Searches, Shortlists), 25 px rows in
-//!   `BrowserSourceListItemStyle`.
-//! - File list rows in `BrowserListItemStyle`.
+//!   Places, Drives, Favourites, Searches, Shortlists), 20 px rows (v1
+//!   measured: ui-v1-style "browser tree").
+//! - File list rows in `BrowserListStyle`, 25 px framed cells (its
+//!   `intRowHeight`; v1 measured: ui-v1-style "browser list").
 //!
 //! Loading (port): presets replace the project (`Command::LoadProject`);
 //! kits replace the selected engine's pads and audio files the selected
@@ -25,8 +26,8 @@ use crate::model::Model;
 use crate::{EditorError, err};
 
 pub const CATEGORIES: [&str; 6] = ["Content", "Places", "Drives", "Favourites", "Searches", "Shortlists"];
-pub(crate) const SOURCE_ROW: f32 = 25.0;
-const FILE_ROW: f32 = 18.0;
+pub(crate) const SOURCE_ROW: f32 = 20.0;
+const FILE_ROW: f32 = 25.0;
 /// The Preview play button's width (v1's 20 px icon).
 const PREVIEW_ICON: f32 = 20.0;
 /// Its red flash: 26 ticks of v1's 30 Hz timer.
@@ -181,6 +182,19 @@ const SOURCE_HEAD_STYLE: &str = "BrowserTreeHeadStyle";
 const HEADER_STYLE: &str = "BrowserListHeaderStyle";
 const SOURCE_SELECTED_STYLE: &str = "BrowserTreeSelectedStyle";
 const NAV_STYLE: &str = "BrowserCrumbStyle";
+/// The lists' scroll bars: thumb `colFill`, track `colAltFill`.
+const SCROLL_STYLE: &str = "BrowserScrollStyle";
+
+/// A list's scroll thumb (y, height) in a track `h` high: the whole track
+/// while every row fits.
+fn scroll_thumb(h: f32, n: usize, scroll: usize) -> (f32, f32) {
+    let vis = (h / FILE_ROW).floor().max(1.0) as usize;
+    if n <= vis {
+        return (0.0, h);
+    }
+    let th = (h * vis as f32 / n as f32).max(8.0);
+    (((h - th) * scroll.min(n - vis) as f32 / (n - vis) as f32).round(), th)
+}
 
 /// Listed files besides projects and kits of every family.
 const EXTENSIONS: [&str; 13] = ["wav", "aif", "aiff", "patterntemplate", "rx2", "rex", "rcy", "rex2", "rcso", "gru", "kit", "g01", "g24"];
@@ -919,13 +933,28 @@ fn build_column(skin: &mut Skin, host: &mut Ctrl) -> Result<(), EditorError> {
     header.name = "BrowserHeader".into();
     let mut footer = crate::front::load(skin, "Browser/Footer.skin")?;
     footer.name = "Footer".into();
+    // v1 (measured on the reference screenshots): the header 8 px down
+    // the column, the 18 px navigator 5 px under it, the tree and lists
+    // from y 58, the footer 2 px off the bottom.
+    // v1's picture buttons get their icons drawn over the face.
+    for name in ["EnterButton", "ParentButton", "SearchOptionsButton"] {
+        if let Some(b) = header.find_mut(name) {
+            b.overload = crate::browsericons::BUTTON_OVERLOAD.into();
+        }
+    }
+    for name in ["PreviewButton", "LockPadsButton", "LockPatternsButton", "CtrlImageView"] {
+        if let Some(b) = footer.find_mut(name) {
+            b.overload = crate::browsericons::BUTTON_OVERLOAD.into();
+        }
+    }
     let (hh, fh) = (header.rect.h, footer.rect.h);
-    footer.rect.y = h - fh;
+    header.rect.y = 8;
+    footer.rect.y = h - fh - 2;
     host.children.push(header);
-    host.children.push(panel("Search", "BrowserSearchPane", Rect::new(0, hh, w, 0), "InvisibleStyle"));
-    const NAV: i32 = 20;
-    host.children.push(panel("Navigator", "BrowserPathNavigator", Rect::new(1, hh + 2, w - 2, NAV), "InvisibleStyle"));
-    let top = hh + NAV + 4;
+    host.children.push(panel("Search", "BrowserSearchPane", Rect::new(0, hh + 8, w, 0), "InvisibleStyle"));
+    const NAV: i32 = 18;
+    host.children.push(panel("Navigator", "BrowserPathNavigator", Rect::new(1, hh + 13, w - 2, NAV), "InvisibleStyle"));
+    let top = hh + 8 + 5 + NAV + 2;
     let body = h - top - fh - 2;
     let mut split = panel("SplitView", "", Rect::new(0, top, w, body), "InvisibleStyle");
     split.class = "CtrlSplitterPanel".into();
@@ -2468,10 +2497,10 @@ impl Browser {
         match c.overload.as_str() {
             "BrowserSourceList" => {
                 p.fill_rect(RectF::new(0.0, 0.0, w, h), crate::front::colour_or(s, "BrowserTreeBackStyle", "colFill", Colour::TRANSPARENT));
-                // v1's column is inset: a shadow fading over 10 px from the
-                // left edge (measured #6E -> #C0).
-                for i in 0..10 {
-                    let a = 0.42 * (1.0 - i as f32 / 10.0).powf(1.6);
+                // v1's column is inset: a shadow fading over 18 px from the
+                // left edge (measured #919BA5 -> #DAE2E7).
+                for i in 0..18 {
+                    let a = 0.42 * (1.0 - i as f32 / 18.0).powf(1.6);
                     p.fill_rect(RectF::new(i as f32, 0.0, 1.0, h), Colour::rgba(0, 0, 20, (a * 255.0) as u8));
                 }
                 let font = s.font(SOURCE_STYLE);
@@ -2495,13 +2524,16 @@ impl Browser {
                     let col = if current { sel_text } else { text };
                     // v1's section heads (measured, ui-v1-style "browser
                     // tree"): upper case at x 14, after a down triangle
-                    // (x 4-12) when the section has entries.
+                    // (x 4-12) when the section has entries; without
+                    // entries at x 8 (the reference screenshots).
                     if src.header {
-                        if self.sources.get(i + 1).is_some_and(|n| !n.header) {
+                        let has_entries = self.sources.get(i + 1).is_some_and(|n| !n.header);
+                        if has_entries {
                             let cy = y + SOURCE_ROW / 2.0;
                             p.fill_polygon(&[(4.0, cy - 3.0), (12.0, cy - 3.0), (8.0, cy + 2.0)], col);
                         }
-                        p.text(RectF::new(14.0, y, w - 18.0, SOURCE_ROW), &src.label.to_uppercase(), col, &s.font(SOURCE_HEAD_STYLE), HAlign::Left, VAlign::Center);
+                        let tx = if has_entries { 14.0 } else { 8.0 };
+                        p.text(RectF::new(tx, y, w - tx - 4.0, SOURCE_ROW), &src.label.to_uppercase(), col, &s.font(SOURCE_HEAD_STYLE), HAlign::Left, VAlign::Center);
                         continue;
                     }
                     let (x, f) = (34.0, &font);
@@ -2532,8 +2564,9 @@ impl Browser {
                 let edge = s.colour(st, "colBorder", Colour::BLACK);
                 let text = s.colour(st, "colText", Colour::BLACK);
                 let font = s.font(st);
-                p.fill_rect(RectF::new(1.0, 0.0, w - 2.0, h - 1.0), back);
-                p.stroke_rect(RectF::new(1.5, 0.5, w - 3.0, h - 2.0), edge, 1.0);
+                // (v1's frame has rounded corners, the reference screenshots)
+                p.fill_rounded(RectF::new(1.0, 0.0, w - 2.0, h - 1.0), 3.0, [true; 4], back);
+                p.stroke_rounded(RectF::new(1.5, 0.5, w - 3.0, h - 2.0), 3.0, [true; 4], edge, 1.0);
                 for (col, x, cw) in self.columns(w) {
                     let title = match col {
                         Column::Name => "Name",
@@ -2559,18 +2592,45 @@ impl Browser {
                 // after every button but the last, which gets a right edge
                 // line and, for "(No slice)", a 10 point star at
                 // (w − 10, h/2) (radii 0.4h / 0.15h) in the text colour.
+                // Styled after v1's stub bitmaps (StartStub / NextStub /
+                // EndStub, ParentButtonTileUp): one light strip with a dark
+                // top and bottom edge, a bracket at its start, the
+                // separators drawn as navy ")" over the chevron's span and
+                // the strip closed after the last button.
                 let st = NAV_STYLE;
                 let font = s.font(st);
                 let text = s.colour(st, "colText", Colour::BLACK);
                 let border = s.colour(st, "colBorder", Colour::BLACK);
+                let face = crate::front::colour_or(s, st, "colFill", Colour::TRANSPARENT);
+                let lower = crate::front::colour_or(s, st, "colAltBorder", border);
+                let ink = crate::front::colour_or(s, st, "colSeparator", text);
                 let (parts, is_path) = self.nav_parts();
                 let no_slice = is_path && self.dir.as_deref().is_some_and(|d| !slicing_allowed(d));
                 let fonts = &mut *p.fonts;
                 let buttons = nav_layout(&mut |t: &str| fonts.measure(&font, t).0, &parts, is_path, no_slice, w);
+                let end = buttons.last().map(|b| (b.x + b.w).min(w - 1.0)).unwrap_or(0.0);
+                if end > 0.0 {
+                    p.fill_rounded(RectF::new(0.0, 0.0, end + 1.0, h), 3.0, [true; 4], face);
+                    p.fill_rect(RectF::new(2.0, 0.0, end - 3.0, 1.0), border);
+                    p.fill_rect(RectF::new(2.0, h - 2.0, end - 3.0, 1.0), lower);
+                    p.fill_rect(RectF::new(2.0, h - 1.0, end - 3.0, 1.0), ink);
+                    // The start and end brackets (".." stands at the start
+                    // in place of the bracket).
+                    let dots = is_path && buttons.first().is_some_and(|b| b.label == ".." && !b.last);
+                    if !dots {
+                        p.stroke_rounded(RectF::new(1.0, 1.0, 4.0, h - 2.0), 2.0, [true, false, false, true], ink, 2.0);
+                    }
+                    p.stroke_rounded(RectF::new(end - 5.0, 1.0, 4.0, h - 2.0), 2.0, [false, true, true, false], ink, 2.0);
+                }
                 for b in &buttons {
                     let x0 = b.x;
+                    // ".." is exactly its text wide ([re:491500]): drawn
+                    // whole, without a separator of its own.
+                    if is_path && b.label == ".." && !b.last && x0 == 0.0 {
+                        p.text(RectF::new(x0 + 1.0, 0.0, b.w.max(1.0), h), &b.label, text, &font, HAlign::Left, VAlign::Center);
+                        continue;
+                    }
                     if b.last {
-                        p.line(x0 + b.w + 0.5, 0.5, x0 + b.w + 0.5, h + 0.5, border, 1.0);
                         if b.display.contains("(No slice)") {
                             let (cx, cy) = (x0 + b.w - 10.0, h * 0.5);
                             let pts: Vec<(f32, f32)> = (0..10)
@@ -2583,10 +2643,17 @@ impl Browser {
                             p.fill_polygon(&pts, text);
                         }
                     } else {
-                        p.line(x0 + b.w - 10.0, 0.0, x0 + b.w, h * 0.5, border, 1.0);
-                        p.line(x0 + b.w - 10.0, h, x0 + b.w, h * 0.5, border, 1.0);
+                        let pts: Vec<(f32, f32)> = (0..=8)
+                            .map(|k| {
+                                let t = k as f32 / 8.0;
+                                (x0 + b.w - 8.0 + 4.0 * (std::f32::consts::PI * t).sin(), 1.0 + t * (h - 2.0))
+                            })
+                            .collect();
+                        p.polyline(&pts, ink, 2.0);
                     }
-                    p.text(RectF::new(x0 + 2.0, 0.0, (b.w - 4.0).max(0.0), h), &b.label, text, &font, HAlign::Left, VAlign::Center);
+                    // (the first button's text clear of the start bracket)
+                    let tx = if x0 == 0.0 { 5.0 } else { 2.0 };
+                    p.text(RectF::new(x0 + tx, 0.0, (b.w - tx - 2.0).max(0.0), h), &b.label, text, &font, HAlign::Left, VAlign::Center);
                 }
                 *self.nav.borrow_mut() = buttons;
                 true
@@ -2620,21 +2687,40 @@ impl Browser {
         let text = s.colour(ITEM_STYLE, "colText", Colour::BLACK);
         let sel = crate::front::colour_or(s, ITEM_STYLE, "colSelection", Colour::rgba(232, 204, 91, 255));
         let sel_text = s.colour(ITEM_STYLE, "colSelectedText", text);
-        let divider = crate::front::colour_or(s, ITEM_STYLE, "colBorder", text).with_alpha(0.5);
+        let divider = crate::front::colour_or(s, ITEM_STYLE, "colColumnDivider", text.with_alpha(0.5));
+        let row_line = crate::front::colour_or(s, ITEM_STYLE, "colRowDivider", Colour::TRANSPARENT);
+        let row_light = crate::front::colour_or(s, ITEM_STYLE, "colRowHighlight", Colour::TRANSPARENT);
         let (row, alt) = (crate::front::colour_or(s, ITEM_STYLE, "colRow", Colour::TRANSPARENT), crate::front::colour_or(s, ITEM_STYLE, "colRowAlt", Colour::TRANSPARENT));
         p.fill_rect(RectF::new(0.0, 0.0, w, h), crate::front::colour_or(s, ITEM_STYLE, "colFill", Colour::TRANSPARENT));
         // Columns line up with the header, which leaves the scroll bar's
         // width free at the right.
-        let cols = self.columns(w - SLIDER_W as f32);
+        let lw = w - SLIDER_W as f32;
+        let cols = self.columns(lw);
         let name_w = cols.first().map(|c| c.2).unwrap_or(w);
+        // v1 (the reference screenshots): the column dividers run down to
+        // the list's foot, under the rows too.
+        for &(_, x, _) in cols.iter().skip(1) {
+            p.line(x + 0.5, 0.0, x + 0.5, h, divider, 1.0);
+        }
         let rows = (h / FILE_ROW) as usize + 1;
         for (k, en) in entries.iter().enumerate().skip(scroll).take(rows) {
             let y = (k - scroll) as f32 * FILE_ROW;
             let on = selected(k);
-            p.fill_rect(RectF::new(0.0, y, w, FILE_ROW), if k % 2 == 0 { row } else { alt });
-            if on {
-                p.fill_rect(RectF::new(0.0, y, w, FILE_ROW), sel);
-            }
+            // v1's rows are framed cells: a light line at the top, another
+            // over the navy line that closes the row.
+            p.fill_rect(
+                RectF::new(0.0, y, lw, FILE_ROW),
+                if on {
+                    sel
+                } else if k % 2 == 0 {
+                    row
+                } else {
+                    alt
+                },
+            );
+            p.fill_rect(RectF::new(0.0, y, lw, 1.0), row_light);
+            p.fill_rect(RectF::new(0.0, y + FILE_ROW - 2.0, lw, 1.0), row_light);
+            p.fill_rect(RectF::new(0.0, y + FILE_ROW - 1.0, lw, 1.0), row_line);
             // The loading bar ([re:ef4a8d]): colAltFill,
             // (2, 2, (w − 4)·p, h − 2) while 0 < p ≤ 1.
             if let Some((_, pr)) = self.loading.as_ref().filter(|(lp, pr)| *lp == en.path && *pr > 0.0 && *pr <= 1.0) {
@@ -2643,7 +2729,7 @@ impl Browser {
             let col = if on { sel_text } else { text };
             // The folder icon, or the file's type badge.
             let st = if on { crate::browsericons::SELECTED_STYLE } else { crate::browsericons::STYLE };
-            let icon = RectF::new(3.0, y + 1.0, 16.0, FILE_ROW - 2.0);
+            let icon = RectF::new(3.0, y + 2.0, 20.0, 20.0);
             if en.dir {
                 crate::browsericons::draw(r, p, st, icon, "folder", "");
             } else {
@@ -2663,23 +2749,30 @@ impl Browser {
                     p.fill_polygon(&pts, Colour::rgba(232, 180, 40, 255));
                 }
             }
-            p.text(RectF::new(22.0, y, name_w - 24.0, FILE_ROW), &en.name, col, &font, HAlign::Left, VAlign::Center);
+            p.text(RectF::new(26.0, y, name_w - 28.0, FILE_ROW - 1.0), &en.name, col, &font, HAlign::Left, VAlign::Center);
             // [re:b86812]: the play button at the name column's right, and
             // after a press a red triangle over it fading out.
             if let Some(ix) = self.preview_button_x(en, on, name_w) {
-                p.fill_polygon(&[(ix + 5.0, y + 4.0), (ix + 12.0, y + 9.0), (ix + 5.0, y + 14.0)], col);
+                p.fill_polygon(&[(ix + 5.0, y + 8.0), (ix + 12.0, y + 12.5), (ix + 5.0, y + 17.0)], col);
                 if let Some((_, t)) = self.preview_flash.as_ref().filter(|(f, _)| *f == en.path) {
                     let ticks = (t.elapsed().as_secs_f32() * 30.0) as u32;
                     let a = 255u32.saturating_sub(10 * ticks) as f32 / 255.0;
-                    p.fill_polygon(&[(ix + 5.0, y + 4.0), (ix + 12.0, y + 9.0), (ix + 5.0, y + 14.0)], Colour::rgba(255, 0, 0, 255).with_alpha(a));
+                    p.fill_polygon(&[(ix + 5.0, y + 8.0), (ix + 12.0, y + 12.5), (ix + 5.0, y + 17.0)], Colour::rgba(255, 0, 0, 255).with_alpha(a));
                 }
             }
             for &(c, x, cw) in cols.iter().skip(1) {
                 p.line(x + 0.5, y, x + 0.5, y + FILE_ROW, divider, 1.0);
                 let t = if c == Column::Type { type_label(&en.path, en.dir).to_string() } else { size_label(&en.path, en.dir) };
-                p.text(RectF::new(x + 3.0, y, cw - 4.0, FILE_ROW), &t, col, &font, HAlign::Left, VAlign::Center);
+                p.text(RectF::new(x + 3.0, y, cw - 4.0, FILE_ROW - 1.0), &t, col, &font, HAlign::Left, VAlign::Center);
             }
         }
+        // v1 always shows the scroll bar in the slider column: a 7 px
+        // light track, the navy thumb filling it while every row fits.
+        let (track, thumb) = (crate::front::colour_or(s, SCROLL_STYLE, "colAltFill", Colour::TRANSPARENT), crate::front::colour_or(s, SCROLL_STYLE, "colFill", text));
+        let (ty, th) = scroll_thumb(h, entries.len(), scroll);
+        let bx = lw + 2.0;
+        p.fill_rounded(RectF::new(bx, 0.0, 7.0, h), 2.0, [true; 4], track);
+        p.fill_rounded(RectF::new(bx, ty, 7.0, th), 2.0, [true; 4], thumb);
     }
 
     /// Apply a shortlist menu action to the current shortlist.
@@ -2742,6 +2835,18 @@ mod search_tests {
         assert_eq!(b.last().map(|b| (b.label.as_str(), b.display.as_str())), Some(("Kits", "Kits (No slice)")));
         let b = nav_layout(&mut m, &["Search Results".into()], false, false, 300.0);
         assert_eq!((b.len(), b[0].w, b[0].index), (1, 89.0, -1));
+    }
+
+    /// v1's always shown scroll bar: the thumb fills the track while every
+    /// row fits, else it shows the visible share at the scroll position.
+    #[test]
+    fn list_scroll_thumb() {
+        crate::app::test_setup();
+        let h = FILE_ROW * 4.0;
+        assert_eq!(scroll_thumb(h, 3, 0), (0.0, h));
+        assert_eq!(scroll_thumb(h, 8, 0), (0.0, h / 2.0));
+        assert_eq!(scroll_thumb(h, 8, 4), (h / 2.0, h / 2.0));
+        assert_eq!(scroll_thumb(h, 8, 7), (h / 2.0, h / 2.0), "past the end: at the foot");
     }
 
     #[test]

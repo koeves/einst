@@ -265,18 +265,23 @@ BUTTONS = [
     (r"^BPMButton", L("LcdRoundButtonStyle", text="bpm", font=text_font(9, True))),
     (r"^AlgoButton", L("LcdButtonStyle", text="ALG", font=text_font(8, True))),
     # Browser header and footer.
-    (r"^PrevUp", L("LcdFlatIconButtonStyle", text=G["left"])),
-    (r"^NextUp", L("LcdFlatIconButtonStyle", text=G["right"])),
-    (r"^PrevFile", L("LcdFlatIconButtonStyle", text=G["up"], font=icon_font(8))),
-    (r"^NextFile", L("LcdFlatIconButtonStyle", text=G["down"], font=icon_font(8))),
-    (r"^EnterButton", L("LcdIconButtonStyle", text=G["folder"], font=icon_font(14))),
+    # (v1: light keys on a navy plate, NavigationBackground / Prev* /
+    # Next* art)
+    (r"^PrevUp", L("BrowserNavKeyStyle", text=G["left"])),
+    (r"^NextUp", L("BrowserNavKeyStyle", text=G["right"])),
+    (r"^PrevFile", L("BrowserNavKeyStyle", text=G["up"])),
+    (r"^NextFile", L("BrowserNavKeyStyle", text=G["down"])),
+    # (EnterButton, ParentButton, LockPads, LockPatterns, SearchOptions,
+    # PreviewVol and the footer's Auto play: v1's pictures are drawn by
+    # the editor over the face, crates/einst-editor/src/browsericons.rs)
+    (r"^EnterButton", L("LcdIconButtonStyle", text="")),
     (r"^ParentButtonTile", L("LcdButtonStyle")),
-    (r"^ParentButton", L("LcdIconButtonStyle", text=G["parent"], font=icon_font(14))),
+    (r"^ParentButton", L("LcdIconButtonStyle", text="")),
     (r"^RefreshButton", L("LcdIconButtonStyle", text=G["refresh"], font=icon_font(14))),
     (r"^StopButton", L("LcdIconButtonStyle", text=G["stop"], font=icon_font(14))),
-    (r"^LockPads", L("LcdButtonStyle", text="Pads", font=text_font(10, True))),
-    (r"^LockPatterns", L("LcdButtonStyle", text="Ptns", font=text_font(10, True))),
-    (r"^SearchOptions", L("LcdFlatIconButtonStyle", text=G["chev_down"], font=icon_font(8))),
+    (r"^LockPads", L("LcdButtonStyle", text="")),
+    (r"^LockPatterns", L("LcdButtonStyle", text="")),
+    (r"^SearchOptions", L("LcdFlatIconButtonStyle", text="")),
     (r"^ViewOptionsButton", L("LcdFlatIconButtonStyle", text=G["settings"])),
     # Scene page.
     # (v1's `Scene/*` keys: the camera and trash can drawn in code, the
@@ -304,7 +309,7 @@ BUTTONS = [
 # options menu button (its v1 name carries the product name).
 BY_NAME = {
     "OptionsButtonStyle": L("ReadoutMenuStyle", text="EINST▼"),
-    "AutoButtonStyle": L("LcdButtonStyle", text="AUTO", font=text_font(8, True)),
+    "AutoButtonStyle": L("LcdButtonStyle", text=""),
     "FooterLatchingButtonStyle": L("LcdButtonStyle", font=text_font(10)),
 }
 
@@ -443,9 +448,13 @@ PLOT = L("LcdPlotStyle", colLine="Ink", colBorder="Ink", realBorderWidth="2", re
 IMAGES = [
     (r"^(Background|BackgroundSmall)$", L("ChassisStyle")),
     # (v1: the screen shaded under the bezel's top and left edges)
-    (r"^(Screen|Browser)$", L("ScreenBezelStyle", decor=[("inside", 3, 20, -6, -23, "ScreenLcdStyle"),
-                                                         ("inside", 3, 20, -6, 18, "ScreenShadeTopStyle"),
-                                                         ("inside", 3, 20, 8, -23, "ScreenShadeLeftStyle")])),
+    (r"^Screen$", L("ScreenBezelStyle", decor=[("inside", 3, 20, -6, -23, "ScreenLcdStyle"),
+                                               ("inside", 3, 20, -6, 18, "ScreenShadeTopStyle"),
+                                               ("inside", 3, 20, 8, -23, "ScreenShadeLeftStyle")])),
+    # (the browser well: its foot 3 px higher, and an inner shadow down
+    # from the top and in from the left, the reference screenshots)
+    (r"^Browser$", L("ScreenBezelStyle", decor=[("inside", 3, 20, -6, -26, "ScreenLcdStyle"), ("inside", 3, 20, -6, 20, "WellShadowTopStyle"),
+                                                ("inside", 3, 20, 18, -26, "WellShadowLeftStyle")])),
     (r"^StatusStrip", L("StatusStripStyle")),
     (r"^EngineText$", L("SectionLabelStyle", text="ENGINES", cls="CtrlLabel")),
     (r"^PatternText$", L("SectionLabelStyle", text="PATTERNS", cls="CtrlLabel")),
@@ -459,16 +468,17 @@ IMAGES = [
                        enumTextHorizontalAlign="left")),
     (r"^Glue", L("LcdGlueStyle", colFill="InkMid")),  # (v1's mixer glue: the chain frame's colour)
     (r"^(Pad|Layer)Glue$", L("LcdLayerGlueStyle")),
-    (r"^NavigationBackground$", L("LcdFieldStyle", realCornerRounding="4")),
+    (r"^NavigationBackground$", L("LcdFieldStyle", colFill="NavPlate", optDrawBorder="false", realCornerRounding="3")),
     (r"^GraphMarkers$", L("LcdRulerStyle", ctrl={"overloadClass": "VelocityRuler"})),  # (labelled by the editor)
     (r"^GraphIcon$", L("ChassisGlyphLabelStyle", text=G["right"], cls="CtrlLabel", font=icon_font(8), enumTextHorizontalAlign="left",
                        decor=GRAPH_BARS)),
-    (r"^PreviewVol$", L("GlyphLabelStyle", text=G["speaker"], cls="CtrlLabel", font=icon_font(10))),
+    (r"^PreviewVol$", L("GlyphLabelStyle", text="", cls="CtrlLabel")),
     # (v1: a note with up / down arrows, and a level ramp)
     (r"^MasterTuneIcon$", L("ChassisGlyphLabelStyle", text="", cls="CtrlLabel", decor=TUNE_ICON)),
     (r"^MasterVolIcon$", L("ChassisGlyphLabelStyle", text="", cls="CtrlLabel", decor=VOL_ICON)),
     (r"^SwingIcon$", L("ChassisGlyphLabelStyle", text=G["metronome"], cls="CtrlLabel", font=icon_font(12))),
-    (r"^SearchBox$", L("LcdFieldStyle", realCornerRounding="8")),
+    # (v1's SearchBox art: one inset field, grey-blue 2 px edge)
+    (r"^SearchBox$", L("LcdFieldStyle", colFill="SearchField", colBorder="SearchEdge", realBorderWidth="2", realCornerRounding="3")),
     (r"^Scene(Empty|Full|Active|Cued)", L("LcdFieldStyle", realCornerRounding="3")),
 ]
 

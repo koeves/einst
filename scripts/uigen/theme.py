@@ -259,9 +259,26 @@ COLOURS = {
     "BigButtonText": (90, 97, 128),
     "BrowserSel": (158, 170, 186),
     "BrowserTreeSel": (108, 122, 152),
-    "BrowserList": (228, 231, 236),
+    "BrowserList": (219, 222, 232),
+    # File list cells (the reference screenshots): faces, the light lines
+    # above and below each row's navy foot.
+    "BrowserRow": (211, 218, 227),
+    "BrowserRowAlt": (195, 202, 213),
+    "BrowserRowLight": (243, 252, 255),
+    "BrowserScrollTrack": (199, 208, 209),
+    # The path navigator's strip (v1's ParentButtonTileUp / *Stub art).
+    "CrumbFace": (222, 229, 238),
+    "CrumbTop": (88, 92, 122),
+    "CrumbLow": (170, 177, 194),
+    # The header's navigation plate and keys (NavigationBackground,
+    # Prev* / Next* art).
+    "NavPlate": (76, 83, 111),
+    "SearchField": (228, 233, 240),
+    "SearchEdge": (135, 143, 163),
+    "NavKey": (221, 227, 236),
+    "NavKeyDown": (169, 176, 191),
     "BrowserHeader": (221, 226, 230),
-    "BrowserSplit": (31, 34, 69),
+    "BrowserSplit": (18, 25, 60),
     "BrowserTreeBack": (222, 227, 233),
     "IconLine": (64, 68, 84),
     "IconFace": (204, 209, 218),
@@ -395,6 +412,10 @@ def base_styles():
        optRoundBottomLeft="false", optRoundBottomRight="false")
     st("ScreenShadeLeftStyle", "BasePanelStyle", colFill="0, 0, 0, 70", colFillGradientTo="0, 0, 0, 0", enumGradientDirection="Horizontal",
        realCornerRounding="9", optRoundTopRight="false", optRoundBottomRight="false")
+    st("WellShadowTopStyle", "BasePanelStyle", colFill="0, 0, 0, 100", colFillGradientTo="0, 0, 0, 0", realCornerRounding="9",
+       optRoundBottomLeft="false", optRoundBottomRight="false")
+    st("WellShadowLeftStyle", "WellShadowTopStyle", enumGradientDirection="Horizontal", optRoundBottomLeft="true",
+       optRoundTopRight="false")
     st("StatusStripStyle", "BasePanelStyle", colFill="Strip", colBorder="StripFrame", optDrawBorder="true", realCornerRounding="3")
     st("LogoStyle", "BasePanelStyle", enumDisabledDrawMode="NormalDrawing", colFill="Amber", colAltFill="AmberSoft")
     st("GlyphLabelStyle", "BaseLabelStyle", colText="InkMid", font=icon_font(12), enumTextHorizontalAlign="center")
@@ -657,7 +678,8 @@ def base_styles():
     st("TrackNameStyle", "BaseLabelStyle", colFill="LcdLight", colBorder="InkSoft", optDrawBorder="true", font=text_font(10), realTextOffset="3")
     st("TrackArrowStyle", "LcdFlatButtonStyle", colText="InkMid", font=text_font(9))
     st("TrackNumberStyle", "BaseLabelStyle", font=text_font(24), enumTextHorizontalAlign="center")
-    st("BrowserCrumbStyle", "BaseButtonStyle", colFill="LcdFace", realGradientShade="0.1", colBorder="LcdEdge", colAltFill="Crumb",
+    st("BrowserCrumbStyle", "BaseButtonStyle", colFill="CrumbFace", realGradientShade="0.1", colBorder="CrumbTop", colAltFill="Crumb",
+       colAltBorder="CrumbLow", colSeparator="Ink",
        colAltText="Ink", realCornerRounding="0", font=text_font(10), enumShape="Arrow", realArrowDepth="6")
     st("BrowserTreeHeadStyle", "BaseLabelStyle", font=text_font(10), realTextOffset="7")
     st("BrowserTreeItemStyle", "BaseLabelStyle", font=text_font(10), realTextOffset="35")
@@ -669,20 +691,24 @@ def base_styles():
        font=text_font(7, True))
     st("BrowserIconSelectedStyle", "BrowserIconStyle")
     st("BrowserSplitStyle", "BasePanelStyle", colFill="BrowserSplit", colAltBorder="BrowserSplit")
+    # The header's navigation keys: light faces on the navy plate.
+    st("BrowserNavKeyStyle", "LcdButtonStyle", colFill="NavKey", colBorder="Transparent", colAltFill="NavKeyDown",
+       colAltBorder="Transparent", colText="Ink", colAltText="Ink", realGradientShade="0", realCornerRounding="1", font=icon_font(8))
     st("BrowserTreeBackStyle", "BasePanelStyle", colFill="BrowserTreeBack")
-    # The bar between the folder's list and the shortlist: light, with a
-    # grip (v1's divider bitmap, measured #BCC1CB / #7A8090).
-    st("BrowserListSplitStyle", "BasePanelStyle", colFill="#BCC1CB", colAltBorder="#7A8090")
+    # The bar between the folder's list and the shortlist (v1's
+    # HorizontalDivider art): navy between white edges, a light grip.
+    st("BrowserListSplitStyle", "BasePanelStyle", colFill="Ink", colBorder="#FFFFFF", optDrawBorder="true", colAltBorder="LcdDim")
     # The list's column header (v1's BrowserHeader* colours).
     st("BrowserListHeaderStyle", "BasePanelStyle", colFill="BrowserHeader", colBorder="BrowserHeaderDividerColour",
        colText="BrowserHeaderTextColour", font=text_font(10))
     st("BrowserParentStyle", "BaseButtonStyle", colFill="LcdLight", colBorder="InkSoft", realCornerRounding="0", font=text_font(10))
-    st("BrowserListStyle", "BaseTableStyle", font=text_font(10), colFill="BrowserList", colBorder="InkSoft", colRow="BrowserList", colSelectedText="Ink",
-       colRowAlt="BrowserList", colSelection="BrowserSel", colHeaderFill="BrowserHeader", colHeaderDivider="InkMid",
-       colColumnDivider="InkSoft", optAltRowColours="true", optColumnDividers="true", optRowDividers="true", colRowDivider="InkSoft",
+    st("BrowserListStyle", "BaseTableStyle", font=text_font(10), colFill="BrowserList", colBorder="InkSoft", colRow="BrowserRow", colSelectedText="Ink",
+       colRowAlt="BrowserRowAlt", colSelection="BrowserSel", colHeaderFill="BrowserHeader", colHeaderDivider="InkMid",
+       colColumnDivider="Ink", optAltRowColours="true", optColumnDividers="true", optRowDividers="true", colRowDivider="Ink",
+       colRowHighlight="BrowserRowLight",
        intRowHeight="25", intHeaderHeight="17")
     st("BrowserBadgeStyle", "BaseButtonStyle", colFill="LcdLight", colBorder="InkMid", realCornerRounding="2", font=text_font(7, True))
-    st("BrowserScrollStyle", "BasePanelStyle", colFill="Ink", realCornerRounding="2")
+    st("BrowserScrollStyle", "BasePanelStyle", colFill="Ink", colAltFill="BrowserScrollTrack", realCornerRounding="2")
 
     # Wave displays (layer page, sampler, slicer): background, the wave
     # (normal / outside the markers / inside the loop), markers, the
@@ -750,6 +776,12 @@ STYLE_OVERRIDES = {
     # The table header band (v1's header bitmap).
     "GlobalTableStyle": {"colHeaderFill": "LcdDim"},
     "GlobalTableStyleAlwaysVisibleHSlider": {"colHeaderFill": "LcdDim"},
+    # The browser's search box (v1: optNoBackground, on the SearchBox art;
+    # the options button left of it carries the magnifier).
+    # The list's view options button: a bare navy ▼ (the reference
+    # screenshots).
+    "BrowserHeaderViewOptionsButtonStyle": {"colText": "Ink", "colAltText": "Ink", "font": text_font(9)},
+    "SearchBoxStyle": {"colFill": "Transparent", "colBorder": "Transparent", "realGradientShade": "0", "optSearchIcon": "false"},
     # The slicer's screen (v1's background bitmap).
     "PreviewPanelBackgroundStyle": {"colFill": "Lcd"},
     # The scene mini-map's cells: square and flat (ScenePanel.skin).

@@ -50,6 +50,8 @@ impl dreist_gui::render::CustomDraw for Drawer<'_> {
             pads::draw_flash(r, p, c);
         } else if c.overload == icons::OVERLOAD {
             icons::draw_button(r, p, c);
+        } else if c.overload == crate::browsericons::BUTTON_OVERLOAD {
+            crate::browsericons::draw_button(r, p, c);
         }
     }
 }

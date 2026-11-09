@@ -30,15 +30,22 @@ use crate::{EditorError, err};
 /// [re:59b2e6]: v1's four binding types.
 pub const BINDING_TYPES: [&str; 4] = ["Continuous", "Momentary", "Latching", "Trigger"];
 const ROW: f32 = 20.0;
-const HEADER: f32 = 20.0;
-const TABLE_STYLE: &str = "BrowserListViewStyle";
-/// `intScrollBarDim` of the skin's TableView; `VScrollBarStyle`.
+/// The header band: v1's table puts its ScrollView 15 px down
+/// (`AutoMapPanel.skin`).
+const HEADER: f32 = 15.0;
+/// v1's table style (`AutoMapPanel.skin` → `GlobalStyles.skin`): its rows,
+/// dividers, selection, header and frame.
+const TABLE_STYLE: &str = "GlobalTableStyleAlwaysVisibleHSlider";
+/// `intScrollBarDim` of the skin's TableView: the vertical bar's width and
+/// the always shown horizontal bar's height.
 const BAR: f32 = 12.0;
-const BAR_STYLE: &str = "ScrollbarStyle";
+/// The scroll bars look like the browser's (thumb colFill, track
+/// colAltFill).
+const BAR_STYLE: &str = "BrowserScrollStyle";
 
-/// Rows that fit below the header.
+/// Rows that fit between the header and the horizontal bar.
 fn visible_rows(h: f32) -> usize {
-    ((h - HEADER) / ROW).floor().max(1.0) as usize
+    ((h - HEADER - BAR) / ROW).floor().max(1.0) as usize
 }
 
 /// The vertical scroll bar (`optAutoHide`, not overlaid: it takes its width
@@ -49,12 +56,11 @@ fn bar_geometry(h: f32, n: usize, scroll: usize) -> Option<(f32, f32, f32, f32)>
     if n <= vis {
         return None;
     }
-    let track = (h - HEADER).max(1.0);
+    let track = (h - HEADER - BAR).max(1.0);
     let th = (track * vis as f32 / n as f32).max(8.0);
     let ty = HEADER + (track - th) * scroll.min(n - vis) as f32 / (n - vis) as f32;
     Some((HEADER, track, ty, th))
 }
-const HEADER_STYLE: &str = "BrowserListViewHeaderStyle";
 /// (title, width, min, max) of the table's columns (resizable
 /// when min ≠ max; u32::MAX = no maximum).
 const COLUMNS: [(&str, f32, f32, f32); 8] = [
@@ -400,6 +406,8 @@ impl MidiMap {
         for (k, v) in [
             ("intSplitPosition", (h - hh - DIM).max(82).to_string()),
             ("intSplitterDim", DIM.to_string()),
+            // (drawn like the browser's list bar, v1's HorizontalDivider)
+            ("SplitterPanelStyle", "BrowserListSplitStyle".into()),
             ("intMinSize0", "82".into()),
             ("intMinSize1", "18".into()),
             ("optIsVertical", "true".into()),
@@ -417,6 +425,22 @@ impl MidiMap {
             ..Ctrl::default()
         };
         skin.mount(&mut top, "AutoMapPanel.skin").map_err(err)?;
+        // The skin's table is 577 high, more than the pane leaves it: it
+        // ends at the pane's foot (where its frame and horizontal bar
+        // show), and follows the split's moves.
+        {
+            use dreist_gui::ctrl::Anchor;
+            let ph = top.rect.h;
+            for pnl in &mut top.children {
+                pnl.anchors[1] = (Anchor::FixedNear, 0.0);
+                pnl.anchors[3] = (Anchor::LockedNear, 0.0);
+                if let Some(t) = pnl.find_mut("TableView") {
+                    t.rect.h = (ph - t.rect.y).max(0);
+                    t.anchors[1] = (Anchor::FixedNear, t.rect.y as f32);
+                    t.anchors[3] = (Anchor::LockedNear, 0.0);
+                }
+            }
+        }
         let mut bottom = Ctrl {
             class: "CtrlPanel".into(),
             name: "HostParamPane".into(),
@@ -768,7 +792,7 @@ impl MidiMap {
         }
         let Some(row) = rows(&model.doc).iter().position(|r| r.key == Key::Midi(ch, cc)) else { return };
         self.selected = Some(row);
-        let visible = self.table.as_ref().and_then(|t| app.ctrl(t)).map(|c| ((c.rect.h as f32 - HEADER) / ROW).floor().max(1.0) as usize).unwrap_or(1);
+        let visible = self.table.as_ref().and_then(|t| app.ctrl(t)).map(|c| visible_rows(c.rect.h as f32)).unwrap_or(1);
         if row < self.scroll || row >= self.scroll + visible {
             self.scroll = row.min(self.max_scroll(app, rows(&model.doc).len()));
         }
@@ -785,34 +809,35 @@ impl MidiMap {
         let cols = layout(&self.widths);
         let font = s.font(TABLE_STYLE);
         let text = s.colour(TABLE_STYLE, "colText", Colour::BLACK);
-        let alt = s.colour(TABLE_STYLE, "colAltFill", Colour::WHITE);
+        let (row_col, alt) = (s.colour(TABLE_STYLE, "colRow", Colour::TRANSPARENT), s.colour(TABLE_STYLE, "colRowAlt", Colour::TRANSPARENT));
         let fill = s.colour(TABLE_STYLE, "colFill", Colour::TRANSPARENT);
-        let divider = s.colour(TABLE_STYLE, "colColDivider", Colour::BLACK);
-        let selection = s.colour(TABLE_STYLE, "colRowSelection", Colour::BLACK);
+        let divider = s.colour(TABLE_STYLE, "colColumnDivider", Colour::BLACK);
+        let selection = s.colour(TABLE_STYLE, "colSelection", Colour::BLACK);
+        let frame = s.colour(TABLE_STYLE, "colBorder", divider);
         let icons = FontSpec { family: dreist_gui::text::icon_family().into(), size: 16.0, bold: false };
         let big = s.fonts.get("ExLarge").cloned().unwrap_or_else(|| font.clone());
         p.fill_rect(RectF::new(0.0, 0.0, w, h), fill);
         // Header.
-        let hfill = s.colour(HEADER_STYLE, "colFill", Colour::WHITE);
-        let htext = s.colour(HEADER_STYLE, "colText", Colour::BLACK);
-        let hdiv = s.colour(HEADER_STYLE, "colAltBorder", divider);
-        let hfont = s.font(HEADER_STYLE);
+        let hfill = s.colour(TABLE_STYLE, "colHeaderFill", Colour::TRANSPARENT);
+        let htext = s.colour(TABLE_STYLE, "colHeaderText", text);
+        let hdiv = s.colour(TABLE_STYLE, "colHeaderDivider", divider);
+        let hfont = font.clone();
         p.fill_rect(RectF::new(0.0, 0.0, w, HEADER), hfill);
         for (i, (x, cw)) in cols.iter().enumerate() {
             p.text(RectF::new(x + 4.0, 0.0, cw - 8.0, HEADER), COLUMNS[i].0, htext, &hfont, HAlign::Left, VAlign::Center);
             p.fill_rect(RectF::new(x + cw - 1.0, 0.0, 1.0, HEADER), hdiv);
         }
-        let visible = ((h - HEADER) / ROW).ceil() as usize;
+        let body = h - BAR;
+        let visible = ((body - HEADER) / ROW).ceil() as usize;
+        let prev = p.push_clip(p.tx as i32, p.ty as i32, c.rect.w, body as i32);
         for (k, row) in rs.iter().enumerate().skip(self.scroll).take(visible) {
             let y = HEADER + (k - self.scroll) as f32 * ROW;
-            let bg = if self.selected == Some(k) {
-                selection
-            } else if k % 2 == 1 {
-                alt
-            } else {
-                Colour::TRANSPARENT
-            };
-            p.fill_rect(RectF::new(0.0, y, w, ROW), bg);
+            p.fill_rect(RectF::new(0.0, y, w, ROW), if k % 2 == 1 { alt } else { row_col });
+            if self.selected == Some(k) {
+                p.fill_rect(RectF::new(0.0, y, w, ROW), selection);
+            }
+            // optRowDividers
+            p.fill_rect(RectF::new(0.0, y + ROW - 1.0, w, 1.0), divider);
             let cell = |i: usize| RectF::new(cols[i].0 + 4.0, y, cols[i].1 - 8.0, ROW);
             p.text(RectF::new(cols[0].0, y, cols[0].1, ROW), "\u{e922}", text, &icons, HAlign::Center, VAlign::Center);
             for (i, t) in [(1, row.locale()), (2, row.path.clone()), (3, row.name.clone())] {
@@ -832,14 +857,26 @@ impl MidiMap {
             }
         }
         for (x, cw) in cols.iter() {
-            p.fill_rect(RectF::new(x + cw - 1.0, HEADER, 1.0, h - HEADER), divider);
+            p.fill_rect(RectF::new(x + cw - 1.0, HEADER, 1.0, body - HEADER), divider);
         }
+        p.pop_clip(prev);
+        p.fill_rect(RectF::new(0.0, HEADER - 1.0, w, 1.0), hdiv);
+        let track_col = s.colour(BAR_STYLE, "colAltFill", Colour::TRANSPARENT);
+        let thumb = s.colour(BAR_STYLE, "colFill", divider);
         if let Some((y0, track, ty, th)) = bar {
-            let bg = s.colour(BAR_STYLE, "colFill", Colour::TRANSPARENT);
-            let thumb = s.colour(BAR_STYLE, "colAltFill", divider);
-            p.fill_rect(RectF::new(w - BAR, y0, BAR, track), bg);
-            p.fill_rounded(RectF::new(w - BAR + 1.0, ty, BAR - 2.0, th), 3.0, [true; 4], thumb);
+            p.fill_rect(RectF::new(w - BAR, y0, BAR, track), fill);
+            p.fill_rounded(RectF::new(w - BAR + 2.0, y0 + 1.0, BAR - 4.0, track - 2.0), 2.0, [true; 4], track_col);
+            p.fill_rounded(RectF::new(w - BAR + 2.0, ty + 1.0, BAR - 4.0, th - 2.0), 2.0, [true; 4], thumb);
         }
+        // The horizontal bar v1 always shows (`optHSlider`): the thumb the
+        // shown share of the columns' width (the table does not scroll
+        // sideways).
+        let total = cols.last().map(|(x, cw)| x + cw).unwrap_or(w).max(w);
+        p.fill_rect(RectF::new(0.0, body, w, BAR), fill);
+        p.fill_rounded(RectF::new(2.0, body + 2.0, w - 4.0, BAR - 4.0), 2.0, [true; 4], track_col);
+        p.fill_rounded(RectF::new(2.0, body + 2.0, ((w - 4.0) * w / total).max(8.0), BAR - 4.0), 2.0, [true; 4], thumb);
+        // optDrawBorder: the Ink frame round the table.
+        p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), frame, 1.0);
         true
     }
 }
@@ -862,11 +899,12 @@ mod tests {
     #[test]
     fn scroll_bar_geometry() {
         crate::app::test_setup();
-        // 100 px: 4 rows fit below the header.
-        assert!(bar_geometry(100.0, 4, 0).is_none());
-        let (y0, track, ty, th) = bar_geometry(100.0, 8, 0).unwrap();
+        // 80 px between the header and the horizontal bar: 4 rows.
+        let h = HEADER + BAR + 80.0;
+        assert!(bar_geometry(h, 4, 0).is_none());
+        let (y0, track, ty, th) = bar_geometry(h, 8, 0).unwrap();
         assert_eq!((y0, track, ty, th), (HEADER, 80.0, HEADER, 40.0));
-        let (_, _, ty, _) = bar_geometry(100.0, 8, 4).unwrap();
+        let (_, _, ty, _) = bar_geometry(h, 8, 4).unwrap();
         assert_eq!(ty, HEADER + 40.0, "thumb at the bottom at the last scroll");
     }
 
