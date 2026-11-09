@@ -277,8 +277,11 @@ def base_styles():
         S.append((name, dict(parentStyle0=parent, **a)))
 
     # Element bases (one per v1 style class).
+    # Disabled controls fade well back, like v1's greyed `imDisabled` art
+    # (empty layers, the controls slicing locks).
     st("BaseStyle", realCornerRounding="0", optDrawShadow="false", font=text_font(10), colText="Ink", colAltText="Ink",
-       colFill="Transparent", colAltFill="Transparent", colBorder="Transparent", colAltBorder="Transparent")
+       colFill="Transparent", colAltFill="Transparent", colBorder="Transparent", colAltBorder="Transparent",
+       realDisabledAlpha="0.4")
     st("BasePanelStyle", "BaseStyle", optDrawBorder="false")
     st("BaseLabelStyle", "BaseStyle", optDrawBorder="false", enumTextHorizontalAlign="left")
     st("BaseTextBoxStyle", "BaseStyle", colFill="LcdFace", colBorder="LcdEdge", realCornerRounding="2", realGradientShade="0.05",
@@ -352,7 +355,10 @@ def base_styles():
        realBorderWidth="2",
        optBevel="true", colBevelLight="255, 255, 255, 160", colBevelDark="40, 48, 64, 110")
     st("LcdSoloButtonStyle", "LcdMuteButtonStyle", colAltFill="SoloOn")
-    st("LcdMenuButtonStyle", "LcdButtonStyle", enumTextHorizontalAlign="left", realTextOffset="5")
+    # v1's menu buttons carry a small arrow near the right edge, no divider,
+    # so the text keeps most of the width ("Insert", "Pattern" fit in 50 px).
+    st("LcdMenuButtonStyle", "LcdButtonStyle", enumTextHorizontalAlign="left", realTextOffset="5",
+       realPopupArrowBoxWidth="10", optPopupDivider="false")
     st("LcdBigButtonStyle", "LcdButtonStyle", font=text_font(11, True), realCornerRounding="3")
     st("LcdSideTabStyle", "LcdBigButtonStyle", colFill="InkMid", colBorder="Ink", colText="LcdLight", colAltFill="Ink",
        colAltBorder="Ink", colAltText="LcdLight", font=text_font(10, True), realTextSlant="14")
