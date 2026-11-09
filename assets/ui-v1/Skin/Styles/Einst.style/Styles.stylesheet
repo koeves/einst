@@ -473,12 +473,12 @@
     <CtrlStyle name="ExposeButtonStyle" parentStyle0="BezelIconButtonStyle" />
     <CtrlStyle name="BackStyle" parentStyle0="BaseImageStyle" />
     <!-- From v1 Sampler/SamplerPanel.skin -->
-    <CtrlStyle name="SamplerPanelInnerBackgroundStyle" colFill="Lcd" font="Sans12" parentStyle0="LcdPanelStyle" realCornerRounding="6" />
-    <CtrlStyle name="SamplerArmButtonStyle" colAltFill="Amber" colAltText="Ink" parentStyle0="LcdBigButtonStyle" />
-    <CtrlStyle name="SamplerRecButtonStyle" colAltFill="HwRed" colAltText="LcdLight" colText="HwRed" font="Icons18" parentStyle0="LcdBigButtonStyle" />
+    <CtrlStyle name="SamplerPanelInnerBackgroundStyle" colBorder="SamplerInsetEdge" colFill="Lcd" font="Sans12" parentStyle0="LcdPanelStyle" realBorderWidth="2" realCornerRounding="1" />
+    <CtrlStyle name="SamplerArmButtonStyle" colAltBorder="Ink" colAltFill="Ink" colAltText="LcdLight" colBorder="InkMid" colFill="LcdLight" colText="BigButtonText" font="Sans14Bold" parentStyle0="LcdBigButtonStyle" realCornerRounding="1" realGradientShade="0" />
+    <CtrlStyle name="SamplerRecButtonStyle" colAltBorder="Ink" colAltFill="Ink" colAltText="LcdLight" colBorder="InkMid" colFill="LcdLight" colText="BigButtonText" font="Sans14Bold" parentStyle0="LcdBigButtonStyle" realCornerRounding="1" realGradientShade="0" />
     <CtrlStyle name="SamplerThresholdTopSliderStyle" colFill="Transparent" font="Sans12" optDrawBorder="false" parentStyle0="BaseSliderStyle" />
     <CtrlStyle name="SamplerThresholdBottomSliderStyle" colFill="Transparent" font="Sans12" optDrawBorder="false" parentStyle0="BaseSliderStyle" />
-    <CtrlStyle name="SamplerPanelOuterBackgroundStyle" colBorder="Ink" colFill="InkMid" font="Sans12" parentStyle0="LcdPanelStyle" realCornerRounding="6" />
+    <CtrlStyle name="SamplerPanelOuterBackgroundStyle" colBorder="Ink" colFill="InkMid" font="Sans12" parentStyle0="LcdPanelStyle" realBorderWidth="2" realCornerRounding="3" />
     <!-- From v1 Scene/Scene.skin -->
     <CtrlStyle name="SceneNoteLabelCenteredStyle" colText="Ink" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="SceneTriggerButtonStyle" font="Sans12" parentStyle0="LcdButtonStyle" />

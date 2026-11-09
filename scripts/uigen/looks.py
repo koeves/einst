@@ -63,6 +63,8 @@ MIDI_ICON = [("inside", 7, 5, 16, 16, "MidiDiscStyle")] + [
 # The layer / pad mixers' MIX / SEND tabs: each with its part of the ink
 # spine right of its face (behind it: the face is inset off the spine).
 SIDE_TAB_SPINE = [("behind", 34, 0, 12, 0, "LcdSideTabSpineStyle")]
+SAMPLER_KEY = dict(font=text_font(14, True), realCornerRounding="1", colFill="LcdLight", colBorder="InkMid", realGradientShade="0",
+                   colText="BigButtonText", colAltFill="Ink", colAltBorder="Ink", colAltText="LcdLight")
 
 # ---------------------------------------------------------------- buttons
 
@@ -213,8 +215,10 @@ BUTTONS = [
     (r"^SceneClearButton", L("LcdIconButtonStyle", text=G["close"])),
     (r"^SmallSceneSelectButton", L("LcdButtonStyle")),
     # Sampler page.
-    (r"^SamplerArmButton", L("LcdBigButtonStyle", text="ARM", colAltFill="Amber", colAltText="Ink")),
-    (r"^SamplerRecButton", L("LcdBigButtonStyle", text=G["record"], font=icon_font(18), colText="HwRed", colAltFill="HwRed", colAltText="LcdLight")),
+    # (v1's 40 x 41 keys: square, a light face in a navy edge, bold grey
+    # caps; navy with light caps when on or flashing)
+    (r"^SamplerArmButton", L("LcdBigButtonStyle", text="ARM", **SAMPLER_KEY)),
+    (r"^SamplerRecButton", L("LcdBigButtonStyle", text="REC", **SAMPLER_KEY)),
 ]
 
 # Looks by (neutral) style name, before the image rules: styles whose
@@ -270,8 +274,11 @@ PANELS = [
     (r"^LayerSelectionBackgroundOdd", L("LcdLayerRowOddStyle")),
     (r"^LayerSelectionBackgroundSelected", L("LcdRowSelectedStyle")),
     (r"^(Preview|ScenePage)Background", L("BasePanelStyle")),
-    (r"^SamplerBackgroundOuter", L("LcdPanelStyle", colFill="InkMid", colBorder="Ink", realCornerRounding="6")),
-    (r"^SamplerBackgroundInner", L("LcdPanelStyle", colFill="Lcd", realCornerRounding="6")),
+    # (v1: the outer tile a 2 px navy edge round 3, the inner ones square
+    # with a 2 px dark inset edge)
+    (r"^SamplerBackgroundOuter", L("LcdPanelStyle", colFill="InkMid", colBorder="Ink", realBorderWidth="2", realCornerRounding="3")),
+    (r"^SamplerBackgroundInner", L("LcdPanelStyle", colFill="Lcd", colBorder="SamplerInsetEdge", realBorderWidth="2",
+                                   realCornerRounding="1")),
     (r"^SceneBackground", L("LcdSlotStyle")),
 ]
 

@@ -182,6 +182,8 @@
     <VColour name="RowEdge" colour="#6A7088" />
     <VColour name="GroupEdge" colour="#5E657E" />
     <VColour name="InsetEdge" colour="#4B4C5A" />
+    <VColour name="SamplerInsetEdge" colour="#3C4361" />
+    <VColour name="BigButtonText" colour="#5A6180" />
     <VColour name="BrowserSel" colour="#9EAABA" />
     <VColour name="BrowserTreeSel" colour="#6C7A98" />
     <VColour name="BrowserList" colour="#E4E7EC" />

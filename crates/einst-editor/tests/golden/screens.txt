@@ -16,7 +16,7 @@ page-layermixer cb20e5aa439f02be
 page-padlayers 45bb52ba5c548258
 page-padmixer e90858121d760c8a
 page-pattern 3024a0a339e19b6f
-page-sampler 4c736168f9ac0923
+page-sampler 6a5f46f0cedeaa52
 page-scene 44cb41515c8fb584
 page-song cc29ecfcb0776fa1
 pattern-multigraph 62deabcccc2a3805
