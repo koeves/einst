@@ -219,6 +219,7 @@ COLOURS = {
     "RowEdge": (106, 112, 136),
     "GroupEdge": (94, 101, 126),
     "InsetEdge": (75, 76, 90),
+    "DividerEdge": (39, 46, 78),
     "SamplerInsetEdge": (60, 67, 97),
     "BigButtonText": (90, 97, 128),
     "BrowserSel": (158, 170, 186),
@@ -373,11 +374,12 @@ def base_styles():
     st("LcdPadRowSelectedStyle", "LcdPadRowStyle", colFill="InkMid")
     st("LcdLayerGlueStyle", "BasePanelStyle", colFill="InkMid")
     # (v1's edit panels: a navy bezel, 2 px dark edge, round a screen with a
-    # 2 px inner shadow; grey-headed group boxes)
+    # 2 px inner shadow; grey-headed group boxes; navy divider bands)
     st("LcdBezelStyle", "BasePanelStyle", colFill="InkMid", colBorder="Ink", optDrawBorder="true", realBorderWidth="2", realCornerRounding="4")
     st("LcdInsetStyle", "BasePanelStyle", colFill="Lcd", colBorder="InsetEdge", optDrawBorder="true", realBorderWidth="2")
     st("LcdGroupStyle", "BasePanelStyle", colFill="Lcd", colBorder="GroupEdge", optDrawBorder="true", realCornerRounding="4")
     st("LcdGroupHeadStyle", "LcdGroupStyle", colFill="InkSoft", optRoundBottomLeft="false", optRoundBottomRight="false")
+    st("LcdDividerStyle", "BasePanelStyle", colFill="InkMid", colBorder="DividerEdge", optDrawBorder="true")
     st("LcdStripSelectedStyle", "LcdRowEvenStyle", colFill="StripSelected", colBorder="StripSelectedEdge", realBorderWidth="2")
     st("LcdGlueStyle", "BasePanelStyle", colFill="StripHead")
     # (the selected mixer strip's name: light on its dark fill)

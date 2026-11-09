@@ -43,6 +43,7 @@
     <CtrlStyle name="LcdInsetStyle" colBorder="InsetEdge" colFill="Lcd" optDrawBorder="true" parentStyle0="BasePanelStyle" realBorderWidth="2" />
     <CtrlStyle name="LcdGroupStyle" colBorder="GroupEdge" colFill="Lcd" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="4" />
     <CtrlStyle name="LcdGroupHeadStyle" colFill="InkSoft" optRoundBottomLeft="false" optRoundBottomRight="false" parentStyle0="LcdGroupStyle" />
+    <CtrlStyle name="LcdDividerStyle" colBorder="DividerEdge" colFill="InkMid" optDrawBorder="true" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="LcdStripSelectedStyle" colBorder="StripSelectedEdge" colFill="StripSelected" parentStyle0="LcdRowEvenStyle" realBorderWidth="2" />
     <CtrlStyle name="LcdGlueStyle" colFill="StripHead" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="StripNameSelectedStyle" colText="LcdMid" parentStyle0="StandardLabelCenteredStyle" />

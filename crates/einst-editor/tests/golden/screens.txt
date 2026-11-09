@@ -20,4 +20,4 @@ page-sampler 6a5f46f0cedeaa52
 page-scene 44cb41515c8fb584
 page-song cc29ecfcb0776fa1
 pattern-multigraph 62deabcccc2a3805
-slicer 8a370f43a89d3dc7
+slicer c4f2e27c68eb2169

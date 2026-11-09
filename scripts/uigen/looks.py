@@ -251,6 +251,12 @@ FX_CARD = [("inside", 1, 2, -2, -4, "FxCardEmptyStyle"), ("inside", 3, 4, -6, 38
 PAD_BEZEL = [("inside", 2, 2, -5, -5, "LcdBezelStyle"), ("inside", 11, 7, -23, -15, "LcdInsetStyle")]
 GROUPS = [d for x, h in ((117, 151), (255, 151), (393, 185), (531, 185))
           for d in (("inside", x, 13, 131, h, "LcdGroupStyle"), ("inside", x, 13, 131, 21, "LcdGroupHeadStyle"))]
+# The slicer (`PreviewBackground`, 820 x 395): the bezel (band 5 px at top
+# and bottom, 2 px at the sides) and two navy bands across, under the
+# pattern preview and above the controls row.
+PREVIEW_BEZEL = [("inside", 1, 2, -8, -4, "LcdBezelStyle"), ("inside", 5, 9, -15, -19, "LcdInsetStyle"),
+                 ("inside", 5, 124, -15, 6, "LcdDividerStyle"), ("inside", 5, 340, -15, 6, "LcdDividerStyle")]
+
 PANELS = [
     (r"^Background", L("ChassisStyle")),
     (r"^AboutBackground", L("LcdPanelStyle", colFill="Ink", colBorder="Amber", realCornerRounding="6")),
@@ -273,7 +279,8 @@ PANELS = [
     (r"^LayerSelectionBackgroundEven", L("LcdLayerRowEvenStyle")),
     (r"^LayerSelectionBackgroundOdd", L("LcdLayerRowOddStyle")),
     (r"^LayerSelectionBackgroundSelected", L("LcdRowSelectedStyle")),
-    (r"^(Preview|ScenePage)Background", L("BasePanelStyle")),
+    (r"^PreviewBackground", L("BasePanelStyle", decor=PREVIEW_BEZEL)),
+    (r"^ScenePageBackground", L("BasePanelStyle")),
     # (v1: the outer tile a 2 px navy edge round 3, the inner ones square
     # with a 2 px dark inset edge)
     (r"^SamplerBackgroundOuter", L("LcdPanelStyle", colFill="InkMid", colBorder="Ink", realBorderWidth="2", realCornerRounding="3")),
