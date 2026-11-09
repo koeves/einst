@@ -295,7 +295,8 @@ pub(crate) fn colour(r: &Renderer, name: &str, default: Colour) -> Colour {
 /// `start_s + len_s`.
 pub(crate) fn draw_ruler(r: &Renderer, p: &mut Painter, w: f32, start_s: f64, len_s: f64, beats: bool, tempo: f64) {
     let ink = wave(r, "colTimelineText", Colour::rgba(18, 25, 60, 255));
-    p.fill_rect(RectF::new(0.0, 0.0, w, WAVE_TOP), colour(r, "LcdLight", Colour::rgba(222, 229, 237, 255)));
+    p.fill_rect(RectF::new(0.0, 0.0, w, RULER), colour(r, "LcdLight", Colour::rgba(222, 229, 237, 255)));
+    p.fill_rect(RectF::new(0.0, RULER, w, WAVE_TOP - RULER), wave(r, "colMarkerStrip", Colour::rgba(148, 155, 172, 255)));
     p.line(0.0, RULER + 0.5, w, RULER + 0.5, ink.with_alpha(0.4), 1.0);
     p.line(0.0, WAVE_TOP - 0.5, w, WAVE_TOP - 0.5, ink, 1.0);
     let font = r.styles.font("StandardLabelStyle");
@@ -313,6 +314,41 @@ pub(crate) fn draw_ruler(r: &Renderer, p: &mut Painter, w: f32, start_s: f64, le
         }
         p.line(x + 0.5, 0.0, x + 0.5, RULER, ink, 1.0);
         p.text(RectF::new(x + 2.0, 0.0, 60.0, RULER), &label, ink, &font, HAlign::Left, VAlign::Center);
+    }
+}
+
+/// [re:627879]: v1 tiles the half-transparent `DisabledBackgroundTile`
+/// over the wave area left of the start marker and from the end marker on
+/// (`colOutsideFill`); `xs` / `xe` are the markers' x.
+pub(crate) fn draw_outside(r: &Renderer, p: &mut Painter, area: RectF, xs: f32, xe: f32) {
+    let col = wave(r, "colOutsideFill", Colour::TRANSPARENT);
+    let (a, b) = (xs.clamp(0.0, area.w), xe.clamp(0.0, area.w));
+    p.fill_rect(RectF::new(area.x, area.y, a, area.h), col);
+    p.fill_rect(RectF::new(area.x + b, area.y, area.w - b, area.h), col);
+}
+
+/// [re:68305f]: a marker at pixel column `x` of a display `h` high: a 1 px
+/// line in `col` from the marker strip's last row down, and v1's 10 × 10
+/// flag image on the strip (here its lower 10 px): a dark top row, then a
+/// right triangle outlined in `col` and filled with `fill`, its upright on
+/// the line, reaching right for a start marker and left for an end marker.
+pub(crate) fn draw_marker(r: &Renderer, p: &mut Painter, x: f32, h: f32, start: bool, col: Colour, fill: Colour) {
+    let edge = wave(r, "colMarkerEdge", Colour::BLACK);
+    let top = WAVE_TOP - 10.0;
+    p.fill_rect(RectF::new(x, WAVE_TOP - 1.0, 1.0, h - WAVE_TOP), col);
+    let x0 = if start { x } else { x - 9.0 };
+    p.fill_rect(RectF::new(x0, top, 10.0, 1.0), edge);
+    p.fill_rect(RectF::new(x0, top + 1.0, 10.0, 1.0), col);
+    for row in 2..10 {
+        // Row `row` is 11 − row px wide, from the line out.
+        let n = (11 - row) as f32;
+        let l = if start { x } else { x - n + 1.0 };
+        let y = top + row as f32;
+        p.fill_rect(RectF::new(l, y, 1.0, 1.0), col);
+        p.fill_rect(RectF::new(l + n - 1.0, y, 1.0, 1.0), col);
+        if n > 2.0 {
+            p.fill_rect(RectF::new(l + 1.0, y, n - 2.0, 1.0), fill);
+        }
     }
 }
 
@@ -948,19 +984,17 @@ impl Sampler {
             // Outside the markers the wave is dimmed.
             let (xs, xe) = (self.x_of(t.start, w), self.x_of(t.end, w));
             let (a, b) = (xs.clamp(0.0, w).floor(), xe.clamp(0.0, w).ceil());
+            draw_outside(r, p, area, a, b);
             let dim = wave(r, "colLineDisabled", ink.with_alpha(0.4));
             draw_lanes(p, area, &t.buckets, BUCKET, v0, v1, dim, (0.0, a));
             draw_lanes(p, area, &t.buckets, BUCKET, v0, v1, ink, (a, b));
             draw_lanes(p, area, &t.buckets, BUCKET, v0, v1, dim, (b, w));
+            let fill = wave(r, "colMarkerFill", Colour::WHITE);
             for (x, name, start) in [(xs, "WaveEditorStartMarkerColour", true), (xe, "WaveEditorEndMarkerColour", false)] {
-                if !(-6.0..=w + 6.0).contains(&x) {
+                if !(-10.0..=w + 10.0).contains(&x) {
                     continue;
                 }
-                let col = colour(r, name, Colour::rgba(250, 121, 25, 255));
-                let x = x.floor() + 0.5;
-                p.line(x, RULER, x, h, col, 1.0);
-                let tri = if start { [(x, RULER + 1.0), (x + 9.0, RULER + 1.0), (x, WAVE_TOP - 2.0)] } else { [(x - 9.0, RULER + 1.0), (x, RULER + 1.0), (x, WAVE_TOP - 2.0)] };
-                p.fill_polygon(&tri, col);
+                draw_marker(r, p, x.floor(), h, start, colour(r, name, Colour::rgba(250, 121, 25, 255)), fill);
             }
         } else {
             draw_ruler(r, p, w, 0.0, 1.0, self.timeline_beats, model.tempo());

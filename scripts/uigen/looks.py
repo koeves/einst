@@ -127,9 +127,10 @@ BUTTONS = [
     # (v1: an ink disc when on, a grey one with an ink edge when off, with
     # an upright slot through it; 16 x 17 ovals, the chain's 24 px round)
     (r"^LEDSmallButton", L("LcdRoundToggleStyle", text="", realCornerRounding="8", realGlyphWidth="4", realGlyphHeight="11")),
-    # (v1's mute / solo bitmaps: a 2 px frame a pixel above and below the cell)
-    (r"^LEDMuteButton", L("LcdMuteButtonStyle", inset=(0, -1, 0, -1))),
-    (r"^LEDSoloButton", L("LcdSoloButtonStyle", inset=(0, -1, 0, -1))),
+    # (v1's mute / solo bitmaps: a 2 px frame a pixel above and below the cell;
+    # the letters mid grey when off, as in v1's `LEDMute/SoloButtonUp`)
+    (r"^LEDMuteButton", L("LcdMuteButtonStyle", inset=(0, -1, 0, -1), colText="RowEdge")),
+    (r"^LEDSoloButton", L("LcdSoloButtonStyle", inset=(0, -1, 0, -1), colText="RowEdge")),
     # (the chain preset menu, 24 px high: v1's small arrow ~7 px in)
     (r"^LEDEffectCombo", L("LcdMenuButtonStyle", ctrl=POPUP, realPopupArrowSize="0.2", realPopupArrowBoxWidth="14")),
     # (the effect slots' type / preset menus, 17 px high: v1's 5 px arrow)
@@ -144,12 +145,13 @@ BUTTONS = [
     (r"^LEDClear", L("LcdIconButtonStyle", text=G["close"])),
     (r"^LEDLock", L("LcdIconButtonStyle", text=G["lock"])),
     (r"^(LEDCheck|ModalCheckBox)", L("CheckBoxStyle", text="", ctrl=CHECK)),
-    (r"^LEDZoomIn", L("LcdIconButtonStyle", text=G["plus"], font=icon_font(8))),
-    (r"^LEDZoomOut", L("LcdIconButtonStyle", text=G["minus"], font=icon_font(8))),
-    (r"^LEDZoomStartEnd", L("LcdIconButtonStyle", text=G["range"], font=icon_font(8))),
-    (r"^LEDZoomStart", L("LcdIconButtonStyle", text=G["to_start"], font=icon_font(8))),
-    (r"^LEDZoomEnd", L("LcdIconButtonStyle", text=G["to_end"], font=icon_font(8))),
-    (r"^LEDNoZoom", L("LcdIconButtonStyle", text=G["ring"], font=icon_font(8))),
+    # (v1's 12 x 12 zoom keys: a navy frame round a light face)
+    (r"^LEDZoomIn", L("LcdIconButtonStyle", text=G["plus"], font=icon_font(8), colBorder="Ink")),
+    (r"^LEDZoomOut", L("LcdIconButtonStyle", text=G["minus"], font=icon_font(8), colBorder="Ink")),
+    (r"^LEDZoomStartEnd", L("LcdIconButtonStyle", text=G["range"], font=icon_font(8), colBorder="Ink")),
+    (r"^LEDZoomStart", L("LcdIconButtonStyle", text=G["to_start"], font=icon_font(8), colBorder="Ink")),
+    (r"^LEDZoomEnd", L("LcdIconButtonStyle", text=G["to_end"], font=icon_font(8), colBorder="Ink")),
+    (r"^LEDNoZoom", L("LcdIconButtonStyle", text=G["ring"], font=icon_font(8), colBorder="Ink")),
     (r"^LEDDiv2", L("LcdButtonStyle", text="÷2", font=text_font(11))),
     (r"^LEDx2", L("LcdButtonStyle", text="×2", font=text_font(11))),
     # Mixer view tabs (v1, 46 x 49: a 34 px face, then the ink spine; the
@@ -179,9 +181,10 @@ BUTTONS = [
     (r"^Part(Next)", L("LcdFlatIconButtonStyle", text=G["right"], font=icon_font(8))),
     (r"^Part(Popup)", L("LcdFlatIconButtonStyle", text=G["chev_down"], font=icon_font(8))),
     # Layer setup / timestretch.
-    (r"^PhaseButton", L("LcdIconButtonStyle", text=G["phase"], font=icon_font(14))),
-    (r"^ReverseButton", L("LcdIconButtonStyle", text=G["reverse"], font=icon_font(14))),
-    (r"^BPMButton", L("LcdButtonStyle", text="BPM", font=text_font(8, True))),
+    # (v1: 24 px round buttons, the tempo ones reading a bold "bpm")
+    (r"^PhaseButton", L("LcdRoundButtonStyle", text=G["phase"], font=icon_font(14))),
+    (r"^ReverseButton", L("LcdRoundButtonStyle", text=G["reverse"], font=icon_font(14))),
+    (r"^BPMButton", L("LcdRoundButtonStyle", text="bpm", font=text_font(9, True))),
     (r"^AlgoButton", L("LcdButtonStyle", text="ALG", font=text_font(8, True))),
     # Browser header and footer.
     (r"^PrevUp", L("LcdFlatIconButtonStyle", text=G["left"])),
@@ -235,6 +238,15 @@ STRIP_HEAD = [("inside", 0, 2, 0, 13, "LcdStripHeadStyle")]
 
 FX_CARD = [("inside", 1, 2, -2, -4, "FxCardEmptyStyle"), ("inside", 3, 4, -6, 38, "FxCardHeadStyle")]
 
+
+# The pad editor's panels (`PadEditBackground` / `PadControlsBackground`,
+# 682 x 396): a navy bezel (2 px transparent margin, 2 px dark edge, the
+# band 3 px high at top and bottom, 7 px at the sides) round a screen with a
+# 2 px inner shadow. The layer view's adds four group boxes with grey
+# 20 px headers (setup, timestretch, filter, envelopes).
+PAD_BEZEL = [("inside", 2, 2, -5, -5, "LcdBezelStyle"), ("inside", 11, 7, -23, -15, "LcdInsetStyle")]
+GROUPS = [d for x, h in ((117, 151), (255, 151), (393, 185), (531, 185))
+          for d in (("inside", x, 13, 131, h, "LcdGroupStyle"), ("inside", x, 13, 131, 21, "LcdGroupHeadStyle"))]
 PANELS = [
     (r"^Background", L("ChassisStyle")),
     (r"^AboutBackground", L("LcdPanelStyle", colFill="Ink", colBorder="Amber", realCornerRounding="6")),
@@ -250,11 +262,12 @@ PANELS = [
     (r"^(MiniChannel|Pad|Aux)Background(Even)", L("LcdRowEvenStyle", realCornerRounding="3", decor=STRIP_HEAD)),
     (r"^(MiniChannel|Pad|Aux)Background(Odd)", L("LcdRowOddStyle", realCornerRounding="3", decor=STRIP_HEAD)),
     (r"^(MiniChannel|Pad|Aux)Background(Selected)", L("LcdStripSelectedStyle", realCornerRounding="3", decor=STRIP_HEAD)),
-    (r"^Pad(Controls|Edit)Background", L("LcdPanelStyle", colFill="LcdMid")),
-    (r"^PadSelectionNotSelected", L("LcdRowEvenStyle")),
-    (r"^PadSelectionPrimary", L("LcdRowSelectedStyle")),
-    (r"^LayerSelectionBackgroundEven", L("LcdRowEvenStyle")),
-    (r"^LayerSelectionBackgroundOdd", L("LcdRowOddStyle")),
+    (r"^PadEditBackground", L("BasePanelStyle", decor=PAD_BEZEL + GROUPS)),
+    (r"^PadControlsBackground", L("BasePanelStyle", decor=PAD_BEZEL)),
+    (r"^PadSelectionNotSelected", L("LcdPadRowStyle")),
+    (r"^PadSelectionPrimary", L("LcdPadRowSelectedStyle")),
+    (r"^LayerSelectionBackgroundEven", L("LcdLayerRowEvenStyle")),
+    (r"^LayerSelectionBackgroundOdd", L("LcdLayerRowOddStyle")),
     (r"^LayerSelectionBackgroundSelected", L("LcdRowSelectedStyle")),
     (r"^(Preview|ScenePage)Background", L("BasePanelStyle")),
     (r"^SamplerBackgroundOuter", L("LcdPanelStyle", colFill="InkMid", colBorder="Ink", realCornerRounding="6")),
@@ -345,9 +358,11 @@ IMAGES = [
     (r"^ModesText$", L("SectionLabelLeftStyle", text="MODES", cls="CtrlLabel")),
     # The wordmark in the logo's place (lower-case, as v1's): text, not art.
     (r"^Logo$", L("WordmarkStyle", text="einst.", cls="CtrlLabel")),
-    (r"^SendArrow$", L("GlyphLabelStyle", text=G["right"], cls="CtrlLabel", font=icon_font(8))),
+    # (v1: a large pale triangle under the "S1" .. "S4" captions)
+    (r"^SendArrow$", L("GlyphLabelStyle", text="►", cls="CtrlLabel", font=text_font(24), colText="LcdDim",
+                       enumTextHorizontalAlign="left")),
     (r"^Glue", L("LcdGlueStyle", colFill="InkMid")),  # (v1's mixer glue: the chain frame's colour)
-    (r"^(Pad|Layer)Glue$", L("LcdGlueStyle")),
+    (r"^(Pad|Layer)Glue$", L("LcdLayerGlueStyle")),
     (r"^NavigationBackground$", L("LcdFieldStyle", realCornerRounding="4")),
     (r"^GraphMarkers$", L("LcdRulerStyle", ctrl={"overloadClass": "VelocityRuler"})),  # (labelled by the editor)
     (r"^GraphIcon$", L("ChassisGlyphLabelStyle", text=G["wave"], cls="CtrlLabel")),

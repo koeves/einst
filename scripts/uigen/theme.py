@@ -166,7 +166,18 @@ COLOURS = {
     # Code-drawn LCD content after v1's colour table (the survey's
     # palette section): wave display, envelopes, velocity split, scenes,
     # song parts being recorded, the area past a track's length.
-    "WaveBack": (178, 170, 158),
+    # (v1's colour table names a beige wave background, but the display
+    # tiles its light `WaveBackgroundTile` over the wave, the grey
+    # `MarkerBackgroundTile` over the marker strip and the half-transparent
+    # light `DisabledBackgroundTile` outside the start / end markers
+    # [re:627879]; the beige shows through that last one)
+    "WaveBack": (222, 229, 237),
+    "WaveOutside": (211, 214, 217),
+    "WaveMarkerFill": (255, 225, 187),
+    "WaveLoopMarkerFill": (235, 235, 235),
+    "WaveMarkerEdge": (30, 30, 30),
+    "EnvHandle": (148, 155, 172, 200),
+    "EnvHandleEdge": (93, 100, 125),
     "WaveMarker": (250, 121, 25),
     "WaveLoopMarker": (24, 41, 62),
     "WaveDisabled": (169, 176, 191, 180),
@@ -202,6 +213,12 @@ COLOURS = {
     "LcdGroove": (138, 145, 160),
     "StripOdd": (189, 196, 209),
     "StripEven": (158, 166, 181),
+    # v1's pad / layer selector (`LayerSelectionBackground*`,
+    # `PadSelection*Background`): the rows' edge, the edit panels' group
+    # boxes and the inner shadow round the panels' screen.
+    "RowEdge": (106, 112, 136),
+    "GroupEdge": (94, 101, 126),
+    "InsetEdge": (75, 76, 90),
     "BrowserSel": (158, 170, 186),
     "BrowserTreeSel": (108, 122, 152),
     "BrowserList": (228, 231, 236),
@@ -345,15 +362,30 @@ def base_styles():
     st("LcdSlotStyle", "BasePanelStyle", colFill="LcdMid", colBorder="InkSoft", optDrawBorder="true", realCornerRounding="3")
     st("LcdRowEvenStyle", "BasePanelStyle", colFill="StripEven", colBorder="InkSoft", optDrawBorder="true", realCornerRounding="2")
     st("LcdRowOddStyle", "LcdRowEvenStyle", colFill="StripOdd")
-    st("LcdRowSelectedStyle", "LcdRowEvenStyle", colFill="AmberSoft", colBorder="Ink")
+    st("LcdRowSelectedStyle", "LcdRowEvenStyle", colFill="InkMid", colBorder="Ink", realCornerRounding="3")
+    # (v1's layer rows: light / lighter grey in a 1 px grey edge, round 3;
+    # the pad item: a 2 px navy frame, grey, navy when selected)
+    st("LcdLayerRowEvenStyle", "BasePanelStyle", colFill="LcdDim", colBorder="RowEdge", optDrawBorder="true", realCornerRounding="3")
+    st("LcdLayerRowOddStyle", "LcdLayerRowEvenStyle", colFill="LcdMid")
+    st("LcdPadRowStyle", "LcdLayerRowEvenStyle", colFill="InkSoft", colBorder="Ink", realBorderWidth="2")
+    st("LcdPadRowSelectedStyle", "LcdPadRowStyle", colFill="InkMid")
+    st("LcdLayerGlueStyle", "BasePanelStyle", colFill="InkMid")
+    # (v1's edit panels: a navy bezel, 2 px dark edge, round a screen with a
+    # 2 px inner shadow; grey-headed group boxes)
+    st("LcdBezelStyle", "BasePanelStyle", colFill="InkMid", colBorder="Ink", optDrawBorder="true", realBorderWidth="2", realCornerRounding="4")
+    st("LcdInsetStyle", "BasePanelStyle", colFill="Lcd", colBorder="InsetEdge", optDrawBorder="true", realBorderWidth="2")
+    st("LcdGroupStyle", "BasePanelStyle", colFill="Lcd", colBorder="GroupEdge", optDrawBorder="true", realCornerRounding="4")
+    st("LcdGroupHeadStyle", "LcdGroupStyle", colFill="InkSoft", optRoundBottomLeft="false", optRoundBottomRight="false")
     st("LcdStripSelectedStyle", "LcdRowEvenStyle", colFill="StripSelected", colBorder="StripSelectedEdge", realBorderWidth="2")
     st("LcdGlueStyle", "BasePanelStyle", colFill="StripHead")
     # (the selected mixer strip's name: light on its dark fill)
     st("StripNameSelectedStyle", "StandardLabelCenteredStyle", colText="LcdMid")
     st("LcdStripHeadStyle", "BasePanelStyle", colFill="StripHead", colBorder="StripHeadEdge", optDrawBorder="true", realBorderWidth="2")
-    # (the velocity ruler over the split lanes: ticks every 16, labels
-    # every 32; drawn by the editor, `VelocityRuler`)
-    st("LcdRulerStyle", "BasePanelStyle", colFill="LcdDim", realCornerRounding="1", colText="Ink", colTick="InkMid", font=text_font(7, True))
+    # (the velocity ruler over the split lanes: a tick at every velocity,
+    # labels every 32 on light boxes, italic; drawn by the editor,
+    # `VelocityRuler`)
+    st("LcdRulerStyle", "BasePanelStyle", colFill="Transparent", realCornerRounding="1", colText="Ink", colTick="Ink", colAltFill="LcdLight",
+       font=text_font(7, True), realTextSlant="12")
     st("LcdFieldStyle", "BasePanelStyle", colFill="LcdLight", colBorder="Ink", optDrawBorder="true", realCornerRounding="2")
     st("LcdPlotStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkMid", optDrawBorder="true", realCornerRounding="2")
     # Effect panels (v1): a card with a 2 px edge and a darker band behind
@@ -386,6 +418,10 @@ def base_styles():
        optDrawBorder="false", realGradientShade="0", font=text_font(10, True), realTextSlant="14", realTextScaleX="0.9", optRoundTopRight="false",
        optRoundBottomRight="false")
     st("LcdSideTabSpineStyle", "BasePanelStyle", colFill="Ink")
+    # (v1's round buttons: Phase, Reverse, Find Src / Track 24 x 24, a light
+    # disc in a grey ring with a grey icon, navy with a light icon on)
+    st("LcdRoundButtonStyle", "LcdButtonStyle", realCornerRounding="100", colFill="Lcd", colBorder="RowEdge", colText="RowEdge",
+       realGradientShade="0", colAltFill="Ink", colAltBorder="Ink", colAltText="LcdLight")
     st("LcdPowerButtonStyle", "LcdIconButtonStyle", font=icon_font(14), colAltFill="Amber", colAltText="Ink", realCornerRounding="3")
     # (v1's latching toggles: a disc, ink when on, grey with an ink edge
     # when off, an upright slot through it)
@@ -584,9 +620,11 @@ def base_styles():
     # timeline strip and the envelopes drawn over the wave.
     st("WaveDisplayStyle", "BasePanelStyle", colFill="WaveBack", colAltFill="WaveBack", colCenterLine="Ink", colLine="Ink",
        colLineDisabled="WaveDisabled", colLineLooping="InkMid", colStartMarker="WaveMarker", colEndMarker="WaveMarker",
-       colLoopStartMarker="WaveLoopMarker", colLoopEndMarker="WaveLoopMarker", colMarkerHole="Ink", colTimelineBackground="LcdDim",
+       colLoopStartMarker="WaveLoopMarker", colLoopEndMarker="WaveLoopMarker", colTimelineBackground="LcdDim",
        colTimelineText="Ink", colTimelineMarkers="Ink", colAmpEnvelopeBack="EnvAmpBack", colFreeEnvelopeBack="EnvFreeBack",
-       colEnvelopeLine="EnvLine", colEnvelopeHandle="LcdLight", colEnvelopeGrab="Amber", colTitleFill="WaveTitle", colText="LcdLight",
+       colEnvelopeLine="EnvLine", colEnvelopeHandle="EnvHandle", colEnvelopeHandleBorder="EnvHandleEdge",
+       colEnvelopeGrab="InkMid", colOutsideFill="WaveOutside", colMarkerStrip="InkSoft", colMarkerFill="WaveMarkerFill",
+       colLoopMarkerFill="WaveLoopMarkerFill", colMarkerEdge="WaveMarkerEdge", colTitleFill="WaveTitle", colText="LcdLight",
        font=text_font(9, True), fontTimeline=text_font(8), fontNoAudio=text_font(20), colNoAudioText="Ink")
     # (track, thumb, its edge lines and grips, the grips' centres)
     st("WaveDisplayZoomSliderStyle", "BasePanelStyle", colTrack="LcdDim", colFill="InkSoft", colAltFill="LcdFace", colBorder="Ink")

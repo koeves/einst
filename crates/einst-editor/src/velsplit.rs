@@ -43,8 +43,9 @@ pub const STYLE: &str = "VSplitStyle";
 /// The velocity ruler over the lanes (v1's marker strip; `LcdRulerStyle`).
 pub const RULER: &str = "VelocityRuler";
 
-/// The velocity ruler: ticks every 16 velocities (colTick), labels 0, 32,
-/// 64, 96, 127 (colText), on colFill, over the lanes' 0..127 scale.
+/// The velocity ruler: a tick at every velocity (colTick), labels 0, 32,
+/// 64, 96, 127 (colText) on colAltFill boxes, on colFill, over the lanes'
+/// 0..127 scale.
 fn draw_ruler(r: &Renderer, p: &mut Painter, c: &Ctrl) {
     use dreist_gui::style::{HAlign, VAlign};
     let s = r.styles;
@@ -52,23 +53,27 @@ fn draw_ruler(r: &Renderer, p: &mut Painter, c: &Ctrl) {
     let (w, h) = (c.rect.w as f32, c.rect.h as f32);
     p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour(st, "colFill", Colour::TRANSPARENT));
     let (tick, text) = (s.colour(st, "colTick", Colour::BLACK), s.colour(st, "colText", Colour::BLACK));
+    let knock = s.colour(st, "colAltFill", Colour::TRANSPARENT);
     let font = s.font(st);
+    // v1's `GraphMarkers` (508 × 10): a line along the top and bottom and a
+    // full-height tick at every velocity; 0, 32, 64, 96 and 127 labelled on
+    // light boxes.
+    p.fill_rect(RectF::new(0.0, 0.0, w, 1.0), tick);
+    p.fill_rect(RectF::new(0.0, h - 1.0, w, 1.0), tick);
     let step = w * 0.007874016;
-    for v in (0..=128u32).step_by(16) {
-        let v = v.min(127);
+    for v in 0..=127u32 {
         let x = ((v as f32 * step).floor() + 0.5).min(w - 0.5);
-        let long = v % 32 == 0 || v == 127;
-        p.line(x, if long { 0.0 } else { h * 0.5 }, x, h, tick, 1.0);
-        if long {
-            let (lx, align) = if v == 0 {
-                (x + 2.0, HAlign::Left)
-            } else if v == 127 {
-                (x - 32.0, HAlign::Right)
-            } else {
-                (x + 2.0, HAlign::Left)
-            };
-            p.text(RectF::new(lx, -1.0, 30.0, h), &v.to_string(), text, &font, align, VAlign::Center);
-        }
+        p.line(x, 0.0, x, h, tick, 1.0);
+    }
+    for v in [0u32, 32, 64, 96, 127] {
+        let x = ((v as f32 * step).floor() + 0.5).min(w - 0.5);
+        let label = v.to_string();
+        let (tw, _) = p.fonts.measure(&font, &label);
+        let bw = tw.ceil() + 3.0;
+        let bx = if v == 127 { w - bw } else { x + 0.5 };
+        p.fill_rect(RectF::new(bx, 1.0, bw, h - 2.0), knock);
+        let align = if v == 127 { HAlign::Right } else { HAlign::Left };
+        p.text_fx(RectF::new(bx + 1.0, 0.0, bw - 2.0, h), &label, text, &font, align, VAlign::Center, r.text_fx(c));
     }
 }
 pub const OVERLOAD: &str = "VelocitySplitEditor";
