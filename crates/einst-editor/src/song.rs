@@ -24,7 +24,7 @@ use dreist_engine::songrec::{STOP_PART, SongEvent};
 use dreist_gui::app::{App, MouseKind, UiEvent};
 use dreist_gui::paint::{Painter, RectF};
 use dreist_gui::render::Renderer;
-use dreist_gui::style::{HAlign, VAlign};
+use dreist_gui::style::{HAlign, Shorten, VAlign};
 use dreist_gui::{Colour, Ctrl, Rect, Skin};
 
 use crate::command::{Command, msg};
@@ -40,20 +40,41 @@ const SONG_TAB: usize = 2;
 const PART_STYLE: &str = "SongPartBodyStyle";
 const PART_SELECTED_STYLE: &str = "SongPartSelectedBodyStyle";
 const FOOT_STYLE: &str = "SongPartFootStyle";
+const RULER_STYLE: &str = "SongRulerStyle";
+const BAR_STYLE: &str = "SongBarLineStyle";
 /// The navy strip closing each lane (v1, measured: 8 px).
 const FOOT_H: f32 = 8.0;
 
-/// Fine diagonal hatching over `r` (v1's selected part reads as a 2 px
-/// checker): 1 px lines at 45 degrees, 2 px apart.
-fn hatch(p: &mut Painter, r: RectF, c: Colour) {
-    let mut k = 0.0;
-    while k < r.w + r.h {
-        // From the top edge (or left edge) down-left to the bottom (or right).
-        let (sx, sy) = if k <= r.w { (r.x + k, r.y) } else { (r.x + r.w, r.y + k - r.w) };
-        let len = (sx - r.x).min(r.y + r.h - sy);
-        p.line(sx, sy, sx - len, sy + len, c, 1.0);
-        k += 2.0;
+/// v1's selected part texture (`PartSelectedTexture`): a 2 px checker of
+/// `c` over the face.
+fn check(p: &mut Painter, r: RectF, c: Colour) {
+    let (x0, y0) = (r.x.round() as i32, r.y.round() as i32);
+    let (x1, y1) = ((r.x + r.w).round() as i32, (r.y + r.h).round() as i32);
+    for y in (y0..y1).step_by(2) {
+        let shift = if (y / 2) % 2 == 0 { 0 } else { 2 };
+        for x in (x0 - x0.rem_euclid(4) + shift..x1).step_by(4) {
+            let xa = x.max(x0);
+            let xb = (x + 2).min(x1);
+            if xb > xa {
+                p.fill_rect(RectF::new(xa as f32, y as f32, (xb - xa) as f32, (2.min(y1 - y)) as f32), c);
+            }
+        }
     }
+}
+
+/// The lanes' horizontal scroll bar (`SongScrollStyle`; v1-song.png): a
+/// light track (colFill) in a navy frame (colBorder), a navy thumb
+/// (colAltFill) over the visible part (`realPage`) at the position.
+fn draw_scroll(r: &Renderer, p: &mut Painter, c: &Ctrl) {
+    let s = r.styles;
+    let st = "SongScrollStyle";
+    let (w, h) = (c.rect.w as f32, c.rect.h as f32);
+    p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour(st, "colFill", Colour::rgba(215, 223, 228, 255)));
+    p.stroke_rect(RectF::new(0.5, 0.5, w - 1.0, h - 1.0), s.colour(st, "colBorder", Colour::rgba(18, 25, 60, 255)), 1.0);
+    let page = c.attr_f32("realPage", 1.0).clamp(0.0, 1.0);
+    let tw = ((w - 6.0) * page).max(8.0).min(w - 6.0);
+    let x = 3.0 + c.value.clamp(0.0, 1.0) * (w - 6.0 - tw);
+    p.fill_rect(RectF::new(x.round(), 3.0, tw.round(), h - 6.0), s.colour(st, "colAltFill", Colour::rgba(44, 48, 77, 255)));
 }
 
 /// The song page's tools, in the toolbar's order.
@@ -1591,6 +1612,10 @@ impl SongPanel {
     }
 
     pub fn draw(&self, model: &Model, r: &Renderer, p: &mut Painter, c: &Ctrl) -> bool {
+        if c.overload == "SongHScroll" {
+            draw_scroll(r, p, c);
+            return true;
+        }
         if c.overload != "SongBody" {
             return false;
         }
@@ -1602,8 +1627,8 @@ impl SongPanel {
         let off = self.scroll * self.zoom;
         let colour = |st: &str, attr: &str, default: Colour| crate::front::colour_or(s, st, attr, default);
         let position = colour("GridPositionStyle", "colFill", Colour::rgba(236, 189, 47, 255));
-        // Track rows.
-        let line = colour("GridLineStyle", "colFill", Colour::rgba(169, 176, 191, 255));
+        // Track rows: v1's empty lanes are darker than the parts, odd
+        // tracks darker again (v1-song.png).
         for e in 0..ENGINES {
             let st = if e == model.engine {
                 "SongLaneSelectedStyle"
@@ -1615,69 +1640,62 @@ impl SongPanel {
             let y = TIMELINE_H + e as f32 * rh;
             p.fill_rect(RectF::new(0.0, y, w, rh), colour(st, "colFill", Colour::WHITE));
         }
-        // Timeline + grid.
-        p.fill_rect(RectF::new(0.0, 0.0, w, TIMELINE_H), colour("TimelineStyle", "colFill", Colour::TRANSPARENT));
-        let bar = line;
+        // The ruler (`SongRulerStyle`) and the bar lines: solid through the
+        // ruler and the empty lanes, darker at the labelled bars
+        // (`SongBarLineStyle`; v1-song.png). Parts cover them.
+        p.fill_rect(RectF::new(0.0, 0.0, w, TIMELINE_H), colour(RULER_STYLE, "colFill", Colour::rgba(210, 217, 229, 255)));
         let font = s.font("TimelineLabelStyle");
         let text = colour("TimelineLabelStyle", "colText", Colour::BLACK);
+        let (minor, major) = (colour(BAR_STYLE, "colFill", Colour::rgba(92, 98, 114, 255)), colour(BAR_STYLE, "colAltFill", Colour::rgba(49, 55, 74, 255)));
         let bar_qn = 4.0f32;
         let first_bar = (self.scroll / bar_qn).floor() as usize;
         let bars = (w / (bar_qn * self.zoom)).ceil() as usize + 2;
         let label_every = ((48.0 / (bar_qn * self.zoom)).ceil() as usize).max(1);
-        // v1 dots the bar lines across the lanes (1 px on, 2 off; measured,
-        // ui-v1-style "song lanes"); the lane feet tick every other bar.
-        let dots = colour("SongBarDotStyle", "colFill", Colour::rgba(40, 44, 70, 255));
         for b in first_bar..first_bar + bars {
             let x = (b as f32 * bar_qn * self.zoom - off).round() + 0.5;
-            p.line(x, 0.0, x, TIMELINE_H, bar, 1.0);
-            let mut dy = TIMELINE_H;
-            while dy < h {
-                p.fill_rect(RectF::new(x - 0.5, dy, 1.0, 1.0), dots);
-                dy += 3.0;
-            }
+            p.line(x, 0.0, x, h, if b % label_every == 0 { major } else { minor }, 1.0);
             if b % label_every == 0 {
-                p.text(RectF::new(x + 2.0, 2.0, 50.0, 12.0), &format!("{}", b + 1), text, &font, HAlign::Left, VAlign::Center);
+                p.text(RectF::new(x + 3.0, 1.0, 50.0, TIMELINE_H - 3.0), &format!("{}", b + 1), text, &font, HAlign::Left, VAlign::Center);
             }
             if self.zoom * bar_qn >= 32.0 {
                 for beat in 1..4 {
                     let bx = ((b as f32 * bar_qn + beat as f32) * self.zoom - off).round() + 0.5;
-                    p.line(bx, 0.0, bx, 4.0, bar.with_alpha(bar.f_alpha() * 0.5), 1.0);
+                    p.line(bx, TIMELINE_H - 6.0, bx, TIMELINE_H - 2.0, minor, 1.0);
                 }
             }
         }
-        // Loop range (`SongLoopStyle`).
+        // The ruler's frame: a line on top, 2 px at the bottom, the left edge.
+        let frame = colour(RULER_STYLE, "colBorder", Colour::rgba(38, 45, 60, 255));
+        p.fill_rect(RectF::new(0.0, 0.0, w, 1.0), frame);
+        p.fill_rect(RectF::new(0.0, TIMELINE_H - 2.0, w, 2.0), frame);
+        p.fill_rect(RectF::new(0.0, 0.0, 1.0, TIMELINE_H), frame);
+        // Loop range (`SongLoopStyle`, v1's `LoopHorizontal` / `LoopGrab`):
+        // a line along the ruler between two upright pairs.
         if song.loop_enabled {
-            let col = colour("SongLoopStyle", "colFill", position.with_alpha(0.5));
-            p.fill_rect(RectF::new(song.loop_start as f32 * self.zoom - off, 0.0, ((song.loop_end - song.loop_start) as f32 * self.zoom).max(0.0), TIMELINE_H), col);
-        }
-        // Lane feet: v1 closes every lane with a navy strip carrying a dot
-        // at a bar line, four ticks at every other one.
-        let foot = colour(FOOT_STYLE, "colFill", Colour::rgba(44, 48, 77, 255));
-        let marks = colour(FOOT_STYLE, "colText", Colour::rgba(200, 206, 224, 255));
-        for e in 0..ENGINES {
-            let fy = TIMELINE_H + (e + 1) as f32 * rh - FOOT_H;
-            p.fill_rect(RectF::new(0.0, fy, w, FOOT_H), foot);
-            let my = fy + (FOOT_H / 2.0).floor() - 1.0;
-            for b in first_bar..first_bar + bars {
-                let x = (b as f32 * bar_qn * self.zoom - off).round();
-                if b % 2 == 1 {
-                    for k in 0..4 {
-                        p.fill_rect(RectF::new(x - 3.0 + k as f32 * 2.0, my, 1.0, 3.0), marks);
-                    }
-                } else {
-                    p.fill_rect(RectF::new(x, my + 1.0, 1.0, 1.0), marks);
-                }
+            let col = colour("SongLoopStyle", "colFill", Colour::rgba(18, 25, 60, 255));
+            let (x0, x1) = ((song.loop_start as f32 * self.zoom - off).round(), (song.loop_end as f32 * self.zoom - off).round());
+            p.fill_rect(RectF::new(x0, 8.0, (x1 - x0).max(0.0), 1.0), col);
+            for x in [x0 - 2.0, x0, x1 - 1.0, x1 + 1.0] {
+                p.fill_rect(RectF::new(x, 6.0, 1.0, 5.0), col);
             }
         }
-        // Parts.
+        // Parts: a flat face with a navy top edge and 2 px sides (one
+        // divider between touching parts), dotted pattern ends; under it
+        // the navy foot with notched ends, a dot at each pattern end and a
+        // grip in each pattern repeat (v1's `PartNormal*` art).
         let fill = colour(PART_STYLE, "colFill", Colour::rgba(222, 229, 237, 255));
         let border = colour(PART_STYLE, "colBorder", Colour::BLACK);
         let ptext = colour(PART_STYLE, "colText", Colour::BLACK);
         let pfont = s.font(PART_STYLE);
         let radius = s.float(PART_STYLE, "realCornerRounding", 7.0).floor().min(rh / 2.0);
         let sel_col = colour(PART_SELECTED_STYLE, "colFill", Colour::rgba(236, 189, 47, 255));
+        let checker = colour(PART_SELECTED_STYLE, "colAltFill", Colour::rgba(217, 205, 157, 255));
+        let dots = colour("SongBarDotStyle", "colFill", Colour::rgba(18, 25, 60, 255));
+        let foot = colour(FOOT_STYLE, "colFill", Colour::rgba(44, 48, 77, 255));
+        let marks = colour(FOOT_STYLE, "colText", Colour::rgba(200, 206, 224, 255));
         for (e, parts) in song.tracks.iter().enumerate() {
             let y = TIMELINE_H + e as f32 * rh;
+            let fy = y + rh - FOOT_H;
             for part in parts {
                 let start = part.start;
                 let x0 = start as f32 * self.zoom - off;
@@ -1685,30 +1703,55 @@ impl SongPanel {
                 if x1 < 0.0 || x0 > w {
                     continue;
                 }
-                // v1: a flat face down to the lane foot, 2 px navy sides; a
-                // selected part is hatched.
                 let rect = RectF::new(x0.round(), y, (x1 - x0).round(), rh - FOOT_H);
                 let selected = self.selected.contains(&(e, key(part.start)));
                 let base = if selected { sel_col } else { fill };
                 let col = if part.mute { base.with_alpha(base.f_alpha() * 0.5) } else { base };
                 p.fill_rounded(rect, radius, [true; 4], col);
                 if selected {
-                    hatch(p, rect, colour(PART_SELECTED_STYLE, "colAltFill", Colour::rgba(196, 170, 70, 255)));
+                    check(p, rect, checker);
                 }
+                p.fill_rect(RectF::new(rect.x, rect.y, rect.w, 1.0), border);
                 p.fill_rect(RectF::new(rect.x, rect.y, 2.0, rect.h), border);
-                p.fill_rect(RectF::new(rect.x + rect.w - 2.0, rect.y, 2.0, rect.h), border);
-                // Pattern repeat dividers.
+                let next = parts.iter().any(|q| (q.start - (start + part.length)).abs() < 1e-6);
+                if !next {
+                    p.fill_rect(RectF::new(rect.x + rect.w - 2.0, rect.y, 2.0, rect.h), border);
+                }
+                // The foot, its bottom corners notched.
+                let (fx, fw) = (rect.x, rect.w);
+                p.fill_rect(RectF::new(fx, fy, fw, FOOT_H - 3.0), foot);
+                p.fill_rect(RectF::new(fx + 2.0, fy + FOOT_H - 3.0, (fw - 4.0).max(0.0), 2.0), foot);
+                p.fill_rect(RectF::new(fx + 4.0, fy + FOOT_H - 1.0, (fw - 8.0).max(0.0), 1.0), foot);
+                // Pattern ends (after the phase offset): dotted on the face,
+                // a dot in the foot; a grip in the middle of each repeat
+                // wide enough for one.
                 let plen = cycle_qn(model, e, part.pattern) as f32;
+                let mut ends = vec![x0];
                 if plen > 0.0 {
-                    // Pattern starts after the phase offset.
                     let mut t = start as f32 + (plen - (part.phase as f32).rem_euclid(plen)) % plen;
                     if t <= start as f32 + 1e-3 {
                         t += plen;
                     }
                     while t < (start + part.length) as f32 - 1e-3 {
-                        let dx = (t * self.zoom - off).round() + 0.5;
-                        p.line(dx, y + 4.0, dx, y + rh - 4.0, border.with_alpha(0.4), 1.0);
+                        let dx = (t * self.zoom - off).round();
+                        let mut dy = y + 1.0;
+                        while dy < fy {
+                            p.fill_rect(RectF::new(dx, dy, 1.0, 1.0), dots);
+                            dy += 2.0;
+                        }
+                        p.fill_rect(RectF::new(dx, fy + 5.0, 1.0, 1.0), marks);
+                        ends.push(t * self.zoom - off);
                         t += plen;
+                    }
+                }
+                ends.push(x1);
+                for pair in ends.windows(2) {
+                    let (a, b) = (pair[0].max(x0 + 2.0), pair[1].min(x1 - 2.0));
+                    if b - a >= 12.0 {
+                        let cx = ((a + b) / 2.0).round();
+                        for k in 0..4 {
+                            p.fill_rect(RectF::new(cx - 3.0 + k as f32 * 2.0, fy + 2.0, 1.0, 5.0), marks);
+                        }
                     }
                 }
                 let name = if part.pattern == STOP_PART {
@@ -1717,10 +1760,14 @@ impl SongPanel {
                     let n = model.pattern_name(e, part.pattern);
                     if n.is_empty() { format!("Pattern {}", part.pattern + 1) } else { n }
                 };
-                // The pattern number over the name, centred.
+                // The pattern number over the name, centred; a name too
+                // long for the part is cut in the middle (v1's shortening
+                // labels, video 01 04-20).
                 if rect.w > 14.0 && part.pattern != STOP_PART {
                     let tw = rect.w - 6.0;
-                    p.text(RectF::new(rect.x + 3.0, y + 5.0, tw, 12.0), &format!("{}", part.pattern + 1), ptext, &pfont, HAlign::Center, VAlign::Center);
+                    let number = p.fonts.shorten(&pfont, &format!("{}", part.pattern + 1), tw, Shorten::Middle);
+                    let name = p.fonts.shorten(&pfont, &name, tw, Shorten::Middle);
+                    p.text(RectF::new(rect.x + 3.0, y + 5.0, tw, 12.0), &number, ptext, &pfont, HAlign::Center, VAlign::Center);
                     p.text(RectF::new(rect.x + 3.0, y + 17.0, tw, 12.0), &name, ptext, &pfont, HAlign::Center, VAlign::Center);
                 }
             }
@@ -1747,9 +1794,12 @@ impl SongPanel {
             p.fill_rounded(rect, radius, [true; 4], col);
             p.stroke_rounded(rect.inset(0.5), radius, [true; 4], edge, 1.0);
         }
-        // Insert marker.
-        let mx = ((self.marker as f32 - self.scroll) * self.zoom).round() + 0.5;
-        p.line(mx, 0.0, mx, TIMELINE_H, position, 1.0);
+        // Insert marker (`SongMarkerStyle`): a head on the ruler's top
+        // edge over a short line (v1-song.png).
+        let mx = ((self.marker as f32 - self.scroll) * self.zoom).round();
+        let mcol = colour("SongMarkerStyle", "colFill", Colour::rgba(18, 25, 60, 255));
+        p.fill_polygon(&[(mx - 3.0, 0.0), (mx + 4.0, 0.0), (mx + 0.5, 4.0)], mcol);
+        p.fill_rect(RectF::new(mx, 0.0, 1.0, 7.0), mcol);
         // Rubber band.
         if let Some(b) = self.band {
             let col = sel_col;

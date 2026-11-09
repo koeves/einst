@@ -46,6 +46,20 @@ TB = (0, 0, 2, 5)
 
 POPUP = {"renderer": "PopupButtonRenderer"}
 
+
+def icon(name, size=None):
+    """Controls drawing one of the editor's code-drawn icons (icons.rs) over
+    their face; `size` is the icon's height in px."""
+    c = {"overloadClass": "IconButton", "icon": name}
+    if size:
+        c["iconSize"] = str(size)
+    return c
+
+
+# v1's flat icon keys (tool buttons: a light face in a thin
+# frame; pressed, a navy face with a light icon).
+FLAT_KEY = dict(realGradientShade="0", colFill="LcdLight", colBorder="InkMid", colText="InkMid")
+
 # Pad mode buttons: the face inside v1's 25 x 27 cells.
 PM = (1, 1, 3, 5)
 PMF = dict(realBorderWidth="2", colBorder="HwFramePad")
@@ -198,9 +212,12 @@ BUTTONS = [
     (r"^LEDClear", L("LcdIconButtonStyle", text=G["close"])),
     (r"^LEDLock", L("LcdIconButtonStyle", text=G["lock"])),
     (r"^(LEDCheck|ModalCheckBox)", L("CheckBoxStyle", text="", ctrl=CHECK)),
-    # (v1's 12 x 12 zoom keys: a navy frame round a light face)
-    (r"^LEDZoomIn", L("LcdIconButtonStyle", text=G["plus"], font=icon_font(8), colBorder="Ink")),
-    (r"^LEDZoomOut", L("LcdIconButtonStyle", text=G["minus"], font=icon_font(8), colBorder="Ink")),
+    # (v1's `LEDZoom{In,Out}`: square, flat, a navy frame and glyph)
+    (r"^LEDZoomIn", L("LcdIconButtonStyle", text=G["plus"], font=icon_font(8), realCornerRounding="0", colBorder="Ink", realGradientShade="0",
+                      colFill="LcdLight")),
+    (r"^LEDZoomOut", L("LcdIconButtonStyle", text=G["minus"], font=icon_font(8), realCornerRounding="0", colBorder="Ink", realGradientShade="0",
+                       colFill="LcdLight")),
+    # (v1's other 12 x 12 zoom keys: a navy frame round a light face)
     (r"^LEDZoomStartEnd", L("LcdIconButtonStyle", text=G["range"], font=icon_font(8), colBorder="Ink")),
     (r"^LEDZoomStart", L("LcdIconButtonStyle", text=G["to_start"], font=icon_font(8), colBorder="Ink")),
     (r"^LEDZoomEnd", L("LcdIconButtonStyle", text=G["to_end"], font=icon_font(8), colBorder="Ink")),
@@ -218,11 +235,13 @@ BUTTONS = [
     (r"^PrevPresetButton", L("LcdTriangleButtonStyle", text="", enumGlyph="TriangleLeft")),
     (r"^NextPresetButton", L("LcdTriangleButtonStyle", text="", enumGlyph="TriangleRight")),
     # Pattern and song tools.
-    (r"^PenPopupTool", L("LcdFlatIconButtonStyle", text=G["chev_down"], font=icon_font(8))),
-    (r"^PenTool", L("LcdButtonStyle", text="", decor=PEN_ICON)),
-    (r"^DeleteTool", L("LcdIconButtonStyle", text=G["eraser"])),
-    (r"^SelectTool", L("LcdButtonStyle", text="", decor=SELECT_ICON)),
-    (r"^MultiTool", L("LcdButtonStyle", text="", decor=MULTI_ICON)),
+    # (v1's `Tools/*Tool*` art: a pencil, an eraser block, a dashed frame,
+    # a pencil with a plus; the pen popup its own framed key with a ▼)
+    (r"^PenPopupTool", L("LcdIconButtonStyle", text=G["down"], font=icon_font(8), **FLAT_KEY)),
+    (r"^PenTool", L("LcdIconButtonStyle", text="", ctrl=icon("pencil"), **FLAT_KEY)),
+    (r"^DeleteTool", L("LcdIconButtonStyle", text="", ctrl=icon("eraser"), **FLAT_KEY)),
+    (r"^SelectTool", L("LcdIconButtonStyle", text="", ctrl=icon("select"), **FLAT_KEY)),
+    (r"^MultiTool", L("LcdIconButtonStyle", text="", ctrl=icon("pencil_plus"), **FLAT_KEY)),
     (r"^MultiTrack", L("LcdButtonStyle", text="", optRoundTopRight="false", optRoundBottomRight="false", decor=TABLE_ICON)),
     (r"^SingleTrack", L("LcdButtonStyle", text="", optRoundTopLeft="false", optRoundBottomLeft="false", decor=SINGLE_ICON)),
     (r"^NudgeLeftButton", L("LcdIconButtonStyle", text=G["left"], font=icon_font(8), realTextOffset="-2", decor=NUDGE_LEFT)),

@@ -166,14 +166,25 @@ COLOURS = {
     "FxCardEdge": (52, 59, 90),
     "FxSlotLitTop": (181, 185, 196),
     "FxSlotLitLow": (220, 229, 238),
-    "LaneAlt": (204, 211, 221),
+    # Empty song lanes (v1-song.png: odd tracks darker than even ones,
+    # both darker than the parts) and the selected track's empty lane.
+    "Lane": (195, 202, 212),
+    "LaneAlt": (207, 215, 220),
+    "LaneSelected": (220, 216, 187),
     "PartSelected": (237, 224, 179),
     # Song lanes (round 4, measured): the navy lane foot and its ticks, the
     # selected part's checker, the dotted bar lines.
     "LaneFoot": (44, 48, 77),
     "LaneFootMark": (200, 206, 224),
-    "PartHatch": (213, 201, 154),
-    "BarDot": (40, 44, 70),
+    "PartHatch": (217, 205, 157),
+    # (pattern ends inside parts: v1's `PartNormalPatternEnd` 1 px on / off)
+    "BarDot": (18, 25, 60),
+    # Song bar lines through empty lanes and the ruler: every bar, every
+    # labelled bar (v1-song.png); the ruler's face and frame.
+    "BarLine": (92, 98, 114),
+    "BarLineMajor": (49, 55, 74),
+    "Ruler": (210, 217, 229),
+    "RulerEdge": (38, 45, 60),
     "Crumb": (190, 195, 204),
     # Code-drawn LCD content after v1's colour table (the survey's
     # palette section): wave display, envelopes, velocity split, scenes,
@@ -617,14 +628,21 @@ def base_styles():
     st("GridRowSelectedStyle", "BasePanelStyle", colFill="RowSelected")
     st("GridPositionStyle", "BasePanelStyle", colFill="PlayPosition")
     st("StepOnStyle", "BasePanelStyle", colFill="StepOn", colBorder="StepEdge", optDrawBorder="true", realCornerRounding="0")
-    st("SongLaneStyle", "BasePanelStyle", colFill="LcdLight")
+    st("SongLaneStyle", "BasePanelStyle", colFill="Lane")
     st("SongLaneAltStyle", "BasePanelStyle", colFill="LaneAlt")
-    st("SongLaneSelectedStyle", "BasePanelStyle", colFill="RowSelected")
+    st("SongLaneSelectedStyle", "BasePanelStyle", colFill="LaneSelected")
     st("SongPartBodyStyle", "BaseLabelStyle", colFill="LcdLight", colBorder="LaneFoot", optDrawBorder="true", realCornerRounding="0",
        font=text_font(10, True), enumTextHorizontalAlign="center")
     st("SongPartSelectedBodyStyle", "SongPartBodyStyle", colFill="PartSelected", colAltFill="PartHatch")
     st("SongPartFootStyle", "BasePanelStyle", colFill="LaneFoot", colText="LaneFootMark")
     st("SongBarDotStyle", "BasePanelStyle", colFill="BarDot")
+    # (bar lines: colFill every bar, colAltFill the labelled ones)
+    st("SongBarLineStyle", "BasePanelStyle", colFill="BarLine", colAltFill="BarLineMajor")
+    st("SongRulerStyle", "BasePanelStyle", colFill="Ruler", colBorder="RulerEdge")
+    # The insert marker (a navy head and line on the ruler).
+    st("SongMarkerStyle", "BasePanelStyle", colFill="Ink")
+    # The scroll bar under the lanes: track, thumb, frame.
+    st("SongScrollStyle", "BasePanelStyle", colFill="#D7DFE4", colAltFill="LaneFoot", colBorder="Ink")
     st("TrackNameStyle", "BaseLabelStyle", colFill="LcdLight", colBorder="InkSoft", optDrawBorder="true", font=text_font(10), realTextOffset="3")
     st("TrackArrowStyle", "LcdFlatButtonStyle", colText="InkMid", font=text_font(9))
     st("TrackNumberStyle", "BaseLabelStyle", font=text_font(24), enumTextHorizontalAlign="center")
@@ -694,7 +712,9 @@ def base_styles():
     # Song page: parts being recorded and retro parts, the loop range.
     st("SongPartRecordingStyle", "BasePanelStyle", colFill="RecordingPart", colBorder="Ink")
     st("SongPartRetroStyle", "BasePanelStyle", colFill="RetroPart", colBorder="RetroEdge")
-    st("SongLoopStyle", "BasePanelStyle", colFill="AmberTint")
+    # (v1's `LoopHorizontal` / `LoopGrab`: a navy line on the ruler between
+    # two upright pairs)
+    st("SongLoopStyle", "BasePanelStyle", colFill="Ink")
 
     # Tooltips and menus (read by dreist-gui by these names).
     st("TooltipStyle", "BaseStyle", optDrawBorder="true", enumDisabledDrawMode="NormalDrawing", colFill="ToolTipPanelColour",
