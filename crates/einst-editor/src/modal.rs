@@ -394,6 +394,24 @@ impl Modals {
                         });
                     }
                 }
+                // v1's artwork band (the panel's top 262 px): Einst's own
+                // wordmark.
+                o.walk_mut(&mut |c: &mut Ctrl| {
+                    if c.children.iter().any(|k| k.name == "AboutView") && !c.children.iter().any(|k| k.name == "AboutWordmark") {
+                        c.children.push(Ctrl {
+                            class: "CtrlLabel".into(),
+                            name: "AboutWordmark".into(),
+                            style: "AboutWordmarkStyle".into(),
+                            text: "einst.".into(),
+                            rect: Rect::new(0, 0, c.rect.w, 262),
+                            zorder: 1,
+                            visible: true,
+                            enabled: true,
+                            passive: true,
+                            ..Ctrl::default()
+                        });
+                    }
+                });
                 o.walk_mut(&mut |c: &mut Ctrl| match c.name.as_str() {
                     "Version" | "VersionLabel" => c.text = format!("Version {}", env!("CARGO_PKG_VERSION")),
                     "DateLabel" => c.text = String::new(),

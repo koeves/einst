@@ -22,6 +22,7 @@
     <VFont name="Sans24" fontName="Liberation Sans" fontSize="24" />
     <VFont name="Sans27" fontName="Liberation Sans" fontSize="27" />
     <VFont name="Sans32" fontName="Liberation Sans" fontSize="32" />
+    <VFont name="Sans48Bold" fontName="Liberation Sans" fontSize="48" weight="bold" />
     <VFont name="Icons8" fontName="Einst-Icons" fontSize="8" />
     <VFont name="Icons10" fontName="Einst-Icons" fontSize="10" />
     <VFont name="Icons11" fontName="Einst-Icons" fontSize="11" />

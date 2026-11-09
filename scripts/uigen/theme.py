@@ -290,6 +290,7 @@ COLOURS = {
     "ModalField": (243, 243, 243),
     "ModalOn": (189, 196, 205),
     "ModalList": (250, 250, 250),
+    "ModalTick": (168, 176, 200),
     # Names dreist-gui itself looks up (window backdrop, base defaults).
     "PanelDarkest": (58, 59, 62),
     "StandardControlBackground": (222, 229, 237),
@@ -322,7 +323,7 @@ ICON_FAMILY = "Einst-Icons"
 # (size, bold) of every text font a converted style may name, plus the
 # theme's own; named Sans<size>[Bold].
 TEXT_SIZES = [(7, True), (8, False), (8, True), (9, False), (9, True), (10, False), (10, True), (11, False), (11, True),
-              (12, False), (12, True), (13, False), (14, False), (14, True), (18, False), (24, False), (32, False)]
+              (12, False), (12, True), (13, False), (14, False), (14, True), (18, False), (24, False), (32, False), (48, True)]
 ICON_SIZES = [8, 10, 11, 12, 14, 16, 18, 22]
 
 
@@ -641,8 +642,16 @@ def base_styles():
     st("ModalFieldStyle", "BaseTextBoxStyle", colFill="ModalField", colBorder="Ink")
     st("ModalListStyle", "BaseTableStyle", colFill="ModalList", colBorder="Ink", colText="Ink", colRowAlt="ModalGroup", font=text_font(10))
     st("ModalProgressStyle", "BaseStyle", optDrawBorder="true", colFill="ModalField", colBorder="Ink", colAltFill="InkMid", colAltBorder="Ink")
+    # The About panel's artwork band and the wordmark on it.
+    st("AboutArtStyle", "BasePanelStyle", colFill="#F5F5F5")
+    st("AboutWordmarkStyle", "BaseLabelStyle", colText="Ink", font=text_font(48, True), enumTextHorizontalAlign="center",
+       realTextScaleX="0.88", realLetterSpacing="-1")
     st("CheckBoxStyle", "BaseStyle", colFill="LcdLight", colBorder="Ink", colAltFill="LcdLight", colAltBorder="Ink",
        colTick="Ink", realCornerRounding="2", realTickInset="3", realTickLineWidth="2")
+    # v1's ModalCheckBox art: a white square in a 2 px navy frame, the tick
+    # light blue-grey with a navy outline.
+    st("ModalCheckBoxStyle", "CheckBoxStyle", colFill="#FFFFFF", colAltFill="#FFFFFF", realBorderWidth="2", realCornerRounding="1",
+       colTick="ModalTick", colTickOutline="Ink", realTickInset="2", realTickLineWidth="3")
 
     # The LCD content v1 drew in code (step grid, song parts, browser tree
     # and lists), after v1's colour table (the survey's palette section);
@@ -793,4 +802,4 @@ STYLE_OVERRIDES = {
 
 
 # Style classes of the theme styles that dreist-gui dispatches on by class.
-STYLE_CLASS = {"CheckBoxStyle": "CheckBoxButtonRendererStyle", "MenuStyle": "CtrlOptionMenuStyle", "BrowserListStyle": "CtrlTableViewStyle"}
+STYLE_CLASS = {"CheckBoxStyle": "CheckBoxButtonRendererStyle", "ModalCheckBoxStyle": "CheckBoxButtonRendererStyle", "MenuStyle": "CtrlOptionMenuStyle", "BrowserListStyle": "CtrlTableViewStyle"}
