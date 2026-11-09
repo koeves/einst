@@ -12,11 +12,12 @@ use crate::Editor;
 use crate::conv::{Conv, bool_text, db15, db15_text, depth_text, long_percent_text, midi_text};
 
 /// Buttons given a [re:103540] ("N: On" / "N: Off"; the
-/// controls connected to a provider).
-const BOOL_BUTTONS: [&str; 33] = [
+/// controls connected to a provider; the steps − / + buttons [re:5d562f],
+/// Classify [re:d78e56], the row link [re:8da206]).
+const BOOL_BUTTONS: [&str; 37] = [
     "Mute", "Solo", "MuteButton", "SoloButton", "QuantizeButton", "PlayButton", "RecButton", "RecordButton", "LearnButton", "MetroButton", "SongButton", "LoopButton", "PrePostButton", "PrePost",
     "GateButton", "RestartButton", "MonoButton", "EraseButton", "FullLevelButton", "MultiLayersButton", "LoopPreview", "ArmButton", "ThruButton", "AllLayers", "AllPads", "ShowSplits",
-    "InteractionModeButton", "HitLoopModeButton", "ActiveButton", "PatternPower", "PowerButton", "RepeatButton", "Follow",
+    "InteractionModeButton", "HitLoopModeButton", "ActiveButton", "PatternPower", "PowerButton", "RepeatButton", "Follow", "MinusButton", "PlusButton", "AnalyzeButton", "AllGroups",
 ];
 
 /// Fixed help texts of the pattern tool bar and

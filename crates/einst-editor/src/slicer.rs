@@ -868,8 +868,9 @@ impl Slicer {
                                 0 if s.locked => "Unlock slice".to_string(),
                                 1 if s.deleted => "Restore slice".to_string(),
                                 0..=2 => t.to_string(),
-                                // Type overrides, with Classify on.
-                                _ => dreist_gui::menu::item(*t, classify),
+                                // Type overrides, with Classify on; [re:93d438]
+                                // ticks the slice's type.
+                                _ => dreist_gui::menu::item(if s.kind as usize == k - 2 { format!("{}{t}", dreist_gui::menu::CHECK) } else { t.to_string() }, classify),
                             })
                             .collect();
                         self.selected = Some(i);

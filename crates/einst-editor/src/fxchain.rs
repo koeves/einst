@@ -10,9 +10,9 @@
 //! A split fader sets the two parameters of the caption panels above (high)
 //! and below (low) it.
 //!
-//! The slot's type menu: Remove effect, then one submenu per category
-//! ([re:364345], [re:2b5598] table [re:2b5598]); an empty slot's offers the
-//! category submenus ([re:0531cf]). The preset menu ([re:41a672]): Save
+//! The slot's type menu ([re:0531cf]): No Effect (removes the slot's
+//! effect), then one submenu per category ([re:364345], table
+//! [re:2b5598]). The preset menu ([re:41a672]): Save
 //! preset, Save as default, Revert to default, the type's presets (user
 //! folder first, then system `Effects/<Type>/*.fxpreset`). Choosing a type
 //! posts `e_setEffect` (100) [engine, pad, layer] with the slot and a new
@@ -1052,11 +1052,9 @@ impl FxPanel {
             UiEvent::Clicked { path, name, .. } if path.starts_with(&self.host) && matches!(name.as_str(), "EffectTypeCombo" | "PresetCombo" | "LastPresetButton" | "NextPresetButton") => {
                 let Some((slot, kind)) = self.slot_of(app, path) else { return false };
                 match name.as_str() {
-                    // An empty slot's type menu: the category submenus; a
-                    // filled one's adds Remove effect.
-                    "EffectTypeCombo" if kind == 0 => self.open_menu(app, path, Some(slot), Self::categories()),
+                    // [re:0531cf]: type 0's name first, on every slot.
                     "EffectTypeCombo" => {
-                        let mut items = vec![("Remove effect".to_string(), Action::Remove), (String::new(), Action::None)];
+                        let mut items = vec![("No Effect".to_string(), if kind == 0 { Action::None } else { Action::Remove })];
                         items.extend(Self::categories());
                         self.open_menu(app, path, Some(slot), items);
                     }
