@@ -6,7 +6,7 @@
         <CtrlPanel rect="5, 20, 43, 43" style="HardKnobRingStyle" />
         <CtrlPanel rect="4, 63, 3, 3" style="HardKnobMarkStyle" />
         <CtrlPanel rect="46, 63, 3, 3" style="HardKnobMarkStyle" />
-        <CtrlKnob name="EngineSwingDepthKnob" rect="5, 20, 43, 43" displayName="Swing Template Depth" id="100010" realDialThickness="0.12" style="HardKnobLargeLR" />
+        <CtrlKnob name="EngineSwingDepthKnob" rect="5, 20, 43, 43" displayName="Swing Template Depth" id="100010" realDialThickness="0.07" style="HardKnobLargeLR" />
         <CtrlLabel name="SwingIcon" rect="22, 80, 13, 14" id="0" legacyClass="CtrlImageView" style="SwingIconImageStyle" text="" />
     </CtrlPanel>
 </root>
