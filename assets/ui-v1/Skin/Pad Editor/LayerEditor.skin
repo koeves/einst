@@ -16,7 +16,7 @@
             <CtrlPanel name="PadControls" rect="0, 0, 681, 396" id="100007" overloadClass="EditorPadControlsPanel" />
             <CtrlPanel name="LayerControls" rect="0, 0, 682, 396" id="100007" overloadClass="EditorPadWaveDisplayPanel" />
         </CtrlPanel>
-        <CtrlPanel name="PadGlue" rect="133, 25, 10, 36" id="0" legacyClass="CtrlImageView" style="LcdGlueStyle" />
-        <CtrlPanel name="LayerGlue" rect="133, 72, 10, 38" id="0" legacyClass="CtrlImageView" style="LcdGlueStyle" />
+        <CtrlPanel name="PadGlue" rect="133, 25, 10, 36" id="0" legacyClass="CtrlImageView" style="LcdLayerGlueStyle" />
+        <CtrlPanel name="LayerGlue" rect="133, 72, 10, 38" id="0" legacyClass="CtrlImageView" style="LcdLayerGlueStyle" />
     </CtrlPanel>
 </root>

@@ -11,7 +11,7 @@
         <CtrlTextBox name="DestBPMBox" rect="74, 69, 40, 17" id="100031" optSingleClickEdit="true" style="LEDEditBoxCenteredStyle" />
         <CtrlLabel name="CtrlLabel" rect="4, 102, 66, 13" id="100002" style="StandardLabelCenteredStyle" text="Find Src" />
         <CtrlLabel name="CtrlLabel" rect="66, 102, 56, 13" id="100005" style="StandardLabelCenteredStyle" text="Track" />
-        <CtrlButton name="TrackBPMButton" rect="84, 115, 24, 24" displayName="Track host BPM" id="100000" optIsMomentary="false" style="BPMButtonStyle" text="BPM" />
-        <CtrlButton name="FindBPMButton" rect="25, 116, 24, 24" displayName="Detect the source BPM" id="100001" optIsMomentary="true" style="FindBPMButtonStyle" text="BPM" />
+        <CtrlButton name="TrackBPMButton" rect="84, 115, 24, 24" displayName="Track host BPM" id="100000" optIsMomentary="false" style="BPMButtonStyle" text="bpm" />
+        <CtrlButton name="FindBPMButton" rect="25, 116, 24, 24" displayName="Detect the source BPM" id="100001" optIsMomentary="true" style="FindBPMButtonStyle" text="bpm" />
     </CtrlPanel>
 </root>

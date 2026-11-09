@@ -138,7 +138,13 @@
     <VColour name="PartHatch" colour="#D5C99A" />
     <VColour name="BarDot" colour="#282C46" />
     <VColour name="Crumb" colour="#BEC3CC" />
-    <VColour name="WaveBack" colour="#B2AA9E" />
+    <VColour name="WaveBack" colour="#DEE5ED" />
+    <VColour name="WaveOutside" colour="#D3D6D9" />
+    <VColour name="WaveMarkerFill" colour="#FFE1BB" />
+    <VColour name="WaveLoopMarkerFill" colour="#EBEBEB" />
+    <VColour name="WaveMarkerEdge" colour="#1E1E1E" />
+    <VColour name="EnvHandle" colour="148, 155, 172, 200" />
+    <VColour name="EnvHandleEdge" colour="#5D647D" />
     <VColour name="WaveMarker" colour="#FA7919" />
     <VColour name="WaveLoopMarker" colour="#18293E" />
     <VColour name="WaveDisabled" colour="169, 176, 191, 180" />
@@ -173,6 +179,9 @@
     <VColour name="LcdGroove" colour="#8A91A0" />
     <VColour name="StripOdd" colour="#BDC4D1" />
     <VColour name="StripEven" colour="#9EA6B5" />
+    <VColour name="RowEdge" colour="#6A7088" />
+    <VColour name="GroupEdge" colour="#5E657E" />
+    <VColour name="InsetEdge" colour="#4B4C5A" />
     <VColour name="BrowserSel" colour="#9EAABA" />
     <VColour name="BrowserTreeSel" colour="#6C7A98" />
     <VColour name="BrowserList" colour="#E4E7EC" />

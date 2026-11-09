@@ -16,24 +16,24 @@
         <CtrlKnob name="CutoffKnob" rect="386, 39, 50, 46" displayName="Layer filter cutoff" id="100017" realDialThickness="0.09" style="LEDKnobLargeLR" />
         <CtrlKnob name="ResKnob" rect="450, 39, 50, 46" displayName="Layer filter resonance" id="100019" realDialThickness="0.09" style="LEDKnobLargeLR" />
         <CtrlSlider name="GainKnob" rect="20, 40, 18, 106" displayName="Layer Gain" id="100000" realTrackInset="0.0" style="FatVerticalFaderStyle" />
-        <CtrlLabel name="SendImage0" rect="42, 43, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="" />
+        <CtrlLabel name="SendImage0" rect="42, 43, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="►" />
         <CtrlLabel name="CtrlLabel" rect="42, 43, 16, 18" id="100000" style="StandardLabelStyle" text="S1" />
         <CtrlKnob name="Send2Knob" rect="61, 67, 24, 26" displayName="Layer engine aux 2 send" id="100026" realDialThickness="0.04" style="LEDKnobSmallLR" />
-        <CtrlLabel name="SendImage1" rect="42, 71, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="" />
+        <CtrlLabel name="SendImage1" rect="42, 71, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="►" />
         <CtrlLabel name="CtrlLabel" rect="42, 71, 16, 18" id="100001" style="StandardLabelStyle" text="S2" />
         <CtrlLabel name="CtrlLabel" rect="103, 88, 66, 13" id="100003" style="StandardLabelCenteredStyle" text="Vel-Pitch" />
         <CtrlLabel name="CtrlLabel" rect="166, 88, 66, 13" id="100001" style="StandardLabelCenteredStyle" text="Pre delay" />
         <CtrlLabel name="CtrlLabel" rect="378, 88, 66, 13" id="100001" style="StandardLabelCenteredStyle" text="Drive" />
         <CtrlLabel name="CtrlLabel" rect="442, 88, 66, 13" id="100002" style="StandardLabelCenteredStyle" text="Vel-Cutoff" />
         <CtrlKnob name="Send3Knob" rect="61, 95, 24, 26" displayName="Layer engine aux 3 send" id="100027" realDialThickness="0.04" style="LEDKnobSmallLR" />
-        <CtrlLabel name="SendImage2" rect="42, 99, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="" />
+        <CtrlLabel name="SendImage2" rect="42, 99, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="►" />
         <CtrlLabel name="CtrlLabel" rect="42, 99, 16, 18" id="100002" style="StandardLabelStyle" text="S3" />
         <CtrlKnob name="V2P" rect="111, 101, 50, 46" displayName="Velocity to Pitch" id="100000" realDialThickness="0.09" style="LEDKnobLargeC" />
         <CtrlKnob name="PreDelayKnob" rect="174, 101, 50, 46" displayName="Pre delay" id="100000" realDialThickness="0.09" style="LEDKnobLargeLR" />
         <CtrlKnob name="DriveKnob" rect="386, 101, 50, 46" displayName="Layer filter drive" id="100021" realDialThickness="0.09" style="LEDKnobLargeLR" />
         <CtrlKnob name="V2C" rect="450, 101, 50, 46" displayName="Velocity to Cutoff" id="100001" realDialThickness="0.09" style="LEDKnobLargeC" />
         <CtrlKnob name="Send4Knob" rect="61, 123, 24, 26" displayName="Layer grid global send" id="100028" realDialThickness="0.04" style="LEDKnobSmallLR" />
-        <CtrlLabel name="SendImage3" rect="42, 127, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="" />
+        <CtrlLabel name="SendImage3" rect="42, 127, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="►" />
         <CtrlLabel name="CtrlLabel" rect="42, 127, 16, 18" id="100003" style="StandardLabelStyle" text="S4" />
         <CtrlLabel name="CtrlLabel" rect="95, 157, 91, 13" id="100006" style="StandardLabelCenteredStyle" text="Output" />
         <CtrlLabel name="CtrlLabel" rect="182, 157, 111, 13" id="100007" style="StandardLabelCenteredStyle" text="Choke mode" />

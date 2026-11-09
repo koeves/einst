@@ -3,8 +3,9 @@
 //! [re:a4b4e4], timeline mode [re:180629]). See the dreist-re GUI notes (Wave
 //! display timeline).
 //!
-//! Areas: the timeline 0..15, the marker strip 15..30 (both filled with
-//! colTimelineBackground), the waveform from 30 down. The visible range is
+//! Areas: the timeline 0..15 (filled with colTimelineBackground), the
+//! marker strip 15..30 (colMarkerStrip: v1 tiles its grey
+//! `MarkerBackgroundTile` there, [re:627879]), the waveform from 30 down. The visible range is
 //! labelled in Time (min:sec:ms, relative to the start marker) or Beats
 //! (bar.beat, bar.beat.16th when at most 4 beats are visible) mode; the
 //! mode is the option `<prefix>WaveDisplayTimelineMode` ("Time" / "Beats";
@@ -177,7 +178,8 @@ pub fn beat_labels(start_ms: f64, len_ms: f64, tempo: f64) -> (f64, Vec<(i64, St
 pub fn draw(p: &mut Painter, s: &StyleSheet, style: &str, w: f32, wave_h: f32, start_s: f64, len_s: f64, offset_s: f64, beats: bool, tempo: f64, x_of: &dyn Fn(f64) -> f32) {
     let purple = Colour::rgba(128, 0, 128, 255);
     let back = s.colour(style, "colTimelineBackground", purple);
-    p.fill_rect(RectF::new(0.0, 0.0, w, WAVE_TOP), back);
+    p.fill_rect(RectF::new(0.0, 0.0, w, STRIP), back);
+    p.fill_rect(RectF::new(0.0, STRIP, w, WAVE_TOP - STRIP), s.colour(style, "colMarkerStrip", back));
     let text = s.colour(style, "colTimelineText", Colour::WHITE);
     let font = s.font_attr(style, "fontTimeline");
     let label = |p: &mut Painter, x: f32, t: &str| p.text(RectF::new(x + 2.0, 1.0, 50.0, STRIP), t, text, &font, HAlign::Left, VAlign::Center);
