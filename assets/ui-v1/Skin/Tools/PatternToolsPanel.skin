@@ -2,10 +2,36 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 86, 35" id="0" style="EmptyPanelStyle">
         <CtrlButtonGroup name="ButtonGroup" rect="0, 0, 86, 30" id="100001" style="BasePanelStyle">
-            <CtrlButton name="PenButton" rect="4, 10, 19, 17" displayName="Pen Tool" id="0" optIsMomentary="false" style="PenToolStyle" text="✎" />
+            <CtrlButton name="PenButton" rect="4, 10, 19, 17" displayName="Pen Tool" id="0" optIsMomentary="false" style="PenToolStyle" text="">
+                <CtrlPanel rect="4, 14, 1, 1" style="ToolMarkStyle" />
+                <CtrlPanel rect="5, 12, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="6, 11, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="7, 10, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="8, 9, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="9, 8, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="10, 7, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="11, 6, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="12, 5, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="13, 4, 2, 2" style="ToolMarkStyle" />
+            </CtrlButton>
             <CtrlButton name="DeleteButton" rect="24, 10, 19, 17" displayName="Erase Tool" id="1" optIsMomentary="false" style="DeleteToolStyle" text="" />
-            <CtrlButton name="SelectionButton" rect="44, 10, 19, 17" displayName="Select Tool" id="2" optIsMomentary="false" style="SelectionToolStyle" text="⬚" />
-            <CtrlButton name="MultiButton" rect="64, 10, 19, 17" displayName="Multi Tool" id="3" optIsMomentary="false" style="MultiToolStyle" text="✛" />
+            <CtrlButton name="SelectionButton" rect="44, 10, 19, 17" displayName="Select Tool" id="2" optIsMomentary="false" style="SelectionToolStyle" text="">
+                <CtrlPanel rect="5, 4, 9, 9" style="ToolDashStyle" />
+            </CtrlButton>
+            <CtrlButton name="MultiButton" rect="64, 10, 19, 17" displayName="Multi Tool" id="3" optIsMomentary="false" style="MultiToolStyle" text="">
+                <CtrlPanel rect="3, 13, 1, 1" style="ToolMarkStyle" />
+                <CtrlPanel rect="4, 11, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="5, 10, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="6, 9, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="7, 8, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="8, 7, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="9, 6, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="10, 5, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="11, 4, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="12, 3, 2, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="12, 11, 6, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="14, 9, 2, 6" style="ToolMarkStyle" />
+            </CtrlButton>
         </CtrlButtonGroup>
     </CtrlPanel>
 </root>

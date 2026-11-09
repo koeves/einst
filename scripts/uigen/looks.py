@@ -54,6 +54,55 @@ GRID_ICON = [("inside", 3 + 5 * (i % 3), 4 + 5 * (i // 3), 4, 4, "PadModeIconSty
 EMS_ICON = [("inside", 15, 5, 3, 3, "PadModeIconStyle"), ("inside", 15, 11, 3, 3, "PadModeIconStyle")]
 CHECK = {"renderer": "CheckBoxButtonRenderer"}
 
+
+def ramp(x, y, w, h, style):
+    """A right-angled ramp rising to the right (bottom left at x, y + h):
+    one 1 px column per step."""
+    return [("inside", x + i, y + h - max(1, round(h * (i + 1) / w)), 1, max(1, round(h * (i + 1) / w)), style) for i in range(w)]
+
+
+def triangle(cx, top, h, half, style, down=False):
+    """An upward (or downward) triangle, apex at (cx, top) (at the bottom
+    when `down`), base `2 half` wide, `h` high: one 1 px row per step."""
+    rows = []
+    for j in range(h):
+        hw = half * (j + 1) / h
+        rows.append(("inside", round(cx - hw), top + (h - 1 - j if down else j), max(1, round(2 * hw)), 1, style))
+    return rows
+
+
+# Pattern tools (v1's Tools/*Icon bitmaps, measured): a diagonal pencil, a
+# dashed square for Select, the pencil with a heavy "+" for Multi.
+def pencil(x, y):
+    """A pencil lying from its tip at the lower left (x, y) to the upper
+    right: a 2 px diagonal stroke."""
+    return [("inside", x, y, 1, 1, "ToolMarkStyle")] + [("inside", x + 1 + k, y - 2 - k, 2, 2, "ToolMarkStyle") for k in range(9)]
+
+
+PEN_ICON = pencil(4, 14)
+SELECT_ICON = [("inside", 5, 4, 9, 9, "ToolDashStyle")]
+MULTI_ICON = pencil(3, 13) + [("inside", 12, 11, 6, 2, "ToolMarkStyle"), ("inside", 14, 9, 2, 6, "ToolMarkStyle")]
+# View modes: a 3 x 3 table of bars; a row of dashes over a ramp.
+TABLE_ICON = [("inside", 6 + 4 * (i % 3), 4 + 3 * (i // 3), 3, 2, "ToolMarkStyle") for i in range(9)]
+SINGLE_ICON = [("inside", 6 + 4 * i, 4, 3, 1, "ToolMarkStyle") for i in range(3)] + ramp(5, 7, 14, 6, "ToolMarkStyle")
+# Nudge: a triangle and a bar (◀| and |▶).
+NUDGE_LEFT = [("inside", 9, 5, 2, 7, "ToolMarkStyle")]
+NUDGE_RIGHT = [("inside", 4, 5, 2, 7, "ToolMarkStyle")]
+# Pad mode column (v1's Pads/*Up bitmaps): a level ramp over "FULL"; a
+# keyboard (a frame, three black keys) and an arrow; the graph icon's
+# arrow and bars.
+FULL_ICON = ramp(5, 5, 15, 8, "PadModeIconStyle")
+FOLLOW_ICON = [("inside", 4, 5, 9, 15, "PadModeFrameStyle")] + [("inside", 4, 8 + 4 * i, 5, 2, "PadModeIconStyle") for i in range(3)]
+GRAPH_BARS = [("inside", 9 + 2 * i, 12 - hh, 1, hh, "ChassisGlyphBarStyle") for i, hh in enumerate((6, 10, 8, 11))]
+# Master icons (v1's Global/Master*Icon bitmaps): a note with up / down
+# arrows; a level ramp.
+TUNE_ICON = ([("inside", 4, 0, 1, 8, "ChassisGlyphBarStyle"), ("inside", 0, 6, 5, 4, "ChassisGlyphDotStyle")]
+             + triangle(9.5, 1, 3, 2.5, "ChassisGlyphBarStyle") + triangle(9.5, 6, 3, 2.5, "ChassisGlyphBarStyle", down=True))
+VOL_ICON = ramp(0, 1, 12, 9, "ChassisGlyphBarStyle")
+# Panic: a pale yellow warning triangle with a dark edge and "!".
+PANIC_ICON = (triangle(15, 5, 20, 12, "PanicEdgeStyle") + triangle(15, 8, 16, 9, "PanicFillStyle")
+              + [("inside", 14, 12, 2, 7, "PanicEdgeStyle"), ("inside", 14, 20, 2, 2, "PanicEdgeStyle")])
+
 # The learn button's MIDI socket: a white disc with five pins round its
 # upper half (v1 drew it filled, not as an outline).
 MIDI_ICON = [("inside", 7, 5, 16, 16, "MidiDiscStyle")] + [
@@ -79,7 +128,7 @@ BUTTONS = [
     (r"^RestartButton", L("HwIconButtonStyle", text=G["skip_start"], inset=TB, colText="HwBlueIcon", colAltText="HwBlueIcon")),
     (r"^LoopButton", L("HwIconButtonStyle", text=G["loop"], inset=TB, colText="HwIconDim", colAltText="HwIconDim")),
     (r"^RetroButton", L("HwIconButtonStyle", text=G["retrigger"], inset=TB, colText="HwRed", colAltText="HwRedOn")),
-    (r"^PanicButton", L("HwIconButtonStyle", text=G["warning"], inset=TB)),
+    (r"^PanicButton", L("HwIconButtonStyle", text="", inset=TB, decor=PANIC_ICON)),
     (r"^LearnButton", L("HwGreyIconButtonStyle", text="", inset=TB, decor=MIDI_ICON)),
     (r"^Quantize", L("HwGreyIconButtonStyle", text=G["quantise"], inset=TB)),
     (r"^MetroButton", L("HwGreyIconButtonStyle", text=G["metronome"], inset=TB)),
@@ -99,10 +148,12 @@ BUTTONS = [
     (r"^PadModeVel", L("HwButtonStyle", text="◢", font=text_font(18), inset=PM, realTextScaleX="1.5", realTextOffsetY="2",
                        enumTextShortenAlgorithm="none", **PMF)),
     (r"^PadModeEMS", L("HwButtonStyle", text="E", font=text_font(14, True), inset=PM, decor=EMS_ICON, realTextOffset="-3", **PMF)),
-    (r"^FullLevel", L("HwButtonStyle", text="FULL", font=text_font(8, True))),
+    (r"^FullLevel", L("HwButtonStyle", text="FULL", font=text_font(7, True), realTextOffsetY="6", decor=FULL_ICON)),
     (r"^Erase(Up|Down)", L("HwIconButtonStyle", text=G["eraser"], font=icon_font(12))),
-    (r"^Follow", L("HwButtonStyle", text="FLW", font=text_font(8, True))),
-    (r"^RepeatOptions", L("HwButtonStyle", font=text_font(11), enumTextHorizontalAlign="left", realTextOffset="5")),
+    (r"^Follow", L("HwButtonStyle", text=G["right"], font=icon_font(8), enumTextHorizontalAlign="right", realTextOffset="3",
+                   decor=FOLLOW_ICON)),
+    (r"^RepeatOptions", L("HwButtonStyle", font=text_font(11), enumTextHorizontalAlign="left", realTextOffset="5", ctrl=POPUP,
+                          realPopupArrowBoxWidth="14", realPopupArrowSize="0.22", optPopupDivider="false")),
     (r"^Repeat", L("HwButtonStyle", text="REPEAT")),
     # Utility menus under the master section (40 x 10).
     (r"^(Load|Save)Button", L("ReadoutMenuStyle", upper=True)),  # ("..." -> "▼", see convert.py)
@@ -168,14 +219,14 @@ BUTTONS = [
     (r"^NextPresetButton", L("LcdTriangleButtonStyle", text="", enumGlyph="TriangleRight")),
     # Pattern and song tools.
     (r"^PenPopupTool", L("LcdFlatIconButtonStyle", text=G["chev_down"], font=icon_font(8))),
-    (r"^PenTool", L("LcdButtonStyle", text="✎", font=text_font(12))),
+    (r"^PenTool", L("LcdButtonStyle", text="", decor=PEN_ICON)),
     (r"^DeleteTool", L("LcdIconButtonStyle", text=G["eraser"])),
-    (r"^SelectTool", L("LcdButtonStyle", text="⬚", font=text_font(11))),
-    (r"^MultiTool", L("LcdButtonStyle", text="✛", font=text_font(11))),
-    (r"^MultiTrack", L("LcdButtonStyle", text="≡", font=text_font(12), optRoundTopRight="false", optRoundBottomRight="false")),
-    (r"^SingleTrack", L("LcdButtonStyle", text="−", font=text_font(12), optRoundTopLeft="false", optRoundBottomLeft="false")),
-    (r"^NudgeLeftButton", L("LcdIconButtonStyle", text=G["left"], font=icon_font(8))),
-    (r"^NudgeRightButton", L("LcdIconButtonStyle", text=G["right"], font=icon_font(8))),
+    (r"^SelectTool", L("LcdButtonStyle", text="", decor=SELECT_ICON)),
+    (r"^MultiTool", L("LcdButtonStyle", text="", decor=MULTI_ICON)),
+    (r"^MultiTrack", L("LcdButtonStyle", text="", optRoundTopRight="false", optRoundBottomRight="false", decor=TABLE_ICON)),
+    (r"^SingleTrack", L("LcdButtonStyle", text="", optRoundTopLeft="false", optRoundBottomLeft="false", decor=SINGLE_ICON)),
+    (r"^NudgeLeftButton", L("LcdIconButtonStyle", text=G["left"], font=icon_font(8), realTextOffset="-2", decor=NUDGE_LEFT)),
+    (r"^NudgeRightButton", L("LcdIconButtonStyle", text=G["right"], font=icon_font(8), realTextOffset="2", decor=NUDGE_RIGHT)),
     # v1's track graph toggle is a bare disclosure triangle (the reference
     # screenshots): flat, ► closed and ▼ open (pattern.rs sets the text).
     (r"^AutoButton", L("TrackArrowStyle", text="►", font=text_font(9))),
@@ -332,14 +383,15 @@ KNOB_BODY = {
 
 # ---------------------------------------------------------------- faders, pans, meters (imBackingStrip)
 
-# LED level strips: 3 px segments 1 px apart. Faders and pans get
+# LED level strips: 1 px lines 1 px apart (v1's strip meters read as a
+# fine bar). Faders and pans get
 # rectangular caps (v1's heads: 15 x 16 / 18 x 22 on the 15 / 18 px
 # faders; pans size theirs with faderHeadSize) and their track back (v1's
 # noDefaultDrawing left it to the bitmap).
-LED = {"intSegmentSize": "3", "intSegmentGap": "1"}
+FINE_LED = {"intSegmentSize": "1", "intSegmentGap": "1"}
 TRACK = {"colFill": "LcdFace"}
 SLIDERS = [
-    (r"^(HARDVU|EngineVU)", L("StripMeterStyle", **LED)),
+    (r"^(HARDVU|EngineVU)", L("StripMeterStyle", **FINE_LED)),
     (r"VU", L("LcdMeterStyle", inset=(0, 0, 1, 0))),  # (v1's LCD meters: plain 3 px bars in 4 px rects)
     # (v1's pan thumb: a dark block, a light line across its middle)
     (r"PanBase", L("LcdPanStyle", ctrl={"realTrackInset": "0.0"}, realHandleRounding="1", enumGripShape="Across", intGripLines="1", **TRACK)),
@@ -363,7 +415,10 @@ PLOT = L("LcdPlotStyle", colLine="Ink", colBorder="Ink", realBorderWidth="2", re
 
 IMAGES = [
     (r"^(Background|BackgroundSmall)$", L("ChassisStyle")),
-    (r"^(Screen|Browser)$", L("ScreenBezelStyle", decor=[("inside", 3, 20, -6, -23, "ScreenLcdStyle")])),
+    # (v1: the screen shaded under the bezel's top and left edges)
+    (r"^(Screen|Browser)$", L("ScreenBezelStyle", decor=[("inside", 3, 20, -6, -23, "ScreenLcdStyle"),
+                                                         ("inside", 3, 20, -6, 18, "ScreenShadeTopStyle"),
+                                                         ("inside", 3, 20, 8, -23, "ScreenShadeLeftStyle")])),
     (r"^StatusStrip", L("StatusStripStyle")),
     (r"^EngineText$", L("SectionLabelStyle", text="ENGINES", cls="CtrlLabel")),
     (r"^PatternText$", L("SectionLabelStyle", text="PATTERNS", cls="CtrlLabel")),
@@ -379,10 +434,12 @@ IMAGES = [
     (r"^(Pad|Layer)Glue$", L("LcdLayerGlueStyle")),
     (r"^NavigationBackground$", L("LcdFieldStyle", realCornerRounding="4")),
     (r"^GraphMarkers$", L("LcdRulerStyle", ctrl={"overloadClass": "VelocityRuler"})),  # (labelled by the editor)
-    (r"^GraphIcon$", L("ChassisGlyphLabelStyle", text=G["wave"], cls="CtrlLabel")),
+    (r"^GraphIcon$", L("ChassisGlyphLabelStyle", text=G["right"], cls="CtrlLabel", font=icon_font(8), enumTextHorizontalAlign="left",
+                       decor=GRAPH_BARS)),
     (r"^PreviewVol$", L("GlyphLabelStyle", text=G["speaker"], cls="CtrlLabel", font=icon_font(10))),
-    (r"^MasterTuneIcon$", L("ChassisGlyphLabelStyle", text=G["a"], cls="CtrlLabel")),
-    (r"^MasterVolIcon$", L("ChassisGlyphLabelStyle", text=G["speaker"], cls="CtrlLabel")),
+    # (v1: a note with up / down arrows, and a level ramp)
+    (r"^MasterTuneIcon$", L("ChassisGlyphLabelStyle", text="", cls="CtrlLabel", decor=TUNE_ICON)),
+    (r"^MasterVolIcon$", L("ChassisGlyphLabelStyle", text="", cls="CtrlLabel", decor=VOL_ICON)),
     (r"^SwingIcon$", L("ChassisGlyphLabelStyle", text=G["metronome"], cls="CtrlLabel", font=icon_font(12))),
     (r"^SearchBox$", L("LcdFieldStyle", realCornerRounding="8")),
     (r"^Scene(Empty|Full|Active|Cued)", L("LcdFieldStyle", realCornerRounding="3")),

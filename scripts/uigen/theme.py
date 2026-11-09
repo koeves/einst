@@ -83,8 +83,10 @@ COLOURS = {
     "PadFace": (96, 100, 101),
     "PadFaceLow": (76, 78, 81),
     "PadFaceTop": (84, 85, 87),
-    "PadText": (214, 214, 217),
-    "PadFrame": (50, 53, 55),
+    # (v1: pale steel-blue pad names with a soft glow, a near-black frame)
+    "PadText": (168, 186, 194),
+    "PadTextGlow": (120, 170, 200, 90),
+    "PadFrame": (40, 44, 45),
     "EngineFace": (70, 71, 74),
     "EngineFaceOff": (40, 40, 42),
     "EngineRim": (126, 127, 129),
@@ -104,7 +106,8 @@ COLOURS = {
     "HwDarkTextLight": (232, 233, 235),
     "HwBlueOn": (46, 84, 122),
     "HwBlueText": (120, 170, 220),
-    "SongText": (84, 158, 200),
+    "SongText": (40, 163, 210),
+    "PanicFill": (226, 221, 173),
     "KeyLed": (176, 197, 226),
     "KeyLedOn": (150, 180, 232),
     "KeyLedSelected": (229, 218, 100),
@@ -140,11 +143,20 @@ COLOURS = {
     "VuTrack": (132, 138, 154),
     "VuLit": (22, 28, 48),
     # LCD content drawn by code (grid, song parts, browser).
-    "RowSelected": (232, 226, 190),
+    "RowSelected": (229, 225, 200),
     "PlayPosition": (158, 180, 198),
     "GridLine": (186, 193, 205),
     "GridBack": (208, 213, 222),
     "GridDash": (150, 158, 174),
+    # (v1: the bar lines solid, 2 px; the grid's left edge and the track
+    # column's frame dark)
+    "GridBar": (117, 118, 133),
+    "GridEdge": (55, 47, 89),
+    "TrackColumn": (223, 228, 234),
+    "ScrollFrame": (140, 142, 155),
+    "TrackColumnEdge": (69, 76, 84),
+    # (v1: the shaded beat groups lighter than the others)
+    "GridShade": (223, 228, 235),
     "StepOn": (90, 101, 131),
     "StepEdge": (51, 55, 92),
     "FxSlotLit": (204, 210, 220),
@@ -197,7 +209,8 @@ COLOURS = {
     # LCD controls (light faces, mid blue-grey edges).
     "LcdFace": (240, 245, 251),
     "LcdFaceLow": (222, 228, 238),
-    "LcdEdge": (140, 149, 164),
+    # (v1's LCD button bitmaps: a dark slate side frame)
+    "LcdEdge": (88, 94, 120),
     "LcdKeyFace": (238, 245, 253),
     "LcdKeyEdge": (150, 158, 170),
     "LcdKeyText": (56, 60, 72),
@@ -345,7 +358,8 @@ def base_styles():
     st("ChassisWellStyle", "BasePanelStyle", colFill="ChassisWell", realCornerRounding="5")
     st("ChassisBackingStyle", "BasePanelStyle", colFill="ChassisBacking", colFillGradientTo="ChassisBackingLow", colBorder="ChassisBackingEdge",
        optDrawBorder="true", realCornerRounding="5", optBevel="true", colBevelLight="0, 0, 0, 50", colBevelDark="255, 255, 255, 120")
-    st("SectionLabelStyle", "BaseLabelStyle", colText="ChassisText", font=text_font(9, True), enumTextHorizontalAlign="right")
+    st("SectionLabelStyle", "BaseLabelStyle", colText="ChassisText", font=text_font(9, True), enumTextHorizontalAlign="right",
+       realTextEmbolden="0.6", realLetterSpacing="0.4")
     st("SectionLabelLeftStyle", "SectionLabelStyle", enumTextHorizontalAlign="left")
     st("WordmarkStyle", "BaseLabelStyle", colText="ChassisText", font=text_font(14, True), enumTextHorizontalAlign="left",
        realTextScaleX="0.88", realLetterSpacing="-0.3")
@@ -354,6 +368,11 @@ def base_styles():
        optBevel="true", colBevelLight="210, 212, 214, 190", colBevelDark="0, 0, 0, 0")
     st("ScreenLcdStyle", "BasePanelStyle", colFill="Lcd", realCornerRounding="9", optBevel="true", colBevelLight="0, 0, 0, 110",
        colBevelDark="255, 255, 255, 90")
+    # (v1: the screen is shaded under its top and left bezel edges)
+    st("ScreenShadeTopStyle", "BasePanelStyle", colFill="0, 0, 0, 80", colFillGradientTo="0, 0, 0, 0", realCornerRounding="9",
+       optRoundBottomLeft="false", optRoundBottomRight="false")
+    st("ScreenShadeLeftStyle", "BasePanelStyle", colFill="0, 0, 0, 70", colFillGradientTo="0, 0, 0, 0", enumGradientDirection="Horizontal",
+       realCornerRounding="9", optRoundTopRight="false", optRoundBottomRight="false")
     st("StatusStripStyle", "BasePanelStyle", colFill="Strip", colBorder="StripFrame", optDrawBorder="true", realCornerRounding="3")
     st("LogoStyle", "BasePanelStyle", enumDisabledDrawMode="NormalDrawing", colFill="Amber", colAltFill="AmberSoft")
     st("GlyphLabelStyle", "BaseLabelStyle", colText="InkMid", font=icon_font(12), enumTextHorizontalAlign="center")
@@ -399,8 +418,8 @@ def base_styles():
     st("FxCardHeadStyle", "BasePanelStyle", colFill="LcdDim")
 
     # LCD buttons.
-    st("LcdButtonStyle", "BaseButtonStyle", colFill="LcdFace", colBorder="LcdEdge", colAltFill="LcdOn", colAltBorder="Ink",
-       realGradientShade="0.08")
+    st("LcdButtonStyle", "BaseButtonStyle", colFill="LcdLight", colBorder="LcdEdge", colAltFill="LcdOn", colAltBorder="Ink",
+       realGradientShade="0.03")
     st("LcdIconButtonStyle", "LcdButtonStyle", font=icon_font(10))
     st("LcdRadioStyle", "LcdButtonStyle", colBorder="InkMid", colFill="LcdLight", realGradientShade="0", colAltFill="RadioOn",
        colAltText="Ink", colAltBorder="InkMid")
@@ -443,7 +462,7 @@ def base_styles():
        colAltFill="Transparent", colAltBorder="Transparent", colAltText="BezelTextOn", font=text_font(12, True), realTextScaleX="0.74",
        colAltTextGlow="BezelTextGlow", realTextGlowRadius="2", realTextGlowStrength="2.4", realTextEmbolden="0.7", realLetterSpacing="0.6",
        realCornerRounding="3", optRoundBottomLeft="false", optRoundBottomRight="false")
-    st("BezelIconButtonStyle", "TabButtonStyle", font=icon_font(11), colText="ChassisText", colAltText="ChassisText", realTextScaleX="1",
+    st("BezelIconButtonStyle", "TabButtonStyle", font=icon_font(14), realTextOffset="-3", colText="ChassisText", colAltText="ChassisText", realTextScaleX="1",
        realTextEmbolden="0", realLetterSpacing="0")
 
     # Hardware buttons.
@@ -468,7 +487,7 @@ def base_styles():
     st("HwSoloButtonStyle", "HwDarkTinyButtonStyle", colAltFill="LedSolo", colAltFillGradientTo="LedSolo", colAltText="HwInk")
     st("HwPowerButtonStyle", "HwDarkTinyButtonStyle", font=icon_font(8), colAltFill="HwBlueOn", colAltFillGradientTo="HwBlueOn", colAltText="HwBlueText")
     st("HwDarkButtonStyle", "HwButtonStyle", colFill="HwDark", colFillGradientTo="HwDarkLow", colBorder="HwDarkFrame",
-       colText="HwDarkTextLight", realDisabledAlpha="0.3", colAltFill="HwDarkLow", colAltFillGradientTo="HwDarkFrame",
+       colText="HwDarkTextLight", realDisabledAlpha="0.45", colAltFill="HwDarkLow", colAltFillGradientTo="HwDarkFrame",
        colAltBorder="HwDarkFrame", colAltText="HwDarkTextLight", realCornerRounding="3", colBevelLight="255, 255, 255, 60")
     st("HwDarkIconButtonStyle", "HwDarkButtonStyle", font=icon_font(8))
     st("HwSongButtonStyle", "HwButtonStyle", colText="SongText", colAltText="SongText", colAltFill="HwFacePressed",
@@ -477,8 +496,9 @@ def base_styles():
        colAltBorder="Strip", colAltText="Strip", realCornerRounding="1", font=text_font(7, True))
     st("IndicatorLabelStyle", "IndicatorStyle", colFill="Transparent", colBorder="Transparent", colText="ReadoutMid",
        colAltFill="Transparent", colAltBorder="Transparent", colAltText="Readout", enumTextHorizontalAlign="left")
-    st("IndicatorMuteStyle", "IndicatorStyle", colAltFill="LedMute", optDrawBorder="false")
-    st("IndicatorSoloStyle", "IndicatorStyle", colAltFill="LedSolo", optDrawBorder="false")
+    # (v1's off indicators are blank)
+    st("IndicatorMuteStyle", "IndicatorStyle", colFill="Transparent", colAltFill="LedMute", optDrawBorder="false")
+    st("IndicatorSoloStyle", "IndicatorStyle", colFill="Transparent", colAltFill="LedSolo", optDrawBorder="false")
     st("IndicatorErrorStyle", "IndicatorStyle", colFill="LedMute")
 
     # Engine selectors, pattern keys, pads.
@@ -490,17 +510,30 @@ def base_styles():
     st("PatternKeyStyle", "BaseButtonStyle", colFill="KeyFace", colFillGradientTo="KeyFaceLow", colBorder="KeyFrame", colText="HwInk",
        colAltFill="KeyFace", colAltFillGradientTo="KeyFaceLow", colAltBorder="HwFrameDark", realCornerRounding="3", font=text_font(8),
        realBorderWidth="2", optBevel="true", colBevelLight="255, 255, 255, 220", colBevelDark="0, 0, 0, 0",
-       realStripHeight="6", realStripInset="3", colStripOff="KeyLed", colStripOn="KeyLed")
+       realStripHeight="6", realStripInset="3", realStripSideInset="4", realStripRounding="2", colStripOff="KeyLed", colStripOn="KeyLed")
     st("PatternKeyAllocatedStyle", "PatternKeyStyle", colStripOff="KeyLedOn", colStripOn="KeyLedOn")
     st("PatternKeyEditingStyle", "PatternKeyStyle", colBorder="AmberSoft", colAltBorder="AmberSoft")
     st("PatternKeySelectedStyle", "PatternKeyStyle", colFill="KeyFaceSelected", colFillGradientTo="KeyFaceSelected", colBorder="KeyAmber",
        colAltBorder="KeyAmber", colStripOff="KeyLedSelected", colStripOn="KeyLedSelected")
     st("PadModeIconStyle", "BasePanelStyle", colFill="HwInk", realCornerRounding="0")
+    st("PadModeFrameStyle", "BasePanelStyle", colBorder="HwInk", optDrawBorder="true", realCornerRounding="0")
+    st("ChassisGlyphBarStyle", "BasePanelStyle", colFill="HwInk")
+    st("ChassisGlyphDotStyle", "ChassisGlyphBarStyle", realCornerRounding="100")
+    # (the pattern tools' and view modes' icon marks, and Select's dashed
+    # square)
+    # (light on a selected button, like its text)
+    st("ToolMarkStyle", "BasePanelStyle", colFill="InkMid", colParentOnFill="LcdLight")
+    st("ToolDashStyle", "BasePanelStyle", colBorder="InkMid", optDrawBorder="true", intDashLength="2", intDashGap="1",
+       colParentOnFill="Transparent", colParentOnBorder="LcdLight")
+    # (the panic button's warning sign)
+    st("PanicFillStyle", "BasePanelStyle", colFill="PanicFill")
+    st("PanicEdgeStyle", "BasePanelStyle", colFill="HwInk")
     st("PadSlotStyle", "BasePanelStyle")
     st("PadStyle", "BasePanelStyle", colFill="PadFace", colFillGradientTo="PadFaceLow", colBorder="PadFrame", optDrawBorder="true",
-       realCornerRounding="3", colText="PadText", optBevel="true", colBevelLight="255, 255, 255, 45", colBevelDark="0, 0, 0, 70")
+       realCornerRounding="4", realBorderWidth="2", colText="PadText", optBevel="true", colBevelLight="255, 255, 255, 45", colBevelDark="0, 0, 0, 70")
     st("PadSelectedStyle", "PadStyle", colBorder="Amber", realBorderWidth="2")
-    st("PadNameStyle", "BaseLabelStyle", colText="PadText", font=text_font(10), enumTextHorizontalAlign="center")
+    st("PadNameStyle", "BaseLabelStyle", colText="PadText", font=text_font(10), enumTextHorizontalAlign="center", colTextGlow="PadTextGlow",
+       realTextGlowRadius="1.5", realTextGlowStrength="1")
     st("PadLedStyle", "BasePanelStyle", colFill="PadFrame", realCornerRounding="1.5")  # round dots (v1, round 5)
     for i in range(1, 5):  # a pad's colour (v1's PadColour1-4) on its first LED
         st(f"PadLed{i}Style", "PadLedStyle", colFill=f"PadColour{i}")
@@ -549,10 +582,11 @@ def base_styles():
        realCornerRounding="9")
     st("LcdScrollBarStyle", "BaseSliderStyle", colFill="LcdLight", colAltFill="InkMid")
     st("LcdMeterStyle", "BaseMeterStyle")
-    st("StripMeterStyle", "BaseMeterStyle", colFill="ReadoutDim", colAltFill="Readout", colAltBorder="Readout")
+    # (v1: fine 1 px lines in the readout blue, faint when off)
+    st("StripMeterStyle", "BaseMeterStyle", colFill="112, 175, 240, 51", colAltFill="Readout", colAltBorder="Readout")
 
     # Readouts on the status strips.
-    st("ReadoutStyle", "BaseLabelStyle", colText="Readout", enumTextHorizontalAlign="center", font=text_font(11, True))
+    st("ReadoutStyle", "BaseLabelStyle", colText="Readout", enumTextHorizontalAlign="center", font=text_font(10))
     st("ReadoutMenuStyle", "BaseButtonStyle", colFill="Transparent", colBorder="Transparent", colText="Readout", colAltFill="ReadoutDim",
        colAltBorder="Transparent", colAltText="Readout", font=text_font(9, True), enumTextHorizontalAlign="left")
     st("ReadoutButtonStyle", "BaseButtonStyle", colFill="Transparent", colBorder="ReadoutDim", colText="Readout",
@@ -570,14 +604,16 @@ def base_styles():
     # The LCD content v1 drew in code (step grid, song parts, browser tree
     # and lists), after v1's colour table (the survey's palette section);
     # the preview example (crates/einst/examples/v1skins.rs) builds it.
-    st("TimelineStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkMid", optDrawBorder="true")
+    st("TimelineStyle", "BasePanelStyle", colFill="LcdLight", colBorder="Ink", optDrawBorder="true")
     st("TimelineLabelStyle", "BaseLabelStyle", font=text_font(9, True))
     st("TimelineTickStyle", "BasePanelStyle", colFill="InkMid")
-    st("GridBackStyle", "BasePanelStyle", colFill="GridBack", colBorder="InkMid", optDrawBorder="true")
-    st("GridShadeStyle", "BasePanelStyle", colFill="LcdMid")
+    # (colAltBorder: the grid's left edge, drawn by the editor)
+    st("GridBackStyle", "BasePanelStyle", colFill="GridBack", colBorder="InkMid", colAltBorder="GridEdge", optDrawBorder="true")
+    st("GridShadeStyle", "BasePanelStyle", colFill="GridShade")
     st("GridLineStyle", "BasePanelStyle", colFill="GridLine")
     st("GridDashStyle", "GridLineStyle", colFill="GridDash", intDashLength="2", intDashGap="2")
-    st("GridBarLineStyle", "GridLineStyle", colFill="InkSoft")
+    st("GridBarLineStyle", "GridLineStyle", colFill="GridBar")
+    st("TrackColumnStyle", "BasePanelStyle", colFill="TrackColumn", colBorder="TrackColumnEdge", optDrawBorder="true")
     st("GridRowSelectedStyle", "BasePanelStyle", colFill="RowSelected")
     st("GridPositionStyle", "BasePanelStyle", colFill="PlayPosition")
     st("StepOnStyle", "BasePanelStyle", colFill="StepOn", colBorder="StepEdge", optDrawBorder="true", realCornerRounding="0")

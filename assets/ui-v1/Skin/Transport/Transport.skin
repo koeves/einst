@@ -17,7 +17,46 @@
         <CtrlButton name="RecButton" rect="367, 5, 40, 28" displayName="Record" id="100003" optIsMomentary="false" style="RecButtonStyle" text="" />
         <CtrlButton name="RetroButton" rect="408, 5, 31, 28" displayName="Retro record" id="100002" optIsMomentary="true" style="RetroButtonStyle" text="" />
         <CtrlButton name="SongButton" rect="448, 5, 40, 28" displayName="Song mode" id="0" optIsMomentary="false" style="SongButtonStyle" text="SONG" />
-        <CtrlButton name="PanicButton" rect="496, 5, 31, 28" displayName="Panic! (Stop all audio)" id="100001" optIsMomentary="true" style="PanicButtonStyle" text="" />
+        <CtrlButton name="PanicButton" rect="496, 5, 31, 28" displayName="Panic! (Stop all audio)" id="100001" optIsMomentary="true" style="PanicButtonStyle" text="">
+            <CtrlPanel rect="14, 5, 1, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="14, 6, 2, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="13, 7, 4, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="13, 8, 5, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="12, 9, 6, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="11, 10, 7, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="11, 11, 8, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="10, 12, 10, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="10, 13, 11, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="9, 14, 12, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="8, 15, 13, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="8, 16, 14, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="7, 17, 16, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="7, 18, 17, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="6, 19, 18, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="5, 20, 19, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="5, 21, 20, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="4, 22, 22, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="4, 23, 23, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="3, 24, 24, 1" style="PanicEdgeStyle" />
+            <CtrlPanel rect="14, 8, 1, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="14, 9, 2, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="13, 10, 3, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="13, 11, 4, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="12, 12, 6, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="12, 13, 7, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="11, 14, 8, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="10, 15, 9, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="10, 16, 10, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="9, 17, 11, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="9, 18, 12, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="8, 19, 14, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="8, 20, 15, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="7, 21, 16, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="7, 22, 17, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="6, 23, 18, 1" style="PanicFillStyle" />
+            <CtrlPanel rect="14, 12, 2, 7" style="PanicEdgeStyle" />
+            <CtrlPanel rect="14, 20, 2, 2" style="PanicEdgeStyle" />
+        </CtrlButton>
         <CtrlButton name="UndoButton" rect="1, 7, 43, 24" displayName="Undo previous action" id="100000" optIsMomentary="true" style="UndoButtonStyle" text="UNDO" />
         <CtrlButton name="UndoHistory" rect="44, 7, 12, 24" displayName="Show undo history" id="100000" optIsMomentary="true" style="UndoRedoDropButtonStyle" text="" />
         <CtrlButton name="RedoButton" rect="62, 7, 43, 24" displayName="Redo previous action" id="100001" optIsMomentary="true" style="RedoButtonStyle" text="REDO" />

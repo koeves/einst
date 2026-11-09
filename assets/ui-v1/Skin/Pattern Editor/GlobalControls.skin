@@ -13,8 +13,36 @@
         <CtrlPanel name="ToolsPanel" rect="3, 1, 86, 35" id="100000" overloadClass="PatternToolsPanel" />
         <CtrlButton name="DragEditButton" rect="91, 11, 65, 17" id="100001" optIsMomentary="true" renderer="PopupButtonRenderer" style="DragEditButtonStyle" text="Velocity" />
         <CtrlButtonGroup name="ModeGroup" rect="160, 11, 50, 20" id="100000" style="BasePanelStyle">
-            <CtrlButton name="MultiButton" rect="0, 0, 24, 17" displayName="Multi track view" id="100001" optIsMomentary="false" style="MultiTrackStyle" text="≡" />
-            <CtrlButton name="SingleButton" rect="23, 0, 24, 17" displayName="Multi graph view" id="100002" optIsMomentary="false" style="SingleTrackStyle" text="−" />
+            <CtrlButton name="MultiButton" rect="0, 0, 24, 17" displayName="Multi track view" id="100001" optIsMomentary="false" style="MultiTrackStyle" text="">
+                <CtrlPanel rect="6, 4, 3, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="10, 4, 3, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="14, 4, 3, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="6, 7, 3, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="10, 7, 3, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="14, 7, 3, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="6, 10, 3, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="10, 10, 3, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="14, 10, 3, 2" style="ToolMarkStyle" />
+            </CtrlButton>
+            <CtrlButton name="SingleButton" rect="23, 0, 24, 17" displayName="Multi graph view" id="100002" optIsMomentary="false" style="SingleTrackStyle" text="">
+                <CtrlPanel rect="6, 4, 3, 1" style="ToolMarkStyle" />
+                <CtrlPanel rect="10, 4, 3, 1" style="ToolMarkStyle" />
+                <CtrlPanel rect="14, 4, 3, 1" style="ToolMarkStyle" />
+                <CtrlPanel rect="5, 12, 1, 1" style="ToolMarkStyle" />
+                <CtrlPanel rect="6, 12, 1, 1" style="ToolMarkStyle" />
+                <CtrlPanel rect="7, 12, 1, 1" style="ToolMarkStyle" />
+                <CtrlPanel rect="8, 11, 1, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="9, 11, 1, 2" style="ToolMarkStyle" />
+                <CtrlPanel rect="10, 10, 1, 3" style="ToolMarkStyle" />
+                <CtrlPanel rect="11, 10, 1, 3" style="ToolMarkStyle" />
+                <CtrlPanel rect="12, 10, 1, 3" style="ToolMarkStyle" />
+                <CtrlPanel rect="13, 9, 1, 4" style="ToolMarkStyle" />
+                <CtrlPanel rect="14, 9, 1, 4" style="ToolMarkStyle" />
+                <CtrlPanel rect="15, 8, 1, 5" style="ToolMarkStyle" />
+                <CtrlPanel rect="16, 8, 1, 5" style="ToolMarkStyle" />
+                <CtrlPanel rect="17, 7, 1, 6" style="ToolMarkStyle" />
+                <CtrlPanel rect="18, 7, 1, 6" style="ToolMarkStyle" />
+            </CtrlButton>
         </CtrlButtonGroup>
         <CtrlButton name="Follow" rect="210, 11, 50, 17" displayName="Follow playback position" id="100000" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Follow" />
         <CtrlTextBox name="PatternNameBox" rect="262, 11, 105, 17" id="100000" optSingleClickEdit="true" style="LEDEditBoxStyle" />
@@ -28,7 +56,11 @@
         <CtrlButton name="QuantizeButton" rect="626, 11, 50, 17" displayName="Quantize" id="100000" optIsMomentary="true" style="LEDMomentaryButtonStyle" text="Quantize" />
         <CtrlButton name="RepeatButton" rect="678, 11, 50, 17" displayName="Repeat selected notes / pattern" id="100007" optIsMomentary="true" style="LEDMomentaryButtonStyle" text="Duplicate" />
         <CtrlButton name="InsertButton" rect="730, 11, 50, 17" id="100008" optIsMomentary="true" renderer="PopupButtonRenderer" style="LEDMenuButtonStyle" text="Insert" />
-        <CtrlButton name="NudgeBack" rect="783, 11, 15, 17" displayName="Nudge selected notes / pattern" id="100000" optIsMomentary="true" style="NudgeLeftStyle" text="" />
-        <CtrlButton name="NudgeNext" rect="797, 11, 15, 17" displayName="Nudge selected notes / pattern" id="100001" optIsMomentary="true" style="NudgeRightStyle" text="" />
+        <CtrlButton name="NudgeBack" rect="783, 11, 15, 17" displayName="Nudge selected notes / pattern" id="100000" optIsMomentary="true" style="NudgeLeftStyle" text="">
+            <CtrlPanel rect="9, 5, 2, 7" style="ToolMarkStyle" />
+        </CtrlButton>
+        <CtrlButton name="NudgeNext" rect="797, 11, 15, 17" displayName="Nudge selected notes / pattern" id="100001" optIsMomentary="true" style="NudgeRightStyle" text="">
+            <CtrlPanel rect="4, 5, 2, 7" style="ToolMarkStyle" />
+        </CtrlButton>
     </CtrlPanel>
 </root>
