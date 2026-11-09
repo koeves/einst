@@ -189,10 +189,12 @@
     <CtrlStyle name="WaveDisplayStyle" colAltFill="WaveBack" colAmpEnvelopeBack="EnvAmpBack" colCenterLine="Ink" colEndMarker="WaveMarker" colEnvelopeGrab="InkMid" colEnvelopeHandle="EnvHandle" colEnvelopeHandleBorder="EnvHandleEdge" colEnvelopeLine="EnvLine" colFill="WaveBack" colFreeEnvelopeBack="EnvFreeBack" colLine="Ink" colLineDisabled="WaveDisabled" colLineLooping="InkMid" colLoopEndMarker="WaveLoopMarker" colLoopMarkerFill="WaveLoopMarkerFill" colLoopStartMarker="WaveLoopMarker" colMarkerEdge="WaveMarkerEdge" colMarkerFill="WaveMarkerFill" colMarkerStrip="InkSoft" colNoAudioText="Ink" colOutsideFill="WaveOutside" colStartMarker="WaveMarker" colText="LcdLight" colTimelineBackground="LcdDim" colTimelineMarkers="Ink" colTimelineText="Ink" colTitleFill="WaveTitle" font="Sans9Bold" fontNoAudio="Sans20" fontTimeline="Sans8" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="WaveDisplayZoomSliderStyle" colAltFill="LcdFace" colBorder="Ink" colFill="InkSoft" colTrack="LcdDim" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="VSplitStyle" colAltBorder="SplitTickBar" colAltFill="AmberSoft" colBorder="SplitTick" colFill="SplitGraph" colHandle="Ink" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="SceneTriggerEmptyStyle" colAltBorder="Transparent" colAltFill="Transparent" colBorder="SceneEdge" colFill="LcdLight" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="SceneTriggerUsedStyle" colAltFill="SceneUsed" parentStyle0="SceneTriggerEmptyStyle" />
-    <CtrlStyle name="SceneTriggerCuedStyle" colAltBorder="Amber" colAltFill="SceneUsed" parentStyle0="SceneTriggerEmptyStyle" />
-    <CtrlStyle name="SceneTriggerActiveStyle" colAltFill="Amber" parentStyle0="SceneTriggerEmptyStyle" />
+    <CtrlStyle name="SceneTriggerEmptyStyle" colAltBorder="Ink" colAltFill="SceneEdge" colBorder="SceneEdge" colFill="LcdLight" colText="SceneMark" parentStyle0="BasePanelStyle" realCornerRounding="2" />
+    <CtrlStyle name="SceneTriggerUsedStyle" colFill="SceneUsed" parentStyle0="SceneTriggerEmptyStyle" />
+    <CtrlStyle name="SceneTriggerCuedStyle" parentStyle0="SceneTriggerUsedStyle" />
+    <CtrlStyle name="SceneTriggerActiveStyle" parentStyle0="SceneTriggerUsedStyle" />
+    <CtrlStyle name="ScenePageBackStyle" colBorder="Ink" colFill="SceneFrame" colPanel="Lcd" colPanelEdge="ScenePanelEdge" colPanelEdgeLow="ScenePanelEdgeLow" colTableWell="SceneTableWell" colWell="SceneWell" colWellEdge="SceneWellEdge" colWellEdgeLow="SceneWellEdgeLow" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="SceneTileStyle" colBorder="SceneEdge" colFill="LcdMid" parentStyle0="BasePanelStyle" realCornerRounding="3" />
     <CtrlStyle name="FxSlotItemStyle" colBorder="Ink" colFill="FxSlotDim" colText="Ink" font="Sans9" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="FxSlotItemLitStyle" colFill="FxSlotLitTop" colFillGradientTo="FxSlotLitLow" parentStyle0="FxSlotItemStyle" />
     <CtrlStyle name="SelectionButtonMultiStyle" colFill="RowSelected" parentStyle0="LcdRowSelectedStyle" realCornerRounding="0" />
@@ -495,26 +497,26 @@
     <CtrlStyle name="SamplerThresholdBottomSliderStyle" colFill="Transparent" font="Sans12" optDrawBorder="false" parentStyle0="BaseSliderStyle" />
     <CtrlStyle name="SamplerPanelOuterBackgroundStyle" colBorder="Ink" colFill="InkMid" font="Sans12" parentStyle0="LcdPanelStyle" realBorderWidth="2" realCornerRounding="3" />
     <!-- From v1 Scene/Scene.skin -->
-    <CtrlStyle name="SceneNoteLabelCenteredStyle" colText="Ink" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseLabelStyle" />
+    <CtrlStyle name="SceneNoteLabelCenteredStyle" colText="Ink" enumTextHorizontalAlign="center" enumTextShortenAlgorithm="middle" font="Sans10" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="SceneTriggerButtonStyle" font="Sans12" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="TriggerImageViewStyle" font="Sans12" parentStyle0="BaseImageStyle" />
     <CtrlStyle name="OverlayImageViewStyle" font="Sans12" parentStyle0="BaseImageStyle" />
     <CtrlStyle name="SmallSceneButtonStyle" font="Sans10" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="SceneSnapshotButtonStyle" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="SceneClearButtonStyle" parentStyle0="LcdIconButtonStyle" />
+    <CtrlStyle name="SceneSnapshotButtonStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
+    <CtrlStyle name="SceneClearButtonStyle" colBorder="InkMid" colFill="LcdLight" colText="InkMid" parentStyle0="LcdIconButtonStyle" realGradientShade="0" />
     <CtrlStyle name="SceneNoBorderPanelStyleEven" parentStyle0="LcdSlotStyle" realCornerRounding="0" />
     <CtrlStyle name="SceneNoBorderPanelStyleOdd" parentStyle0="LcdSlotStyle" realCornerRounding="0" />
     <!-- From v1 Scene/ScenePanel.skin -->
-    <CtrlStyle name="SnapshotToNextButtonStyle" font="Icons18" parentStyle0="LcdBigButtonStyle" />
-    <CtrlStyle name="SceneClearAllButtonStyle" font="Icons16" parentStyle0="LcdBigButtonStyle" />
-    <CtrlStyle name="SceneRowUpButtonStyle" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="SceneRowDownButtonStyle" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="ScenePageUpButtonStyle" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="ScenePageDownButtonStyle" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="PrevSceneButtonStyle" font="Icons16" parentStyle0="LcdBigButtonStyle" />
-    <CtrlStyle name="NextSceneButtonStyle" font="Icons16" parentStyle0="LcdBigButtonStyle" />
-    <CtrlStyle name="MiniSceneEvenButtonStyle" colAltFill="Ink" colBorder="18, 25, 60, 100" colFill="LcdMid" optDrawBorder="true" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="MiniSceneOddButtonStyle" colAltFill="Ink" colBorder="18, 25, 60, 100" colFill="LcdMid" optDrawBorder="true" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="SnapshotToNextButtonStyle" colBevelDark="18, 25, 60, 255" colBevelLight="0, 0, 0, 0" colBorder="#3C4461" colFill="LcdLight" colText="InkMid" optBevel="true" parentStyle0="LcdBigButtonStyle" realBorderWidth="1" realCornerRounding="0" realGradientShade="0" />
+    <CtrlStyle name="SceneClearAllButtonStyle" colBevelDark="18, 25, 60, 255" colBevelLight="0, 0, 0, 0" colBorder="#3C4461" colFill="LcdLight" colText="InkMid" optBevel="true" parentStyle0="LcdBigButtonStyle" realBorderWidth="1" realCornerRounding="0" realGradientShade="0" />
+    <CtrlStyle name="SceneRowUpButtonStyle" colBorder="Ink" colFill="LcdLight" colText="InkMid" font="Icons8" parentStyle0="LcdIconButtonStyle" realCornerRounding="10" realGradientShade="0" />
+    <CtrlStyle name="SceneRowDownButtonStyle" colBorder="Ink" colFill="LcdLight" colText="InkMid" font="Icons8" parentStyle0="LcdIconButtonStyle" realCornerRounding="10" realGradientShade="0" />
+    <CtrlStyle name="ScenePageUpButtonStyle" colBorder="Ink" colFill="LcdLight" colText="InkMid" parentStyle0="LcdIconButtonStyle" realCornerRounding="10" realGradientShade="0" />
+    <CtrlStyle name="ScenePageDownButtonStyle" colBorder="Ink" colFill="LcdLight" colText="InkMid" parentStyle0="LcdIconButtonStyle" realCornerRounding="10" realGradientShade="0" />
+    <CtrlStyle name="PrevSceneButtonStyle" colBevelDark="18, 25, 60, 255" colBevelLight="0, 0, 0, 0" colBorder="#3C4461" colFill="LcdLight" colText="InkMid" font="Icons22" optBevel="true" parentStyle0="LcdBigButtonStyle" realBorderWidth="1" realCornerRounding="0" realGradientShade="0" />
+    <CtrlStyle name="NextSceneButtonStyle" colBevelDark="18, 25, 60, 255" colBevelLight="0, 0, 0, 0" colBorder="#3C4461" colFill="LcdLight" colText="InkMid" font="Icons22" optBevel="true" parentStyle0="LcdBigButtonStyle" realBorderWidth="1" realCornerRounding="0" realGradientShade="0" />
+    <CtrlStyle name="MiniSceneEvenButtonStyle" colAltFill="Ink" colBorder="18, 25, 60, 100" colFill="LcdMid" optDrawBorder="true" parentStyle0="LcdButtonStyle" realCornerRounding="0" realGradientShade="0" />
+    <CtrlStyle name="MiniSceneOddButtonStyle" colAltFill="Ink" colBorder="18, 25, 60, 100" colFill="LcdMid" optDrawBorder="true" parentStyle0="LcdButtonStyle" realCornerRounding="0" realGradientShade="0" />
     <CtrlStyle name="SceneViewSliderStyle" colAltFill="232, 239, 247, 120" colBorder="Ink" colFill="Transparent" colFillHighlight="232, 239, 247, 120" font="Sans8" optDrawBorder="true" parentStyle0="BaseSliderStyle" />
     <CtrlStyle name="ScenePanelBackgroundStyle" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <!-- From v1 Song/SongPanel.skin -->

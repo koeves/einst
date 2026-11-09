@@ -169,8 +169,16 @@
     <VColour name="SplitGraph" colour="76, 83, 111, 200" />
     <VColour name="SplitTick" colour="18, 25, 60, 102" />
     <VColour name="SplitTickBar" colour="18, 25, 60, 51" />
-    <VColour name="SceneUsed" colour="18, 25, 60, 150" />
-    <VColour name="SceneEdge" colour="18, 25, 60, 140" />
+    <VColour name="SceneFrame" colour="#4C536F" />
+    <VColour name="SceneWell" colour="#A9B0BF" />
+    <VColour name="SceneTableWell" colour="#C7CED9" />
+    <VColour name="SceneWellEdge" colour="#71788E" />
+    <VColour name="SceneWellEdgeLow" colour="#80879C" />
+    <VColour name="ScenePanelEdge" colour="#2F3656" />
+    <VColour name="ScenePanelEdgeLow" colour="#787F94" />
+    <VColour name="SceneUsed" colour="#A9B0BF" />
+    <VColour name="SceneEdge" colour="#4C536F" />
+    <VColour name="SceneMark" colour="#656C84" />
     <VColour name="PastLength" colour="169, 176, 191, 140" />
     <VColour name="RecordingPart" colour="222, 229, 237, 200" />
     <VColour name="RetroPart" colour="187, 81, 81, 75" />

@@ -154,7 +154,9 @@ fn shown_in(name: &str, mode: usize) -> Option<bool> {
 }
 
 /// An `AutoShorteningLabel`: its text cut to fit (`fitWidth`, else the
-/// label's width) with an ellipsis.
+/// label's width) with an ellipsis; with the style's
+/// `enumTextShortenAlgorithm` "middle", cut in the middle with "..." as
+/// v1's scene names (video 01 04-20).
 pub(crate) fn draw_short_label(r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) -> bool {
     if c.overload != "AutoShorteningLabel" || c.class != "CtrlLabel" {
         return false;
@@ -162,7 +164,9 @@ pub(crate) fn draw_short_label(r: &dreist_gui::render::Renderer, p: &mut dreist_
     let font = r.styles.font(&c.style);
     let avail = c.attr_f32("fitWidth", c.rect.w as f32 - 4.0);
     let mut text = c.text.clone();
-    if p.text_width(&font, &text, 0.0) > avail {
+    if r.styles.shorten(&c.style) == dreist_gui::style::Shorten::Middle {
+        text = p.fonts.shorten(&font, &text, avail, dreist_gui::style::Shorten::Middle);
+    } else if p.text_width(&font, &text, 0.0) > avail {
         while !text.is_empty() && p.text_width(&font, &format!("{}\u{2026}", text.trim_end()), 0.0) > avail {
             text.pop();
         }

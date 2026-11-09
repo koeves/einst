@@ -153,6 +153,9 @@ NAMED_DECOR = {
 # labels this much wider on each side.
 LABEL_LEAD = 3
 LABEL_WIDEN = 8
+# Labels that keep v1's rect: a scene's name fits its trigger and shortens
+# in the middle (v1's shortening label).
+LABEL_KEEP = {("Scene/Scene.skin", "NameLabel")}
 # Right-aligned labels (captions left of their control) reach this much
 # further left.
 LABEL_REACH = 60
@@ -618,7 +621,7 @@ class Converter:
                     d.attrs["rect"] = [base[0] + x, base[1] + y, w, h]
                     out_before.append(d)
                 self.decor += 1
-        if cls == "CtrlLabel" and v1cls == "CtrlLabel":
+        if cls == "CtrlLabel" and v1cls == "CtrlLabel" and (source, attrs.get("name")) not in LABEL_KEEP:
             rect = self.fit_label(rect, attrs.get("style", ""))
         if cls != v1cls:
             attrs["legacyClass"] = v1cls

@@ -89,6 +89,11 @@ impl Scenes {
         for &i in page {
             host = &mut host.children[i];
         }
+        // The page's art (frame, panels, wells) is drawn in code.
+        // (the page panel: v1's `ScenePanelBackgroundStyle` root)
+        if host.overload.is_empty() {
+            host.overload = "ScenePageBack".into();
+        }
         // The slots: `Scene<k>` panels get the slot skin.
         if let Some(m) = host.find_mut("ScenesPanel") {
             for c in m.children.iter_mut() {
@@ -246,6 +251,8 @@ impl Scenes {
             "SceneDetailsTable" => self.draw_details(model, r, p, c),
             "SceneTrigger" => draw_trigger(r, p, c),
             "SceneViewSlider" => draw_view(r, p, c),
+            "ScenePageBack" => draw_page_back(r, p, c),
+            "EditorScene" => draw_tile(r, p, c),
             _ => return false,
         }
         true
@@ -253,7 +260,9 @@ impl Scenes {
 
     /// [re:04e91a] into the `DetailsTable` (columns "Engine" 40 px centred,
     /// "Patt." 200 px, "Power" 50 px centred, [re:0474d8]; rows 1..8): for a
-    /// used scene "n: name" and On/Off per engine.
+    /// used scene "n: name" and On/Off per engine. v1's `GlobalTableStyle`
+    /// (GlobalStyles.skin) leaves the header and the rows clear over the
+    /// page's table well, with a divider under every row.
     fn draw_details(&self, model: &Model, r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) {
         use dreist_gui::paint::RectF;
         use dreist_gui::style::{HAlign, VAlign};
@@ -263,11 +272,9 @@ impl Scenes {
         // v1's table style: the header band, rows and alternate rows,
         // column dividers and the frame.
         let ink = s.colour(st, "colBorder", Colour::rgba(18, 25, 60, 255));
-        p.fill_rect(RectF::new(0.0, 0.0, w, h), s.colour(st, "colFill", Colour::rgba(222, 229, 237, 255)));
         let row_h = (h / 9.0).floor().max(12.0);
         let cols = [(0.0, 40.0, HAlign::Center), (40.0, 200.0, HAlign::Left), (240.0, 50.0, HAlign::Center)];
-        p.fill_rect(RectF::new(0.0, 0.0, w, row_h), s.colour(st, "colHeaderFill", Colour::rgba(169, 176, 191, 255)));
-        p.line(0.0, row_h - 0.5, w, row_h - 0.5, s.colour(st, "colHeaderDivider", ink), 1.0);
+        let divider = s.colour(st, "colHeaderDivider", ink);
         let font = s.font(st);
         let text = s.colour(st, "colText", ink);
         let htext = s.colour(st, "colHeaderText", text);
@@ -291,6 +298,7 @@ impl Scenes {
         for e in 0..8 {
             let y = row_h * (e + 1) as f32;
             p.fill_rect(RectF::new(0.0, y, w, row_h), if e % 2 == 1 { alt } else { row });
+            p.line(0.0, y - 0.5, w, y - 0.5, divider, 1.0);
             // [re:e6662f] table cells: "Eng n", then "-" unless the scene is
             // used, "<n>: <pattern name>" and lower-case "on" / "off".
             let (mut pat, mut pow) = ("-".to_string(), "-".to_string());
@@ -491,24 +499,82 @@ impl Scenes {
 }
 
 /// The trigger area of a slot by its state (`SceneTrigger{Empty,Used,
-/// Cued,Active}Style`): the field (colFill) in its edge (colBorder), the
-/// inner block (colAltFill: ink when the slot holds a scene, amber while
-/// it plays) and the cue ring (colAltBorder).
+/// Cued,Active}Style`, after v1's `Scene{Empty,Full,Cued,Active}` art): a
+/// rounded field (colFill) in its edge (colBorder); a cued scene shows a
+/// row of dots (colText), the playing one a play mark (colAltFill edged
+/// colAltBorder).
 fn draw_trigger(r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) {
     use dreist_gui::paint::RectF;
     let s = r.styles;
     let (w, h) = (c.rect.w as f32, c.rect.h as f32);
-    let st = match c.attr("sceneState").unwrap_or("empty") {
+    let state = c.attr("sceneState").unwrap_or("empty");
+    let st = match state {
         "used" => "SceneTriggerUsedStyle",
         "cued" => "SceneTriggerCuedStyle",
         "active" => "SceneTriggerActiveStyle",
         _ => "SceneTriggerEmptyStyle",
     };
-    let rr = RectF::new(0.5, 0.5, w - 1.0, h - 1.0);
-    p.fill_rect(rr, s.colour(st, "colFill", Colour::rgba(222, 229, 237, 255)));
-    p.fill_rect(RectF::new(3.0, 3.0, w - 6.0, h - 6.0), s.colour(st, "colAltFill", Colour::TRANSPARENT));
-    p.stroke_rect(RectF::new(2.0, 2.0, w - 4.0, h - 4.0), s.colour(st, "colAltBorder", Colour::TRANSPARENT), 2.0);
-    p.stroke_rect(rr, s.colour(st, "colBorder", Colour::rgba(18, 25, 60, 140)), 1.0);
+    let radius = s.float(st, "realCornerRounding", 2.0);
+    let rr = RectF::new(0.0, 0.0, w, h);
+    p.fill_rounded(rr, radius, [true; 4], s.colour(st, "colFill", Colour::rgba(222, 229, 237, 255)));
+    p.stroke_rounded(rr.inset(0.5), radius, [true; 4], s.colour(st, "colBorder", Colour::rgba(76, 83, 111, 255)), 1.0);
+    match state {
+        "cued" => crate::icons::draw(p, "dots", rr, None, s.colour(st, "colText", Colour::rgba(101, 108, 132, 255)), Colour::TRANSPARENT),
+        "active" => {
+            let (fill, edge) = (s.colour(st, "colAltFill", Colour::rgba(76, 83, 111, 255)), s.colour(st, "colAltBorder", Colour::rgba(18, 25, 60, 255)));
+            crate::icons::draw(p, "play", rr, None, edge, fill);
+        }
+        _ => {}
+    }
+}
+
+/// A slot's tile in the slot well (`SceneTileStyle`; v1's
+/// `SceneBackground`: a 93 × 67 rounded tile 6, 4 into the 105 × 75 cell).
+fn draw_tile(r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, _c: &Ctrl) {
+    use dreist_gui::paint::RectF;
+    let s = r.styles;
+    let st = "SceneTileStyle";
+    let radius = s.float(st, "realCornerRounding", 3.0);
+    let rr = RectF::new(6.0, 4.0, 93.0, 67.0);
+    p.fill_rounded(rr, radius, [true; 4], s.colour(st, "colFill", Colour::rgba(199, 206, 217, 255)));
+    p.stroke_rounded(rr.inset(0.5), radius, [true; 4], s.colour(st, "colBorder", Colour::rgba(76, 83, 111, 255)), 1.0);
+}
+
+/// The scene page's art (`ScenePageBackStyle`, after v1's 820 × 395
+/// `ScenePageBackground`): a slate frame in a 2 px navy outline holding
+/// two light panels with dark edges, the left one with the slot well and
+/// the scroll well, the right one with the details table's well.
+fn draw_page_back(r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, _c: &Ctrl) {
+    use dreist_gui::paint::RectF;
+    let s = r.styles;
+    let st = "ScenePageBackStyle";
+    let col = |k: &str, d: (u8, u8, u8)| s.colour(st, k, Colour::rgba(d.0, d.1, d.2, 255));
+    let (frame, outline) = (col("colFill", (76, 83, 111)), col("colBorder", (18, 25, 60)));
+    let (panel, edge, edge_low) = (col("colPanel", (210, 217, 227)), col("colPanelEdge", (47, 54, 86)), col("colPanelEdgeLow", (120, 127, 148)));
+    let (well, table, well_edge, well_low) = (col("colWell", (169, 176, 191)), col("colTableWell", (199, 206, 217)), col("colWellEdge", (113, 120, 142)), col("colWellEdgeLow", (128, 135, 156)));
+    // (x, y, w, h in the 820 × 395 art)
+    let outer = RectF::new(1.0, 2.0, 812.0, 391.0);
+    p.fill_rounded(outer, 4.0, [true; 4], frame);
+    p.stroke_rounded(outer.inset(1.0), 3.0, [true; 4], outline, 2.0);
+    // A panel: 2 px dark top and left, 1 px dark bottom and right inside
+    // a lighter line.
+    let mut panel_at = |x: f32, y: f32, w: f32, h: f32| {
+        p.fill_rect(RectF::new(x, y, w, h), edge);
+        p.fill_rect(RectF::new(x + 2.0, y + 2.0, w - 3.0, h - 3.0), edge_low);
+        p.fill_rect(RectF::new(x + 2.0, y + 2.0, w - 4.0, h - 4.0), panel);
+    };
+    panel_at(11.0, 17.0, 482.0, 361.0);
+    panel_at(498.0, 17.0, 307.0, 259.0);
+    // A well: 1 px dark top and left inside a light line, lighter bottom
+    // and right.
+    let mut well_at = |x: f32, y: f32, w: f32, h: f32, fill: Colour| {
+        p.fill_rect(RectF::new(x, y, w, h), well_low);
+        p.fill_rect(RectF::new(x + 1.0, y + 1.0, w - 2.0, h - 2.0), well_edge);
+        p.fill_rect(RectF::new(x + 2.0, y + 2.0, w - 4.0, h - 4.0), fill);
+    };
+    well_at(16.0, 66.0, 428.0, 308.0, well);
+    well_at(448.0, 66.0, 41.0, 308.0, well);
+    well_at(506.0, 133.0, 292.0, 136.0, table);
 }
 
 /// The scene view control: the four visible rows' area over the mini-map.
