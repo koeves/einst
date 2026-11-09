@@ -427,20 +427,27 @@ impl Sampler {
         format!("{name} {}", self.takes.get(i).map(Take::label).unwrap_or_default())
     }
 
+    /// [re:3b3d0e]: "Armed" / "Idle" until there is a take, then the
+    /// selected take (numbered from 1) and its length in samples; idle
+    /// adds the memory all takes use (4 bytes a sample).
     fn status(&self, model: &Model) -> String {
         let s = &model.sampler;
+        let take = self.take().map(|t| (self.current + 1, t.frames()));
         match s.state {
-            2 => "Recording".into(),
-            1 => match s.start_mode {
-                1 => "Armed: waiting for MIDI".into(),
-                2 => "Armed: waiting for the host".into(),
-                3 => "Armed: waiting for the threshold".into(),
-                _ => "Armed".into(),
+            2 => {
+                let frames = model.sampling.as_ref().map(|sm| sm.frames).unwrap_or(0);
+                format!("Recording: take {}, samples {frames}", self.takes.len() + 1)
+            }
+            1 => match take {
+                Some((n, frames)) => format!("Armed, Recorded: take {n}, samples {frames}"),
+                None => "Armed".into(),
             },
-            _ => self.message.clone().unwrap_or_else(|| match self.takes.len() {
-                0 => "Idle".into(),
-                1 => "Idle (1 take)".into(),
-                n => format!("Idle ({n} takes)"),
+            _ => self.message.clone().unwrap_or_else(|| match take {
+                Some((n, frames)) => {
+                    let total: u64 = self.takes.iter().map(|t| t.frames() as u64).sum();
+                    format!("Idle, Recorded: take {n}, samples {frames}  (total usage: {})", dreist_engine::memory::bytes_label(total * 4))
+                }
+                None => "Idle".into(),
             }),
         }
     }
