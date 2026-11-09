@@ -452,6 +452,18 @@ impl Inspector {
         ins.params = path_under(root, page, "LayerControls");
         ins.pad_controls = path_under(root, page, "PadControls");
         ins.pad_header = path_under(root, page, "PadSelection");
+        // [re:8da206]: the pad item's layer link names its shortcut.
+        if let Some(h) = &ins.pad_header {
+            let mut c = &mut *root;
+            for &i in h {
+                c = &mut c.children[i];
+            }
+            if let Some(b) = c.find_mut("AllLayers") {
+                if !b.display_name.ends_with(" (Cmd)") {
+                    b.display_name.push_str(" (Cmd)");
+                }
+            }
+        }
         ins.pad_glue = path_under(root, page, "PadGlue");
         ins.layer_glue = path_under(root, page, "LayerGlue");
         ins.rows = (0..LAYERS).filter_map(|l| path_under(root, page, &format!("LayerSelectionButton{l}"))).collect();

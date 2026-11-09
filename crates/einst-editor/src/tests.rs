@@ -2615,13 +2615,15 @@ fn effect_chain_shows_four_of_six_slots_and_scrolls() {
     assert_eq!(ed.app.ctrl(&row).unwrap().rect.x, -2 * slot_w, "slots 3–6 shown");
     ed.handle(&UiEvent::Mouse { path: bar, overload: "EditorEffectPanelScrollbar".into(), kind: dreist_gui::app::MouseKind::Down, x: 2.0, y: 5.0 });
     assert_eq!(ed.app.ctrl(&row).unwrap().rect.x, 0);
-    // An empty slot's type menu offers the categories; a pick fills that slot.
+    // An empty slot's type menu: No Effect, then the categories; a pick
+    // fills that slot.
     let combo = [row.clone(), vec![5], ed.app.ctrl(&[row.clone(), vec![5]].concat()).unwrap().path_of("EffectTypeCombo").unwrap()].concat();
     ed.handle(&UiEvent::Clicked { path: combo.clone(), name: "EffectTypeCombo".into(), id: 0, on: false });
     let items = ed.app.menu.as_ref().map(|m| m.items.clone()).unwrap_or_default();
-    assert_eq!(items.len(), fxchain::CATEGORIES.len(), "{items:?}");
+    assert_eq!(items.len(), fxchain::CATEGORIES.len() + 1, "{items:?}");
+    assert_eq!(items[0], "No Effect");
     ed.app.menu = None;
-    ed.handle(&UiEvent::MenuSelected { anchor: combo.clone(), name: "EffectTypeCombo".into(), index: 4 });
+    ed.handle(&UiEvent::MenuSelected { anchor: combo.clone(), name: "EffectTypeCombo".into(), index: 5 });
     ed.app.menu = None;
     ed.handle(&UiEvent::MenuSelected { anchor: combo.clone(), name: "EffectTypeCombo".into(), index: 0 });
     let fx = fxchain::effects(&ed.model, fxchain::Target::Aux(0));
