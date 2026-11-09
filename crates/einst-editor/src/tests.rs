@@ -776,6 +776,10 @@ fn undo_history_menu_steps_back() {
         // Mimic an edit event's snapshot.
         ed.history.undo.push_back((format!("Edit {k}"), before));
     }
+    ed.sync();
+    let enabled = |ed: &Editor, n: &str| ed.app.ctrl(&ed.app.root.path_of(n).unwrap()).unwrap().enabled;
+    assert!(enabled(&ed, "UndoButton") && enabled(&ed, "UndoHistory"));
+    assert!(!enabled(&ed, "RedoButton") && !enabled(&ed, "RedoHistory"), "v1 greys Redo with nothing to redo");
     let h = ed.app.root.path_of("UndoHistory").unwrap();
     ed.handle(&UiEvent::Clicked { path: h.clone(), name: "UndoHistory".into(), id: 0, on: false });
     // Items: "Edit 2", divider, "Edit 1", "Edit 0": index 3 undoes all three.
@@ -783,6 +787,9 @@ fn undo_history_menu_steps_back() {
     assert_eq!(ed.model.doc, original);
     assert_eq!(ed.history.redo.len(), 3);
     assert_eq!(ed.history.redo.last().map(|r| r.0.as_str()), Some("Edit 0"));
+    ed.sync();
+    assert!(!enabled(&ed, "UndoButton") && !enabled(&ed, "UndoHistory"), "nothing left to undo");
+    assert!(enabled(&ed, "RedoButton") && enabled(&ed, "RedoHistory"));
 }
 
 #[test]

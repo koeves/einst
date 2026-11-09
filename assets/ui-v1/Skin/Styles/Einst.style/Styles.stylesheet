@@ -19,11 +19,13 @@
     <CtrlStyle name="ChassisFrameStyle" colBorder="ChassisLine" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="2" />
     <CtrlStyle name="ChassisWellStyle" colFill="ChassisWell" parentStyle0="BasePanelStyle" realCornerRounding="5" />
     <CtrlStyle name="ChassisBackingStyle" colBevelDark="255, 255, 255, 120" colBevelLight="0, 0, 0, 50" colBorder="ChassisBackingEdge" colFill="ChassisBacking" colFillGradientTo="ChassisBackingLow" optBevel="true" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="5" />
-    <CtrlStyle name="SectionLabelStyle" colText="ChassisText" enumTextHorizontalAlign="right" font="Sans9Bold" parentStyle0="BaseLabelStyle" />
+    <CtrlStyle name="SectionLabelStyle" colText="ChassisText" enumTextHorizontalAlign="right" font="Sans9Bold" parentStyle0="BaseLabelStyle" realLetterSpacing="0.4" realTextEmbolden="0.6" />
     <CtrlStyle name="SectionLabelLeftStyle" enumTextHorizontalAlign="left" parentStyle0="SectionLabelStyle" />
     <CtrlStyle name="WordmarkStyle" colText="ChassisText" enumTextHorizontalAlign="left" font="Sans14Bold" parentStyle0="BaseLabelStyle" realLetterSpacing="-0.3" realTextScaleX="0.88" />
     <CtrlStyle name="ScreenBezelStyle" colBevelDark="0, 0, 0, 0" colBevelLight="210, 212, 214, 190" colBorder="ChassisEdge" colFill="Bezel" optBevel="true" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="4" />
     <CtrlStyle name="ScreenLcdStyle" colBevelDark="255, 255, 255, 90" colBevelLight="0, 0, 0, 110" colFill="Lcd" optBevel="true" parentStyle0="BasePanelStyle" realCornerRounding="9" />
+    <CtrlStyle name="ScreenShadeTopStyle" colFill="0, 0, 0, 80" colFillGradientTo="0, 0, 0, 0" optRoundBottomLeft="false" optRoundBottomRight="false" parentStyle0="BasePanelStyle" realCornerRounding="9" />
+    <CtrlStyle name="ScreenShadeLeftStyle" colFill="0, 0, 0, 70" colFillGradientTo="0, 0, 0, 0" enumGradientDirection="Horizontal" optRoundBottomRight="false" optRoundTopRight="false" parentStyle0="BasePanelStyle" realCornerRounding="9" />
     <CtrlStyle name="StatusStripStyle" colBorder="StripFrame" colFill="Strip" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="3" />
     <CtrlStyle name="LogoStyle" colAltFill="AmberSoft" colFill="Amber" enumDisabledDrawMode="NormalDrawing" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="GlyphLabelStyle" colText="InkMid" enumTextHorizontalAlign="center" font="Icons12" parentStyle0="BaseLabelStyle" />
@@ -54,7 +56,7 @@
     <CtrlStyle name="FxCardStyle" colBorder="FxCardEdge" colFill="Lcd" optDrawBorder="true" parentStyle0="BasePanelStyle" realBorderWidth="2" />
     <CtrlStyle name="FxCardEmptyStyle" colFill="LcdDim" parentStyle0="FxCardStyle" />
     <CtrlStyle name="FxCardHeadStyle" colFill="LcdDim" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="LcdButtonStyle" colAltBorder="Ink" colAltFill="LcdOn" colBorder="LcdEdge" colFill="LcdFace" parentStyle0="BaseButtonStyle" realGradientShade="0.08" />
+    <CtrlStyle name="LcdButtonStyle" colAltBorder="Ink" colAltFill="LcdOn" colBorder="LcdEdge" colFill="LcdLight" parentStyle0="BaseButtonStyle" realGradientShade="0.03" />
     <CtrlStyle name="LcdIconButtonStyle" font="Icons10" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="LcdRadioStyle" colAltBorder="InkMid" colAltFill="RadioOn" colAltText="Ink" colBorder="InkMid" colFill="LcdLight" parentStyle0="LcdButtonStyle" realGradientShade="0" />
     <CtrlStyle name="LcdMuteButtonStyle" colAltFill="MuteOn" colAltText="Ink" colBevelDark="40, 48, 64, 110" colBevelLight="255, 255, 255, 160" colBorder="LcdKeyEdge" colFill="LcdKeyFace" colText="LcdKeyText" font="Sans10Bold" optBevel="true" parentStyle0="LcdButtonStyle" realBorderWidth="2" realCornerRounding="3" realGradientShade="0.04" realTextEmbolden="0.5" />
@@ -70,7 +72,7 @@
     <CtrlStyle name="LcdFlatButtonStyle" colAltBorder="Transparent" colAltFill="Transparent" colAltText="Ink" colBorder="Transparent" colFill="Transparent" colText="InkMid" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="LcdFlatIconButtonStyle" font="Icons10" parentStyle0="LcdFlatButtonStyle" />
     <CtrlStyle name="TabButtonStyle" colAltBorder="Transparent" colAltFill="Transparent" colAltText="BezelTextOn" colAltTextGlow="BezelTextGlow" colBorder="Transparent" colFill="Transparent" colText="BezelText" font="Sans12Bold" optRoundBottomLeft="false" optRoundBottomRight="false" parentStyle0="BaseButtonStyle" realCornerRounding="3" realLetterSpacing="0.6" realTextEmbolden="0.7" realTextGlowRadius="2" realTextGlowStrength="2.4" realTextScaleX="0.74" />
-    <CtrlStyle name="BezelIconButtonStyle" colAltText="ChassisText" colText="ChassisText" font="Icons11" parentStyle0="TabButtonStyle" realLetterSpacing="0" realTextEmbolden="0" realTextScaleX="1" />
+    <CtrlStyle name="BezelIconButtonStyle" colAltText="ChassisText" colText="ChassisText" font="Icons14" parentStyle0="TabButtonStyle" realLetterSpacing="0" realTextEmbolden="0" realTextOffset="-3" realTextScaleX="1" />
     <CtrlStyle name="HwButtonStyle" colAltBorder="HwFrameDark" colAltFill="HwFaceOn" colAltFillGradientTo="HwFaceOnLow" colAltText="HwInkOn" colBevelDark="0, 0, 0, 45" colBevelLight="255, 255, 255, 170" colBorder="HwFrame" colFill="HwFace" colFillGradientTo="HwFaceLow" colText="HwInk" font="Sans9Bold" optBevel="true" parentStyle0="BaseButtonStyle" realCornerRounding="2" />
     <CtrlStyle name="HwIconButtonStyle" colAltFill="HwFacePressed" colAltFillGradientTo="HwFacePressedLow" font="Icons18" parentStyle0="HwButtonStyle" />
     <CtrlStyle name="HwGreyIconButtonStyle" colAltText="HwGreyIcon" colBevelDark="0, 0, 0, 90" colBevelLight="255, 255, 255, 0" colBorder="HwFrameDark" colFill="HwGrey" colFillGradientTo="HwGreyFaceLow" colText="HwGreyIcon" parentStyle0="HwIconButtonStyle" realBorderWidth="2" />
@@ -84,25 +86,32 @@
     <CtrlStyle name="HwMuteButtonStyle" colAltFill="LedMute" colAltFillGradientTo="LedMute" colAltText="HwFace" parentStyle0="HwDarkTinyButtonStyle" />
     <CtrlStyle name="HwSoloButtonStyle" colAltFill="LedSolo" colAltFillGradientTo="LedSolo" colAltText="HwInk" parentStyle0="HwDarkTinyButtonStyle" />
     <CtrlStyle name="HwPowerButtonStyle" colAltFill="HwBlueOn" colAltFillGradientTo="HwBlueOn" colAltText="HwBlueText" font="Icons8" parentStyle0="HwDarkTinyButtonStyle" />
-    <CtrlStyle name="HwDarkButtonStyle" colAltBorder="HwDarkFrame" colAltFill="HwDarkLow" colAltFillGradientTo="HwDarkFrame" colAltText="HwDarkTextLight" colBevelLight="255, 255, 255, 60" colBorder="HwDarkFrame" colFill="HwDark" colFillGradientTo="HwDarkLow" colText="HwDarkTextLight" parentStyle0="HwButtonStyle" realCornerRounding="3" realDisabledAlpha="0.3" />
+    <CtrlStyle name="HwDarkButtonStyle" colAltBorder="HwDarkFrame" colAltFill="HwDarkLow" colAltFillGradientTo="HwDarkFrame" colAltText="HwDarkTextLight" colBevelLight="255, 255, 255, 60" colBorder="HwDarkFrame" colFill="HwDark" colFillGradientTo="HwDarkLow" colText="HwDarkTextLight" parentStyle0="HwButtonStyle" realCornerRounding="3" realDisabledAlpha="0.45" />
     <CtrlStyle name="HwDarkIconButtonStyle" font="Icons8" parentStyle0="HwDarkButtonStyle" />
     <CtrlStyle name="HwSongButtonStyle" colAltFill="HwFacePressed" colAltFillGradientTo="HwFacePressedLow" colAltText="SongText" colText="SongText" font="Sans9Bold" parentStyle0="HwButtonStyle" />
     <CtrlStyle name="IndicatorStyle" colAltBorder="Strip" colAltFill="Readout" colAltText="Strip" colBorder="Strip" colFill="LedOff" colText="HwInk" font="Sans7Bold" parentStyle0="BaseButtonStyle" realCornerRounding="1" />
     <CtrlStyle name="IndicatorLabelStyle" colAltBorder="Transparent" colAltFill="Transparent" colAltText="Readout" colBorder="Transparent" colFill="Transparent" colText="ReadoutMid" enumTextHorizontalAlign="left" parentStyle0="IndicatorStyle" />
-    <CtrlStyle name="IndicatorMuteStyle" colAltFill="LedMute" optDrawBorder="false" parentStyle0="IndicatorStyle" />
-    <CtrlStyle name="IndicatorSoloStyle" colAltFill="LedSolo" optDrawBorder="false" parentStyle0="IndicatorStyle" />
+    <CtrlStyle name="IndicatorMuteStyle" colAltFill="LedMute" colFill="Transparent" optDrawBorder="false" parentStyle0="IndicatorStyle" />
+    <CtrlStyle name="IndicatorSoloStyle" colAltFill="LedSolo" colFill="Transparent" optDrawBorder="false" parentStyle0="IndicatorStyle" />
     <CtrlStyle name="IndicatorErrorStyle" colFill="LedMute" parentStyle0="IndicatorStyle" />
     <CtrlStyle name="EngineButtonStyle" colAltBorder="Amber" colAltFill="EngineFace" colAltText="ChassisText" colBorder="EngineRim" colFill="EngineFace" colText="EngineDigit" font="Sans14Bold" parentStyle0="BaseButtonStyle" realBorderWidth="2" realCornerRounding="13" realGradientShade="-0.15" />
     <CtrlStyle name="EngineButtonPowerOffStyle" colAltFill="EngineFaceOff" colAltText="EngineDigitOff" colFill="EngineFaceOff" colText="EngineDigitOff" parentStyle0="EngineButtonStyle" />
-    <CtrlStyle name="PatternKeyStyle" colAltBorder="HwFrameDark" colAltFill="KeyFace" colAltFillGradientTo="KeyFaceLow" colBevelDark="0, 0, 0, 0" colBevelLight="255, 255, 255, 220" colBorder="KeyFrame" colFill="KeyFace" colFillGradientTo="KeyFaceLow" colStripOff="KeyLed" colStripOn="KeyLed" colText="HwInk" font="Sans8" optBevel="true" parentStyle0="BaseButtonStyle" realBorderWidth="2" realCornerRounding="3" realStripHeight="6" realStripInset="3" />
+    <CtrlStyle name="PatternKeyStyle" colAltBorder="HwFrameDark" colAltFill="KeyFace" colAltFillGradientTo="KeyFaceLow" colBevelDark="0, 0, 0, 0" colBevelLight="255, 255, 255, 220" colBorder="KeyFrame" colFill="KeyFace" colFillGradientTo="KeyFaceLow" colStripOff="KeyLed" colStripOn="KeyLed" colText="HwInk" font="Sans8" optBevel="true" parentStyle0="BaseButtonStyle" realBorderWidth="2" realCornerRounding="3" realStripHeight="6" realStripInset="3" realStripRounding="2" realStripSideInset="4" />
     <CtrlStyle name="PatternKeyAllocatedStyle" colStripOff="KeyLedOn" colStripOn="KeyLedOn" parentStyle0="PatternKeyStyle" />
     <CtrlStyle name="PatternKeyEditingStyle" colAltBorder="AmberSoft" colBorder="AmberSoft" parentStyle0="PatternKeyStyle" />
     <CtrlStyle name="PatternKeySelectedStyle" colAltBorder="KeyAmber" colBorder="KeyAmber" colFill="KeyFaceSelected" colFillGradientTo="KeyFaceSelected" colStripOff="KeyLedSelected" colStripOn="KeyLedSelected" parentStyle0="PatternKeyStyle" />
     <CtrlStyle name="PadModeIconStyle" colFill="HwInk" parentStyle0="BasePanelStyle" realCornerRounding="0" />
+    <CtrlStyle name="PadModeFrameStyle" colBorder="HwInk" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="0" />
+    <CtrlStyle name="ChassisGlyphBarStyle" colFill="HwInk" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="ChassisGlyphDotStyle" parentStyle0="ChassisGlyphBarStyle" realCornerRounding="100" />
+    <CtrlStyle name="ToolMarkStyle" colFill="InkMid" colParentOnFill="LcdLight" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="ToolDashStyle" colBorder="InkMid" colParentOnBorder="LcdLight" colParentOnFill="Transparent" intDashGap="1" intDashLength="2" optDrawBorder="true" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="PanicFillStyle" colFill="PanicFill" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="PanicEdgeStyle" colFill="HwInk" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="PadSlotStyle" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="PadStyle" colBevelDark="0, 0, 0, 70" colBevelLight="255, 255, 255, 45" colBorder="PadFrame" colFill="PadFace" colFillGradientTo="PadFaceLow" colText="PadText" optBevel="true" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="3" />
+    <CtrlStyle name="PadStyle" colBevelDark="0, 0, 0, 70" colBevelLight="255, 255, 255, 45" colBorder="PadFrame" colFill="PadFace" colFillGradientTo="PadFaceLow" colText="PadText" optBevel="true" optDrawBorder="true" parentStyle0="BasePanelStyle" realBorderWidth="2" realCornerRounding="4" />
     <CtrlStyle name="PadSelectedStyle" colBorder="Amber" parentStyle0="PadStyle" realBorderWidth="2" />
-    <CtrlStyle name="PadNameStyle" colText="PadText" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseLabelStyle" />
+    <CtrlStyle name="PadNameStyle" colText="PadText" colTextGlow="PadTextGlow" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseLabelStyle" realTextGlowRadius="1.5" realTextGlowStrength="1" />
     <CtrlStyle name="PadLedStyle" colFill="PadFrame" parentStyle0="BasePanelStyle" realCornerRounding="1.5" />
     <CtrlStyle name="PadLed1Style" colFill="PadColour1" parentStyle0="PadLedStyle" />
     <CtrlStyle name="PadLed2Style" colFill="PadColour2" parentStyle0="PadLedStyle" />
@@ -127,8 +136,8 @@
     <CtrlStyle name="LcdRangeStyle" colAltBorder="Ink" colAltFill="LcdLight" colFill="LcdDim" colFillHighlight="LcdLight" colGroove="InkMid" colTrackBorder="Ink" enumHandleShape="Triangles" parentStyle0="LcdFaderStyle" realCornerRounding="9" realGrooveInset="5" realGrooveWidth="1" realHandleLength="11" />
     <CtrlStyle name="LcdScrollBarStyle" colAltFill="InkMid" colFill="LcdLight" parentStyle0="BaseSliderStyle" />
     <CtrlStyle name="LcdMeterStyle" parentStyle0="BaseMeterStyle" />
-    <CtrlStyle name="StripMeterStyle" colAltBorder="Readout" colAltFill="Readout" colFill="ReadoutDim" parentStyle0="BaseMeterStyle" />
-    <CtrlStyle name="ReadoutStyle" colText="Readout" enumTextHorizontalAlign="center" font="Sans11Bold" parentStyle0="BaseLabelStyle" />
+    <CtrlStyle name="StripMeterStyle" colAltBorder="Readout" colAltFill="Readout" colFill="112, 175, 240, 51" parentStyle0="BaseMeterStyle" />
+    <CtrlStyle name="ReadoutStyle" colText="Readout" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="ReadoutMenuStyle" colAltBorder="Transparent" colAltFill="ReadoutDim" colAltText="Readout" colBorder="Transparent" colFill="Transparent" colText="Readout" enumTextHorizontalAlign="left" font="Sans9Bold" parentStyle0="BaseButtonStyle" />
     <CtrlStyle name="ReadoutButtonStyle" colAltBorder="Readout" colAltFill="ReadoutDim" colAltText="Readout" colBorder="ReadoutDim" colFill="Transparent" colText="Readout" font="Sans9Bold" parentStyle0="BaseButtonStyle" />
     <CtrlStyle name="ModalButtonStyle" colAltBorder="Ink" colAltFill="ModalOn" colAltText="Ink" colBorder="Ink" colFill="ModalGroup" parentStyle0="BaseButtonStyle" realCornerRounding="3" />
@@ -136,14 +145,15 @@
     <CtrlStyle name="ModalListStyle" colBorder="Ink" colFill="ModalList" colRowAlt="ModalGroup" colText="Ink" font="Sans10" parentStyle0="BaseTableStyle" />
     <CtrlStyle name="ModalProgressStyle" colAltBorder="Ink" colAltFill="InkMid" colBorder="Ink" colFill="ModalField" optDrawBorder="true" parentStyle0="BaseStyle" />
     <CheckBoxButtonRendererStyle name="CheckBoxStyle" colAltBorder="Ink" colAltFill="LcdLight" colBorder="Ink" colFill="LcdLight" colTick="Ink" parentStyle0="BaseStyle" realCornerRounding="2" realTickInset="3" realTickLineWidth="2" />
-    <CtrlStyle name="TimelineStyle" colBorder="InkMid" colFill="LcdLight" optDrawBorder="true" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="TimelineStyle" colBorder="Ink" colFill="LcdLight" optDrawBorder="true" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="TimelineLabelStyle" font="Sans9Bold" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="TimelineTickStyle" colFill="InkMid" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="GridBackStyle" colBorder="InkMid" colFill="GridBack" optDrawBorder="true" parentStyle0="BasePanelStyle" />
-    <CtrlStyle name="GridShadeStyle" colFill="LcdMid" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="GridBackStyle" colAltBorder="GridEdge" colBorder="InkMid" colFill="GridBack" optDrawBorder="true" parentStyle0="BasePanelStyle" />
+    <CtrlStyle name="GridShadeStyle" colFill="GridShade" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="GridLineStyle" colFill="GridLine" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="GridDashStyle" colFill="GridDash" intDashGap="2" intDashLength="2" parentStyle0="GridLineStyle" />
-    <CtrlStyle name="GridBarLineStyle" colFill="InkSoft" parentStyle0="GridLineStyle" />
+    <CtrlStyle name="GridBarLineStyle" colFill="GridBar" parentStyle0="GridLineStyle" />
+    <CtrlStyle name="TrackColumnStyle" colBorder="TrackColumnEdge" colFill="TrackColumn" optDrawBorder="true" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="GridRowSelectedStyle" colFill="RowSelected" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="GridPositionStyle" colFill="PlayPosition" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="StepOnStyle" colBorder="StepEdge" colFill="StepOn" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="0" />
@@ -303,7 +313,7 @@
     <CtrlStyle name="VU45Dark" parentStyle0="LcdMeterStyle" />
     <CtrlStyle name="VU45Light" parentStyle0="LcdMeterStyle" />
     <CtrlStyle name="VU106" parentStyle0="LcdMeterStyle" />
-    <CtrlStyle name="HardVU120" intSegmentGap="1" intSegmentSize="3" parentStyle0="StripMeterStyle" />
+    <CtrlStyle name="HardVU120" intSegmentGap="1" intSegmentSize="1" parentStyle0="StripMeterStyle" />
     <CtrlStyle name="VU120Horizontal" parentStyle0="LcdMeterStyle" />
     <CtrlStyle name="SongTrackPanelStyle0" colBorder="Transparent" colFill="Transparent" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="SongTrackPanelStyle1" colBorder="Transparent" colFill="255, 255, 255, 50" parentStyle0="BasePanelStyle" realCornerRounding="0" />
@@ -363,7 +373,7 @@
     <CtrlStyle name="EngineButtonPowerOffStyle7" parentStyle0="EngineButtonPowerOffStyle" />
     <CtrlStyle name="EngineButtonPowerOffStyle8" parentStyle0="EngineButtonPowerOffStyle" />
     <CtrlStyle name="EnginePatternPowerStyle" parentStyle0="HwPowerButtonStyle" />
-    <CtrlStyle name="EngineVUStyle" intSegmentGap="1" intSegmentSize="3" parentStyle0="StripMeterStyle" />
+    <CtrlStyle name="EngineVUStyle" intSegmentGap="1" intSegmentSize="1" parentStyle0="StripMeterStyle" />
     <CtrlStyle name="MuteIndiStyle" parentStyle0="IndicatorMuteStyle" />
     <CtrlStyle name="SoloIndiStyle" parentStyle0="IndicatorSoloStyle" />
     <!-- From v1 Global/FileFindPanel.skin -->
@@ -436,17 +446,17 @@
     <CtrlStyle name="PadModeChromaticStyle" colBorder="HwFramePad" enumTextShortenAlgorithm="none" font="Sans24" parentStyle0="HwButtonStyle" realBorderWidth="2" />
     <CtrlStyle name="PadModeVelocityStyle" colBorder="HwFramePad" enumTextShortenAlgorithm="none" font="Sans18" parentStyle0="HwButtonStyle" realBorderWidth="2" realTextOffsetY="2" realTextScaleX="1.5" />
     <CtrlStyle name="PadModeEMSStyle" colBorder="HwFramePad" font="Sans14Bold" parentStyle0="HwButtonStyle" realBorderWidth="2" realTextOffset="-3" />
-    <CtrlStyle name="FullLevelStyle" font="Sans8Bold" parentStyle0="HwButtonStyle" />
+    <CtrlStyle name="FullLevelStyle" font="Sans7Bold" parentStyle0="HwButtonStyle" realTextOffsetY="6" />
     <CtrlStyle name="EraseButtonStyle" font="Icons12" parentStyle0="HwIconButtonStyle" />
     <CtrlStyle name="IconStyle" parentStyle0="BaseImageStyle" />
     <CtrlStyle name="RepeatButtonStyle" parentStyle0="HwButtonStyle" />
-    <CtrlStyle name="RepeatOptionStyle" enumTextHorizontalAlign="left" font="Sans11" parentStyle0="HwButtonStyle" realTextOffset="5" />
-    <CtrlStyle name="FollowModeButtonStyle" font="Sans8Bold" parentStyle0="HwButtonStyle" />
+    <CtrlStyle name="RepeatOptionStyle" enumTextHorizontalAlign="left" font="Sans11" optPopupDivider="false" parentStyle0="HwButtonStyle" realPopupArrowBoxWidth="14" realPopupArrowSize="0.22" realTextOffset="5" />
+    <CtrlStyle name="FollowModeButtonStyle" enumTextHorizontalAlign="right" font="Icons8" parentStyle0="HwButtonStyle" realTextOffset="3" />
     <!-- From v1 Pattern Editor/GlobalControls.skin -->
-    <CtrlStyle name="NudgeLeftStyle" font="Icons8" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="NudgeRightStyle" font="Icons8" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="MultiTrackStyle" font="Sans12" optRoundBottomRight="false" optRoundTopRight="false" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="SingleTrackStyle" font="Sans12" optRoundBottomLeft="false" optRoundTopLeft="false" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="NudgeLeftStyle" font="Icons8" parentStyle0="LcdIconButtonStyle" realTextOffset="-2" />
+    <CtrlStyle name="NudgeRightStyle" font="Icons8" parentStyle0="LcdIconButtonStyle" realTextOffset="2" />
+    <CtrlStyle name="MultiTrackStyle" optRoundBottomRight="false" optRoundTopRight="false" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="SingleTrackStyle" optRoundBottomLeft="false" optRoundTopLeft="false" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="DragEditButtonStyle" enumTextHorizontalAlign="left" font="Sans10" parentStyle0="LcdMenuButtonStyle" realTextOffset="2" />
     <!-- From v1 Pattern Editor/TrackControls.skin -->
     <CtrlStyle name="TrackControlAutoStyle" font="Sans9" parentStyle0="TrackArrowStyle" />
@@ -506,10 +516,10 @@
     <!-- From v1 Song/SongPanel.skin -->
     <CtrlStyle name="SongBlackoutPanelStyle" colBorder="Transparent" colFill="0, 0, 0, 100" font="Sans12" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="BlackoutTextStyle" colText="#FFFFFF" enumTextHorizontalAlign="center" font="Sans20" parentStyle0="BaseLabelStyle" />
-    <CtrlStyle name="SongSelectButtonStyle" font="Sans11" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="SongDrawButtonStyle" font="Sans12" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="SongSelectButtonStyle" font="Sans10" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="SongDrawButtonStyle" font="Sans10" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="SongEraseButtonStyle" parentStyle0="LcdIconButtonStyle" />
-    <CtrlStyle name="SongMultiButtonStyle" font="Sans11" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="SongMultiButtonStyle" font="Sans10" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="SongPartMomentaryButtonStyle" colAltText="#000000" colFill="Transparent" font="Sans10" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="SongDrawPopupButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
     <CtrlStyle name="SongPartNextButtonStyle" font="Icons8" parentStyle0="LcdFlatIconButtonStyle" />
@@ -525,12 +535,12 @@
     <CtrlStyle name="SongSelectorStyleSelected" parentStyle0="PatternKeySelectedStyle" />
     <CtrlStyle name="SongPatternPopupPanelStyle" colFill="255, 255, 255, 150" font="Sans12" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <!-- From v1 Tools/PatternToolsPanel.skin -->
-    <CtrlStyle name="PenToolStyle" font="Sans12" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="PenToolStyle" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="BrushToolStyle" parentStyle0="LcdButtonStyle" />
     <CtrlStyle name="DeleteToolStyle" parentStyle0="LcdIconButtonStyle" />
     <CtrlStyle name="VelocityToolStyle" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="SelectionToolStyle" font="Sans11" parentStyle0="LcdButtonStyle" />
-    <CtrlStyle name="MultiToolStyle" font="Sans11" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="SelectionToolStyle" parentStyle0="LcdButtonStyle" />
+    <CtrlStyle name="MultiToolStyle" parentStyle0="LcdButtonStyle" />
     <!-- From v1 Transport/Transport.skin -->
     <CtrlStyle name="RetroButtonStyle" colAltText="HwRedOn" colText="HwRed" parentStyle0="HwIconButtonStyle" />
     <CtrlStyle name="PlayButtonStyle" font="Icons22" parentStyle0="HwPlayButtonStyle" />
@@ -551,6 +561,7 @@
     <CtrlStyle name="GlueMediumImageStyle" colFill="InkMid" parentStyle0="LcdGlueStyle" />
     <CtrlStyle name="GlueMicroImageStyle" colFill="InkMid" parentStyle0="LcdGlueStyle" />
     <CtrlStyle name="GlueSmallImageStyle" colFill="InkMid" parentStyle0="LcdGlueStyle" />
+    <CtrlStyle name="GraphIconImageStyle" enumTextHorizontalAlign="left" font="Icons8" parentStyle0="ChassisGlyphLabelStyle" />
     <CtrlStyle name="NavigationBackgroundImageStyle" parentStyle0="LcdFieldStyle" realCornerRounding="4" />
     <CtrlStyle name="PreviewVolImageStyle" font="Icons10" parentStyle0="GlyphLabelStyle" />
     <CtrlStyle name="SendArrowImageStyle" colText="LcdDim" enumTextHorizontalAlign="left" font="Sans24" parentStyle0="GlyphLabelStyle" />

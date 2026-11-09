@@ -65,8 +65,9 @@
     <VColour name="PadFace" colour="#606465" />
     <VColour name="PadFaceLow" colour="#4C4E51" />
     <VColour name="PadFaceTop" colour="#545557" />
-    <VColour name="PadText" colour="#D6D6D9" />
-    <VColour name="PadFrame" colour="#323537" />
+    <VColour name="PadText" colour="#A8BAC2" />
+    <VColour name="PadTextGlow" colour="120, 170, 200, 90" />
+    <VColour name="PadFrame" colour="#282C2D" />
     <VColour name="EngineFace" colour="#46474A" />
     <VColour name="EngineFaceOff" colour="#28282A" />
     <VColour name="EngineRim" colour="#7E7F81" />
@@ -85,7 +86,8 @@
     <VColour name="HwDarkTextLight" colour="#E8E9EB" />
     <VColour name="HwBlueOn" colour="#2E547A" />
     <VColour name="HwBlueText" colour="#78AADC" />
-    <VColour name="SongText" colour="#549EC8" />
+    <VColour name="SongText" colour="#28A3D2" />
+    <VColour name="PanicFill" colour="#E2DDAD" />
     <VColour name="KeyLed" colour="#B0C5E2" />
     <VColour name="KeyLedOn" colour="#96B4E8" />
     <VColour name="KeyLedSelected" colour="#E5DA64" />
@@ -119,11 +121,17 @@
     <VColour name="SoloOn" colour="#F0D640" />
     <VColour name="VuTrack" colour="#848A9A" />
     <VColour name="VuLit" colour="#161C30" />
-    <VColour name="RowSelected" colour="#E8E2BE" />
+    <VColour name="RowSelected" colour="#E5E1C8" />
     <VColour name="PlayPosition" colour="#9EB4C6" />
     <VColour name="GridLine" colour="#BAC1CD" />
     <VColour name="GridBack" colour="#D0D5DE" />
     <VColour name="GridDash" colour="#969EAE" />
+    <VColour name="GridBar" colour="#757685" />
+    <VColour name="GridEdge" colour="#372F59" />
+    <VColour name="TrackColumn" colour="#DFE4EA" />
+    <VColour name="ScrollFrame" colour="#8C8E9B" />
+    <VColour name="TrackColumnEdge" colour="#454C54" />
+    <VColour name="GridShade" colour="#DFE4EB" />
     <VColour name="StepOn" colour="#5A6583" />
     <VColour name="StepEdge" colour="#33375C" />
     <VColour name="FxSlotLit" colour="#CCD2DC" />
@@ -163,7 +171,7 @@
     <VColour name="RetroEdge" colour="#BB5151" />
     <VColour name="LcdFace" colour="#F0F5FB" />
     <VColour name="LcdFaceLow" colour="#DEE4EE" />
-    <VColour name="LcdEdge" colour="#8C95A4" />
+    <VColour name="LcdEdge" colour="#585E78" />
     <VColour name="LcdKeyFace" colour="#EEF5FD" />
     <VColour name="LcdKeyEdge" colour="#969EAA" />
     <VColour name="LcdKeyText" colour="#383C48" />

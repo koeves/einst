@@ -363,6 +363,7 @@ impl Editor {
             mm.sync(&mut self.app, &self.model);
         }
         self.slicer.sync(&mut self.app);
+        self.sync_undo_buttons();
         self.modals.sync(&mut self.app);
         // Preferences › UI scaling / Help › Reset UI scale apply at once
         // ([re:695294] 0x153 → [re:2fbdeb] and

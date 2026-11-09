@@ -54,6 +54,23 @@ impl Editor {
         }
     }
 
+    /// v1 greys Undo / Redo and their menu arrows while there is nothing to
+    /// undo / redo (the reference screenshots, the tutorial video at 1:00;
+    /// the skin's disabled art). Slicing keeps them locked.
+    pub(crate) fn sync_undo_buttons(&mut self) {
+        if self.slicer.open {
+            return;
+        }
+        for (redo, names) in [(false, ["UndoButton", "UndoHistory"]), (true, ["RedoButton", "RedoHistory"])] {
+            let on = !self.history.labels(redo).is_empty();
+            for n in names {
+                if let Some(c) = crate::front::path_in(&self.app.root, "Transport", n).and_then(|p| self.app.ctrl_mut(&p)) {
+                    c.enabled = on;
+                }
+            }
+        }
+    }
+
     /// One undo (or redo) step: restore the snapshot and rebuild the engine.
     pub(crate) fn step_undo(&mut self, redo: bool) -> bool {
         let current = std::mem::replace(&mut self.model.doc, dreist_formats::Node::new("root", None));

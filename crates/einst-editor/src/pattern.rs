@@ -789,7 +789,8 @@ fn part(class: &str, name: &str, r: Rect, style: &str) -> Ctrl {
 /// the horizontal scroll bar and zoom along the bottom.
 fn editor_area(w: i32, h: i32) -> Ctrl {
     const COLS: i32 = 152;
-    const RULER: i32 = 15;
+    // (v1, the reference screenshots: a 16 px ruler, 4 px under the toolbar)
+    const RULER: i32 = 16;
     const BAR: i32 = 12;
     let grid_w = w - COLS - BAR - 2;
     let split_h = h - BAR;
@@ -804,9 +805,10 @@ fn editor_area(w: i32, h: i32) -> Ctrl {
     let step_h = split_h - RULER;
     let mut steps = part("CtrlPanel", "StepPanel", Rect::new(0, RULER, w, step_h), "InvisibleStyle");
     steps.zorder = 3;
-    steps.children.push(part("CtrlScrollView", "ControlsScrollView", Rect::new(2, 0, COLS - 2, step_h), "InvisibleStyle"));
+    // (v1: the track controls sit in a framed light panel)
+    steps.children.push(part("CtrlScrollView", "ControlsScrollView", Rect::new(2, 0, COLS - 2, step_h), "TrackColumnStyle"));
     steps.children.push(part("CtrlScrollView", "PatternScrollView", Rect::new(COLS, 0, grid_w, step_h), "GridBackStyle"));
-    steps.children.push(part("CtrlScrollBar", "VScrollBar", Rect::new(w - BAR - 1, 0, BAR, step_h - 2 * BAR), "VerticalScrollbarStyle"));
+    steps.children.push(scroll_bar("VScrollBar", Rect::new(w - BAR - 1, 0, BAR, step_h - 2 * BAR)));
     for (i, (n, t)) in [("ZoomOutV", "-"), ("ZoomInV", "+")].into_iter().enumerate() {
         let mut b = part("CtrlButton", n, Rect::new(w - BAR - 1, step_h - 2 * BAR + i as i32 * BAR, BAR, BAR), if i == 0 { "ZoomOutButtonStyle" } else { "ZoomInButtonStyle" });
         b.text = t.into();
@@ -825,7 +827,7 @@ fn editor_area(w: i32, h: i32) -> Ctrl {
     sp.children.push(lower);
     ed.children.push(sp);
     let mut hbar = part("CtrlPanel", "HBarPanel", Rect::new(COLS, split_h, grid_w, BAR), "InvisibleStyle");
-    hbar.children.push(part("CtrlScrollBar", "HScrollBar", Rect::new(0, 0, grid_w - 2 * BAR - 1, BAR), "VerticalScrollbarStyle"));
+    hbar.children.push(scroll_bar("HScrollBar", Rect::new(0, 0, grid_w - 2 * BAR - 1, BAR)));
     for (i, (n, t)) in [("ZoomOutH", "-"), ("ZoomInH", "+")].into_iter().enumerate() {
         let mut b = part("CtrlButton", n, Rect::new(grid_w - 2 * BAR + i as i32 * BAR, 0, BAR, BAR), if i == 0 { "ZoomOutButtonStyle" } else { "ZoomInButtonStyle" });
         b.text = t.into();
@@ -834,6 +836,17 @@ fn editor_area(w: i32, h: i32) -> Ctrl {
     }
     ed.children.push(hbar);
     ed
+}
+
+/// The step editor's scroll bars: v1 draws the thumb full length when the
+/// content fits, rounded and inset in a framed track (the reference
+/// screenshots).
+fn scroll_bar(name: &str, r: Rect) -> Ctrl {
+    let mut c = part("CtrlScrollBar", name, r, "VerticalScrollbarStyle");
+    for (k, v) in [("optThumbWhenFull", "true"), ("realThumbInset", "2"), ("colTrackBorder", "ScrollFrame")] {
+        c.set_attr(k, v.into());
+    }
+    c
 }
 
 fn new_custom(name: &str, overload: &str, w: i32, h: i32) -> Ctrl {
@@ -866,8 +879,8 @@ impl PatternPanel {
             crate::front::mount_all(skin, &mut tb)?;
             let tb_h = tb.rect.h;
             host.children.push(tb);
-            let mut area = editor_area(w, h - tb_h - 2);
-            area.rect.y = tb_h + 2;
+            let mut area = editor_area(w, h - tb_h - 4);
+            area.rect.y = tb_h + 4;
             host.children.push(area);
             // The single-graph view (`SingleViewPanel`, intMaxSize1 75 px)
             // under the step panel: graph controls + the lane graph.
@@ -1317,6 +1330,8 @@ impl PatternPanel {
                 let mut row = t.clone();
                 row.set_rect(Rect::new(0, lay.row_y(r) as i32, w, lay.row_h as i32));
                 row.set_attr("trackRow", r.to_string());
+                // (v1: rows divided by a dashed line, as in the grid)
+                row.children.push(part("CtrlPanel", "RowDivider", Rect::new(0, lay.row_h as i32 - 1, w, 1), "GridDashStyle"));
                 rows.children.push(row);
             }
             // MultiTrack lane controls ([re:be3f16]).
@@ -1353,7 +1368,7 @@ impl PatternPanel {
             }
             let td = pat.tracks.get(track);
             row.set_attr("track", track.to_string());
-            row.style = if track == selected { "GridRowSelectedStyle" } else { "InvisibleStyle" }.into();
+            // (v1 tints the selected track's grid row, not its controls)
             for c in row.children.iter_mut() {
                 match c.name.as_str() {
                     "SelectArea" => c.text = names[r].clone(),
@@ -2757,14 +2772,20 @@ impl PatternPanel {
         for gr in &lay.graphs {
             self.draw_lane(r, p, &pat, &lay, gr.track, gr.lane, gr.y, w, gr.h);
         }
+        // (v1: only the bar lines solid, 2 px; beat lines dashed as the
+        // step lines)
+        let per_bar = bar_steps(pat.resolution);
         for st in lay.first_step..=lay.step_range().end {
-            let x = lay.step_x(st).round() + 0.5;
-            if st % 4 == 0 || st == lay.steps {
-                p.line(x, 0.0, x, h, bar, 1.0);
+            let x = lay.step_x(st).round();
+            if st % per_bar == 0 || st == lay.steps {
+                p.fill_rect(RectF::new(x - 1.0, 0.0, 2.0, h), bar);
             } else {
-                dashed(p, x, 0.0, x, h);
+                dashed(p, x + 0.5, 0.0, x + 0.5, h);
             }
         }
+        // The grid's dark left edge (v1: 2 px, meeting the track column).
+        let edge = s.colour("GridBackStyle", "colAltBorder", bar);
+        p.fill_rect(RectF::new(0.0, 0.0, 2.0, h), edge);
         // Pattern power off.
         if !model.pattern_power(e) {
             p.fill_rect(RectF::new(0.0, 0.0, c.rect.w as f32, h), Colour::BLACK.with_alpha(0.3));
@@ -2801,29 +2822,39 @@ impl PatternPanel {
             p.line(0.0, y0 + (h / 2.0).floor() + 0.5, w, y0 + (h / 2.0).floor() + 0.5, divider, 1.0);
         }
         let step_col = grid_colour(s, "colStep");
+        let step_edge = s.colour("StepOnStyle", "colBorder", Colour::rgba(51, 55, 92, 255));
         let Some(t) = pat.tracks.get(track) else { return };
         for st in lay.step_range() {
             let Some(step) = t.steps.get(st) else { continue };
-            let col = if step.on { step_col } else { step_col.with_alpha(0.125) };
+            let col = if step.on { step_col } else { step_col.with_alpha(0.12) };
+            let edge = if step.on { step_edge } else { step_edge.with_alpha(0.35) };
             let v = step.lanes.get(lane).copied().unwrap_or(0.0);
             let x = lay.step_x(st);
             let bw = (lay.step_w - 4.0).max(1.0);
-            let radius = if h * 0.5 < 2.0 { (h * 0.25).floor().max(0.0) } else { 2.0 };
+            // v1 (tutorial frames): square bars with a 1 px edge, light ones
+            // with a grey edge where the step has no note.
+            let bar = |p: &mut Painter, a: RectF| {
+                let a = RectF::new(a.x.round(), a.y.round(), a.w.round(), a.h.round());
+                p.fill_rect(a, col);
+                if a.w >= 3.0 && a.h >= 3.0 {
+                    p.stroke_rect(a.inset(0.5), edge, 1.0);
+                }
+            };
             match style {
                 // Unipolar: a bar from the bottom.
                 0 => {
                     let bh = (v * (h - 3.0)).floor().max(1.0);
-                    p.fill_rounded(RectF::new(x + 2.0, y0 + h - 2.0 - bh, bw, bh), radius, [true; 4], col);
+                    bar(p, RectF::new(x + 2.0, y0 + h - 2.0 - bh, bw, bh));
                 }
                 // Bipolar / pitch: from the centre line.
                 1 | 4 => {
                     let mid = (h / 2.0).floor();
                     if v > 0.5 {
                         let top = (mid - (mid - 2.0) * 2.0 * (v - 0.5)).max(0.0);
-                        p.fill_rounded(RectF::new(x + 2.0, y0 + top, bw, mid - top), radius, [true; 4], col);
+                        bar(p, RectF::new(x + 2.0, y0 + top, bw, mid - top));
                     } else if v < 0.5 {
                         let bh = (mid * (1.0 - 2.0 * v)).floor().max(2.0) - 1.0;
-                        p.fill_rounded(RectF::new(x + 2.0, y0 + mid + 1.0, bw, bh), radius, [true; 4], col);
+                        bar(p, RectF::new(x + 2.0, y0 + mid + 1.0, bw, bh));
                     }
                 }
                 // On/off: Reverse draws a left arrow, the link two strokes.
@@ -2855,14 +2886,15 @@ impl PatternPanel {
                     let unit = ((h - 3.0) / if lane == 2 || lane == 15 { 8.0 } else { 3.0 }).floor().max(2.0);
                     for k in 0..n {
                         let y = y0 + h - 1.0 - unit * (k + 1) as f32;
-                        p.fill_rect(RectF::new(x + 2.0, y, bw, unit - 2.0), col);
+                        bar(p, RectF::new(x + 2.0, y, bw, unit - 2.0));
                     }
                 }
             }
         }
+        let per_bar = bar_steps(pat.resolution);
         for st in lay.first_step..=lay.step_range().end {
             let x = lay.step_x(st).round() + 0.5;
-            let beat = grid_colour(s, if st % 4 == 0 { "colGridBar" } else { "colGridBeat" });
+            let beat = grid_colour(s, if st % per_bar == 0 { "colGridBar" } else { "colGridBeat" });
             p.line(x, y0, x, y0 + h, beat, 1.0);
         }
     }
@@ -3046,6 +3078,11 @@ fn shading_group_in(mode: u8, resolution: usize) -> Option<usize> {
         _ => -1,
     };
     (g > 0).then_some(g as usize)
+}
+
+/// Steps per bar at `resolution` (four beats; at least one).
+fn bar_steps(resolution: usize) -> usize {
+    (dreist_engine::pattern::resolution_beats(resolution).max(0) as usize * 4).max(1)
 }
 
 /// Whether step `st` lies in a shaded (odd) group.
