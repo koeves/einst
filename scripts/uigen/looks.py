@@ -56,9 +56,15 @@ def icon(name, size=None):
     return c
 
 
-# v1's flat icon keys (tool buttons: a light face in a thin
+# v1's flat icon keys (scene slot and tool buttons: a light face in a thin
 # frame; pressed, a navy face with a light icon).
 FLAT_KEY = dict(realGradientShade="0", colFill="LcdLight", colBorder="InkMid", colText="InkMid")
+# v1's 40 x 41 scene page keys: square, a light face over a 2 px navy
+# bottom, large slate glyphs.
+BIG_KEY = dict(realCornerRounding="0", colBorder="#3C4461", realGradientShade="0", colFill="LcdLight", colText="InkMid",
+               realBorderWidth="1", optBevel="true", colBevelLight="0, 0, 0, 0", colBevelDark="18, 25, 60, 255")
+# v1's scene scroll keys: pills in a navy outline.
+PILL_KEY = dict(realCornerRounding="10", colBorder="Ink", colFill="LcdLight", realGradientShade="0", colText="InkMid")
 
 # Pad mode buttons: the face inside v1's 25 x 27 cells.
 PM = (1, 1, 3, 5)
@@ -273,16 +279,18 @@ BUTTONS = [
     (r"^SearchOptions", L("LcdFlatIconButtonStyle", text=G["chev_down"], font=icon_font(8))),
     (r"^ViewOptionsButton", L("LcdFlatIconButtonStyle", text=G["settings"])),
     # Scene page.
-    (r"^ScenePageSnapshotNextButton", L("LcdBigButtonStyle", text=G["snapshot"], font=icon_font(18))),
-    (r"^PreviousSceneButton", L("LcdBigButtonStyle", text=G["left"], font=icon_font(16))),
-    (r"^NextSceneButton", L("LcdBigButtonStyle", text=G["right"], font=icon_font(16))),
-    (r"^ScenePageClearAllButton", L("LcdBigButtonStyle", text=G["close"], font=icon_font(16))),
-    (r"^ScenePageUpButton", L("LcdIconButtonStyle", text=G["up"])),
-    (r"^ScenePageDownButton", L("LcdIconButtonStyle", text=G["down"])),
-    (r"^SceneRowUpButton", L("LcdIconButtonStyle", text=G["chev_up"])),
-    (r"^SceneRowDownButton", L("LcdIconButtonStyle", text=G["chev_down"])),
-    (r"^SceneSnapshotButton", L("LcdIconButtonStyle", text=G["plus"])),
-    (r"^SceneClearButton", L("LcdIconButtonStyle", text=G["close"])),
+    # (v1's `Scene/*` keys: the camera and trash can drawn in code, the
+    # arrows as glyphs; the scroll keys pills with one or two triangles)
+    (r"^ScenePageSnapshotNextButton", L("LcdBigButtonStyle", text="", ctrl=icon("camera", 20), **BIG_KEY)),
+    (r"^PreviousSceneButton", L("LcdBigButtonStyle", text=G["left"], font=icon_font(22), **BIG_KEY)),
+    (r"^NextSceneButton", L("LcdBigButtonStyle", text=G["right"], font=icon_font(22), **BIG_KEY)),
+    (r"^ScenePageClearAllButton", L("LcdBigButtonStyle", text="", ctrl=icon("trash", 26), **BIG_KEY)),
+    (r"^ScenePageUpButton", L("LcdIconButtonStyle", text="", ctrl=icon("page_up"), **PILL_KEY)),
+    (r"^ScenePageDownButton", L("LcdIconButtonStyle", text="", ctrl=icon("page_down"), **PILL_KEY)),
+    (r"^SceneRowUpButton", L("LcdIconButtonStyle", text=G["up"], font=icon_font(8), **PILL_KEY)),
+    (r"^SceneRowDownButton", L("LcdIconButtonStyle", text=G["down"], font=icon_font(8), **PILL_KEY)),
+    (r"^SceneSnapshotButton", L("LcdIconButtonStyle", text="", ctrl=icon("camera", 9), **FLAT_KEY)),
+    (r"^SceneClearButton", L("LcdIconButtonStyle", text="", ctrl=icon("trash", 12), **FLAT_KEY)),
     (r"^SmallSceneSelectButton", L("LcdButtonStyle")),
     # Sampler page.
     # (v1's 40 x 41 keys: square, a light face in a navy edge, bold grey

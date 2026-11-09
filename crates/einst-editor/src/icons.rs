@@ -1,10 +1,12 @@
 //! Button icons drawn as vectors over a button's face (`IconButton`
-//! controls; v1 drew them in its button bitmaps): the song and pattern
+//! controls; v1 drew them in its button bitmaps): the scene page's camera
+//! and trash can, its page scroll triangles, and the song and pattern
 //! tools' pencil, eraser, dashed frame and pencil with a plus.
 //!
 //! The control's `icon` attribute names the icon and `iconSize` its height
 //! in px. It is drawn centred in the style's text colour (colAltText while
-//! the button is on); holes (the pencil's light stripe) take the face colour (colFill / colAltFill).
+//! the button is on); holes (the camera's lens, the can's slats, the
+//! pencil's light stripe) take the face colour (colFill / colAltFill).
 
 use dreist_gui::paint::{Painter, RectF};
 use dreist_gui::render::Renderer;
@@ -28,9 +30,14 @@ pub fn draw_button(r: &Renderer, p: &mut Painter, c: &Ctrl) {
 pub fn draw(p: &mut Painter, name: &str, r: RectF, size: Option<f32>, ink: Colour, face: Colour) {
     // The design box (w, h) and default height of each icon.
     let (dw, dh, default) = match name {
+        "camera" => (26.0, 20.0, 10.0),
+        "trash" => (16.0, 26.0, 12.0),
         "pencil" | "eraser" => (13.0, 13.0, 13.0),
         "pencil_plus" => (14.0, 13.0, 13.0),
         "select" => (13.0, 10.0, 10.0),
+        "page_up" | "page_down" => (7.0, 10.0, 10.0),
+        "play" => (14.0, 22.0, 22.0),
+        "dots" => (16.0, 2.0, 2.0),
         _ => return,
     };
     let k = size.unwrap_or(default) / dh;
@@ -38,6 +45,23 @@ pub fn draw(p: &mut Painter, name: &str, r: RectF, size: Option<f32>, ink: Colou
     let pt = |x: f32, y: f32| (ox + x * k, oy + y * k);
     let rr = |x: f32, y: f32, w: f32, h: f32| RectF::new(ox + x * k, oy + y * k, w * k, h * k);
     match name {
+        // (v1's camera: a body with a hollow handle on top, a flash window
+        // at the left and a large round lens right of centre)
+        "camera" => {
+            p.stroke_rounded(rr(9.75, 0.75, 7.5, 4.5), k, [true; 4], ink, 1.5 * k);
+            p.fill_rounded(rr(0.0, 4.0, 26.0, 16.0), 2.0 * k, [true; 4], ink);
+            p.fill_rounded(rr(3.0, 7.5, 4.0, 2.5), k, [true; 4], face);
+            p.fill_ellipse(rr(11.0, 7.0, 10.0, 10.0), face);
+        }
+        // (a lid with a knob over a tapering can, three light slats)
+        "trash" => {
+            p.fill_rect(rr(6.0, 0.0, 4.0, 2.5), ink);
+            p.fill_rect(rr(0.0, 2.0, 16.0, 2.5), ink);
+            p.fill_polygon(&[pt(1.0, 6.0), pt(15.0, 6.0), pt(13.5, 26.0), pt(2.5, 26.0)], ink);
+            for x in [4.0, 7.2, 10.4] {
+                p.fill_rect(rr(x, 9.0, 1.6, 14.0), face);
+            }
+        }
         "pencil" => pencil(p, pt(0.5, 12.5), 16.0 * k, k, ink, face),
         "pencil_plus" => {
             pencil(p, pt(0.5, 10.5), 13.0 * k, k, ink, face);
@@ -69,6 +93,25 @@ pub fn draw(p: &mut Painter, name: &str, r: RectF, size: Option<f32>, ink: Colou
                 y += 3.0;
             }
         }
+        // (two stacked triangles)
+        "page_up" | "page_down" => {
+            for y in [0.0, 5.0] {
+                let (tip, base) = if name == "page_up" { (y, y + 5.0) } else { (10.0 - y, 5.0 - y) };
+                p.fill_polygon(&[pt(3.5, tip), pt(7.0, base), pt(0.0, base)], ink);
+            }
+        }
+        // (a play mark: `face` in an `ink` edge)
+        "play" => {
+            let tri = [pt(0.5, 0.5), pt(13.5, 11.0), pt(0.5, 21.5)];
+            p.fill_polygon(&tri, face);
+            p.polyline(&[tri[0], tri[1], tri[2], tri[0]], ink, k.max(1.0));
+        }
+        // (a row of five dots)
+        "dots" => {
+            for i in 0..5 {
+                p.fill_rect(rr(i as f32 * 3.5, 0.0, 2.0, 2.0), ink);
+            }
+        }
         _ => {}
     }
 }
@@ -94,7 +137,7 @@ mod tests {
         crate::app::test_setup();
         let ink = Colour::rgba(18, 25, 60, 255);
         let face = Colour::rgba(222, 229, 237, 255);
-        for name in ["pencil", "pencil_plus", "eraser", "select"] {
+        for name in ["camera", "trash", "pencil", "pencil_plus", "eraser", "select", "page_up", "page_down", "play", "dots"] {
             let mut pm = dreist_gui::tiny_skia::Pixmap::new(40, 40).unwrap();
             let mut fonts = dreist_gui::text::Fonts::new(std::path::Path::new("."));
             let mut p = Painter::new(&mut pm, &mut fonts, 1.0);

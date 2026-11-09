@@ -211,8 +211,19 @@ COLOURS = {
     "SplitGraph": (76, 83, 111, 200),
     "SplitTick": (18, 25, 60, 102),
     "SplitTickBar": (18, 25, 60, 51),
-    "SceneUsed": (18, 25, 60, 150),
-    "SceneEdge": (18, 25, 60, 140),
+    # Scene page (`ScenePageBackground`, `SceneBackground`, `Scene*` trigger
+    # art, measured): the slate frame, the wells, the slot tiles, the
+    # trigger of a used scene and the edges.
+    "SceneFrame": (76, 83, 111),
+    "SceneWell": (169, 176, 191),
+    "SceneTableWell": (199, 206, 217),
+    "SceneWellEdge": (113, 120, 142),
+    "SceneWellEdgeLow": (128, 135, 156),
+    "ScenePanelEdge": (47, 54, 86),
+    "ScenePanelEdgeLow": (120, 127, 148),
+    "SceneUsed": (169, 176, 191),
+    "SceneEdge": (76, 83, 111),
+    "SceneMark": (101, 108, 132),
     "PastLength": (169, 176, 191, 140),
     "RecordingPart": (222, 229, 237, 200),
     "RetroPart": (187, 81, 81, 75),
@@ -690,13 +701,22 @@ def base_styles():
     # lines (every eighth lighter), the handles.
     st("VSplitStyle", "BasePanelStyle", colFill="SplitGraph", colAltFill="AmberSoft", colBorder="SplitTick", colAltBorder="SplitTickBar",
        colHandle="Ink")
-    # Scene slots' trigger area by state: the field and its edge, the
-    # inner block (a used scene ink, the playing one amber), the cue ring.
-    st("SceneTriggerEmptyStyle", "BasePanelStyle", colFill="LcdLight", colBorder="SceneEdge", colAltFill="Transparent",
-       colAltBorder="Transparent")
-    st("SceneTriggerUsedStyle", "SceneTriggerEmptyStyle", colAltFill="SceneUsed")
-    st("SceneTriggerCuedStyle", "SceneTriggerEmptyStyle", colAltFill="SceneUsed", colAltBorder="Amber")
-    st("SceneTriggerActiveStyle", "SceneTriggerEmptyStyle", colAltFill="Amber")
+    # Scene slots' trigger area by state (v1's `Scene{Empty,Full,Cued,
+    # Active}` art): the field, its edge and corner rounding; a cued scene
+    # shows a row of dots (colText), the playing one a play mark (colAltFill
+    # in colAltBorder).
+    st("SceneTriggerEmptyStyle", "BasePanelStyle", colFill="LcdLight", colBorder="SceneEdge", realCornerRounding="2",
+       colText="SceneMark", colAltFill="SceneEdge", colAltBorder="Ink")
+    st("SceneTriggerUsedStyle", "SceneTriggerEmptyStyle", colFill="SceneUsed")
+    st("SceneTriggerCuedStyle", "SceneTriggerUsedStyle")
+    st("SceneTriggerActiveStyle", "SceneTriggerUsedStyle")
+    # The scene page's art: the slate frame (colFill, outline colBorder),
+    # the light panels, the slot and scroll wells and the table's well.
+    st("ScenePageBackStyle", "BasePanelStyle", colFill="SceneFrame", colBorder="Ink", colPanel="Lcd", colPanelEdge="ScenePanelEdge",
+       colPanelEdgeLow="ScenePanelEdgeLow", colWell="SceneWell", colTableWell="SceneTableWell", colWellEdge="SceneWellEdge",
+       colWellEdgeLow="SceneWellEdgeLow")
+    # A slot's tile in the well (`SceneBackground`: 93 x 67 at 6, 4).
+    st("SceneTileStyle", "BasePanelStyle", colFill="LcdMid", colBorder="SceneEdge", realCornerRounding="3")
     # The effect chain's slot bar: one item per slot, the shown ones lit.
     # v1 (round 5): the shown slots light blue-grey, the others a darker
     # slate, both with a dark edge.
@@ -732,6 +752,11 @@ STYLE_OVERRIDES = {
     "GlobalTableStyleAlwaysVisibleHSlider": {"colHeaderFill": "LcdDim"},
     # The slicer's screen (v1's background bitmap).
     "PreviewPanelBackgroundStyle": {"colFill": "Lcd"},
+    # The scene mini-map's cells: square and flat (ScenePanel.skin).
+    "MiniSceneEvenButtonStyle": {"realCornerRounding": "0", "realGradientShade": "0"},
+    "MiniSceneOddButtonStyle": {"realCornerRounding": "0", "realGradientShade": "0"},
+    # A scene's name shortens in the middle (v1's shortening label).
+    "SceneNoteLabelCenteredStyle": {"enumTextShortenAlgorithm": "middle"},
 }
 
 
