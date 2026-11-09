@@ -369,6 +369,11 @@ impl Mixer {
         let mut selected_rect = None;
         for (i, (ch, path)) in self.strips.clone().into_iter().enumerate() {
             let label = self.label(model, ch);
+            // [re:87fde4]: an empty layer's strip controls are disabled.
+            let live = match ch {
+                Channel::Layer(k) => Some(model.layer(model.engine, model.pad[model.engine], k).valid),
+                _ => None,
+            };
             let node = Self::node(model, ch);
             let gain_key = match ch {
                 Channel::Layer(_) => LayerParam::Gain.name(),
@@ -424,6 +429,11 @@ impl Mixer {
             }
             strip.style = style;
             strip.walk_mut(&mut |k: &mut Ctrl| {
+                if let Some(v) = live {
+                    if matches!(k.name.as_str(), "GainSlider" | "PanKnob" | "MuteButton" | "SoloButton" | "OutputCombo") || send_index(&k.name).is_some() {
+                        k.enabled = v;
+                    }
+                }
                 if has_views {
                     if let Some(v) = shown_in(&k.name, mode) {
                         k.visible = v;
@@ -499,6 +509,8 @@ impl Mixer {
                 let p = Self::pad_of(model, k);
                 model.pad_name(e, p).unwrap_or_else(|| format!("Pad {}", p + 1))
             }
+            // [re:87fde4]: an empty layer's strip shows its number.
+            Channel::Layer(k) if !model.layer(e, model.pad[e], k).valid => (k + 1).to_string(),
             Channel::Layer(k) => model.layer_name(e, model.pad[e], k).unwrap_or_else(|| format!("Layer {}", k + 1)),
         }
     }
