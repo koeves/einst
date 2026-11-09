@@ -1,4 +1,4 @@
-//! Scene page (`Scene/ScenePanel.skin`, [re:04e91a]): 64 scene slots
+//! Scene page (`Scene/ScenePanel.skin`, [re:04e91a]): 72 scene slots
 //! (v1's six octaves, C-2 to B3), 16 of them visible (`Scene0..15`, a 4 × 4
 //! grid, bottom row first) with the page / row scroll buttons and the
 //! scene view control (`ScrollArea` mini-map under the `ViewSlider`).
@@ -22,13 +22,19 @@ use crate::model::Model;
 
 const NOTES: [&str; 12] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-/// v1's scene slots: six octaves (and C4 to D#4).
-pub const SLOTS: usize = 64;
+/// v1's scene slots: six octaves, C-2 to B3 ([re:04e91a]: 72 mini-map
+/// cells; [re:344aeb]: the first visible slot stops at 56).
+pub const SLOTS: usize = 72;
 /// Slot rows (4 slots each) and the rows on view.
 const ROWS: usize = SLOTS / 4;
 const VISIBLE_ROWS: usize = 4;
 /// The highest first visible row.
 const MAX_BASE: usize = ROWS - VISIBLE_ROWS;
+/// [re:04e91a]: mini-map cells are the skin's 8×8 template, 9 px apart
+/// across and (ScrollArea height − 8) / 17 = 12 px apart down.
+const MINI_CELL: i32 = 8;
+const MINI_PITCH_X: i32 = 9;
+const MINI_PITCH: i32 = 12;
 
 /// [re:8ad0c7]: note name and octave (C-2 = 0).
 pub fn key_name(n: usize) -> String {
@@ -64,11 +70,11 @@ fn find_path(root: &Ctrl, base: &[usize], name: &str) -> Option<Vec<usize>> {
     Some([base.to_vec(), c.path_of(name)?].concat())
 }
 
-/// The mini-map cell of slot `n` (inside the `ScrollArea`, 4 columns of 16
+/// The mini-map cell of slot `n` (inside the `ScrollArea`, 4 columns of 18
 /// rows, bottom row first).
 fn mini_rect(n: usize) -> Rect {
     let (row, col) = ((n / 4) as i32, (n % 4) as i32);
-    Rect::new(3 + col * 8, 3 + (ROWS as i32 - 1 - row) * 13, 7, 12)
+    Rect::new(col * MINI_PITCH_X, (ROWS as i32 - 1 - row) * MINI_PITCH, MINI_CELL, MINI_CELL)
 }
 
 fn manager(model: &Model) -> dreist_engine::scene::SceneManager {
@@ -106,14 +112,14 @@ impl Scenes {
             }
         }
         // The mini-map: one cell per slot (the skin's two cells are the
-        // even / odd row templates).
+        // templates; [re:04e91a] alternates them by octave).
         if let Some(a) = host.find_mut("ScrollArea") {
             let even = a.children.iter().find(|c| c.name == "MiniSceneEven").cloned();
             let odd = a.children.iter().find(|c| c.name == "MiniSceneOdd").cloned();
             if let (Some(even), Some(odd)) = (even, odd) {
                 a.children.clear();
                 for n in 0..SLOTS {
-                    let mut c = if (n / 4) % 2 == 0 { even.clone() } else { odd.clone() };
+                    let mut c = if (n / 12) % 2 == 0 { even.clone() } else { odd.clone() };
                     c.name = format!("MiniScene{n}");
                     c.set_rect(mini_rect(n));
                     c.passive = true;
@@ -270,17 +276,34 @@ impl Scenes {
             p.text(RectF::new(x + 3.0, 0.0, cw - 6.0, row_h), name, htext, &font, *al, VAlign::Center);
         }
         let sc = manager(model).scenes.get(self.selected).cloned().unwrap_or_default();
+        // The scene's mode (`both` / `pat` / `mix`): a pattern-only scene
+        // shows no power, a mix-only one no pattern.
+        let mode = model
+            .doc
+            .children
+            .iter()
+            .find(|c| c.class == "SceneManager")
+            .and_then(|m| m.child("Scene", &format!("Scene{}", self.selected)))
+            .and_then(|n| n.attr("mode"))
+            .unwrap_or("both")
+            .trim()
+            .to_string();
         for e in 0..8 {
             let y = row_h * (e + 1) as f32;
             p.fill_rect(RectF::new(0.0, y, w, row_h), if e % 2 == 1 { alt } else { row });
-            let (pat, pow) = if sc.used {
+            // [re:e6662f] table cells: "Eng n", then "-" unless the scene is
+            // used, "<n>: <pattern name>" and lower-case "on" / "off".
+            let (mut pat, mut pow) = ("-".to_string(), "-".to_string());
+            if sc.used {
                 let se = sc.engines[e];
-                let name = model.pattern_name(e, se.pattern);
-                (if name.trim().is_empty() { (se.pattern + 1).to_string() } else { format!("{}: {name}", se.pattern + 1) }, if se.power { "On" } else { "Off" }.to_string())
-            } else {
-                (String::new(), String::new())
-            };
-            for ((x, cw, al), t) in cols.iter().zip([(e + 1).to_string(), pat, pow]) {
+                if mode != "mix" {
+                    pat = format!("{}: {}", se.pattern + 1, model.pattern_name(e, se.pattern));
+                }
+                if mode != "pat" {
+                    pow = if se.power { "on" } else { "off" }.to_string();
+                }
+            }
+            for ((x, cw, al), t) in cols.iter().zip([format!("Eng {}", e + 1), pat, pow]) {
                 p.text(RectF::new(x + 3.0, y, cw - 6.0, row_h), &t, text, &font, *al, VAlign::Center);
             }
         }
@@ -297,8 +320,8 @@ impl Scenes {
 
     /// The first visible row for a pointer at `y` in the view control.
     fn view_row_at(&self, y: f32, grab: f32) -> usize {
-        // Row r's cell top is at 5 + (ROWS − 1 − r)·13 in the control.
-        let top_row = ROWS as f32 - 1.0 - ((y - grab - 5.0) / 13.0);
+        // Row r's cell top is at 2 + (ROWS − 1 − r)·12 in the control.
+        let top_row = ROWS as f32 - 1.0 - ((y - grab - 2.0) / MINI_PITCH as f32);
         let base = top_row - (VISIBLE_ROWS as f32 - 1.0);
         base.round().clamp(0.0, MAX_BASE as f32) as usize
     }
@@ -339,13 +362,13 @@ impl Scenes {
                 true
             }
             UiEvent::Mouse { path, overload, kind, y, .. } if overload == "SceneViewSlider" => {
-                let first_top = 5.0 + (ROWS - 1 - (self.base + VISIBLE_ROWS - 1)) as f32 * 13.0;
+                let first_top = 2.0 + (ROWS - 1 - (self.base + VISIBLE_ROWS - 1)) as f32 * MINI_PITCH as f32;
                 match kind {
                     MouseKind::Down => {
                         let grab = *y - first_top;
                         // A press outside the visible area centres it there.
-                        let inside = (0.0..VISIBLE_ROWS as f32 * 13.0).contains(&grab);
-                        self.view_drag = Some(if inside { grab } else { VISIBLE_ROWS as f32 * 13.0 / 2.0 });
+                        let inside = (0.0..VISIBLE_ROWS as f32 * MINI_PITCH as f32).contains(&grab);
+                        self.view_drag = Some(if inside { grab } else { VISIBLE_ROWS as f32 * MINI_PITCH as f32 / 2.0 });
                     }
                     MouseKind::Up => {
                         self.view_drag = None;
@@ -411,7 +434,12 @@ impl Scenes {
                 }
                 let parent = app.ctrl(&path[..path.len() - 1]).map(|c| c.name.clone()).unwrap_or_default();
                 if parent == "StartModeButtonGroup" {
-                    out.push(msg(id::SCENE_SET_START_MODE, &[], &[self.selected as f32, *path.last().unwrap() as f32]));
+                    // [re:9931ee]: with Alt held the mode goes to every scene.
+                    let mode = *path.last().unwrap() as f32;
+                    let scenes = if app.mods.alt { 0..SLOTS } else { self.selected..self.selected + 1 };
+                    for n in scenes {
+                        out.push(msg(id::SCENE_SET_START_MODE, &[], &[n as f32, mode]));
+                    }
                     return true;
                 }
                 let scene = Self::scene_of(app, path);
@@ -491,8 +519,8 @@ fn draw_view(r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painte
     let base = c.attr("viewBase").and_then(|v| v.parse::<usize>().ok()).unwrap_or(0);
     let top_row = base + VISIBLE_ROWS - 1;
     // The mini-map sits 2 px in (ScrollArea at 449,112; the control at 447,110).
-    let y = 2.0 + 3.0 + (ROWS - 1 - top_row) as f32 * 13.0 - 2.0;
-    let rr = RectF::new(1.5, y, c.rect.w as f32 - 3.0, VISIBLE_ROWS as f32 * 13.0 + 2.0);
+    let y = 2.0 + (ROWS - 1 - top_row) as f32 * MINI_PITCH as f32 - 2.0;
+    let rr = RectF::new(1.5, y, c.rect.w as f32 - 3.0, ((VISIBLE_ROWS - 1) as i32 * MINI_PITCH + MINI_CELL) as f32 + 4.0);
     p.fill_rect(rr, s.colour(st, "colAltFill", Colour::rgba(232, 239, 247, 120)));
     p.stroke_rect(rr, s.colour(st, "colBorder", Colour::rgba(18, 25, 60, 255)), 1.0);
 }
@@ -505,6 +533,6 @@ mod tests {
         assert_eq!(super::key_name(0), "C-2");
         assert_eq!(super::key_name(8), "G#-2");
         assert_eq!(super::key_name(60), "C3");
-        assert_eq!(super::key_name(super::SLOTS - 1), "D#3");
+        assert_eq!(super::key_name(super::SLOTS - 1), "B3");
     }
 }
