@@ -681,6 +681,7 @@ impl Inspector {
         }
         // Layer rows.
         let (_, lmask) = crate::multipad::layer_selection(model, e, p);
+        let pad_locked = model.pad_node(e, p).is_some_and(|n| n.locked());
         for (li, rp) in self.rows.iter().enumerate() {
             let f = model.layer(e, p, li);
             // An empty layer reads "Empty" (manual §5:1 figures).
@@ -705,13 +706,27 @@ impl Inspector {
                 match c.name.as_str() {
                     // The name edits once the row is selected; until then a
                     // click selects it.
+                    // [re:73027d]: an empty layer's name and buttons are
+                    // disabled; a locked layer (or pad) keeps its name and
+                    // Clear disabled, a locked pad its Lock.
                     "SampleName" => {
                         c.text = name.clone();
                         c.passive = !(selected && li == l);
+                        c.enabled = f.valid && !(locked || pad_locked);
                     }
-                    "Mute" => c.on = f.mute,
-                    "Solo" => c.on = f.solo,
-                    "Lock" => c.on = locked,
+                    "Mute" => {
+                        c.on = f.mute;
+                        c.enabled = f.valid;
+                    }
+                    "Solo" => {
+                        c.on = f.solo;
+                        c.enabled = f.valid;
+                    }
+                    "Lock" => {
+                        c.on = locked;
+                        c.enabled = f.valid && !pad_locked;
+                    }
+                    "Clear" => c.enabled = f.valid && !(locked || pad_locked),
                     _ => {}
                 }
             }
