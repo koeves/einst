@@ -3,7 +3,7 @@
     <CtrlPanel name="CtrlPanel" rect="0, 0, 193, 150" id="0" style="EmptyPanelStyle">
         <CtrlKnob name="Control3" rect="71, 3, 50, 46" id="100021" realDialThickness="0.09" style="LEDKnobLargeLR" />
         <CtrlKnob name="Control2" rect="136, 3, 50, 46" id="100009" realDialThickness="0.09" style="LEDKnobLargeLR" />
-        <CtrlButton name="Control1" rect="24, 24, 16, 17" id="100000" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
+        <CtrlButton name="Control1" rect="24, 24, 16, 17" id="100000" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
         <CtrlLabel name="CtrlLabel" rect="-1, 53, 66, 15" id="100026" style="StandardLabelCenteredStyle" text="Gate" />
         <CtrlLabel name="CtrlLabel" rect="58, 53, 76, 15" id="100027" style="StandardLabelCenteredStyle" text="Grain Length" />
         <CtrlLabel name="CtrlLabel" rect="123, 53, 76, 15" id="100010" style="StandardLabelCenteredStyle" text="Loop Length" />

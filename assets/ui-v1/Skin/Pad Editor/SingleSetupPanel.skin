@@ -2,7 +2,7 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 1, 650, 191" id="0" style="EmptyPanelStyle">
         <CtrlLabel name="CtrlLabel" rect="7, -2, 91, 13" id="100002" style="StandardLabelCenteredStyle" text="Pan" />
-        <CtrlButton name="FilterActiveButton" rect="382, 5, 16, 17" displayName="Layer filter active" id="100023" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
+        <CtrlButton name="FilterActiveButton" rect="382, 5, 16, 17" displayName="Layer filter active" id="100023" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
         <CtrlPopupButton name="FilterModeKnob" rect="431, 5, 75, 17" id="100002" legacyClass="CtrlComboBox" optSingleClickEdit="true" style="LEDComboBoxStyle" />
         <CtrlPanSlider name="PanKnob" rect="15, 10, 73, 12" displayName="Pan" id="100000" realTrackInset="0.0" style="FatPanStyle" />
         <CtrlLabel name="CtrlLabel" rect="8, 26, 41, 13" id="100003" style="StandardLabelCenteredStyle" text="Gain" />

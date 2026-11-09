@@ -7,8 +7,8 @@
         <CtrlPanel name="AuxChannel3" rect="574, 232, 193, 161" id="100005" overloadClass="EditorMixerAuxChannel" />
         <CtrlPanel name="MasterChannel" rect="765, 232, 48, 161" id="100008" overloadClass="EditorMixerMasterChannel" />
         <CtrlPanel name="FXPanel" rect="1, 2, 812, 245" id="100009" overloadClass="EditorEffectChainPanel" />
-        <CtrlPanel name="LargeGlue" rect="1, 232, 189, 11" id="0" legacyClass="CtrlImageView" style="LcdGlueStyle" />
-        <CtrlPanel name="MasterGlue" rect="767, 235, 44, 15" id="0" legacyClass="CtrlImageView" style="LcdGlueStyle" />
-        <CtrlPanel name="GlueMicro" rect="3, 235, 3, 8" id="0" legacyClass="CtrlImageView" style="LcdGlueStyle" />
+        <CtrlPanel name="LargeGlue" rect="1, 232, 189, 11" id="0" legacyClass="CtrlImageView" style="GlueLargeImageStyle" />
+        <CtrlPanel name="MasterGlue" rect="767, 235, 44, 15" id="0" legacyClass="CtrlImageView" style="GlueMasterImageStyle" />
+        <CtrlPanel name="GlueMicro" rect="3, 235, 3, 8" id="0" legacyClass="CtrlImageView" style="GlueMicroImageStyle" />
     </CtrlPanel>
 </root>

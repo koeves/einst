@@ -440,7 +440,11 @@ impl Mixer {
                     }
                 }
                 match k.name.as_str() {
-                    "NameLabel" => k.text = label.clone(),
+                    "NameLabel" => {
+                        k.text = label.clone();
+                        // (v1: light on the selected strip's dark fill)
+                        k.style = if sel { "StripNameSelectedStyle" } else { "StandardLabelCenteredStyle" }.into();
+                    }
                     "GainSlider" => k.value = gain,
                     "PanKnob" => k.value = pan,
                     "EnginePitchKnob" => k.value = pitch,
@@ -468,7 +472,10 @@ impl Mixer {
                 }
             });
         }
-        // The glue joins the selected strip to the chain.
+        // The glue joins the selected strip to the chain (down over the
+        // chain frame's bottom edge: v1's frame and selected strip read as
+        // one dark shape).
+        let chain_bottom = self.fx.as_ref().and_then(|f| app.ctrl(&f.host)).map(|c| c.rect.y + c.rect.h);
         for (name, path, rect) in &self.glue {
             let Some(g) = app.ctrl_mut(path) else { continue };
             match selected_rect {
@@ -482,7 +489,8 @@ impl Mixer {
                     } else {
                         1
                     };
-                    let nr = Rect::new(r.x + dx, rect.y, rect.w, rect.h);
+                    let h = chain_bottom.map_or(rect.h, |b| rect.h.max(b - rect.y));
+                    let nr = Rect::new(r.x + dx, rect.y, rect.w, h);
                     if g.rect != nr {
                         g.set_rect(nr);
                     }

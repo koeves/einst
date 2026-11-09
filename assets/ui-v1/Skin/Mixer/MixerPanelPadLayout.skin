@@ -19,10 +19,12 @@
         <CtrlPanel name="PadChan15" rect="765, 232, 48, 161" id="15" overloadClass="EditorMixerPadChannel" />
         <CtrlButton name="AllPads" rect="13, 264, 46, 15" displayName="Apply changes to all pads (Alt)" id="100000" optIsMomentary="false" style="LinkLargeButtonStyle" text="Pads" />
         <CtrlButton name="AllGroups" rect="13, 280, 46, 15" displayName="Apply changes to all pads in this group (Alt + Shift)" id="100001" optIsMomentary="false" style="LinkLargeButtonStyle" text="Row" />
-        <CtrlButton name="MixButton" rect="13, 296, 46, 49" displayName="View mixer" id="100001" optIsMomentary="false" style="LEDMixButton" text="MIX" />
-        <CtrlButton name="SendButton" rect="13, 344, 46, 49" displayName="View aux sends" id="100002" optIsMomentary="false" style="LEDSendButton" text="SEND" />
+        <CtrlPanel rect="47, 296, 12, 49" style="LcdSideTabSpineStyle" />
+        <CtrlButton name="MixButton" rect="13, 298, 34, 45" displayName="View mixer" id="100001" optIsMomentary="false" style="LEDMixButton" text="MIX" />
+        <CtrlPanel rect="47, 344, 12, 49" style="LcdSideTabSpineStyle" />
+        <CtrlButton name="SendButton" rect="13, 346, 34, 45" displayName="View aux sends" id="100002" optIsMomentary="false" style="LEDSendButton" text="SEND" />
         <CtrlPanel name="FXPanel" rect="1, 2, 812, 245" id="100009" overloadClass="EditorEffectChainPanel" />
-        <CtrlPanel name="PadGlue" rect="61, 232, 44, 11" id="0" legacyClass="CtrlImageView" style="LcdGlueStyle" />
-        <CtrlPanel name="PadGlueMicro" rect="808, 231, 3, 8" id="0" legacyClass="CtrlImageView" style="LcdGlueStyle" />
+        <CtrlPanel name="PadGlue" rect="61, 232, 44, 11" id="0" legacyClass="CtrlImageView" style="GlueSmallImageStyle" />
+        <CtrlPanel name="PadGlueMicro" rect="808, 231, 3, 8" id="0" legacyClass="CtrlImageView" style="GlueMicroImageStyle" />
     </CtrlPanel>
 </root>

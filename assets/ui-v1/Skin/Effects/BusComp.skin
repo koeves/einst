@@ -10,7 +10,7 @@
         <CtrlLabel name="CtrlLabel" rect="122, 87, 66, 15" id="100033" style="StandardLabelCenteredStyle" text="Make up" />
         <CtrlKnob name="Control2" rect="21, 107, 24, 26" id="100021" realDialThickness="0.04" style="LEDKnobSmallLR" />
         <CtrlKnob name="Control4" rect="82, 107, 24, 26" id="100011" realDialThickness="0.04" style="LEDKnobSmallLR" />
-        <CtrlButton name="Control6" rect="148, 107, 16, 17" id="100034" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
+        <CtrlButton name="Control6" rect="148, 107, 16, 17" id="100034" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
         <CtrlLabel name="CtrlLabel" rect="4, 137, 56, 15" id="100027" style="StandardLabelCenteredStyle" text="Attack" />
         <CtrlLabel name="CtrlLabel" rect="66, 137, 56, 15" id="100014" style="StandardLabelCenteredStyle" text="Release" />
         <CtrlLabel name="CtrlLabel" rect="135, 137, 41, 15" id="100036" style="StandardLabelCenteredStyle" text="Limit" />
