@@ -12,8 +12,9 @@
 
 | | |
 |---|---|
-| ![Pattern editor](docs/screens/readme/pattern.png) | ![Pad / Layers](docs/screens/readme/pad-layers.png) |
-| ![Song mode](docs/screens/readme/song.png) | ![Engine mixer](docs/screens/readme/engine-mixer.png) |
+| ![Pattern editor](docs/screens/readme/einst-pattern.png) | ![Pad / Layers](docs/screens/readme/einst-pad.png) |
+| ![Song mode](docs/screens/readme/einst-song.png) | ![Engine mixer](docs/screens/readme/einst-engine.png) |
+| ![Scenes](docs/screens/readme/einst-scene.png) | ![Global mixer](docs/screens/readme/einst-global.png) |
 
 ## Installation
 
