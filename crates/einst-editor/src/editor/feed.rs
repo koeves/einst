@@ -16,7 +16,7 @@ impl Editor {
         if self.header.tick_indicators(levels.midi_received, levels.voice_stolen) {
             let before = self.app.marks();
             self.header.sync(&mut self.app, &self.model, self.learn.active);
-            self.app.invalidate_changes(&before);
+            self.invalidate_changes(&before);
         }
     }
 

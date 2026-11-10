@@ -23,6 +23,31 @@ struct Drawer<'a> {
     learn: &'a learn::Learn,
 }
 
+/// The [`Drawer`] of an editor's panels (a macro: the editor's app stays
+/// free to borrow mutably).
+macro_rules! drawer {
+    ($ed:expr) => {
+        Drawer {
+            model: &$ed.model,
+            browser: $ed.browser.as_ref(),
+            song: $ed.song.as_ref(),
+            pattern: $ed.pattern.as_ref(),
+            inspector: &$ed.inspector,
+            midimap: $ed.midimap.as_ref(),
+            slicer: &$ed.slicer,
+            sampler: &$ed.sampler,
+            filefind: &$ed.filefind,
+            devices: &$ed.devices,
+            transmod: &$ed.transmod,
+            midiconsole: &$ed.midiconsole,
+            scenes: $ed.scenes.as_ref(),
+            mixers: &$ed.mixers,
+            modals: &$ed.modals,
+            learn: &$ed.learn,
+        }
+    };
+}
+
 impl dreist_gui::render::CustomDraw for Drawer<'_> {
     fn draw(&self, r: &dreist_gui::render::Renderer, p: &mut dreist_gui::paint::Painter, c: &Ctrl) -> bool {
         self.pattern.is_some_and(|pp| pp.draw(self.model, r, p, c))
@@ -398,7 +423,7 @@ impl Editor {
         }
         self.transmod.sync(&mut self.app, &self.model);
         popups::sync(&mut self.app, &self.model, &self.popup_paths);
-        self.app.invalidate_changes(&before);
+        self.invalidate_changes(&before);
     }
 
     /// Render a frame (with the code-drawn panels).
@@ -414,25 +439,18 @@ impl Editor {
         if let Some(pp) = &self.pattern {
             pp.begin_frame();
         }
-        let d = Drawer {
-            model: &self.model,
-            browser: self.browser.as_ref(),
-            song: self.song.as_ref(),
-            pattern: self.pattern.as_ref(),
-            inspector: &self.inspector,
-            midimap: self.midimap.as_ref(),
-            slicer: &self.slicer,
-            sampler: &self.sampler,
-            filefind: &self.filefind,
-            devices: &self.devices,
-            transmod: &self.transmod,
-            midiconsole: &self.midiconsole,
-            scenes: self.scenes.as_ref(),
-            mixers: &self.mixers,
-            modals: &self.modals,
-            learn: &self.learn,
-        };
+        let d = drawer!(self);
         self.app.render_frame_with(scale, Some(&d))
+    }
+
+    /// Repaint what changed since `before`: the controls, and the
+    /// code-drawn panels whose drawing changed.
+    pub(crate) fn invalidate_changes(&mut self, before: &dreist_gui::app::Marks) {
+        if let Some(pp) = &self.pattern {
+            pp.begin_frame();
+        }
+        let d = drawer!(self);
+        self.app.invalidate_changes_with(before, Some(&d));
     }
 
     pub fn handle(&mut self, ev: &UiEvent) {
