@@ -2,8 +2,8 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 295, 598" id="0" style="EmptyPanelStyle">
         <CtrlPanel name="MapControls" rect="0, 0, 295, 21" id="0" style="EmptyPanelStyle">
-            <CtrlButton name="Clear" rect="5, 2, 19, 17" displayName="Clear all mappings" id="100016" optIsMomentary="true" style="StandardClearButtonStyle" text="" />
-            <CtrlButton name="Lock" rect="25, 2, 19, 17" displayName="Lock map" id="100017" optIsMomentary="false" style="StandardLockButtonStyle" text="" />
+            <CtrlButton name="Clear" rect="5, 2, 19, 17" displayName="Clear all mappings" icon="cross" id="100016" optIsMomentary="true" overloadClass="IconButton" style="StandardClearButtonStyle" text="" />
+            <CtrlButton name="Lock" rect="25, 2, 19, 17" displayName="Lock map" icon="padlock" id="100017" optIsMomentary="false" overloadClass="IconButton" style="StandardLockButtonStyle" text="" />
             <CtrlButton name="Select" rect="138, 2, 50, 17" displayName="Automatically select bindings when recieving MIDI" id="10000" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Auto-sel" />
             <CtrlButton name="SendNotesButton" rect="190, 2, 50, 17" id="100000" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Send Note" />
             <CtrlButton name="SendCCButton" rect="242, 2, 50, 17" id="100001" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Send CC" />

@@ -134,6 +134,8 @@
     <VColour name="FaderCapLine" colour="#878B99" />
     <VColour name="PanGroove" colour="#737A91" />
     <VColour name="PanMark" colour="#A7AEBC" />
+    <VColour name="KeyFootShade" colour="#ABB2C1" />
+    <VColour name="MenuArrow" colour="#38312C" />
     <VColour name="VuTrack" colour="#848A9A" />
     <VColour name="VuLit" colour="#161C30" />
     <VColour name="RowSelected" colour="#E5E1C8" />

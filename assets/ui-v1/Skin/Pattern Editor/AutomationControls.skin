@@ -3,8 +3,8 @@
     <CtrlPanel name="CtrlPanel" rect="0, 0, 150, 75" id="0" style="EmptyPanelStyle">
         <CtrlButton name="GraphCombo" rect="2, 1, 130, 17" id="100009" optIsMomentary="true" renderer="PopupButtonRenderer" style="LEDUltraMenuButtonStyle" />
         <CtrlButton name="InsertButton" rect="2, 20, 50, 17" id="100009" optIsMomentary="true" renderer="PopupButtonRenderer" style="LEDMenuButtonStyle" text="Insert" />
-        <CtrlButton name="Div2Button" rect="53, 20, 19, 17" id="100000" optIsMomentary="true" style="Div2ButtonStyle" text="÷2" />
-        <CtrlButton name="x2Button" rect="73, 20, 19, 17" id="100001" optIsMomentary="true" style="x2ButtonStyle" text="×2" />
+        <CtrlButton name="Div2Button" rect="53, 20, 19, 17" id="100000" optIsMomentary="true" style="Div2ButtonStyle" text="/2" />
+        <CtrlButton name="x2Button" rect="73, 20, 19, 17" id="100001" optIsMomentary="true" style="x2ButtonStyle" text="X2" />
         <CtrlButton name="LearnButton" rect="93, 20, 50, 17" id="100014" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Learn" />
         <CtrlLabel name="CtrlLabel" rect="3, 40, 26, 13" id="100002" style="StandardLabelStyle" text="Offset" />
         <CtrlLabel name="CtrlLabel" rect="32, 40, 26, 13" id="100006" style="StandardLabelStyle" text="Comp" />

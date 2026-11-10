@@ -157,6 +157,8 @@ COLOURS = {
     "FaderCapLine": (135, 139, 153),
     "PanGroove": (115, 122, 145),
     "PanMark": (167, 174, 188),
+    "KeyFootShade": (171, 178, 193),
+    "MenuArrow": (56, 49, 44),
     "VuTrack": (132, 138, 154),
     "VuLit": (22, 28, 48),
     # LCD content drawn by code (grid, song parts, browser).
@@ -505,23 +507,27 @@ def base_styles():
        optDrawBorder="true", realBorderWidth="1", realCornerRounding="2")
 
     # LCD buttons.
-    st("LcdButtonStyle", "BaseButtonStyle", colFill="LcdLight", colBorder="LcdEdge", colAltFill="LcdOn", colAltBorder="Ink",
-       realGradientShade="0.03")
-    st("LcdIconButtonStyle", "LcdButtonStyle", font=icon_font(10))
+    # (v1's `LEDStandardButton` family, measured: a flat light face in a
+    # 1 px slate frame over a 2 px foot (a grey line, then ink); all ink
+    # when down or on, with light text)
+    st("LcdButtonStyle", "BaseButtonStyle", colFill="LcdLight", colBorder="LcdEdge", colAltFill="Ink", colAltBorder="Ink",
+       realGradientShade="0", colFoot="Ink", colFootShade="KeyFootShade")
+    # (the marks in mid ink, v1's `LEDAdd`, `LEDClear`, `LEDLock` art)
+    st("LcdIconButtonStyle", "LcdButtonStyle", font=icon_font(10), colText="InkMid")
     st("LcdRadioStyle", "LcdButtonStyle", colBorder="InkMid", colFill="LcdLight", realGradientShade="0", colAltFill="RadioOn",
-       colAltText="Ink", colAltBorder="InkMid")
+       colAltText="Ink", colAltBorder="Ink")
     # (mute / solo: a near-white face in a grey frame, shaded at the bottom;
     # heavy dark-grey letters)
-    st("LcdMuteButtonStyle", "LcdButtonStyle", colAltFill="MuteOn", colAltText="Ink", font=text_font(10, True), realCornerRounding="3",
-       colFill="LcdKeyFace", realGradientShade="0.04", colBorder="LcdKeyEdge", colText="LcdKeyText", realTextEmbolden="0.5",
-       realBorderWidth="2",
-       optBevel="true", colBevelLight="255, 255, 255, 160", colBevelDark="40, 48, 64, 110")
-    st("LcdSoloButtonStyle", "LcdMuteButtonStyle", colAltFill="SoloOn")
+    # (v1's `LEDMute/SoloButton`: the standard key with a bold mid-grey
+    # letter; ink with a light letter when on)
+    st("LcdMuteButtonStyle", "LcdButtonStyle", colAltText="LcdLight", font=text_font(10, True), colText="RowEdge", realTextEmbolden="0.5")
+    st("LcdSoloButtonStyle", "LcdMuteButtonStyle")
     # v1's menu buttons carry a small arrow near the right edge, no divider,
     # so the text keeps most of the width ("Insert", "Pattern" fit in 50 px).
+    # (v1's arrow: 6 px, dark brown-grey, its middle 6 px from the right)
     st("LcdMenuButtonStyle", "LcdButtonStyle", enumTextHorizontalAlign="left", realTextOffset="5",
-       realPopupArrowBoxWidth="10", optPopupDivider="false")
-    st("LcdBigButtonStyle", "LcdButtonStyle", font=text_font(11, True), realCornerRounding="3")
+       realPopupArrowBoxWidth="12", realPopupArrowSize="0.35", colPopupArrow="MenuArrow", optPopupDivider="false")
+    st("LcdBigButtonStyle", "LcdButtonStyle", colFoot="Transparent", colFootShade="Transparent", font=text_font(11, True), realCornerRounding="3")
     # (v1's mixer view tabs: a grey face with ink letters, ink with grey
     # letters when on, merging into the ink spine on their right)
     st("LcdSideTabStyle", "LcdBigButtonStyle", colFill="LcdDim", colText="Ink", colAltFill="Ink", colAltText="LcdDim",
@@ -530,17 +536,17 @@ def base_styles():
     st("LcdSideTabSpineStyle", "BasePanelStyle", colFill="Ink")
     # (v1's round buttons: Phase, Reverse, Find Src / Track 24 x 24, a light
     # disc in a grey ring with a grey icon, navy with a light icon on)
-    st("LcdRoundButtonStyle", "LcdButtonStyle", realCornerRounding="100", colFill="Lcd", colBorder="RowEdge", colText="RowEdge",
+    st("LcdRoundButtonStyle", "LcdButtonStyle", colFoot="Transparent", colFootShade="Transparent", realCornerRounding="100", colFill="Lcd", colBorder="RowEdge", colText="RowEdge",
        realGradientShade="0", colAltFill="Ink", colAltBorder="Ink", colAltText="LcdLight")
     st("LcdPowerButtonStyle", "LcdIconButtonStyle", font=icon_font(14), colAltFill="Amber", colAltText="Ink", realCornerRounding="3")
     # (v1's latching toggles: a disc, ink when on, grey with an ink edge
     # when off, an upright slot through it)
-    st("LcdRoundToggleStyle", "LcdButtonStyle", colFill="InkSoft", colBorder="Ink", colAltFill="Ink", colAltBorder="Ink",
+    st("LcdRoundToggleStyle", "LcdButtonStyle", colFoot="Transparent", colFootShade="Transparent", colFill="InkSoft", colBorder="Ink", colAltFill="Ink", colAltBorder="Ink",
        realGradientShade="0", enumGlyph="Bar", colGlyph="LcdLight", colGlyphBorder="Ink")
     # (v1's preset arrows: grey triangles with an ink edge, ink pressed)
-    st("LcdTriangleButtonStyle", "LcdButtonStyle", colFill="Transparent", colBorder="Transparent", colAltFill="Transparent",
+    st("LcdTriangleButtonStyle", "LcdButtonStyle", colFoot="Transparent", colFootShade="Transparent", colFill="Transparent", colBorder="Transparent", colAltFill="Transparent",
        colAltBorder="Transparent", optDrawBorder="false", colGlyph="InkSoft", colAltGlyph="Ink", colGlyphBorder="Ink")
-    st("LcdFlatButtonStyle", "LcdButtonStyle", colFill="Transparent", colBorder="Transparent", colText="InkMid",
+    st("LcdFlatButtonStyle", "LcdButtonStyle", colFoot="Transparent", colFootShade="Transparent", colFill="Transparent", colBorder="Transparent", colText="InkMid",
        colAltFill="Transparent", colAltBorder="Transparent", colAltText="Ink")
     st("LcdFlatIconButtonStyle", "LcdFlatButtonStyle", font=icon_font(10))
 
