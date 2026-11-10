@@ -1,0 +1,23 @@
+<root>
+    <EffectChain name="EffectChain" FXChainVersion="2" IsActive="true">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="0.5" Level="1" Parameter0="0" Parameter1="1" Parameter2="0" Parameter3="0" Parameter4="0" Parameter5="0" EffectType="Noise Gate">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="0.468249" Level="1" Parameter0="0.169902" Parameter1="0.820618" Parameter2="0.021883" Parameter3="1" Parameter4="0.8" Parameter5="0.970268" EffectType="Bit Crusher">
+            <FixedString name="PresetName" string="default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="0.3071" Level="1" Parameter0="0.102861" Parameter1="0.854594" Parameter2="0.189265" Parameter3="0.531106" Parameter4="0.825879" Parameter5="0.871989" EffectType="Flanger">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect3" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.5" Parameter1="1" Parameter2="0.660777" Parameter3="1" Parameter4="0.367785" Parameter5="0.834386" EffectType="No Effect">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect4" EffectVersion="2" IsActive="true" Mix="1" Level="0.610518" Parameter0="0" Parameter1="0.789832" Parameter2="0.845005" Parameter3="0.808391" Parameter4="0.684106" Parameter5="0.751736" EffectType="DJ EQ">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect5" EffectVersion="2" IsActive="false" Mix="0.5" Level="1" Parameter0="0" Parameter1="0" Parameter2="0" Parameter3="0" Parameter4="0" Parameter5="0" EffectType="No Effect">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="-Shaker Break" />
+    </EffectChain>
+</root>

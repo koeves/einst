@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.25" Parameter1="0" Parameter2="0.5" Parameter3="0.195" Parameter4="1" Parameter5="1" EffectType="Noise Gate">
+        <FixedString name="PresetName" string="Default" />
+    </Effect>
+</root>

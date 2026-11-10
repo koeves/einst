@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.74" Parameter0="0.117" Parameter1="0.304348" Parameter2="0.239" Parameter3="0.78" Parameter4="0.50996" Parameter5="1" EffectType="Hoover Filter">
+        <FixedString name="PresetName" string="$U$\Sub Bass Treat" />
+    </Effect>
+</root>

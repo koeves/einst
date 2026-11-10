@@ -578,7 +578,7 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("einst-plugin-v1-{}", std::process::id()));
         let samples = dir.join("Kit.samples");
         std::fs::create_dir_all(&samples).unwrap();
-        let click = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/v1/System/Metronomes/Default/Beat.wav");
+        let click = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/ui-v1/Metronomes/Default/Beat.wav");
         std::fs::copy(&click, samples.join("Beat.wav")).unwrap();
         let kit = dir.join("Kit.geistkit");
         std::fs::write(&kit, r#"<root><Pad name="Pad0" Ver="2" PadMode="All layers"><Layer name="Layer0" Ver="3.2" AudioFileName="Beat.wav" Envelope0Param3="-1" /></Pad></root>"#).unwrap();

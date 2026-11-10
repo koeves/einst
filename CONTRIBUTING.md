@@ -15,7 +15,8 @@ the merge is tagged. GitHub Actions run only on release tags (commit-subject che
 tests, release) and by hand (`workflow_dispatch`), never on branch pushes, so run the checks
 locally before pushing: `cargo fmt --all --check`,
 `cargo clippy --workspace --all-targets --features einst-plugin/standalone -- -D warnings` and
-`cargo test --workspace --no-fail-fast`.
+`cargo test --workspace --no-fail-fast` (and `python3 scripts/uigen/uigen.py --check` after
+changing `scripts/uigen`).
 
 dreist-commons: the shared crates are the submodule at `commons` (clone with `--recursive`). To
 change them, commit and push in `commons/` first, then commit the new pointer here as

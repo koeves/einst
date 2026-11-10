@@ -1,0 +1,14 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2" IsActive="true">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.583" Parameter1="0" Parameter2="0" Parameter3="0" Parameter4="0" Parameter5="1" EffectType="Gain">
+            <FixedString name="PresetName" string="+6.0dB" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="0.49" Level="1" Parameter0="0.411429" Parameter1="0.884204" Parameter2="0.34" Parameter3="0.88" Parameter4="0.5" Parameter5="1" EffectType="Delay">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="0.5" Level="1" Parameter0="0.330448" Parameter1="0" Parameter2="0.574468" Parameter3="0.494354" Parameter4="0.137931" Parameter5="0.288237" EffectType="Breverb Hall">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="Giant Delayed Hall" />
+    </EffectChain>
+</root>

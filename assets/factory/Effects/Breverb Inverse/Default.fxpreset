@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.11" Level="1" Parameter0="0.21482" Parameter1="0.030303" Parameter2="0.266363" Parameter3="0.260312" Parameter4="0.279824" Parameter5="0.13373" EffectType="Breverb Inverse">
+        <FixedString name="PresetName" string="Default" />
+    </Effect>
+</root>

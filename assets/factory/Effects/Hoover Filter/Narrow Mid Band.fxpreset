@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.157" Parameter1="0.434783" Parameter2="0.549" Parameter3="0.68" Parameter4="0.50996" Parameter5="1" EffectType="Hoover Filter">
+        <FixedString name="PresetName" string="$U$\Narrow Mid Band" />
+    </Effect>
+</root>

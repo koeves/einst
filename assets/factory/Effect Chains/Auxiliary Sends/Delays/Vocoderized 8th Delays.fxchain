@@ -1,0 +1,14 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2" IsActive="true">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.51" Parameter1="0.99" Parameter2="0.15" Parameter3="0" Parameter4="1" Parameter5="0" EffectType="Tin Can Verb">
+            <FixedString name="PresetName" string="Karplus Strong 02" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="0.5" Level="1" Parameter0="0.67" Parameter1="1" Parameter2="0.288363" Parameter3="0.673136" Parameter4="0.129798" Parameter5="1" EffectType="Frequency Shifter">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="0.49" Level="1" Parameter0="0.411429" Parameter1="0.884204" Parameter2="0.34" Parameter3="0.88" Parameter4="0.5" Parameter5="1" EffectType="Delay">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="Vocoderized 8th Delays" />
+    </EffectChain>
+</root>

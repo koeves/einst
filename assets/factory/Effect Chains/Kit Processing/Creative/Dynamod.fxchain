@@ -1,0 +1,14 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2.1" IsActive="true" ChainMix="1">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0" Parameter1="0.43" Parameter2="0.83" Parameter3="0.35" Parameter4="0.357785" Parameter5="0.772" EffectType="Modulated Filter">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.25" Parameter1="0.23" Parameter2="0.5" Parameter3="0.195" Parameter4="1" Parameter5="1" EffectType="Noise Gate">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="1" Parameter1="1" Parameter2="1" Parameter3="0" Parameter4="1" Parameter5="1" EffectType="Distortion">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="$U$/Dynamod" />
+    </EffectChain>
+</root>

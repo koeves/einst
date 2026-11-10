@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.91" Parameter0="0.660148" Parameter1="0.2202" Parameter2="0.679207" Parameter3="0.82" Parameter4="0.734106" Parameter5="0.701736" EffectType="Parametric EQ">
+        <FixedString name="PresetName" string="Bass+High Boost" />
+    </Effect>
+</root>

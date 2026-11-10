@@ -1,0 +1,23 @@
+<root>
+    <EffectChain name="EffectChain" FXChainVersion="2" IsActive="true">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.731602" Parameter1="0.166234" Parameter2="0.557143" Parameter3="0.309957" Parameter4="1" Parameter5="0.431602" EffectType="Breverb Room">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.168184" Parameter1="0.845812" Parameter2="1" Parameter3="0.274182" Parameter4="0.410546" Parameter5="0.218051" EffectType="Flanger">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.237463" Parameter1="0.770846" Parameter2="0.808888" Parameter3="0.437717" Parameter4="0.684106" Parameter5="0.751736" EffectType="DJ EQ">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect3" EffectVersion="2" IsActive="false" Mix="0.5" Level="1" Parameter0="0" Parameter1="0" Parameter2="0" Parameter3="0" Parameter4="0" Parameter5="0" EffectType="No Effect">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect4" EffectVersion="2" IsActive="false" Mix="0.5" Level="1" Parameter0="0" Parameter1="0" Parameter2="0" Parameter3="0" Parameter4="0" Parameter5="0" EffectType="No Effect">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect5" EffectVersion="2" IsActive="false" Mix="0.5" Level="1" Parameter0="0" Parameter1="0" Parameter2="0" Parameter3="0" Parameter4="0" Parameter5="0" EffectType="No Effect">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="-Dubby Verb" />
+    </EffectChain>
+</root>

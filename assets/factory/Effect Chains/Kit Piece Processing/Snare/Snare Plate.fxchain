@@ -1,0 +1,11 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2" IsActive="true">
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="0.28" Level="1" Parameter0="0.240352" Parameter1="0.030303" Parameter2="1" Parameter3="0.0766234" Parameter4="0.333333" Parameter5="0.8" EffectType="Breverb Plate">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.25" Parameter1="0.568364" Parameter2="0" Parameter3="0.271951" Parameter4="0" Parameter5="0" EffectType="Vari-EQ">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="Snare Plate" />
+    </EffectChain>
+</root>

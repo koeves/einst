@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.33" Level="0.87" Parameter0="0.333333" Parameter1="0.598889" Parameter2="0.36" Parameter3="0.11" Parameter4="0.46" Parameter5="0.48" EffectType="Distortion">
+        <FixedString name="PresetName" string="$U$/Low Rumbler" />
+    </Effect>
+</root>

@@ -8,9 +8,9 @@ use dreist_engine::{Dreist, RenderOptions};
 use dreist_formats::Node;
 use einst_formats::{FileKind, v1::Document};
 
-/// A factory metronome click from the v1 install, used as every layer's sample.
+/// Einst's metronome click, used as every layer's sample.
 fn samples() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/v1/System/Metronomes/Default")
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets/ui-v1/Metronomes/Default")
 }
 
 /// A v1 layer with every attribute [re:0d77d9] writes (`Ver` 3.2).

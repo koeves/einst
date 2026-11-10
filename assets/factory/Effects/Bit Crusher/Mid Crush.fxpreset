@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.49" Level="0.74" Parameter0="0.317024" Parameter1="0.811" Parameter2="0" Parameter3="0.61" Parameter4="0.49" Parameter5="1" EffectType="Bit Crusher">
+        <FixedString name="PresetName" string="$U$/Mid Crush" />
+    </Effect>
+</root>

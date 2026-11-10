@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.84" Parameter0="0.5" Parameter1="0" Parameter2="0.84" Parameter3="0.5" Parameter4="0" Parameter5="0" EffectType="Vari-EQ">
+        <FixedString name="PresetName" string="Next Door&apos;s Party" />
+    </Effect>
+</root>

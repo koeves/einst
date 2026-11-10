@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.67" Parameter1="0.17" Parameter2="0.458912" Parameter3="1" Parameter4="1" Parameter5="5.96046e-10" EffectType="Envelope Shaper">
+        <FixedString name="PresetName" string="$U$/Short Hits" />
+    </Effect>
+</root>

@@ -1,6 +1,6 @@
 //! Einst's app profile on dreist-commons (`dreist_formats::profile`): its
 //! names and theme, its resources (this repository's `assets/ui-v1`, the
-//! v1-layout UI set, and the v1 factory data in `assets/v1/System`), the
+//! v1-layout UI set, and the factory presets and templates in `assets/factory`), the
 //! `.einst*` file family, v1's
 //! effect menu, v1 documents read through `einst_formats` and v1's effect
 //! nodes from `einst_dsp`. [`install`] it before any window, document or
@@ -25,7 +25,7 @@ pub static PROFILE: Profile = Profile {
     icon_family: "Einst-Icons",
     logo_mark: LOGO_MARK,
     ui: Resources { env: "EINST_UI", bundle_dir: "Einst", dev_dirs: &[concat!(env!("CARGO_MANIFEST_DIR"), "/../../assets/ui-v1")] },
-    factory: Resources { env: "EINST_RESOURCES", bundle_dir: "Factory", dev_dirs: &[concat!(env!("CARGO_MANIFEST_DIR"), "/../../assets/v1/System")] },
+    factory: Resources { env: "EINST_RESOURCES", bundle_dir: "Factory", dev_dirs: &[concat!(env!("CARGO_MANIFEST_DIR"), "/../../assets/factory")] },
     save: EINST,
 };
 

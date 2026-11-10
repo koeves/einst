@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.44" Parameter0="0.207024" Parameter1="0.84" Parameter2="1" Parameter3="1" Parameter4="0" Parameter5="0.738565" EffectType="Bit Crusher">
+        <FixedString name="PresetName" string="$U$/Just Rave It" />
+    </Effect>
+</root>

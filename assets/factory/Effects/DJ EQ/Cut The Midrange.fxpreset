@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="false" Mix="1" Level="0.8" Parameter0="0.609909" Parameter1="0.269832" Parameter2="0.0509381" Parameter3="0.66" Parameter4="0.684106" Parameter5="0.751736" EffectType="DJ EQ">
+        <FixedString name="PresetName" string="Cut The Midrange" />
+    </Effect>
+</root>

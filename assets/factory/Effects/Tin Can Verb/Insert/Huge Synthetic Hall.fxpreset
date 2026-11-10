@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.19" Level="1" Parameter0="0.51" Parameter1="0.99" Parameter2="0.15" Parameter3="0" Parameter4="0.5" Parameter5="0" EffectType="Tin Can Verb">
+        <FixedString name="PresetName" string="Huge Synthetic Hall" />
+    </Effect>
+</root>

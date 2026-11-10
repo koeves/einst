@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.523149" Parameter1="0.478261" Parameter2="0.58" Parameter3="0.3" Parameter4="0.50996" Parameter5="1" EffectType="Child Genius Filter">
+        <FixedString name="PresetName" string="$U$/On A Nearby Radio" />
+    </Effect>
+</root>
