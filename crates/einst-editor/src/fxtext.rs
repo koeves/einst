@@ -126,6 +126,15 @@ fn conv(c: C, x: f32) -> String {
             }
         }
         C::SslQ => format!("{:.4}", (-x).exp()),
+        // [re:f7c222]: "0" below 1e-8, else the value rounded half away
+        // from zero.
+        C::Int => {
+            if x.abs() < 1e-8 {
+                "0".into()
+            } else {
+                f2s(round_away(x) as f64, 0, false)
+            }
+        }
     }
 }
 

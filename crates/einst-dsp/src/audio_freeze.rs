@@ -269,6 +269,9 @@ impl AudioFreeze {
         let mut ports = ports_from(ports::AUDIO_FREEZER);
         // Float-form enum: Sync max = item count (2).
         ports[3] = Port::new(1.0, 0.0, 2.0);
+        // v1 [re:8ea5d7]: LoopLength in whole beats, default 4, 1..16 (v2: a
+        // 0..16 note-value switch, default 1).
+        ports[1] = Port::new(4.0, 1.0, 16.0);
         AudioFreeze { ports, voices: [Voice::new(), Voice::new()] }
     }
 }
@@ -295,5 +298,23 @@ impl Node for AudioFreeze {
         for v in &mut self.voices {
             v.reset();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// v1's LoopLength port: whole beats, default 4, 1..16; the front
+    /// panel's 0..1 maps to 1 + 15·v.
+    #[test]
+    fn loop_length_port_is_v1s() {
+        let mut f = AudioFreeze::new();
+        let p = &mut f.ports()[1];
+        assert_eq!((p.value, p.min, p.max), (4.0, 1.0, 16.0));
+        p.set01(0.0);
+        assert_eq!(p.value, 1.0);
+        p.set01(0.2);
+        assert_eq!(p.value, 4.0);
     }
 }

@@ -24,6 +24,7 @@ pub enum C {
     Angle,
     SslDecibel,
     SslQ,
+    Int,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -211,7 +212,7 @@ pub const TABLE: &[(usize, usize, f32, f32, Fx)] = &[
     (37, 1, 0.0, 1.0, Fx::Conv(C::Float)),
     (37, 2, 0.0, 1.0, Fx::Conv(C::Float)),
     (38, 0, 0.0, 1.0, Fx::Conv(C::Switch)),
-    (38, 1, 0.0, 16.0, Fx::Enum(&["1/64T", "1/64", "1/32T", "1/32", "1/16T", "1/16", "1/8T", "1/8", "1/4T", "1/4", "1/2", "1", "2", "3", "4", "8"])),
+    (38, 1, 1.0, 16.0, Fx::Conv(C::Int)), // v1 [re:8ea5d7]: whole beats 1..16
     (38, 2, -8.0, 2.0, Fx::TimeBeat { synced: false }),
     (38, 3, 0.0, 1.0, Fx::Conv(C::Percentage)),
     (38, 4, -1.0, 1.0, Fx::Conv(C::Float)),
