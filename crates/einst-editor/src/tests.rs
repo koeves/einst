@@ -891,6 +891,70 @@ fn song_part_select_move_duplicate() {
     assert_eq!(song(&ed).tracks[0].len(), 2);
 }
 
+/// Clicks as the window delivers them (press, release, the editor's
+/// handling and frame) repaint only what changed: each frame equals a full
+/// render, and opening and closing menus or toggling header and mixer
+/// buttons repaints no whole window.
+#[test]
+fn clicks_repaint_like_full_renders() {
+    use dreist_gui::app::MouseButton;
+    crate::app::test_setup();
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(project::new_document())) else { return };
+    ed.sync();
+    for scale in [1.0, 2.0] {
+        let _ = ed.render(scale);
+        let frame = |ed: &mut Editor, evs: Vec<UiEvent>, what: &str, partial_only: bool| {
+            for e in evs {
+                ed.handle(&e);
+            }
+            let path = ed.app.tooltip_target();
+            ed.handle(&UiEvent::ToolTip { path });
+            let _ = ed.take_commands();
+            ed.animate();
+            assert!(!partial_only || !ed.app.dirty, "scale {scale}: {what} repaints the whole window");
+            let partial = ed.render_frame(scale).clone();
+            let full = ed.render(scale);
+            // As `damaged_frames_match_full_renders`: shapes cut at a
+            // repainted region's edge may differ in a few anti-aliased pixels.
+            let px = |d: &[u8]| d.chunks(4).map(|c| [c[0], c[1], c[2]]).collect::<Vec<_>>();
+            let (a, b) = (px(partial.data()), px(full.data()));
+            let off = a.iter().zip(&b).filter(|(x, y)| x.iter().zip(y.iter()).any(|(p, q)| p.abs_diff(*q) > 1)).count();
+            assert!(off * 1000 <= a.len(), "scale {scale}: {what}: {off} pixels differ");
+        };
+        let click = |ed: &mut Editor, x: f32, y: f32, what: &str, partial_only: bool| {
+            let ev = ed.app.mouse_move(x, y);
+            frame(ed, ev, &format!("{what} move"), false);
+            let ev = ed.app.mouse_down(MouseButton::Left);
+            frame(ed, ev, &format!("{what} press"), partial_only);
+            let ev = ed.app.mouse_up(MouseButton::Left);
+            frame(ed, ev, &format!("{what} release"), partial_only);
+        };
+        let centre = |ed: &Editor, p: &[usize]| {
+            let r = ed.app.abs_rect(p);
+            (r.x as f32 + r.w as f32 / 2.0, r.y as f32 + r.h as f32 / 2.0)
+        };
+        let (gx, gy) = centre(&ed, &front_path(&ed, "UtilityControls", "GridButton"));
+        // The main menu: closed by a click beside it, then its MIDI console
+        // item shown and hidden again.
+        click(&mut ed, gx, gy, "menu open", true);
+        assert!(ed.app.menu.is_some());
+        click(&mut ed, 5.0, 5.0, "menu close", true);
+        assert!(ed.app.menu.is_none());
+        for _ in 0..2 {
+            click(&mut ed, gx, gy, "menu open", true);
+            let m = ed.app.menu.clone().unwrap();
+            let i = m.items.iter().position(|t| t.contains("MIDI console")).unwrap();
+            click(&mut ed, m.x + 10.0, m.y + i as f32 * 20.0 + 10.0, "MIDI console item", false);
+        }
+        for name in ["MetroButton", "MuteButton"] {
+            let Some(p) = ed.app.root.path_of(name).filter(|p| ed.app.shown(p)) else { continue };
+            let (x, y) = centre(&ed, &p);
+            click(&mut ed, x, y, name, true);
+            click(&mut ed, x, y, name, true);
+        }
+    }
+}
+
 #[test]
 fn damaged_frames_match_full_renders() {
     crate::app::test_setup();
