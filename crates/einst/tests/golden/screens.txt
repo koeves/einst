@@ -1,5 +1,14 @@
 chromatic-pads b547805ac9452c66
 fx-newer-types 602210efef13c5dc
+hidden-page-enginemixer 32bf9904efe13b2d
+hidden-page-globalmixer f4aaadca1398c443
+hidden-page-layermixer 1c3197a5278409f2
+hidden-page-padlayers 893d75dab578ca25
+hidden-page-padmixer d11df8407832155c
+hidden-page-pattern d322dab8ea7ca7b8
+hidden-page-sampler 99ff0633735139ed
+hidden-page-scene 1a4c50f8ef4caceb
+hidden-page-song e2966e7e3c8511c1
 main 20137f401a4b2120
 main-menu d76fab1cff35367e
 mapping aa0bdc7ad598d7e9

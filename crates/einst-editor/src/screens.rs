@@ -88,6 +88,14 @@ pub fn check_screens(name: &str) {
         ed.sync();
         record(&mut golden, &format!("page-{}", page.to_ascii_lowercase().replace([' ', '/'], "")), &mut ed);
     }
+    // Every page with the browser column hidden (the narrower window).
+    for (tab, (page, _)) in crate::front::PAGES.iter().enumerate() {
+        let mut ed = editor().unwrap();
+        ed.set_browser_hidden(true);
+        ed.model.editor_tab = tab;
+        ed.sync();
+        record(&mut golden, &format!("hidden-page-{}", page.to_ascii_lowercase().replace([' ', '/'], "")), &mut ed);
+    }
     // The pattern page in v1's multi graph view.
     let mut ed = editor().unwrap();
     if let Some(pp) = ed.pattern.as_mut() {
