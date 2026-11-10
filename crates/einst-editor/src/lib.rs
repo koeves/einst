@@ -273,6 +273,9 @@ impl Editor {
     pub fn set_browser_hidden(&mut self, hidden: bool) {
         self.front.browser_hidden = hidden;
         front::set_browser_visible(&mut self.app, !hidden);
+        // The show / hide button shows the state at once (the plugin
+        // hides the browser after the editor's first sync).
+        self.front.sync(&mut self.app, &self.model);
     }
 
     /// Build the editor from the installed resources (`theme`, e.g.
@@ -550,5 +553,7 @@ pub mod screens;
 #[cfg(test)]
 mod screens_test;
 
+#[cfg(test)]
+mod resize_tests;
 #[cfg(test)]
 mod tests;
