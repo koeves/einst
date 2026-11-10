@@ -1,5 +1,90 @@
 # Changelog
 
+## [0.2.0] - 2026-11-10
+
+The v1 look and a parity pass from the vendor's v1 tutorial videos, a second reverse-engineering
+audit of the effects and the audio engine, and faster, steadier drawing.
+
+### Summary
+
+- **Look**: v1's knobs (value arcs, measured per knob type), buttons, faders, radio groups,
+  menu buttons, scroll bars and panel art on every page; effect panels, mixers, pad/layers,
+  sampler, slicer, scenes, song, browser and dialogs restyled from v1's skin and screenshots.
+- **From the videos**: 72 scene slots, Alt-click start mode for all scenes, v1's scene table,
+  "No audio file loaded", one wave lane per channel, v1's sampler status line, empty layers
+  disabled, "No Effect" first in the effect menu, v1 tooltips.
+- **Sound**: analog table reads floor like v1 (voice filters, vintage path, analog filter
+  effects); Flanger delay range (10 ms), Audio Freezer loop length, Comb Filter buffer,
+  sequencer timing (one sample later, as v1), 8 timestretch voices, v1's graph record.
+- **Speed**: menu hover, clicks and panel updates redraw only what changed.
+
+### Features
+
+- **ui:** V1 menu buttons and disabled look
+- **scenes:** 72 slots, Alt start mode, v1 details table
+- **editor:** V1 wave displays: empty text and one lane per channel
+- **sampler:** V1 status line
+- **editor:** Empty layers disabled as in v1
+- **editor:** V1 menu items and tooltips
+
+### Fixes
+
+- **engine:** Analog table reads floor like v1; dreist-commons dbc3c39
+- **engine:** V1's sequencer window and 8 timestretch voices; dreist-commons 99c3274
+- **fx:** Flanger delay range at the current sample rate
+- **fx:** Audio Freezer loop length in whole beats 1..16
+- **fx:** Comb Filter ring sized from the current sample rate
+- **fx:** Channel Compressor meter reads 0 while switched off
+- **engine:** V1's graph record; dreist-commons bd87fbc
+- **engine:** Graph-record writes reach the same sub-block's note; dreist-commons 20751a6
+- **editor:** The browser show / hide button shows a hidden column at once
+
+### Performance
+
+- **editor:** Time menu hovers in the render bench
+- **editor:** Time clicks in the render bench
+- **editor:** Repaint only the code-drawn panels whose drawing changed
+- **editor:** A knob reset repaints what changed, not the window
+- **editor:** Time syncs after a frame in the render bench
+
+### Documentation
+
+- Rebuild and reinstall the VST3 after a change; dreist-commons a4837fb
+- Keep work branches local until a release; dreist-commons 2cf4bbc
+
+### Tests
+
+- **editor:** Clicks repaint like full renders
+- **editor:** Knob resets and panel buttons repaint like full renders
+- **editor:** Live resizes and browser toggles match a fresh editor
+
+### Build and CI
+
+- Dreist-commons 24bdf61 (popup arrow box width)
+- Dreist-commons e05a1b8 (faster menu hover repaints)
+- Dreist-commons 149a70e (clicks repaint only what they change)
+- Dreist-commons 964c58b (code-drawn panels repaint only when their drawing changes)
+- Dreist-commons 0a810a3 (resize-path independent anchoring and splitters, mounted skins fill their host, host resizing in nih-plug)
+- Dreist-commons v0.2.0
+
+### Other
+
+- **ui:** V1 knobs and radio groups
+- **mixer:** V1 look for the mixer pages and effect chain
+- **layers:** V1 look for the Pad / Layers page and the wave displays
+- **sampler:** V1 look for the sampler page
+- **slicer:** V1 frame and divider bands for the slicer
+- **pattern:** V1 look for the front panel and pattern page
+- **song:** V1 look for the song page
+- **scenes:** V1 look for the scene page
+- **browser:** V1 look for the browser column and Mapping
+- **dialogs:** V1 look for the About panel and modal check boxes
+- **fx:** V1 look for the effect panels
+- **knobs:** One measured v1 look per knob type
+- **faders:** V1's fader, pan and light meter looks
+- **buttons:** V1's LED key, mark and menu looks
+- **mixer:** Side tabs as v1: white text, spine flush with the faces, light edge
+
 ## [0.1.0] - 2026-11-06
 
 First release: the original v1 (1.1.1.2) rebuilt natively for Apple Silicon (VST3, CLAP,
