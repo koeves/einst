@@ -952,6 +952,45 @@ fn clicks_repaint_like_full_renders() {
             click(&mut ed, x, y, name, true);
             click(&mut ed, x, y, name, true);
         }
+        // A knob pressed, then double-clicked (reset to its default).
+        fn knobs(c: &dreist_gui::Ctrl, path: &mut Vec<usize>, out: &mut Vec<Vec<usize>>) {
+            if !c.visible || !c.enabled {
+                return;
+            }
+            if c.class == "CtrlKnob" && !c.passive {
+                out.push(path.clone());
+            }
+            for (i, k) in c.children.iter().enumerate() {
+                path.push(i);
+                knobs(k, path, out);
+                path.pop();
+            }
+        }
+        let mut found = Vec::new();
+        knobs(&ed.app.root, &mut Vec::new(), &mut found);
+        let mut resets = 0;
+        for k in found.iter().take(3) {
+            let (x, y) = centre(&ed, k);
+            click(&mut ed, x, y, "knob", true);
+            // Two more clicks at once: one of the presses (the first or,
+            // after a slow frame, the second) is a double click.
+            let mut ev = Vec::new();
+            for _ in 0..2 {
+                ev.extend(ed.app.mouse_down(MouseButton::Left));
+                ev.extend(ed.app.mouse_up(MouseButton::Left));
+            }
+            resets += ev.iter().filter(|e| matches!(e, UiEvent::DoubleClicked { .. })).count();
+            frame(&mut ed, ev, "knob double click", true);
+        }
+        assert!(found.is_empty() || resets > 0, "no double click");
+        // Buttons whose clicks change code-drawn panels (zoom, follow,
+        // the pattern tools): those panels repaint, nothing else.
+        for name in ["ZoomInButton", "ZoomOutButton", "Div2Button", "x2Button", "FollowButton", "MultiButton", "EraseButton"] {
+            let Some(p) = ed.app.root.path_of(name).filter(|p| ed.app.shown(p)) else { continue };
+            let (x, y) = centre(&ed, &p);
+            click(&mut ed, x, y, name, false);
+            click(&mut ed, x, y, name, false);
+        }
     }
 }
 
