@@ -47,13 +47,16 @@ impl Flanger {
         Flanger { ports, alt: f32::from_bits(ALT), idx: 0, phase: 0.0, delay: [0.0; 2], dc: [0.0; 2], max_delay: 0.0, k_dc: 0.0, buf: [Vec::new(), Vec::new()], mask: 0, sr: 0.0 }
     }
 
-    /// Stream setup: both lines hold `2·max(0.01·384000, 2) + 4` samples
-    /// rounded up to a power of two.
+    /// Stream setup ([re:de6ce6]):
+    /// the maximum delay is `max(0.01·sr, 2)` at the current rate (SongInfo
+    /// +0x20; v2 reads the 384 kHz maximum rate at +0x8), so Depth and
+    /// Position span 10 ms; both lines hold `(int)(2·max + 4 + 0.5)` samples
+    /// rounded up to a power of two, and the voice is reset.
     fn prepare(&mut self, sr: f32) {
-        let m = 384000.0f32 * 0.01;
-        let m = ((m + -2.0).abs() + m + 2.0) * 0.5;
+        let m = sr * 0.01;
+        let m = ((m + 2.0) + (m - 2.0).abs()) * 0.5;
         self.max_delay = m;
-        let n = (m + m + 4.0).round() as i32;
+        let n = (m + m + 4.0 + 0.5) as i32;
         let size = pow2_at_least(n as i64);
         if self.buf[0].len() != size {
             self.buf = [vec![0.0; size], vec![0.0; size]];
@@ -61,6 +64,7 @@ impl Flanger {
         self.mask = size as u32 - 1;
         let k = (1.0 / sr) * 251.32742;
         self.k_dc = ((k + 1.0) - (k + -1.0).abs()) * 0.5;
+        self.reset();
     }
 }
 
@@ -151,5 +155,23 @@ impl Node for Flanger {
         for b in &mut self.buf {
             b.fill(0.0);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// v1's maximum delay is 10 ms at the current rate (441 samples at
+    /// 44.1 kHz), the lines `(int)(2·441 + 4.5)` = 886 → 1024 samples.
+    #[test]
+    fn max_delay_is_ten_ms_at_the_rate() {
+        let mut f = Flanger::new();
+        f.prepare_rate(44_100.0);
+        assert_eq!(f.max_delay, 441.0);
+        assert_eq!(f.buf[0].len(), 1024);
+        f.prepare_rate(96_000.0);
+        assert_eq!(f.max_delay, 960.0);
+        assert_eq!(f.buf[1].len(), 2048);
     }
 }
