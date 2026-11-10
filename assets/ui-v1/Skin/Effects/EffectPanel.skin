@@ -2,7 +2,9 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 199, 196" id="0" style="EffectPanelBackgroundNoFX">
         <CtrlPanel rect="1, 2, 197, 192" style="FxCardEmptyStyle" />
+        <CtrlPanel rect="2, 3, 195, 190" style="FxCardInnerEmptyStyle" />
         <CtrlPanel rect="3, 4, 193, 38" style="FxCardHeadStyle" />
+        <CtrlPanel rect="3, 42, 193, 1" style="FxCardHeadLineEmptyStyle" />
         <CtrlPanel name="SetupPanel" rect="0, 0, 199, 50" id="100001" style="EmptyPanelStyle">
             <CtrlKnob name="MixKnob" rect="158, 4, 18, 19" displayName="Effect wet / dry mix" id="100004" realDialThickness="0.05" style="LEDKnobMicroLR" />
             <CtrlButton name="EffectTypeCombo" rect="4, 5, 130, 17" displayName="Effect Type" id="100002" optIsMomentary="true" renderer="PopupButtonRenderer" style="LEDUltraMenuButtonStyle" />

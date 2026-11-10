@@ -161,9 +161,28 @@ COLOURS = {
     "StepEdge": (51, 55, 92),
     "FxSlotLit": (204, 210, 220),
     "FxSlotDim": (122, 127, 142),
-    # v1's effect panels: the card's edge (ink over the chain's frame, and
-    # a mid line inside it), the slot bar items' shading.
-    "FxCardEdge": (52, 59, 90),
+    # v1's effect panels: the slot bar items' shading.
+    # (FXPanelBackground: the outer edge ink at 60 % over the frame, the
+    # inner one a mid grey, lighter behind a loaded effect; a light line
+    # under the menu band)
+    "FxCardOuter": (41, 48, 80),
+    "FxCardInner": (94, 101, 126),
+    "FxCardInnerEmpty": (78, 85, 112),
+    "FxCardHeadLine": (189, 196, 209),
+    # The reverb models' panel (v1 image, 193 x 150): a charcoal
+    # case round a cream screen shading lighter downwards, its edge dark.
+    "ReverbCase": (42, 42, 42),
+    "ReverbScreen": (203, 192, 169),
+    "ReverbScreenLow": (234, 229, 220),
+    "ReverbScreenEdge": (30, 31, 37),
+    # The delay's split fader (SplitFaderBackgroundH / ZoneH): a dark
+    # groove through the grey track, the range a light bar edged grey.
+    "SplitGroove": (46, 53, 84),
+    "SplitZoneEdge": (93, 100, 125),
+    # The EQ plot (EQGraph): its lower half a shade darker, faint lines
+    # every 6 px and a grey line across the middle.
+    "PlotStripe": (18, 25, 60, 8),
+    "PlotMidLine": (190, 196, 209),
     "FxSlotLitTop": (181, 185, 196),
     "FxSlotLitLow": (220, 229, 238),
     # Empty song lanes (v1-song.png: odd tracks darker than even ones,
@@ -457,9 +476,16 @@ def base_styles():
     st("LcdPlotStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkMid", optDrawBorder="true", realCornerRounding="2")
     # Effect panels (v1): a card with a 2 px edge and a darker band behind
     # the slot's menus; an empty slot is dark all over.
-    st("FxCardStyle", "BasePanelStyle", colFill="Lcd", colBorder="FxCardEdge", optDrawBorder="true", realBorderWidth="2")
+    st("FxCardStyle", "BasePanelStyle", colFill="Lcd", colBorder="FxCardOuter", optDrawBorder="true", realBorderWidth="1")
     st("FxCardEmptyStyle", "FxCardStyle", colFill="LcdDim")
     st("FxCardHeadStyle", "BasePanelStyle", colFill="LcdDim")
+    st("FxCardInnerStyle", "BasePanelStyle", colFill="Transparent", colBorder="FxCardInner", optDrawBorder="true", realBorderWidth="1")
+    st("FxCardInnerEmptyStyle", "FxCardInnerStyle", colBorder="FxCardInnerEmpty")
+    st("FxCardHeadLineStyle", "BasePanelStyle", colFill="FxCardHeadLine")
+    st("FxCardHeadLineEmptyStyle", "BasePanelStyle", colFill="Transparent")
+    st("ReverbCaseStyle", "BasePanelStyle", colFill="ReverbCase", optDrawBorder="false", realCornerRounding="0")
+    st("ReverbScreenStyle", "BasePanelStyle", colFill="ReverbScreen", colFillGradientTo="ReverbScreenLow", colBorder="ReverbScreenEdge",
+       optDrawBorder="true", realBorderWidth="1", realCornerRounding="2")
 
     # LCD buttons.
     st("LcdButtonStyle", "BaseButtonStyle", colFill="LcdLight", colBorder="LcdEdge", colAltFill="LcdOn", colAltBorder="Ink",
@@ -621,9 +647,9 @@ def base_styles():
        enumGripShape="Along", realHandleRounding="3")
     # (v1's delay cut split fader: a grey pill with an ink edge and a dark
     # line through it, the range light, ▼ / ▲ markers for the two cuts)
-    st("LcdRangeStyle", "LcdFaderStyle", enumHandleShape="Triangles", realHandleLength="11", colFill="LcdDim", colFillHighlight="LcdLight",
-       colTrackBorder="Ink", colGroove="InkMid", realGrooveWidth="1", realGrooveInset="5", colAltFill="LcdLight", colAltBorder="Ink",
-       realCornerRounding="9")
+    st("LcdRangeStyle", "LcdFaderStyle", enumHandleShape="Triangles", realHandleLength="11", colFill="LcdDim", colFillHighlight="255, 255, 255, 255",
+       colTrackBorder="Ink", realTrackBorderWidth="2", colGroove="SplitGroove", realGrooveWidth="3", realGrooveInset="3", colAltFill="LcdLight",
+       colAltBorder="Ink", realCornerRounding="5", realRangeHeight="6", colRangeBorder="SplitZoneEdge")
     st("LcdScrollBarStyle", "BaseSliderStyle", colFill="LcdLight", colAltFill="InkMid")
     st("LcdMeterStyle", "BaseMeterStyle")
     # (v1: fine 1 px lines in the readout blue, faint when off)

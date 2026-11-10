@@ -494,9 +494,13 @@ impl FxPanel {
             slot.set_attr("fxKind", kind.to_string());
             slot.style = if kind == 0 { "EffectPanelBackgroundNoFX" } else { "EffectPanelBackground" }.into();
             // The card under the slot (the skin's decor, scripts/uigen
-            // looks.py): dark when empty.
-            if let Some(card) = slot.children.iter_mut().find(|k| matches!(k.style.as_str(), "FxCardStyle" | "FxCardEmptyStyle")) {
-                card.style = if kind == 0 { "FxCardEmptyStyle" } else { "FxCardStyle" }.into();
+            // looks.py): dark when empty, its inner edge darker and no
+            // line under the menu band.
+            for k in slot.children.iter_mut() {
+                let base = k.style.strip_suffix("EmptyStyle").or_else(|| k.style.strip_suffix("Style")).unwrap_or("");
+                if matches!(base, "FxCard" | "FxCardInner" | "FxCardHeadLine") {
+                    k.style = format!("{base}{}", if kind == 0 { "EmptyStyle" } else { "Style" });
+                }
             }
             if let Some(setup) = slot.find_mut("SetupPanel") {
                 for k in setup.children.iter_mut() {
@@ -661,7 +665,10 @@ impl FxPanel {
                 _ => p.fill_rect(rc, fill),
             }
             p.stroke_rect(rc.inset(0.5), s.colour(st, "colBorder", text), 1.0);
-            p.text(RectF::new(rc.x + 2.0, rc.y, rc.w - 4.0, rc.h), label, text, &s.font(st), HAlign::Center, VAlign::Center);
+            // (v1 shortens long names in the middle: "Chann...essor")
+            let font = s.font(st);
+            let label = p.fonts.shorten(&font, label, rc.w - 4.0, dreist_gui::style::Shorten::Middle);
+            p.text(RectF::new(rc.x + 2.0, rc.y, rc.w - 4.0, rc.h), &label, text, &font, HAlign::Center, VAlign::Center);
         }
         true
     }

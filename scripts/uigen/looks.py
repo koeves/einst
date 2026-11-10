@@ -324,7 +324,8 @@ FLAT_BUTTON = L("LcdButtonStyle")
 # (2 px down, 13 px high; the bands of neighbouring strips meet).
 STRIP_HEAD = [("inside", 0, 2, 0, 13, "LcdStripHeadStyle")]
 
-FX_CARD = [("inside", 1, 2, -2, -4, "FxCardEmptyStyle"), ("inside", 3, 4, -6, 38, "FxCardHeadStyle")]
+FX_CARD = [("inside", 1, 2, -2, -4, "FxCardEmptyStyle"), ("inside", 2, 3, -4, -6, "FxCardInnerEmptyStyle"),
+           ("inside", 3, 4, -6, 38, "FxCardHeadStyle"), ("inside", 3, 42, -6, 1, "FxCardHeadLineEmptyStyle")]
 
 
 # The pad editor's panels (`PadEditBackground` / `PadControlsBackground`,
@@ -355,7 +356,11 @@ PANELS = [
     # bottom, with a darker band behind the slot's menus; empty slots all
     # dark. fxchain.rs switches the card's style.)
     (r"^FXPanelBackground", L("BasePanelStyle", colFill="Transparent", optDrawBorder="false", decor=FX_CARD)),
-    (r"^BreverbBackground", L("BasePanelStyle")),
+    # (v1, 193 x 150: a charcoal case round a cream screen 4 px in at the
+    # sides, 22 px down (the model's name sits in the case above it) and
+    # 7 px up from the bottom; the case's maker artwork is left out)
+    (r"^BreverbBackground", L("BasePanelStyle", decor=[("inside", 0, 0, -0, -0, "ReverbCaseStyle"),
+                                                       ("inside", 4, 22, -10, -29, "ReverbScreenStyle")])),
     (r"^(MiniChannel|Pad|Aux)Background(Even)", L("LcdRowEvenStyle", realCornerRounding="3", decor=STRIP_HEAD)),
     (r"^(MiniChannel|Pad|Aux)Background(Odd)", L("LcdRowOddStyle", realCornerRounding="3", decor=STRIP_HEAD)),
     (r"^(MiniChannel|Pad|Aux)Background(Selected)", L("LcdStripSelectedStyle", realCornerRounding="3", decor=STRIP_HEAD)),
@@ -444,8 +449,9 @@ SLIDERS = [
 # corners; the gain-reduction meter has a dark band along the bottom with
 # a bump under the needle's pivot, a thin grey scale and small grey labels)
 METER = L("LcdPlotStyle", colAltBorder="InkSoft", colLine="Ink", colBorder="Ink", realBorderWidth="2", realCornerRounding="5",
-          colBaseBand="InkMid", realBaseBandHeight="5", intTicks="0", colText="60, 60, 60, 255", font=text_font(8))
-PLOT = L("LcdPlotStyle", colLine="Ink", colBorder="Ink", realBorderWidth="2", realCornerRounding="5")
+          colBaseBand="InkMid", realBaseBandHeight="6", intTicks="0", colText="60, 60, 60, 255", font=text_font(8))
+PLOT = L("LcdPlotStyle", colLine="Ink", colBorder="Ink", realBorderWidth="2", realCornerRounding="5", colLowerFill="Lcd",
+         colStripe="PlotStripe", colMidLine="PlotMidLine")
 
 # ---------------------------------------------------------------- image views (`image=`)
 
