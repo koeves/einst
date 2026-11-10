@@ -47,9 +47,9 @@
         <CtrlButton name="Follow" rect="210, 11, 50, 17" displayName="Follow playback position" id="100000" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Follow" />
         <CtrlTextBox name="PatternNameBox" rect="262, 11, 105, 17" id="100000" optSingleClickEdit="true" style="LEDEditBoxStyle" />
         <CtrlPopupButton name="StepLengthCombo" rect="369, 11, 40, 17" id="100004" legacyClass="CtrlComboBox" optSingleClickEdit="true" style="LEDSmallComboBoxStyle" />
-        <CtrlButton name="MinusButton" rect="411, 11, 15, 17" displayName="Reduce steps" id="100000" optIsMomentary="true" style="StandardSubtractButtonStyle" text="" />
+        <CtrlButton name="MinusButton" rect="411, 11, 15, 17" displayName="Reduce steps" icon="minus" id="100000" optIsMomentary="true" overloadClass="IconButton" style="StandardSubtractButtonStyle" text="" />
         <CtrlValueBox name="LengthBox" rect="425, 11, 30, 17" id="100002" optSingleClickEdit="true" style="LEDSmallNonDragableValueBoxStyle" />
-        <CtrlButton name="PlusButton" rect="454, 11, 15, 17" displayName="Increase steps" id="100001" optIsMomentary="true" style="StandardAddButtonStyle" text="" />
+        <CtrlButton name="PlusButton" rect="454, 11, 15, 17" displayName="Increase steps" icon="plus" id="100001" optIsMomentary="true" overloadClass="IconButton" style="StandardAddButtonStyle" text="" />
         <CtrlButton name="RestartButton" rect="471, 11, 50, 17" displayName="Restart pattern from beginning on pattern change" id="100001" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Restart" />
         <CtrlButton name="GateButton" rect="522, 11, 50, 17" displayName="Pattern requires MIDI trigger to playback" id="100000" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Gated" />
         <CtrlButton name="MonoButton" rect="574, 11, 50, 17" displayName="Remix mode" id="100001" optIsMomentary="false" style="LEDLatchingButtonStyle" text="Remix!" />

@@ -58,13 +58,15 @@ def icon(name, size=None):
 
 # v1's flat icon keys (scene slot and tool buttons: a light face in a thin
 # frame; pressed, a navy face with a light icon).
-FLAT_KEY = dict(realGradientShade="0", colFill="LcdLight", colBorder="InkMid", colText="InkMid")
+FLAT_KEY = dict(colFoot="Transparent", colFootShade="Transparent", realGradientShade="0", colFill="LcdLight", colBorder="InkMid", colText="InkMid")
 # v1's 40 x 41 scene page keys: square, a light face over a 2 px navy
 # bottom, large slate glyphs.
 BIG_KEY = dict(realCornerRounding="0", colBorder="#3C4461", realGradientShade="0", colFill="LcdLight", colText="InkMid",
                realBorderWidth="1", optBevel="true", colBevelLight="0, 0, 0, 0", colBevelDark="18, 25, 60, 255")
+# v1's 12 x 12 zoom keys: an ink frame all round (no foot), grey when down.
+ZOOM = dict(colFoot="Transparent", colFootShade="Transparent", colAltFill="RadioOn", colAltText="Ink")
 # v1's scene scroll keys: pills in a navy outline.
-PILL_KEY = dict(realCornerRounding="10", colBorder="Ink", colFill="LcdLight", realGradientShade="0", colText="InkMid")
+PILL_KEY = dict(colFoot="Transparent", colFootShade="Transparent", realCornerRounding="10", colBorder="Ink", colFill="LcdLight", realGradientShade="0", colText="InkMid")
 
 # Pad mode buttons: the face inside v1's 25 x 27 cells.
 PM = (1, 1, 3, 5)
@@ -207,30 +209,33 @@ BUTTONS = [
     # (the chain preset menu, 24 px high: v1's small arrow ~7 px in)
     (r"^LEDEffectCombo", L("LcdMenuButtonStyle", ctrl=POPUP, realPopupArrowSize="0.2", realPopupArrowBoxWidth="14")),
     # (the effect slots' type / preset menus, 17 px high: v1's 5 px arrow)
-    (r"^LEDUltraMenuButton", L("LcdMenuButtonStyle", ctrl=POPUP, realPopupArrowSize="0.3")),
+    (r"^LEDUltraMenuButton", L("LcdMenuButtonStyle", ctrl=POPUP)),
     (r"^LED(Large)?MenuButton|^DragEditButton", L("LcdMenuButtonStyle", ctrl=POPUP)),
     # (v1: the selected segment mid grey with dark text, the outer ends pills)
     (r"^LEDRadio(Large|Micro)Left", L("LcdRadioStyle", realCornerRounding="8", optRoundTopRight="false", optRoundBottomRight="false")),
     (r"^LEDRadio(Large|Micro)Center", L("LcdRadioStyle", realCornerRounding="0")),
     (r"^LEDRadio(Large|Micro)Right", L("LcdRadioStyle", realCornerRounding="8", optRoundTopLeft="false", optRoundBottomLeft="false")),
-    (r"^LEDAddButton", L("LcdIconButtonStyle", text=G["plus"])),
-    (r"^LEDSubtractButton", L("LcdIconButtonStyle", text=G["minus"])),
-    (r"^LEDClear", L("LcdIconButtonStyle", text=G["close"])),
-    (r"^LEDLock", L("LcdIconButtonStyle", text=G["lock"])),
+    # (v1's marks, drawn by the editor: a 2 px plus, a minus, a heavy
+    # cross, an open padlock that closes while on)
+    (r"^LEDAddButton", L("LcdIconButtonStyle", text="", ctrl=icon("plus"))),
+    (r"^LEDSubtractButton", L("LcdIconButtonStyle", text="", ctrl=icon("minus"))),
+    (r"^LEDClear", L("LcdIconButtonStyle", text="", ctrl=icon("cross"))),
+    (r"^LEDLock", L("LcdIconButtonStyle", text="", ctrl=icon("padlock"))),
     (r"^LEDCheck", L("CheckBoxStyle", text="", ctrl=CHECK)),
     (r"^ModalCheckBox", L("ModalCheckBoxStyle", text="", ctrl=CHECK)),
     # (v1's `LEDZoom{In,Out}`: square, flat, a navy frame and glyph)
-    (r"^LEDZoomIn", L("LcdIconButtonStyle", text=G["plus"], font=icon_font(8), realCornerRounding="0", colBorder="Ink", realGradientShade="0",
+    (r"^LEDZoomIn", L("LcdIconButtonStyle", **ZOOM, text=G["plus"], font=icon_font(8), realCornerRounding="0", colBorder="Ink", realGradientShade="0",
                       colFill="LcdLight")),
-    (r"^LEDZoomOut", L("LcdIconButtonStyle", text=G["minus"], font=icon_font(8), realCornerRounding="0", colBorder="Ink", realGradientShade="0",
+    (r"^LEDZoomOut", L("LcdIconButtonStyle", **ZOOM, text=G["minus"], font=icon_font(8), realCornerRounding="0", colBorder="Ink", realGradientShade="0",
                        colFill="LcdLight")),
     # (v1's other 12 x 12 zoom keys: a navy frame round a light face)
-    (r"^LEDZoomStartEnd", L("LcdIconButtonStyle", text=G["range"], font=icon_font(8), colBorder="Ink")),
-    (r"^LEDZoomStart", L("LcdIconButtonStyle", text=G["to_start"], font=icon_font(8), colBorder="Ink")),
-    (r"^LEDZoomEnd", L("LcdIconButtonStyle", text=G["to_end"], font=icon_font(8), colBorder="Ink")),
-    (r"^LEDNoZoom", L("LcdIconButtonStyle", text=G["ring"], font=icon_font(8), colBorder="Ink")),
-    (r"^LEDDiv2", L("LcdButtonStyle", text="÷2", font=text_font(11))),
-    (r"^LEDx2", L("LcdButtonStyle", text="×2", font=text_font(11))),
+    (r"^LEDZoomStartEnd", L("LcdIconButtonStyle", **ZOOM, text=G["range"], font=icon_font(8), colBorder="Ink")),
+    (r"^LEDZoomStart", L("LcdIconButtonStyle", **ZOOM, text=G["to_start"], font=icon_font(8), colBorder="Ink")),
+    (r"^LEDZoomEnd", L("LcdIconButtonStyle", **ZOOM, text=G["to_end"], font=icon_font(8), colBorder="Ink")),
+    (r"^LEDNoZoom", L("LcdIconButtonStyle", **ZOOM, text=G["ring"], font=icon_font(8), colBorder="Ink")),
+    # (v1: a bold "/2" and "X2" in mid ink)
+    (r"^LEDDiv2", L("LcdButtonStyle", text="/2", font=text_font(11, True), colText="InkMid")),
+    (r"^LEDx2", L("LcdButtonStyle", text="X2", font=text_font(11, True), colText="InkMid")),
     # Mixer view tabs (v1, 46 x 49: a 34 px face, then the ink spine; the
     # engine mixer's group draws one spine for its three, convert.py).
     (r"^LEDM(Mix|Send|Setup)Button", L("LcdSideTabStyle", upper=True, inset=(0, 2, 12, 2))),
@@ -316,7 +321,7 @@ BY_NAME = {
 
 # Buttons without any image (flat colour styles, flash layers) keep their
 # v1 colours on this base.
-FLAT_BUTTON = L("LcdButtonStyle")
+FLAT_BUTTON = L("LcdButtonStyle", colFoot="Transparent", colFootShade="Transparent")
 
 # ---------------------------------------------------------------- panels (imBackground)
 

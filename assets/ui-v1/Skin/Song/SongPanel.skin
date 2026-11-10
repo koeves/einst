@@ -12,9 +12,9 @@
             </CtrlButtonGroup>
             <CtrlButton name="SetDrawPatternButton" rect="25, 14, 12, 17" displayName="Change selected Parts to previous Pattern" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="SongPenPopupButtonStyle" text="" />
             <CtrlButton name="FollowButton" rect="150, 14, 50, 17" displayName="Scroll to Follow" id="100028" optIsMomentary="false" overloadClass="FlashingButton" style="LEDLatchingButtonStyle" text="Follow" />
-            <CtrlButton name="PrevPatternButton" rect="263, 14, 15, 17" displayName="Change selected Parts to previous Pattern" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="StandardSubtractButtonStyle" text="" />
+            <CtrlButton name="PrevPatternButton" rect="263, 14, 15, 17" displayName="Change selected Parts to previous Pattern" icon="minus" id="100028" optIsMomentary="true" overloadClass="IconButton" style="StandardSubtractButtonStyle" text="" />
             <CtrlButton name="SelectPatternButton" rect="277, 14, 50, 17" displayName="Change Pattern for selected Parts" id="100028" optIsMomentary="true" overloadClass="FlashingButton" renderer="PopupButtonRenderer" style="LEDMenuButtonStyle" text="Pattern" />
-            <CtrlButton name="NextPatternButton" rect="326, 14, 15, 17" displayName="Change selected Parts to next Pattern" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="StandardAddButtonStyle" text="" />
+            <CtrlButton name="NextPatternButton" rect="326, 14, 15, 17" displayName="Change selected Parts to next Pattern" icon="plus" id="100028" optIsMomentary="true" overloadClass="IconButton" style="StandardAddButtonStyle" text="" />
             <CtrlButton name="EraseButton" rect="559, 14, 50, 17" displayName="Erase when Recording" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" text="Erase" />
             <CtrlButton name="ClearAllButton" rect="611, 14, 50, 17" displayName="Clear Song" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" text="Clear All" />
             <CtrlButton name="DuplicateButton" rect="663, 14, 50, 17" displayName="Duplicate selected Parts" id="100028" optIsMomentary="true" overloadClass="FlashingButton" style="LEDMomentaryButtonStyle" text="Duplicate" />

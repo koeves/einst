@@ -22,7 +22,13 @@ pub fn draw_button(r: &Renderer, p: &mut Painter, c: &Ctrl) {
     let (ink, face) =
         if c.on { (s.colour(st, "colAltText", Colour::WHITE), s.colour(st, "colAltFill", Colour::BLACK)) } else { (s.colour(st, "colText", Colour::BLACK), s.colour(st, "colFill", Colour::WHITE)) };
     let size = c.attr("iconSize").and_then(|v| v.trim().parse::<f32>().ok());
-    draw(p, c.attr("icon").unwrap_or(""), RectF::new(0.0, 0.0, c.rect.w as f32, c.rect.h as f32), size, ink, face);
+    // (v1's lock keys: an open padlock, a closed one while on)
+    let name = match c.attr("icon").unwrap_or("") {
+        "padlock" if c.on => "padlock_closed",
+        "padlock" => "padlock_open",
+        n => n,
+    };
+    draw(p, name, RectF::new(0.0, 0.0, c.rect.w as f32, c.rect.h as f32), size, ink, face);
 }
 
 /// Icon `name` centred in `r`, `size` px high (each icon has its own
@@ -38,6 +44,10 @@ pub fn draw(p: &mut Painter, name: &str, r: RectF, size: Option<f32>, ink: Colou
         "page_up" | "page_down" => (7.0, 10.0, 10.0),
         "play" => (14.0, 22.0, 22.0),
         "dots" => (16.0, 2.0, 2.0),
+        "plus" => (9.0, 8.0, 8.0),
+        "minus" => (9.0, 2.0, 2.0),
+        "cross" => (10.0, 11.0, 11.0),
+        "padlock_open" | "padlock_closed" => (10.0, 12.0, 12.0),
         _ => return,
     };
     let k = size.unwrap_or(default) / dh;
@@ -105,6 +115,36 @@ pub fn draw(p: &mut Painter, name: &str, r: RectF, size: Option<f32>, ink: Colou
             let tri = [pt(0.5, 0.5), pt(13.5, 11.0), pt(0.5, 21.5)];
             p.fill_polygon(&tri, face);
             p.polyline(&[tri[0], tri[1], tri[2], tri[0]], ink, k.max(1.0));
+        }
+        // (v1's `LEDAddButton` / `LEDSubtractButton` / `LEDClear` marks:
+        // a 2 px plus 9 x 8, a minus over a half-tone line, a heavy cross)
+        "plus" => {
+            p.fill_rect(rr(0.0, 3.0, 9.0, 2.0), ink);
+            p.fill_rect(rr(3.5, 0.0, 2.0, 8.0), ink);
+        }
+        "minus" => {
+            p.fill_rect(rr(0.0, 0.0, 9.0, 1.0), ink);
+            p.fill_rect(rr(0.0, 1.0, 9.0, 1.0), ink.with_alpha(0.55));
+        }
+        "cross" => {
+            let (a, b, c2, d) = (pt(1.5, 1.5), pt(8.5, 9.5), pt(8.5, 1.5), pt(1.5, 9.5));
+            p.line(a.0, a.1, b.0, b.1, ink, 3.2 * k);
+            p.line(c2.0, c2.1, d.0, d.1, ink, 3.2 * k);
+        }
+        // (v1's `LEDLock`: a padlock, its shackle swung up to the left when
+        // open; a body 10 x 7 with a keyhole)
+        "padlock_open" | "padlock_closed" => {
+            let open = name == "padlock_open";
+            let (l, r2, foot) = if open { (1.5, 6.5, 2.5) } else { (2.5, 7.5, 5.5) };
+            let mut arc = vec![pt(l, foot)];
+            for i in 0..=8 {
+                let a = std::f32::consts::PI * (1.0 + i as f32 / 8.0);
+                arc.push(pt((l + r2) / 2.0 + (r2 - l) / 2.0 * a.cos(), 2.6 + 2.5 * a.sin()));
+            }
+            arc.push(pt(r2, if open { 3.5 } else { foot }));
+            p.polyline(&arc, ink, 1.6 * k);
+            p.fill_rounded(rr(0.0, 5.0, 10.0, 7.0), 1.5 * k, [true; 4], ink);
+            p.fill_rect(rr(4.0, 7.0, 2.0, 3.0), face);
         }
         // (a row of five dots)
         "dots" => {
