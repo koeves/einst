@@ -31,5 +31,9 @@ Nothing may come to the front while the desktop is in use: tests and harnesses s
 `DREIST_BACKGROUND_GUI=1` (commons `vendor/baseview`), the standalone app is not run for
 tests, pluginval runs with `--skip-gui-tests`, and apps start with `open -g`.
 
+Branches: work on local feature branches or local `dev` (parallel threads: one worktree each,
+outside the checkout); push nothing while working. At a release, clean up `dev`'s commits, push `dev`,
+merge into `main` (`--no-ff`) and release.
+
 After any code change here or in commons, rebuild and reinstall the VST3 (`scripts/build.sh`, then
 `target/bundled/Einst.vst3` into `~/Library/Audio/Plug-Ins/VST3`) and say which commit is installed.
