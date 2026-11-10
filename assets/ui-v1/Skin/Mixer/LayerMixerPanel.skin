@@ -12,9 +12,9 @@
         <CtrlButton name="AllLayers" rect="4, 248, 46, 15" displayName="Apply changes to all layers of this pad" id="100002" optIsMomentary="false" style="LinkLargeButtonStyle" text="Layers" />
         <CtrlButton name="AllPads" rect="4, 264, 46, 15" displayName="Apply changes to all selected layers on all pads (Alt)" id="100000" optIsMomentary="false" style="LinkLargeButtonStyle" text="Pads" />
         <CtrlButton name="AllGroups" rect="4, 280, 46, 15" displayName="Apply changes to all selected layers on all pads in this group (Alt + Shift)" id="100001" optIsMomentary="false" style="LinkLargeButtonStyle" text="Row" />
-        <CtrlPanel rect="38, 296, 12, 49" style="LcdSideTabSpineStyle" />
+        <CtrlPanel rect="38, 298, 12, 49" style="LcdSideTabSpineStyle" />
         <CtrlButton name="MixButton" rect="4, 298, 34, 45" displayName="View mixer" id="100001" optIsMomentary="false" style="LEDMixButton" text="MIX" />
-        <CtrlPanel rect="38, 344, 12, 49" style="LcdSideTabSpineStyle" />
+        <CtrlPanel rect="38, 346, 12, 49" style="LcdSideTabSpineStyle" />
         <CtrlButton name="SendButton" rect="4, 346, 34, 45" displayName="View aux sends" id="100002" optIsMomentary="false" style="LEDSendButton" text="SEND" />
         <CtrlPanel name="FXPanel" rect="1, 2, 812, 245" id="100009" overloadClass="EditorEffectChainPanel" />
         <CtrlPanel name="LayerGlue" rect="52, 233, 92, 11" id="0" legacyClass="CtrlImageView" style="GlueMediumImageStyle" />
