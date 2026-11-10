@@ -439,13 +439,17 @@ FINE_LED = {"intSegmentSize": "1", "intSegmentGap": "1"}
 TRACK = {"colFill": "LcdFace"}
 SLIDERS = [
     (r"^(HARDVU|EngineVU)", L("StripMeterStyle", **FINE_LED)),
+    # (v1's `*Light` strips sit on the selected, dark mixer strip: pale
+    # lines, not ink ones)
+    (r"VU.*Light", L("LcdMeterLightStyle", inset=(0, 0, 1, 0))),
     (r"VU", L("LcdMeterStyle", inset=(0, 0, 1, 0))),  # (v1's LCD meters: plain 3 px bars in 4 px rects)
-    # (v1's pan thumb: a dark block, a light line across its middle)
-    (r"PanBase", L("LcdPanStyle", ctrl={"realTrackInset": "0.0"}, realHandleRounding="1", enumGripShape="Across", intGripLines="1", **TRACK)),
-    # (v1's mixer fader cap: dark, a light line across its middle)
-    (r"^LEDSmVSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="15", intGripLines="1", enumGripShape="Across",
-                             **TRACK)),
-    (r"^LEDFatSliderBack", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="20", **TRACK)),
+    # (v1's pans: 73 / 41 x 12 tracks, 10 px caps 8 px high)
+    (r"^LEDFatPanBase", L("LcdPanFatStyle", ctrl={"realTrackInset": "0.0"})),
+    (r"PanBase", L("LcdPanSmallStyle", ctrl={"realTrackInset": "0.0"})),
+    # (v1's fader caps: 14 x 15 on the 15 px mixer faders, 14 x 21 on the
+    # 18 px gain fader)
+    (r"^LEDSmVSliderBack", L("LcdFaderSmallStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="15")),
+    (r"^LEDFatSliderBack", L("LcdFaderFatStyle", ctrl={"realTrackInset": "0.0"}, realHandleLength="21")),
     (r"", L("LcdFaderStyle", ctrl={"realTrackInset": "0.0"}, **TRACK)),
 ]
 

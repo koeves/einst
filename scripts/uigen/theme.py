@@ -149,6 +149,14 @@ COLOURS = {
     # LCD state colours.
     "MuteOn": (232, 84, 76),
     "SoloOn": (240, 214, 64),
+    "FaderGroove": (158, 165, 182),
+    "FaderSmallFace": (214, 222, 234),
+    "FaderSmallEdge": (59, 64, 94),
+    "FaderSmallGroove": (76, 82, 110),
+    "FaderCapEdge": (71, 76, 100),
+    "FaderCapLine": (135, 139, 153),
+    "PanGroove": (115, 122, 145),
+    "PanMark": (167, 174, 188),
     "VuTrack": (132, 138, 154),
     "VuLit": (22, 28, 48),
     # LCD content drawn by code (grid, song parts, browser).
@@ -664,6 +672,19 @@ def base_styles():
        colTrackBorder="LcdEdge", colGroove="LcdGroove", colAltFill="LcdCap", colAltFillGradientTo="LcdCapLow", colAltBorder="LcdCapLow",
        colGrip="LcdGrip", intGripLines="2", enumGripShape="Squares", realGripSize="2", realCornerRounding="3", realHandleInset="2",
        enumGradientDirection="Radial", realGradientRadius="0.62")
+    # v1's faders and pans (`LEDFat/SmVSlider*`, `LED*Pan*`, measured): a
+    # light track in a 1 px frame with a groove and a mark across it (unity
+    # on faders, the centre on pans); the cap InkMid over Ink with a pale
+    # line between and pale triangles pointing at it.
+    st("LcdFaderFatStyle", "LcdFaderStyle", colFill="LcdLight", colTrackBorder="Ink", colGroove="FaderGroove", realGrooveWidth="2",
+       realGrooveInset="10", colTrackMark="FaderGroove", realTrackMark="0.255", colAltFill="InkMid", colAltFillGradientTo="InkMid",
+       colHandleLow="Ink", colAltBorder="FaderCapEdge", colGrip="LcdMid", colGripLine="FaderCapLine", enumGripShape="Arrows",
+       realGripSize="6", realHandleInset="2", realHandleRounding="1", enumGradientDirection="Vertical")
+    st("LcdFaderSmallStyle", "LcdFaderFatStyle", colFill="FaderSmallFace", colTrackBorder="FaderSmallEdge", colGroove="FaderSmallGroove",
+       realGrooveWidth="1", realGrooveInset="7", colTrackMark="FaderSmallGroove", realTrackMark="0.267", realGripSize="5")
+    st("LcdPanFatStyle", "LcdFaderFatStyle", colGroove="PanGroove", realGrooveInset="5", colTrackMark="PanMark", realTrackMark="0.5",
+       realTrackMarkInset="1", realGripSize="4", realHandleLength="10")
+    st("LcdPanSmallStyle", "LcdPanFatStyle", colTrackBorder="InkMid", realGrooveInset="4")
     st("LcdPanStyle", "LcdFaderStyle", realHandleLength="9", realHandleInset="1", colBorder="Transparent", intGripLines="1",
        enumGripShape="Along", realHandleRounding="3")
     # (v1's delay cut split fader: a grey pill with an ink edge and a dark
@@ -673,6 +694,9 @@ def base_styles():
        colAltBorder="Ink", realCornerRounding="5", realRangeHeight="6", colRangeBorder="SplitZoneEdge")
     st("LcdScrollBarStyle", "BaseSliderStyle", colFill="LcdLight", colAltFill="InkMid")
     st("LcdMeterStyle", "BaseMeterStyle")
+    # (v1's `LEDVU*Light`: LcdLight lines, a quarter opaque off, most of
+    # the way on, averaged over v1's 1 px stripes)
+    st("LcdMeterLightStyle", "BaseMeterStyle", colFill="222, 229, 237, 60", colAltFill="222, 229, 237, 190", colAltBorder="LcdLight")
     # (v1: fine 1 px lines in the readout blue, faint when off)
     st("StripMeterStyle", "BaseMeterStyle", colFill="112, 175, 240, 51", colAltFill="Readout", colAltBorder="Readout")
 

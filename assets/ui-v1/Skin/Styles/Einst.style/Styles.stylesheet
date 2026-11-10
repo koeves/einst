@@ -140,10 +140,15 @@
     <CtrlStyle name="LcdKnobBodyStyle" colBorder="InkSoft" colFill="LcdLight" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="100" />
     <CtrlStyle name="SpinnerStyle" colFace="Transparent" colFill="SpinnerRing" colPointer="SpinnerArrow" optPointer="false" optSpinner="true" parentStyle0="BaseKnobStyle" />
     <CtrlStyle name="LcdFaderStyle" colAltBorder="LcdCapLow" colAltFill="LcdCap" colAltFillGradientTo="LcdCapLow" colFill="LcdFace" colFillHighlight="Transparent" colGrip="LcdGrip" colGroove="LcdGroove" colTrackBorder="LcdEdge" enumGradientDirection="Radial" enumGripShape="Squares" enumHandleShape="Rect" intGripLines="2" parentStyle0="BaseSliderStyle" realCornerRounding="3" realGradientRadius="0.62" realGripSize="2" realHandleInset="2" />
+    <CtrlStyle name="LcdFaderFatStyle" colAltBorder="FaderCapEdge" colAltFill="InkMid" colAltFillGradientTo="InkMid" colFill="LcdLight" colGrip="LcdMid" colGripLine="FaderCapLine" colGroove="FaderGroove" colHandleLow="Ink" colTrackBorder="Ink" colTrackMark="FaderGroove" enumGradientDirection="Vertical" enumGripShape="Arrows" parentStyle0="LcdFaderStyle" realGripSize="6" realGrooveInset="10" realGrooveWidth="2" realHandleInset="2" realHandleRounding="1" realTrackMark="0.255" />
+    <CtrlStyle name="LcdFaderSmallStyle" colFill="FaderSmallFace" colGroove="FaderSmallGroove" colTrackBorder="FaderSmallEdge" colTrackMark="FaderSmallGroove" parentStyle0="LcdFaderFatStyle" realGripSize="5" realGrooveInset="7" realGrooveWidth="1" realTrackMark="0.267" />
+    <CtrlStyle name="LcdPanFatStyle" colGroove="PanGroove" colTrackMark="PanMark" parentStyle0="LcdFaderFatStyle" realGripSize="4" realGrooveInset="5" realHandleLength="10" realTrackMark="0.5" realTrackMarkInset="1" />
+    <CtrlStyle name="LcdPanSmallStyle" colTrackBorder="InkMid" parentStyle0="LcdPanFatStyle" realGrooveInset="4" />
     <CtrlStyle name="LcdPanStyle" colBorder="Transparent" enumGripShape="Along" intGripLines="1" parentStyle0="LcdFaderStyle" realHandleInset="1" realHandleLength="9" realHandleRounding="3" />
     <CtrlStyle name="LcdRangeStyle" colAltBorder="Ink" colAltFill="LcdLight" colFill="LcdDim" colFillHighlight="255, 255, 255, 255" colGroove="SplitGroove" colRangeBorder="SplitZoneEdge" colTrackBorder="Ink" enumHandleShape="Triangles" parentStyle0="LcdFaderStyle" realCornerRounding="5" realGrooveInset="3" realGrooveWidth="3" realHandleLength="11" realRangeHeight="6" realTrackBorderWidth="2" />
     <CtrlStyle name="LcdScrollBarStyle" colAltFill="InkMid" colFill="LcdLight" parentStyle0="BaseSliderStyle" />
     <CtrlStyle name="LcdMeterStyle" parentStyle0="BaseMeterStyle" />
+    <CtrlStyle name="LcdMeterLightStyle" colAltBorder="LcdLight" colAltFill="222, 229, 237, 190" colFill="222, 229, 237, 60" parentStyle0="BaseMeterStyle" />
     <CtrlStyle name="StripMeterStyle" colAltBorder="Readout" colAltFill="Readout" colFill="112, 175, 240, 51" parentStyle0="BaseMeterStyle" />
     <CtrlStyle name="ReadoutStyle" colText="Readout" enumTextHorizontalAlign="center" font="Sans10" parentStyle0="BaseLabelStyle" />
     <CtrlStyle name="ReadoutMenuStyle" colAltBorder="Transparent" colAltFill="ReadoutDim" colAltText="Readout" colBorder="Transparent" colFill="Transparent" colText="Readout" enumTextHorizontalAlign="left" font="Sans9Bold" parentStyle0="BaseButtonStyle" />
@@ -283,11 +288,11 @@
     <CtrlStyle name="StandardScrollViewStyle" colBorder="Transparent" colFill="Transparent" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="EmptyScrollViewStyle" colBorder="Transparent" colFill="Transparent" optDrawBorder="false" parentStyle0="BasePanelStyle" realCornerRounding="0" />
     <CtrlStyle name="FieldEditorHistogramStyle" colAltFill="255, 0, 0, 180" colBorder="Transparent" colFill="Transparent" colFillHighlight="255, 0, 0, 180" parentStyle0="BaseSliderStyle" />
-    <CtrlStyle name="SmallVerticalFaderStyle" colFill="LcdFace" enumGripShape="Across" intGripLines="1" optDrawBorder="false" parentStyle0="LcdFaderStyle" realHandleLength="15" />
-    <CtrlStyle name="FatVerticalFaderStyle" colFill="LcdFace" optDrawBorder="false" parentStyle0="LcdFaderStyle" realHandleLength="20" />
-    <CtrlStyle name="SmallPanStyle" colFill="LcdFace" enumGripShape="Across" intGripLines="1" optDrawBorder="false" parentStyle0="LcdPanStyle" realHandleLength="10" realHandleRounding="1" />
-    <CtrlStyle name="LargePanStyle" colFill="LcdFace" enumGripShape="Across" intGripLines="1" optDrawBorder="false" parentStyle0="LcdPanStyle" realHandleLength="10" realHandleRounding="1" />
-    <CtrlStyle name="FatPanStyle" colFill="LcdFace" enumGripShape="Across" intGripLines="1" optDrawBorder="false" parentStyle0="LcdPanStyle" realHandleLength="10" realHandleRounding="1" />
+    <CtrlStyle name="SmallVerticalFaderStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="LcdFaderSmallStyle" realHandleLength="15" />
+    <CtrlStyle name="FatVerticalFaderStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="LcdFaderFatStyle" realHandleLength="21" />
+    <CtrlStyle name="SmallPanStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="LcdPanSmallStyle" realHandleLength="10" />
+    <CtrlStyle name="LargePanStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="LcdPanSmallStyle" realHandleLength="10" />
+    <CtrlStyle name="FatPanStyle" colFill="Transparent" optDrawBorder="false" parentStyle0="LcdPanFatStyle" realHandleLength="10" />
     <CtrlStyle name="LEDEditBoxStyle" colFill="LcdLight" colText="Ink" font="Sans10" parentStyle0="BaseTextBoxStyle" />
     <CtrlStyle name="ModalEditBoxStyle" colBorder="Ink" colFill="ModalField" colText="Ink" font="Sans10" optDrawBorder="true" parentStyle0="ModalFieldStyle" />
     <CtrlStyle name="ModalNonEditableEditBoxStyle" colBorder="Ink" colFill="ModalField" colText="Ink" font="Sans10" optDrawBorder="true" parentStyle0="ModalFieldStyle" />
@@ -327,9 +332,9 @@
     <CtrlMeterStyle name="StandardDBReduceMeterStyle" colAltBorder="InkSoft" colBaseBand="InkMid" colBorder="Ink" colLine="Ink" colText="60, 60, 60, 255" font="Sans8" intTicks="0" parentStyle0="LcdPlotStyle" realAngleSize="90" realAngleStart="135" realBaseBandHeight="6" realBorderWidth="2" realCornerRounding="5" realPivotX="0.5" realPivotY="1.10" realRadius="0.90" textLeftRange="-∞" textRightRange="0" textUnits="dB" />
     <CtrlStyle name="EQGraphStyle" colBorder="Ink" colLine="Ink" colLowerFill="Lcd" colMidLine="PlotMidLine" colStripe="PlotStripe" parentStyle0="LcdPlotStyle" realBorderWidth="2" realCornerRounding="5" realLineWidth="2" realPlotInset="0" />
     <CtrlStyle name="VU75Dark" parentStyle0="LcdMeterStyle" />
-    <CtrlStyle name="VU75Light" parentStyle0="LcdMeterStyle" />
+    <CtrlStyle name="VU75Light" parentStyle0="LcdMeterLightStyle" />
     <CtrlStyle name="VU45Dark" parentStyle0="LcdMeterStyle" />
-    <CtrlStyle name="VU45Light" parentStyle0="LcdMeterStyle" />
+    <CtrlStyle name="VU45Light" parentStyle0="LcdMeterLightStyle" />
     <CtrlStyle name="VU106" parentStyle0="LcdMeterStyle" />
     <CtrlStyle name="HardVU120" intSegmentGap="1" intSegmentSize="1" parentStyle0="StripMeterStyle" />
     <CtrlStyle name="VU120Horizontal" parentStyle0="LcdMeterStyle" />
