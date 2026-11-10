@@ -77,11 +77,14 @@ impl Voice {
         }
     }
 
-    /// `PrepareStream`: buffer for [re:46f4da]+8 / 20 samples (power of two).
+    /// Stream setup ([re:22848e]): a ring for `max(0.05·sr, 2)` samples at the
+    /// current rate (SongInfo +0x20; v2 sizes it for the 384 kHz maximum,
+    /// [re:46f4da]+8 / 20), rounded up to a power of two and cleared; the
+    /// delay is clamped to the ring size − 2.
     fn prepare(&mut self, sr: f32) {
-        let m = 384000.0f32 / 20.0;
-        let m = ((m - 2.0).abs() + m + 2.0) * 0.5;
-        let n = m.round() as i32;
+        let m = sr * 0.05;
+        let m = ((m + 2.0) + (m - 2.0).abs()) * 0.5;
+        let n = (m + 0.5) as i32;
         let size = pow2_at_least(n as i64);
         self.buf = vec![0.0; size];
         self.mask = size as u32 - 1;
@@ -229,6 +232,22 @@ impl Node for Comb {
     fn reset(&mut self) {
         for v in &mut self.voices {
             v.reset();
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// v1 sizes the ring from the current rate: 0.05·sr rounded up to a
+    /// power of two, the delay clamped 2 below it.
+    #[test]
+    fn ring_follows_the_rate() {
+        for (sr, size) in [(44_100.0, 4096), (48_000.0, 4096), (96_000.0, 8192)] {
+            let mut v = Voice::new();
+            v.prepare(sr);
+            assert_eq!((v.buf.len(), v.mask, v.max_delay), (size, size as u32 - 1, (size - 2) as f32), "{sr}");
         }
     }
 }
