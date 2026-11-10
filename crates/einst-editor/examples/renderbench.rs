@@ -16,6 +16,9 @@ fn main() {
     // SYNCBENCH=1: only editor syncs (for profiling).
     if std::env::var("SYNCBENCH").is_ok() {
         let mut ed = Editor::new(dreist_gui::skin::default_theme(), Model::new(doc)).expect("editor");
+        // After a frame, as in the window (its code-drawn panels are
+        // fingerprinted against it).
+        let _ = ed.render(scale);
         let t = std::time::Instant::now();
         for _ in 0..n {
             ed.sync();
