@@ -1,113 +1,36 @@
 # Changelog
 
-## [0.2.0] - 2026-11-10
+## [0.1.0] - 2026-11-10
 
-The v1 look and a parity pass from the vendor's v1 tutorial videos, a second reverse-engineering
-audit of the effects and the audio engine, and faster, steadier drawing.
+First release: the original v1 (1.1.1.2) rebuilt natively for Apple Silicon (VST3, CLAP,
+standalone) as a thin app on dreist-commons, listed under the Dreist vendor.
 
 ### Summary
 
-- **Look**: v1's knobs (value arcs, measured per knob type), buttons, faders, radio groups,
-  menu buttons, scroll bars and panel art on every page; effect panels, mixers, pad/layers,
-  sampler, slicer, scenes, song, browser and dialogs restyled from v1's skin and screenshots.
-- **From the videos**: 72 scene slots, Alt-click start mode for all scenes, v1's scene table,
-  "No audio file loaded", one wave lane per channel, v1's sampler status line, empty layers
-  disabled, "No Effect" first in the effect menu, v1 tooltips.
-- **Sound**: analog table reads floor like v1 (voice filters, vintage path, analog filter
-  effects); Flanger delay range (10 ms), Audio Freezer loop length, Comb Filter buffer,
-  sequencer timing (one sample later, as v1), 8 timestretch voices, v1's graph record.
-- **Speed**: menu hover, clicks and panel updates redraw only what changed.
-
-### Features
-
-- **ui:** V1 menu buttons and disabled look
-- **scenes:** 72 slots, Alt start mode, v1 details table
-- **editor:** V1 wave displays: empty text and one lane per channel
-- **sampler:** V1 status line
-- **editor:** Empty layers disabled as in v1
-- **editor:** V1 menu items and tooltips
-
-### Fixes
-
-- **engine:** Analog table reads floor like v1; dreist-commons dbc3c39
-- **engine:** V1's sequencer window and 8 timestretch voices; dreist-commons 99c3274
-- **fx:** Flanger delay range at the current sample rate
-- **fx:** Audio Freezer loop length in whole beats 1..16
-- **fx:** Comb Filter ring sized from the current sample rate
-- **fx:** Channel Compressor meter reads 0 while switched off
-- **engine:** V1's graph record; dreist-commons bd87fbc
-- **engine:** Graph-record writes reach the same sub-block's note; dreist-commons 20751a6
-- **editor:** The browser show / hide button shows a hidden column at once
-
-### Performance
-
-- **editor:** Time menu hovers in the render bench
-- **editor:** Time clicks in the render bench
-- **editor:** Repaint only the code-drawn panels whose drawing changed
-- **editor:** A knob reset repaints what changed, not the window
-- **editor:** Time syncs after a frame in the render bench
-
-### Documentation
-
-- Rebuild and reinstall the VST3 after a change; dreist-commons a4837fb
-- Keep work branches local until a release; dreist-commons 2cf4bbc
-
-### Tests
-
-- **editor:** Clicks repaint like full renders
-- **editor:** Knob resets and panel buttons repaint like full renders
-- **editor:** Live resizes and browser toggles match a fresh editor
-
-### Build and CI
-
-- Dreist-commons 24bdf61 (popup arrow box width)
-- Dreist-commons e05a1b8 (faster menu hover repaints)
-- Dreist-commons 149a70e (clicks repaint only what they change)
-- Dreist-commons 964c58b (code-drawn panels repaint only when their drawing changes)
-- Dreist-commons 0a810a3 (resize-path independent anchoring and splitters, mounted skins fill their host, host resizing in nih-plug)
-- Dreist-commons v0.2.0
-
-### Other
-
-- **ui:** V1 knobs and radio groups
-- **mixer:** V1 look for the mixer pages and effect chain
-- **layers:** V1 look for the Pad / Layers page and the wave displays
-- **sampler:** V1 look for the sampler page
-- **slicer:** V1 frame and divider bands for the slicer
-- **pattern:** V1 look for the front panel and pattern page
-- **song:** V1 look for the song page
-- **scenes:** V1 look for the scene page
-- **browser:** V1 look for the browser column and Mapping
-- **dialogs:** V1 look for the About panel and modal check boxes
-- **fx:** V1 look for the effect panels
-- **knobs:** One measured v1 look per knob type
-- **faders:** V1's fader, pan and light meter looks
-- **buttons:** V1's LED key, mark and menu looks
-- **mixer:** Side tabs as v1: white text, spine flush with the faces, light edge
-
-## [0.1.0] - 2026-11-06
-
-First release: the original v1 (1.1.1.2) rebuilt natively for Apple Silicon (VST3, CLAP,
-standalone) as a thin app on dreist-commons v0.1.0, listed under the Dreist vendor.
-
-### What was ported
-
 - v1 files: projects, kits, pads, engines and patterns convert onto the v2 document on load,
   with v1's object defaults and layer holds; v1's MIDI and host bindings; all of v1's factory
-  effect presets, chains, pattern and swing templates load. Einst saves its own `.einst` family.
+  effect presets, chains, pattern and swing templates load and are bundled. Einst saves its
+  own `.einst` family.
 - Effects: v1's own Gain, Vari-EQ and Envelope Shaper, and v1's differences in the effects it
   shares with v2 (compressors, filters, Flanger, Chorus, Phaser, Delay, Audio Freezer, Ring
-  Mod and more), including v1's fast 2^x approximation.
+  Mod and more), including v1's fast 2^x approximation; Flanger delay range, Audio Freezer
+  loop length and Comb Filter buffer at the current sample rate.
 - Voice and sequencer: v1's pitch and filter modulation model, envelope end and loop rules,
-  step lanes, pan and send summing, reverse and end fade, timestretch, routing-depth lanes and
-  scene snapshots.
-- Editor: v1's layout and look, generated from v1's skin layouts; every page, dialog and menu
-  checked against the original and its manual (pads and layers, pattern editor with graph
-  lanes, scenes, song, mixers, sampler, slicer, browser, MIDI mapping, export, preferences).
+  step lanes, pan and send summing, reverse and end fade, timestretch (8 voices),
+  routing-depth lanes, scene snapshots, v1's sequencer timing and graph record, and analog
+  table reads that floor like v1's.
+- Editor: v1's layout and look (knobs measured per type, buttons, faders, radio groups, menu
+  buttons, scroll bars and panel art on every page), drawn as vector styling from Einst's own
+  layout description of v1's panels; every page, dialog and menu checked against the original,
+  its manual and its tutorial videos (pads and layers, pattern editor with graph lanes, 72
+  scene slots, song, mixers, sampler, slicer, browser, MIDI mapping, export, preferences).
+- Speed: menu hover, clicks and panel updates redraw only what changed.
 - Plays in hosts that leave the 16 sub outputs inactive (such as Live); app icon from the
   in-app "einst." wordmark.
 - Known differences are logged in the private reverse-engineering ledger; Launchpad support
   is deliberately left out.
+- Third-party crate versions live in dreist-commons: audio and MIDI devices, file dialogs and
+  the relaunch session come through its shared host crate, dreist-host.
 
 ### Features
 
@@ -221,6 +144,12 @@ standalone) as a thin app on dreist-commons v0.1.0, listed under the Dreist vend
 - **einst-editor:** A preset dropped on the window loads, as v1
 - List Einst under the Dreist vendor
 - New app icon from the in-app logo
+- **ui:** V1 menu buttons and disabled look
+- **scenes:** 72 slots, Alt start mode, v1 details table
+- **editor:** V1 wave displays: empty text and one lane per channel
+- **sampler:** V1 status line
+- **editor:** Empty layers disabled as in v1
+- **editor:** V1 menu items and tooltips
 
 ### Fixes
 
@@ -275,16 +204,32 @@ standalone) as a thin app on dreist-commons v0.1.0, listed under the Dreist vend
 - **einst-editor:** Layer sample save dialog as v1
 - **einst-editor:** Scene details table columns as v1
 - **einst-editor:** A file dropped on the browser list shows its folder, as v1
+- **engine:** Analog table reads floor like v1; dreist-commons dbc3c39
+- **engine:** V1's sequencer window and 8 timestretch voices; dreist-commons 99c3274
+- **fx:** Flanger delay range at the current sample rate
+- **fx:** Audio Freezer loop length in whole beats 1..16
+- **fx:** Comb Filter ring sized from the current sample rate
+- **fx:** Channel Compressor meter reads 0 while switched off
+- **engine:** V1's graph record; dreist-commons bd87fbc
+- **engine:** Graph-record writes reach the same sub-block's note; dreist-commons 20751a6
+- **editor:** The browser show / hide button shows a hidden column at once
 
 ### Performance
 
 - **einst-editor:** Browser previews decode off the editor thread
+- **editor:** Time menu hovers in the render bench
+- **editor:** Time clicks in the render bench
+- **editor:** Repaint only the code-drawn panels whose drawing changed
+- **editor:** A knob reset repaints what changed, not the window
+- **editor:** Time syncs after a frame in the render bench
 
 ### Refactoring
 
 - Make Einst a thin app on dreist-commons
 - **einst-dsp:** Use dreist-commons' exp2 hook and drop the copies that only swapped 2^x
 - **editor:** Einst owns its editor, einst-editor
+- **uigen:** The v1-layout skins come from Einst's own layout source (`scripts/uigen/skins`), no longer from v1's skin files
+- **deps:** Take the host-side crates through dreist-host
 
 ### Documentation
 
@@ -293,7 +238,6 @@ standalone) as a thin app on dreist-commons v0.1.0, listed under the Dreist vend
 - Move the RE ledger to dreist-re and cite evidence by tag
 - **readme:** How the three projects relate
 - Contributing section, git conventions for agents
-- **changelog:** 0.1.0 is unreleased until the remaining v1 work is done
 - Worktree placement and cleanup after a task
 - Coordinate shared-code changes between Einst and Dreist
 - Read and update the commons coordination log
@@ -315,6 +259,10 @@ standalone) as a thin app on dreist-commons v0.1.0, listed under the Dreist vend
 - **readme:** Rewrite in Dreist's style
 - **readme:** Add AI usage note
 - **readme:** AI usage note in the owner's words
+- Rebuild and reinstall the VST3 after a change; dreist-commons a4837fb
+- Keep work branches local until a release; dreist-commons 2cf4bbc
+- **readme:** New screenshots
+- Third-party notices
 
 ### Tests
 
@@ -348,6 +296,9 @@ standalone) as a thin app on dreist-commons v0.1.0, listed under the Dreist vend
 - Golden for the sampler's default trigger mode
 - Golden for the scene details table
 - **einst-editor:** Songcheck example
+- **editor:** Clicks repaint like full renders
+- **editor:** Knob resets and panel buttons repaint like full renders
+- **editor:** Live resizes and browser toggles match a fresh editor
 
 ### Build and CI
 
@@ -375,6 +326,19 @@ standalone) as a thin app on dreist-commons v0.1.0, listed under the Dreist vend
 - Build on the macos-15 runner
 - dreist-commons 4be0295 (agent notes removed; no code change)
 - dreist-commons df06666 (inactive sub outputs no longer silence the plugin)
+- Dreist-commons 24bdf61 (popup arrow box width)
+- Dreist-commons e05a1b8 (faster menu hover repaints)
+- Dreist-commons 149a70e (clicks repaint only what they change)
+- Dreist-commons 964c58b (code-drawn panels repaint only when their drawing changes)
+- Dreist-commons 0a810a3 (resize-path independent anchoring and splitters, mounted skins fill their host, host resizing in nih-plug)
+- Dreist-commons v0.2.0
+- Dreist-commons 9060148
+- Dreist-commons v0.2.3 (the shared host crate, dreist-host)
+- Move v1's install files out of the repository; the factory presets, chains and templates stay in `assets/factory`
+- Dependabot for GitHub Actions and the commons submodule (crate versions are bumped in dreist-commons)
+- CodeQL on release tags and by hand; read-only workflow permissions
+- Bump actions/checkout to 7, actions/upload-artifact to 7, actions/download-artifact to 8
+- Bump rfd to 0.18.0 and midir to 0.11.1
 
 ### Other
 
@@ -384,3 +348,18 @@ standalone) as a thin app on dreist-commons v0.1.0, listed under the Dreist vend
 - Bump commons (SampleCache::forget)
 - Ignore the local test songs folder
 - Remove agent notes and unused files
+- **ui:** V1 knobs and radio groups
+- **mixer:** V1 look for the mixer pages and effect chain
+- **layers:** V1 look for the Pad / Layers page and the wave displays
+- **sampler:** V1 look for the sampler page
+- **slicer:** V1 frame and divider bands for the slicer
+- **pattern:** V1 look for the front panel and pattern page
+- **song:** V1 look for the song page
+- **scenes:** V1 look for the scene page
+- **browser:** V1 look for the browser column and Mapping
+- **dialogs:** V1 look for the About panel and modal check boxes
+- **fx:** V1 look for the effect panels
+- **knobs:** One measured v1 look per knob type
+- **faders:** V1's fader, pan and light meter looks
+- **buttons:** V1's LED key, mark and menu looks
+- **mixer:** Side tabs as v1: white text, spine flush with the faces, light edge
