@@ -45,7 +45,7 @@ jobs:
           ditto -c -k --keepParent Einst.vst3 "Einst-$TAG-macOS-VST3.zip"
           ditto -c -k --keepParent Einst.clap "Einst-$TAG-macOS-CLAP.zip"
           ditto -c -k --keepParent Einst.app "Einst-$TAG-macOS-App.zip"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Einst-${{ env.TAG }}-macOS
           path: target/bundled/Einst-*.zip
