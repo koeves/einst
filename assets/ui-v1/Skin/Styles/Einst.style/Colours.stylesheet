@@ -126,6 +126,14 @@
     <VColour name="LedGreen" colour="#46D250" />
     <VColour name="MuteOn" colour="#E8544C" />
     <VColour name="SoloOn" colour="#F0D640" />
+    <VColour name="FaderGroove" colour="#9EA5B6" />
+    <VColour name="FaderSmallFace" colour="#D6DEEA" />
+    <VColour name="FaderSmallEdge" colour="#3B405E" />
+    <VColour name="FaderSmallGroove" colour="#4C526E" />
+    <VColour name="FaderCapEdge" colour="#474C64" />
+    <VColour name="FaderCapLine" colour="#878B99" />
+    <VColour name="PanGroove" colour="#737A91" />
+    <VColour name="PanMark" colour="#A7AEBC" />
     <VColour name="VuTrack" colour="#848A9A" />
     <VColour name="VuLit" colour="#161C30" />
     <VColour name="RowSelected" colour="#E5E1C8" />
