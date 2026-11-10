@@ -108,3 +108,33 @@ fn graph_record_rewrites_the_current_step_until_the_wrap() {
     process_engine(&mut st2, Some(&p), &timing, &clock, 0.0, block as f64, &pads, &mut rng, &mut Vec::new(), &mut Vec::new(), None);
     assert!(st2.graph_writes.is_empty());
 }
+
+/// v1 [re:c0679e] writes the recorded values into the step before it
+/// reads it: a note starting in the writing sub-block takes the recorded
+/// velocity and repeat count.
+#[test]
+fn graph_record_write_reaches_the_note_of_that_sub_block() {
+    use dreist_engine::pattern::lane;
+    einst::install();
+    let mut p = PatternData::empty();
+    p.tracks[5].steps[0] = StepData { on: true, ..StepData::off() };
+    let mut st = EngineState { gate: true, ..EngineState::default() };
+    st.needs_resync = true;
+    st.recording = true;
+    st.set_graph_record(5, lane::VELOCITY, 40);
+    st.set_graph_record(5, lane::REPEATS, 64);
+    let timing = EngineTiming::default();
+    let one_shot = [true; TRACKS];
+    let links = [[false; TRACKS]; TRACKS];
+    let pads = PadInfo { one_shot: &one_shot, links: &links };
+    let mut rng = Rng::new(1);
+    let clock = Clock { bpm: 120.0, sample_rate: 48_000.0, ppq_block: 0.0, ppq_now: 0.0 };
+    let mut out = Vec::new();
+    process_engine(&mut st, Some(&p), &timing, &clock, 0.0, 32.0, &pads, &mut rng, &mut out, &mut Vec::new(), None);
+    // 64/127 → floor(64/127·7 + 1) = 4 repeats, each at the recorded velocity.
+    assert_eq!(out.len(), 4, "{out:?}");
+    let want = ((40.0f32 / 127.0) * 127.0) as u32;
+    assert!(out.iter().all(|n| n.pad == 5 && n.velocity == want), "{out:?}");
+    // The pattern itself takes the values through the queued writes.
+    assert!(st.graph_writes.iter().any(|w| *w == (5, 0, lane::VELOCITY, 40.0 / 127.0)));
+}
