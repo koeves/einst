@@ -1,10 +1,12 @@
 name: CodeQL
 
-# Code scanning, only on release tags and by hand (Actions run on releases,
-# never on branch pushes or pull requests).
+# Code scanning on release tags, on the release pull requests into main (the
+# main branch rule requires its result) and by hand; never on branch pushes.
 on:
   push:
     tags: ["v*"]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
