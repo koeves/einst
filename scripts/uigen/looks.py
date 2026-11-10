@@ -394,17 +394,23 @@ TEXT_BOXES = [
 # (rule, look, fit): fit = how the square dial sits in v1's rect ("top"
 # for the hardware knobs, whose film frames carry a scale under the dial).
 KNOBS = [
-    # (v1: a light-blue value arc on the outer part of the dark ring)
-    (r"^HARDKnobLarge", L("HardKnobStyle", ctrl={"realDialThickness": "0.07"}, inset=(4, 12, 8, 20)), "top"),
+    # (v1, 55 x 75 film: a black ring with a 2 px light-blue value arc on a
+    # grey track inside it, a face lit at the top, a short grey pointer)
+    (r"^HARDKnobLarge", L("HardKnobStyle", ctrl={"realDialThickness": "0.047"}, inset=(4, 12, 8, 20)), "top"),
     (r"^HARDKnobSmall", L("HardKnobSmallStyle", ctrl={"realDialThickness": "0.07"}, inset=(2, 1, 2, 5)), "top"),
-    # (v1, 50 x 46 film: a 4 px 270-degree value arc, a gap, then a knob
-    # body: grey ring round a light face, with a short dark pointer)
-    (r"^LEDKnobLarge", L("LcdKnobLargeStyle", ctrl={"realDialThickness": "0.09"}), "center"),
-    # (v1, 24 x 26 / 17 x 17 films: no arc; a closed grey ring round a light
-    # face with a dark edge and a pointer)
-    (r"^LEDKnobSmall", L("LcdKnobSmallStyle", ctrl={"realDialThickness": "0.04"}), "center"),
-    (r"^LEDKnobMicro", L("LcdKnobMicroStyle", ctrl={"realDialThickness": "0.05"}), "center"),
-    (r"^LEDSpinner", L("SpinnerStyle", ctrl={"realDialThickness": "0.2"}), "center"),
+    # (v1, 50 x 46 film: a circle 50 across from the top; a 4 px 270-degree
+    # value arc outlined in ink, a 3 px gap, then a knob body: an ink edge,
+    # a 3 px grey ring and a light face, an ink pointer from the centre)
+    (r"^LEDKnobLarge", L("LcdKnobLargeStyle", ctrl={"realDialThickness": "0.08"}), "width"),
+    # (v1, 24 x 26 / 17 x 17 films: no arc; an ink edge, a grey ring round a
+    # light face, an ink pointer; a dark shadow under the foot)
+    (r"^LEDKnobSmall", L("LcdKnobSmallStyle", ctrl={"realDialThickness": "0.04"}), "top"),
+    (r"^LEDKnobMicro", L("LcdKnobMicroStyle", ctrl={"realDialThickness": "0.05"}), "top"),
+    # (v1, 20 x 20 / 50 x 50 films: a light-blue ring, two darker
+    # arrowheads chasing round it)
+    (r"^LEDSpinnerLarge", L("SpinnerStyle", ctrl={"realDialThickness": "0.1", "realSpinnerInset": "4.5", "realSpinnerArrow": "0.26"}),
+     "center"),
+    (r"^LEDSpinner", L("SpinnerStyle", ctrl={"realDialThickness": "0.13", "realSpinnerInset": "1", "realSpinnerArrow": "0.36"}), "center"),
 ]
 
 # The panels drawn under knobs big enough to have them (dials over 32 px):
@@ -415,7 +421,7 @@ KNOB_BODY = {
     "HardKnobStyle": [
         ("HardKnobHaloStyle", -0.13, -0.13, 1.13, 1.13),
         ("HardKnobShadowStyle", 0.0, 0.6, 1.0, 1.4),
-        ("HardKnobRingStyle", 0, 0, 1, 1),
+        ("HardKnobRingStyle", -0.025, -0.025, 1.025, 1.025),
         # (the scale's end marks, below left and right)
         ("HardKnobMarkStyle", -0.02, 0.99, 0.05, 1.06),
         ("HardKnobMarkStyle", 0.95, 0.99, 1.02, 1.06),

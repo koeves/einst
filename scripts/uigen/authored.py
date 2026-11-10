@@ -162,8 +162,9 @@ CENTRED = {"Balance", "Pitch", "Tone"}
 
 W, H = 193, 150
 COMBO_W, TOGGLE_CELL = 75, 44
-LARGE = (50, 46, "LEDKnobLargeLR", "0.14")
-SMALL = (24, 26, "LEDKnobSmallLR", "0.22")
+# (the knobs' dial thickness as the converted v1 knobs have it, looks.KNOBS)
+LARGE = (50, 46, "LEDKnobLargeLR", "0.08")
+SMALL = (24, 26, "LEDKnobSmallLR", "0.04")
 CAPTION = 15
 
 

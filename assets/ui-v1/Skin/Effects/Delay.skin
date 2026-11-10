@@ -10,9 +10,9 @@
         </CtrlPanel>
         <CtrlButton name="Control6" rect="25, 21, 16, 17" id="100002" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
         <CtrlLabel name="CtrlLabel" rect="-1, 43, 66, 13" id="100003" style="StandardLabelCenteredStyle" text="Sync" />
-        <CtrlKnob name="Control1" rect="7, 68, 50, 46" displayName="Delay time" id="100001" realDialThickness="0.09" style="LEDKnobLargeLR" />
-        <CtrlKnob name="Control2" rect="71, 68, 50, 46" id="100021" realDialThickness="0.09" style="LEDKnobLargeLR" />
-        <CtrlKnob name="Control5" rect="136, 68, 50, 46" id="100027" realDialThickness="0.09" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control1" rect="7, 68, 50, 46" displayName="Delay time" id="100001" realDialThickness="0.08" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control2" rect="71, 68, 50, 46" id="100021" realDialThickness="0.08" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control5" rect="136, 68, 50, 46" id="100027" realDialThickness="0.08" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="-1, 118, 66, 15" id="100020" style="StandardLabelCenteredStyle" text="Delay Time" />
         <CtrlLabel name="CtrlLabel" rect="63, 118, 66, 15" id="100022" style="StandardLabelCenteredStyle" text="Feedback" />
         <CtrlLabel name="CtrlLabel" rect="128, 118, 66, 15" id="100028" style="StandardLabelCenteredStyle" text="Swing" />

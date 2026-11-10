@@ -11,10 +11,10 @@
         <CtrlLabel name="CtrlLabel" rect="378, 26, 66, 13" id="100010" style="StandardLabelCenteredStyle" text="Cutoff " />
         <CtrlLabel name="CtrlLabel" rect="442, 26, 66, 13" id="100000" style="StandardLabelCenteredStyle" text="Res" />
         <CtrlKnob name="Send1Knob" rect="61, 39, 24, 26" displayName="Layer engine aux 1 send" id="100025" realDialThickness="0.04" style="LEDKnobSmallLR" />
-        <CtrlKnob name="TuneKnob" rect="111, 39, 50, 46" displayName="Layer coarse tune" id="100009" realDialThickness="0.09" style="LEDKnobLargeC" />
-        <CtrlKnob name="FineKnob" rect="175, 39, 50, 46" displayName="Layer fine tune" id="100011" realDialThickness="0.09" style="LEDKnobLargeC" />
-        <CtrlKnob name="CutoffKnob" rect="386, 39, 50, 46" displayName="Layer filter cutoff" id="100017" realDialThickness="0.09" style="LEDKnobLargeLR" />
-        <CtrlKnob name="ResKnob" rect="450, 39, 50, 46" displayName="Layer filter resonance" id="100019" realDialThickness="0.09" style="LEDKnobLargeLR" />
+        <CtrlKnob name="TuneKnob" rect="111, 39, 50, 46" displayName="Layer coarse tune" id="100009" optCentered="true" realDialThickness="0.08" style="LEDKnobLargeC" />
+        <CtrlKnob name="FineKnob" rect="175, 39, 50, 46" displayName="Layer fine tune" id="100011" optCentered="true" realDialThickness="0.08" style="LEDKnobLargeC" />
+        <CtrlKnob name="CutoffKnob" rect="386, 39, 50, 46" displayName="Layer filter cutoff" id="100017" realDialThickness="0.08" style="LEDKnobLargeLR" />
+        <CtrlKnob name="ResKnob" rect="450, 39, 50, 46" displayName="Layer filter resonance" id="100019" realDialThickness="0.08" style="LEDKnobLargeLR" />
         <CtrlSlider name="GainKnob" rect="20, 40, 18, 106" displayName="Layer Gain" id="100000" realTrackInset="0.0" style="FatVerticalFaderStyle" />
         <CtrlLabel name="SendImage0" rect="42, 43, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="►" />
         <CtrlLabel name="CtrlLabel" rect="42, 43, 16, 18" id="100000" style="StandardLabelStyle" text="S1" />
@@ -28,10 +28,10 @@
         <CtrlKnob name="Send3Knob" rect="61, 95, 24, 26" displayName="Layer engine aux 3 send" id="100027" realDialThickness="0.04" style="LEDKnobSmallLR" />
         <CtrlLabel name="SendImage2" rect="42, 99, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="►" />
         <CtrlLabel name="CtrlLabel" rect="42, 99, 16, 18" id="100002" style="StandardLabelStyle" text="S3" />
-        <CtrlKnob name="V2P" rect="111, 101, 50, 46" displayName="Velocity to Pitch" id="100000" realDialThickness="0.09" style="LEDKnobLargeC" />
-        <CtrlKnob name="PreDelayKnob" rect="174, 101, 50, 46" displayName="Pre delay" id="100000" realDialThickness="0.09" style="LEDKnobLargeLR" />
-        <CtrlKnob name="DriveKnob" rect="386, 101, 50, 46" displayName="Layer filter drive" id="100021" realDialThickness="0.09" style="LEDKnobLargeLR" />
-        <CtrlKnob name="V2C" rect="450, 101, 50, 46" displayName="Velocity to Cutoff" id="100001" realDialThickness="0.09" style="LEDKnobLargeC" />
+        <CtrlKnob name="V2P" rect="111, 101, 50, 46" displayName="Velocity to Pitch" id="100000" optCentered="true" realDialThickness="0.08" style="LEDKnobLargeC" />
+        <CtrlKnob name="PreDelayKnob" rect="174, 101, 50, 46" displayName="Pre delay" id="100000" realDialThickness="0.08" style="LEDKnobLargeLR" />
+        <CtrlKnob name="DriveKnob" rect="386, 101, 50, 46" displayName="Layer filter drive" id="100021" realDialThickness="0.08" style="LEDKnobLargeLR" />
+        <CtrlKnob name="V2C" rect="450, 101, 50, 46" displayName="Velocity to Cutoff" id="100001" optCentered="true" realDialThickness="0.08" style="LEDKnobLargeC" />
         <CtrlKnob name="Send4Knob" rect="61, 123, 24, 26" displayName="Layer grid global send" id="100028" realDialThickness="0.04" style="LEDKnobSmallLR" />
         <CtrlLabel name="SendImage3" rect="42, 127, 16, 18" id="0" legacyClass="CtrlImageView" style="SendArrowImageStyle" text="►" />
         <CtrlLabel name="CtrlLabel" rect="42, 127, 16, 18" id="100003" style="StandardLabelStyle" text="S4" />

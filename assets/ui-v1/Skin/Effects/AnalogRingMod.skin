@@ -3,11 +3,11 @@
     <CtrlPanel name="CtrlPanel" rect="0, 0, 193, 150" style="EmptyPanelStyle">
         <CtrlPopupButton name="Control1" rect="59, 5, 75, 17" displayName="Mode" optSingleClickEdit="true" style="LEDComboBoxStyle" />
         <CtrlLabel name="CtrlLabel" rect="55, 24, 83, 15" style="StandardLabelCenteredStyle" text="Mode" />
-        <CtrlKnob name="Control2" rect="7, 61, 50, 46" displayName="Drive" realDialThickness="0.14" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control2" rect="7, 61, 50, 46" displayName="Drive" realDialThickness="0.08" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="-1, 111, 66, 15" style="StandardLabelCenteredStyle" text="Drive" />
-        <CtrlKnob name="Control3" rect="71, 61, 50, 46" displayName="Pitch" realDialThickness="0.14" style="LEDKnobLargeC" />
+        <CtrlKnob name="Control3" rect="71, 61, 50, 46" displayName="Pitch" realDialThickness="0.08" style="LEDKnobLargeC" />
         <CtrlLabel name="CtrlLabel" rect="63, 111, 66, 15" style="StandardLabelCenteredStyle" text="Pitch" />
-        <CtrlKnob name="Control4" rect="136, 61, 50, 46" displayName="Tone" realDialThickness="0.14" style="LEDKnobLargeC" />
+        <CtrlKnob name="Control4" rect="136, 61, 50, 46" displayName="Tone" realDialThickness="0.08" style="LEDKnobLargeC" />
         <CtrlLabel name="CtrlLabel" rect="128, 111, 66, 15" style="StandardLabelCenteredStyle" text="Tone" />
     </CtrlPanel>
 </root>

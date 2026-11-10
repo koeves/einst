@@ -2,6 +2,6 @@
 <root>
     <CtrlPanel name="CtrlPanel" rect="0, 0, 400, 175" id="0" style="ModalPanelStyle">
         <CtrlLabel name="Label" rect="-8, 16, 416, 50" id="100001" style="ModalLargeLabelCenteredNotificationStyle" text="Converting file. Please wait..." />
-        <CtrlKnob name="Spinner" rect="167, 90, 50, 50" id="100002" realDialThickness="0.2" style="LargeSpinnerStyle" />
+        <CtrlKnob name="Spinner" rect="167, 90, 50, 50" id="100002" realDialThickness="0.1" realSpinnerArrow="0.26" realSpinnerInset="4.5" style="LargeSpinnerStyle" />
     </CtrlPanel>
 </root>

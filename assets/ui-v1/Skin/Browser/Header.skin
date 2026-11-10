@@ -9,7 +9,7 @@
         <CtrlButton name="EnterButton" rect="60, 1, 23, 24" displayName="Enter the selected folder" id="100000" optIsMomentary="true" style="EnterButtonStyle" text="" />
         <CtrlButton name="ParentButton" rect="84, 1, 23, 24" displayName="Navigate to the parent of the current directory" id="100000" optIsMomentary="true" style="BrowserParentButtonStyle" text="" />
         <CtrlButton name="RefreshButton" rect="108, 1, 23, 24" displayName="Refresh current file list" id="100000" optIsMomentary="true" style="RefreshButtonStyle" text="" />
-        <CtrlKnob name="Spinner" rect="138, 2, 20, 20" id="100001" realDialThickness="0.2" style="SpinnerStyle" />
+        <CtrlKnob name="Spinner" rect="138, 2, 20, 20" id="100001" realDialThickness="0.13" realSpinnerArrow="0.36" realSpinnerInset="1" style="SpinnerStyle" />
         <CtrlPanel name="CtrlImageView" rect="161, 1, 126, 24" id="100006" legacyClass="CtrlImageView" style="StupidImageStyle" />
         <CtrlSearchBox name="SearchBox" rect="180, 3, 105, 18" id="0" legacyClass="CtrlSearchTextBox" optSingleClickEdit="true" style="SearchBoxStyle" />
         <CtrlButton name="SearchOptionsButton" rect="165, 7, 14, 11" displayName="Alter search settings" id="0" optIsMomentary="true" style="SearchOptionsStyle" text="" />

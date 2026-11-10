@@ -5,13 +5,13 @@
         <CtrlLabel name="CtrlLabel" rect="21, 24, 83, 15" style="StandardLabelCenteredStyle" text="Mode" />
         <CtrlButton name="Control6" rect="138, 5, 16, 17" displayName="Saturate" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
         <CtrlLabel name="CtrlLabel" rect="120, 24, 52, 15" style="StandardLabelCenteredStyle" text="Saturate" />
-        <CtrlKnob name="Control2" rect="12, 71, 24, 26" displayName="Drive" realDialThickness="0.22" style="LEDKnobSmallLR" />
+        <CtrlKnob name="Control2" rect="12, 71, 24, 26" displayName="Drive" realDialThickness="0.04" style="LEDKnobSmallLR" />
         <CtrlLabel name="CtrlLabel" rect="-2, 101, 52, 15" style="StandardLabelCenteredStyle" text="Drive" />
-        <CtrlKnob name="Control3" rect="60, 71, 24, 26" displayName="Post Freq" realDialThickness="0.22" style="LEDKnobSmallLR" />
+        <CtrlKnob name="Control3" rect="60, 71, 24, 26" displayName="Post Freq" realDialThickness="0.04" style="LEDKnobSmallLR" />
         <CtrlLabel name="CtrlLabel" rect="46, 101, 52, 15" style="StandardLabelCenteredStyle" text="Post Freq" />
-        <CtrlKnob name="Control4" rect="109, 71, 24, 26" displayName="Restore" realDialThickness="0.22" style="LEDKnobSmallLR" />
+        <CtrlKnob name="Control4" rect="109, 71, 24, 26" displayName="Restore" realDialThickness="0.04" style="LEDKnobSmallLR" />
         <CtrlLabel name="CtrlLabel" rect="95, 101, 52, 15" style="StandardLabelCenteredStyle" text="Restore" />
-        <CtrlKnob name="Control5" rect="157, 71, 24, 26" displayName="Gain" realDialThickness="0.22" style="LEDKnobSmallLR" />
+        <CtrlKnob name="Control5" rect="157, 71, 24, 26" displayName="Gain" realDialThickness="0.04" style="LEDKnobSmallLR" />
         <CtrlLabel name="CtrlLabel" rect="143, 101, 52, 15" style="StandardLabelCenteredStyle" text="Gain" />
     </CtrlPanel>
 </root>

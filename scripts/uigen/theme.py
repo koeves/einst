@@ -20,6 +20,15 @@ COLOURS = {
     "KnobLcdTrack": (169, 176, 191),
     "KnobLcdValue": (71, 77, 106),
     "KnobLcdEdge": (57, 65, 95),
+    "KnobLcdInnerEdge": (110, 117, 140),
+    "KnobLcdShadow": (76, 83, 111),
+    # v1's hardware knob: the value arc's track and lit part, the face's edge.
+    "KnobTrack": (93, 93, 93),
+    "KnobArcLit": (125, 182, 241),
+    "KnobFaceEdge": (90, 90, 90),
+    # v1's busy spinner: a light-blue ring, darker arrowheads.
+    "SpinnerRing": (127, 180, 220),
+    "SpinnerArrow": (62, 106, 146),
     # v1's selected radio segment.
     "RadioOn": (149, 156, 173),
     "Lcd": (210, 217, 227),
@@ -116,10 +125,10 @@ COLOURS = {
     "KeyFaceSelected": (240, 238, 214),
     "KeyFrame": (140, 142, 141),
     "KeyAmber": (240, 210, 50),
-    "KnobFace": (250, 249, 250),
-    "KnobFaceLow": (184, 187, 186),
+    "KnobFace": (239, 239, 239),
+    "KnobFaceLow": (188, 188, 188),
     "KnobRing": (22, 25, 26),
-    "KnobRingTop": (128, 128, 126),
+    "KnobRingTop": (24, 24, 24),
     "KnobRingLow": (4, 4, 5),
     "KnobHalo": (238, 238, 237),
     "KnobHaloLow": (220, 221, 220),
@@ -129,7 +138,7 @@ COLOURS = {
     "KnobShadowOut": (200, 202, 201, 0),
     "KnobArc": (44, 70, 120),
     "KnobDot": (70, 150, 230),
-    "KnobPointer": (84, 86, 88),
+    "KnobPointer": (131, 131, 131),
     "SmallKnobFace": (66, 67, 66),
     "SmallKnobFaceLow": (26, 28, 27),
     "SmallKnobRim": (105, 109, 110),
@@ -393,7 +402,7 @@ def base_styles():
        colAltText="LcdLight", realCornerRounding="2", enumTextShortenAlgorithm="end")
     st("BaseKnobStyle", "BaseStyle", colFill="InkSoft", colFillHighlight="Ink", colAltFill="LcdLight", colAltBorder="Ink",
        colFace="LcdFace", colFaceGradientTo="LcdFaceLow", realFaceInset="1", optPointer="true", colPointer="Ink",
-       realPointerWidth="2", realPointerInset="2")
+       realPointerWidth="2", realPointerInset="2", realArcStart="135", realArcSweep="270")
     st("BaseSliderStyle", "BaseStyle", colFill="InkSoft", colFillHighlight="Ink", colAltFill="LcdLight",
        colAltBorder="Ink", realCornerRounding="2")
     st("BaseImageStyle", "BasePanelStyle")
@@ -612,11 +621,13 @@ def base_styles():
     # The large knob: a light halo, the dark ring (lit grey at the top) and a
     # face lit from the top left are panels behind it (looks.KNOB_BODY);
     # the knob draws the face and pointer.
-    st("HardKnobStyle", "BaseKnobStyle", colFill="Transparent",
-       colFace="KnobFace", colFaceGradientTo="KnobFaceLow", enumGradientDirection="Radial", realGradientCentreX="0.42",
-       realGradientCentreY="0.18", realGradientRadius="0.95",
-       colPointer="KnobPointer", realPointerStart="0.3", realPointerInset="3.3", optPointerDot="false", colAltFill="KnobDot",
-       colAltBorder="KnobDot", colFillHighlight="Readout", realFaceInset="2")
+    # (v1: the arc 2 px inside the black ring on a grey track, the face
+    # lit at its top edge in a dark line, the pointer from 0.3 to 0.7 of
+    # the face's radius)
+    st("HardKnobStyle", "BaseKnobStyle", colFill="KnobTrack", realArcInset="0.5",
+       colFace="KnobFace", colFaceGradientTo="KnobFaceLow", colFaceBorder="KnobFaceEdge", realFaceBorderWidth="1",
+       colPointer="KnobPointer", realPointerStart="0.3", realPointerInset="8.5", optPointerDot="false", colAltFill="KnobDot",
+       colAltBorder="KnobDot", colFillHighlight="KnobArcLit", realFaceInset="3.5")
     st("HardKnobHaloStyle", "BasePanelStyle", colFill="KnobHalo", colFillGradientTo="KnobHaloLow", enumGradientDirection="Radial",
        realGradientRadius="0.5", realCornerRounding="100")
     st("HardKnobMarkStyle", "BasePanelStyle", colFill="KnobMark", realCornerRounding="100")
@@ -629,16 +640,26 @@ def base_styles():
        realPointerWidth="1.5", realPointerInset="1")
     # v1: a uniform dark ring (the value shows by the pointer), light face.
     st("LcdKnobStyle", "BaseKnobStyle", colFill="InkMid", colFillHighlight="InkMid")
-    st("LcdKnobLargeStyle", "BaseKnobStyle", colFill="KnobLcdTrack", colFillHighlight="KnobLcdValue", colFace="LcdLight",
-       colFaceGradientTo="LcdLight", realFaceInset="3", colFaceBorder="InkSoft", realFaceBorderWidth="3", colPointer="Ink",
-       realPointerWidth="2.5", realPointerStart="0.1", realPointerInset="6")
+    # (v1, measured on the 50 px film: the arc r 25..19 with a 1 px ink
+    # outline, the body r 15.5 (ink edge, 3 px grey ring, a mid edge), the
+    # pointer 2 px from the centre to r 9)
+    st("LcdKnobLargeStyle", "BaseKnobStyle", colFill="KnobLcdTrack", colFillHighlight="KnobLcdValue", colArcBorder="Ink", realArcInset="1",
+       colFace="LcdLight", colFaceGradientTo="LcdLight", realFaceInset="5.5", colFaceBorder="InkSoft", realFaceBorderWidth="4",
+       colFaceEdge="Ink", colFaceInnerEdge="KnobLcdInnerEdge", colPointer="Ink", realPointerWidth="2", realPointerStart="0",
+       realPointerInset="12")
+    # (v1's 24 px film: an ink edge, a 2 px grey ring, the face r 8, the
+    # pointer from r 2 to 8; a dark shadow 2 px under the dial)
     st("LcdKnobSmallStyle", "BaseKnobStyle", colFill="Transparent", colFillHighlight="Transparent",
        colFace="LcdLight", colFaceGradientTo="LcdLight", realFaceInset="-1", colFaceBorder="InkSoft", realFaceBorderWidth="3",
-       colPointer="Ink", realPointerWidth="2", realPointerInset="3")
-    st("LcdKnobMicroStyle", "LcdKnobSmallStyle", realFaceBorderWidth="2", realPointerInset="2")
+       colFaceEdge="KnobLcdEdge", colFaceInnerEdge="KnobLcdInnerEdge", colPointer="Ink", realPointerWidth="2", realPointerStart="0.2",
+       realPointerInset="3", colDialShadow="KnobLcdShadow")
+    # (17 px: the face r 5.5, a 1.5 px pointer from r 1 to 5)
+    st("LcdKnobMicroStyle", "LcdKnobSmallStyle", realFaceBorderWidth="2", realPointerWidth="1.5", realPointerStart="0.2", realPointerInset="2.5",
+       colDialShadow="Transparent")
     st("SpinnerFaceStyle", "BaseKnobStyle")
     st("LcdKnobBodyStyle", "BasePanelStyle", colFill="LcdLight", colBorder="InkSoft", optDrawBorder="true", realCornerRounding="100")
-    st("SpinnerStyle", "BaseKnobStyle", colFill="Transparent", colFillHighlight="InkSoft", optPointer="false", colFace="Transparent")
+    st("SpinnerStyle", "BaseKnobStyle", colFill="SpinnerRing", optSpinner="true", colPointer="SpinnerArrow", optPointer="false",
+       colFace="Transparent")
     st("LcdFaderStyle", "BaseSliderStyle", enumHandleShape="Rect", colFill="LcdFace", colFillHighlight="Transparent",
        colTrackBorder="LcdEdge", colGroove="LcdGroove", colAltFill="LcdCap", colAltFillGradientTo="LcdCapLow", colAltBorder="LcdCapLow",
        colGrip="LcdGrip", intGripLines="2", enumGripShape="Squares", realGripSize="2", realCornerRounding="3", realHandleInset="2",

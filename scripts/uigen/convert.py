@@ -443,7 +443,7 @@ class Converter:
         if not draw_text and not look:
             out["optDrawText"] = "false"
         if fit:
-            out["enumDialAlign"] = "Top" if fit == "top" else "Center"
+            out["enumDialAlign"] = {"top": "Top", "width": "Width"}.get(fit, "Center")
         parent = STYLE_BASES.get(el.tag, "BaseStyle")
         cls = el.tag if el.tag in NATIVE_STYLES else "CtrlStyle"
         if look:
@@ -603,7 +603,7 @@ class Converter:
                 # flipped (inferred from the faders, no evidence yet).
                 if info["flip"] != (rect[3] > rect[2]):
                     attrs["optFlipDirection"] = "true"
-        if v1cls in ("CtrlKnob",) and info and info["look"] and info["look"]["parent"] in ("HardKnobStyle", "LcdKnobStyle"):
+        if v1cls in ("CtrlKnob",) and info and info["look"] and info["look"]["parent"] in ("HardKnobStyle", "LcdKnobStyle", "LcdKnobLargeStyle"):
             if attrs.get("style", "").endswith("C"):
                 attrs["optCentered"] = "true"
         decor = (look["decor"] if look else []) + PANEL_DECOR.get(ov, []) + NAMED_DECOR.get((source, attrs.get("name")), [])
@@ -684,9 +684,9 @@ class Converter:
         """The body panel under the square dial dreist-gui draws in a knob's
         rect (enumDialAlign)."""
         x, y, w, h = rect
-        s = min(w, h)
+        s = w if info["fit"] == "width" else min(w, h)
         nx = x + (w - s) // 2
-        ny = y if info["fit"] == "top" else y + (h - s) // 2
+        ny = y if info["fit"] in ("top", "width") else y + (h - s) // 2
         if s <= 32:
             return
         for style, x0, y0, x1, y1 in looks.KNOB_BODY.get(info["look"]["parent"], []):
