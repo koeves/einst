@@ -1,5 +1,5 @@
 """The `Einst` theme of the v1-layout UI: palette, type scale and the base
-control styles every converted v1 style inherits from.
+control styles every panel style (skins/styles.py) builds on.
 
 The palette follows v1's own (light blue-grey "LCD", dark-blue ink, amber
 selection; the RE survey's palette section) and adds the chassis colours
@@ -352,14 +352,12 @@ def colour_value(c):
 # ---------------------------------------------------------------- fonts
 
 TEXT_FAMILY = "Liberation Sans"  # metric stand-in for v1's Arial
-# v1's font sizes drew smaller than the same pixel size here (v1's screens:
-# "Clear All" spans about 37 px where Liberation Sans 12 needs 46), so
-# converted sizes are scaled by this.
-TEXT_SCALE = 0.83
 ICON_FAMILY = "Einst-Icons"
 
-# (size, bold) of every text font a converted style may name, plus the
-# theme's own; named Sans<size>[Bold].
+# (size, bold) of the theme's text fonts (the panel styles add theirs,
+# skins/styles.py FONTS); named Sans<size>[Bold]. The panel styles' sizes
+# are v1's scaled by 0.83 (v1's fonts drew smaller than the same pixel
+# size here: "Clear All" spans about 37 px where Liberation Sans 12 needs 46).
 TEXT_SIZES = [(7, True), (8, False), (8, True), (9, False), (9, True), (10, False), (10, True), (11, False), (11, True),
               (12, False), (12, True), (13, False), (14, False), (14, True), (18, False), (24, False), (32, False), (48, True)]
 ICON_SIZES = [8, 10, 11, 12, 14, 16, 18, 22]
@@ -635,7 +633,7 @@ def base_styles():
 
     # Knobs, faders, meters.
     # The large knob: a light halo, the dark ring (lit grey at the top) and a
-    # face lit from the top left are panels behind it (looks.KNOB_BODY);
+    # face lit from the top left are panels behind it (decor in the skins);
     # the knob draws the face and pointer.
     # (v1: the arc 2 px inside the black ring on a grey track, the face
     # lit at its top edge in a dark line, the pointer from 0.3 to 0.7 of
@@ -856,28 +854,6 @@ def base_styles():
     st("MenuStyle", "BaseStyle", optDrawBorder="true", optDrawShadow="true", colFill="LcdLight", colBorder="Ink", colAltFill="Amber",
        colDivider="InkSoft", colSubMenuArrow="Ink", colText="Ink", realCornerRounding="3")
     return S
-
-
-# Attributes set on converted v1 styles (v1 left them to code or to a
-# bitmap): style -> attrs.
-STYLE_OVERRIDES = {
-    # The table header band (v1's header bitmap).
-    "GlobalTableStyle": {"colHeaderFill": "LcdDim"},
-    "GlobalTableStyleAlwaysVisibleHSlider": {"colHeaderFill": "LcdDim"},
-    # The browser's search box (v1: optNoBackground, on the SearchBox art;
-    # the options button left of it carries the magnifier).
-    # The list's view options button: a bare navy ▼ (the reference
-    # screenshots).
-    "BrowserHeaderViewOptionsButtonStyle": {"colText": "Ink", "colAltText": "Ink", "font": text_font(9)},
-    "SearchBoxStyle": {"colFill": "Transparent", "colBorder": "Transparent", "realGradientShade": "0", "optSearchIcon": "false"},
-    # The slicer's screen (v1's background bitmap).
-    "PreviewPanelBackgroundStyle": {"colFill": "Lcd"},
-    # The scene mini-map's cells: square and flat (ScenePanel.skin).
-    "MiniSceneEvenButtonStyle": {"realCornerRounding": "0", "realGradientShade": "0"},
-    "MiniSceneOddButtonStyle": {"realCornerRounding": "0", "realGradientShade": "0"},
-    # A scene's name shortens in the middle (v1's shortening label).
-    "SceneNoteLabelCenteredStyle": {"enumTextShortenAlgorithm": "middle"},
-}
 
 
 # Style classes of the theme styles that dreist-gui dispatches on by class.

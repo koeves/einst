@@ -1,0 +1,65 @@
+"""The slicer / preview panel (Preview/)."""
+
+from . import N, skin
+
+
+@skin("Preview/PreviewPanel.skin")
+def preview_panel():
+    return [
+        N("Panel", "CtrlPanel", (0, 0, 820, 395), id=0, style="PreviewPanelBackgroundStyle", kids=[
+            N("Panel", None, (1, 2, 812, 391), style="LcdBezelStyle"),
+            N("Panel", None, (5, 9, 805, 376), style="LcdInsetStyle"),
+            N("Panel", None, (5, 124, 805, 6), style="LcdDividerStyle"),
+            N("Panel", None, (5, 340, 805, 6), style="LcdDividerStyle"),
+            N("Panel", "PatternPreview", (7, 12, 800, 112), id=100001, legacyClass="CtrlImageView",
+              overloadClass="EditorPreviewPanelPatternDisplay"),
+            N("Panel", "WaveDisplay", (8, 131, 799, 194), id=100000, overloadClass="EditorPreviewWaveEditor"),
+            N("Button", "ZoomOutButton", (782, 327, 12, 12), id=100001, optIsMomentary=True, style="ZoomOutButtonStyle",
+              text="\ue91c"),
+            N("Button", "ZoomInButton", (795, 327, 12, 12), id=100001, optIsMomentary=True, style="ZoomInButtonStyle",
+              text="\ue91d"),
+            N("Panel", "Controls", (9, 345, 800, 40), id=0, style="EmptyPanelStyle", kids=[
+                N("Label", "CtrlLabel", (-8, 2, 66, 13), id=100000, style="StandardLabelCenteredStyle", text="File BPM"),
+                N("Label", "CtrlLabel", (51, 2, 66, 13), id=100017, style="StandardLabelCenteredStyle", text="BPM"),
+                N("Label", "CtrlLabel", (104, 2, 66, 13), id=100018, style="StandardLabelCenteredStyle", text="Bars"),
+                N("Label", "CtrlLabel", (157, 2, 66, 13), id=100019, style="StandardLabelCenteredStyle", text="Beats"),
+                N("Label", "CtrlLabel", (216, 2, 136, 13), id=100006, style="StandardLabelCenteredStyle", text="Detection Mode"),
+                N("Label", "SenseLabel", (338, 2, 81, 13), id=100013, style="StandardLabelCenteredStyle", text="Sensitivity"),
+                N("Label", "CtrlLabel", (406, 2, 121, 13), id=100000, style="StandardLabelCenteredStyle", text="Assignment mode"),
+                N("Label", "ExtractLabel", (521, 2, 171, 13), id=100005, style="StandardLabelCenteredStyle", text="Extract..."),
+                N("Label", "SrcBPM", (-8, 15, 66, 17), displayName="The original BPM of the file, detected from the file",
+                  id=100002, style="StandardLabelCenteredStyle"),
+                N("TextBox", "BPMBox", (59, 15, 50, 17), id=100014, optSingleClickEdit=True, style="LEDEditBoxStyle"),
+                N("TextBox", "BarsBox", (112, 15, 50, 17), id=100015, optSingleClickEdit=True, style="LEDEditBoxStyle"),
+                N("TextBox", "BeatsBox", (165, 15, 50, 17), id=100016, optSingleClickEdit=True, style="LEDEditBoxStyle"),
+                N("ButtonGroup", "SliceModeButtonGroup", (224, 15, 122, 17), id=100007, style="BasePanelStyle", kids=[
+                    N("Button", "CtrlButton", (0, 0, 60, 20), displayName="Slice audio based on transient detection", id=100008,
+                      optIsMomentary=False, style="RadioButtonLeftStyle", text="Transient"),
+                    N("Button", "CtrlButton", (58, 0, 60, 20), displayName="Divide audio in to an equal number of sections",
+                      id=100009, optIsMomentary=False, style="RadioButtonRightStyle", text="Divide"),
+                ]),
+                N("ValueBox", "ChopDivisionBox", (350, 15, 50, 17), id=100011, optSingleClickEdit=True,
+                  style="LEDSmallNonDragableValueBoxStyle"),
+                N("Knob", "SensitivitySlider", (370, 15, 17, 17), displayName="Transient detection threshold", id=100026,
+                  realDialThickness=0.05, style="LEDKnobMicroLR"),
+                N("Button", "AnalyzeButton", (414, 15, 50, 17),
+                  displayName="Classify slices as a specific type of drum and allocate to pads based on this analysis",
+                  id=100023, optIsMomentary=False, style="LEDLatchingButtonStyle", text="Classify"),
+                N("Button", "MultiLayersButton", (466, 15, 50, 17),
+                  displayName="Use multiple layers on each pad when allocating slices", id=100000, optIsMomentary=False,
+                  style="LEDLatchingButtonStyle", text="Use layers"),
+                N("Button", "BothButton", (529, 15, 50, 17), displayName="Send both audio to pads and the pattern", id=0,
+                  optIsMomentary=True, style="LEDMomentaryButtonStyle", text="Audio+Ptn"),
+                N("Button", "AudioButton", (581, 15, 50, 17), displayName="Send audio slices to pads", id=0,
+                  optIsMomentary=True, style="LEDMomentaryButtonStyle", text="Audio"),
+                N("Button", "PatternButton", (633, 15, 50, 17), displayName="Send pattern", id=0, optIsMomentary=True,
+                  style="LEDMomentaryButtonStyle", text="Pattern"),
+                N("Button", "CancelButton", (694, 15, 50, 17), displayName="Cancel slicing", id=100000, optIsMomentary=True,
+                  style="LEDMomentaryButtonStyle", text="Cancel"),
+                N("Button", "DoneButton", (747, 15, 50, 17), displayName="Confirm slicing", id=100000, optIsMomentary=True,
+                  style="LEDMomentaryButtonStyle", text="Done"),
+            ]),
+            N("Panel", "PreviewZoomSlider", (8, 327, 772, 12), displayName="Drag to scroll, drag an edge to zoom",
+              overloadClass="WaveDisplayZoomSlider", style="WaveDisplayZoomSliderStyle"),
+        ]),
+    ]

@@ -494,7 +494,7 @@ impl FxPanel {
             slot.set_attr("fxKind", kind.to_string());
             slot.style = if kind == 0 { "EffectPanelBackgroundNoFX" } else { "EffectPanelBackground" }.into();
             // The card under the slot (the skin's decor, scripts/uigen
-            // looks.py): dark when empty, its inner edge darker and no
+            // skins/effects.py): dark when empty, its inner edge darker and no
             // line under the menu band.
             for k in slot.children.iter_mut() {
                 let base = k.style.strip_suffix("EmptyStyle").or_else(|| k.style.strip_suffix("Style")).unwrap_or("");
