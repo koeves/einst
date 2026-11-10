@@ -3,6 +3,8 @@
 use einst_editor::{Editor, Model};
 
 fn main() {
+    // Einst's profile and resources.
+    einst::install();
     let args: Vec<String> = std::env::args().collect();
     let doc = args.get(1).filter(|s| !s.is_empty()).map(|p| dreist_formats::Project::load(std::path::Path::new(p)).expect("project").raw).unwrap_or_else(|| dreist_formats::Node::new("root", None));
     let scale: f32 = args.get(2).and_then(|s| s.parse().ok()).unwrap_or(2.0);
@@ -64,6 +66,39 @@ fn main() {
         }
     }
     println!("mouse move {:.3} ms ({evs} events)", t.elapsed().as_secs_f64() * 1000.0 / 400.0);
+    menu_hover(&mut ed, scale, n);
+}
+
+/// The main menu open, the pointer moving from item to item as the window
+/// drives it: the move and its tooltip query, the editor link's frame
+/// (animations, transport, meters) and the repaint.
+fn menu_hover(ed: &mut Editor, scale: f32, n: usize) {
+    use dreist_gui::app::UiEvent;
+    let Some(p) = ed.app.root.path_of("GridButton") else { return };
+    ed.handle(&UiEvent::Clicked { path: p, name: "GridButton".into(), id: 0, on: false });
+    let Some(m) = ed.app.menu.clone() else { return };
+    let rows: Vec<f32> = (0..m.items.len()).filter(|&i| !m.items[i].is_empty()).map(|i| m.y + i as f32 * 20.0 + 10.0).collect();
+    let _ = ed.render_frame(scale);
+    let (mut full, mut ms) = (0, Vec::new());
+    for k in 0..n.max(rows.len()) {
+        let t = std::time::Instant::now();
+        for ev in ed.app.mouse_move(m.x + m.w / 2.0, rows[k % rows.len()]) {
+            ed.handle(&ev);
+        }
+        let path = ed.app.tooltip_target();
+        ed.handle(&UiEvent::ToolTip { path });
+        let _ = ed.take_commands();
+        ed.animate();
+        ed.set_playback(false, [None; 8], None);
+        ed.update_meters(&dreist_engine::Meters::default());
+        full += ed.app.dirty as usize;
+        let _ = ed.render_frame(scale);
+        ms.push(t.elapsed().as_secs_f64() * 1000.0);
+    }
+    ms.sort_by(f64::total_cmp);
+    let mean = ms.iter().sum::<f64>() / ms.len() as f64;
+    println!("menu hover {mean:.2} ms (max {:.2}), {full} full repaints of {}", ms[ms.len() - 1], ms.len());
+    ed.app.menu = None;
 }
 
 /// Playback frames as the plugin's editor link drives them: `PLAYBENCH=1`.
