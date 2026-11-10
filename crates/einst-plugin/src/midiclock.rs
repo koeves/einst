@@ -111,7 +111,7 @@ impl Clock {
 /// audio thread drains.
 #[cfg(feature = "standalone")]
 pub struct ClockInput {
-    _conn: midir::MidiInputConnection<()>,
+    _conn: dreist_host::midi::InputConnection,
     rx: std::sync::mpsc::Receiver<(u64, [u8; 3], usize)>,
     pub clock: Clock,
 }
@@ -126,26 +126,15 @@ impl ClockInput {
             return None;
         }
         let want = einst_editor::devices::Settings::load(&o).midi_in;
-        let mut input = midir::MidiInput::new("Einst clock").ok()?;
-        input.ignore(midir::Ignore::None);
-        let ports = input.ports();
-        let port = ports.iter().find(|p| want.is_empty() || input.port_name(p).is_ok_and(|n| n == want))?.clone();
         let (tx, rx) = std::sync::mpsc::sync_channel(1024);
-        let conn = input
-            .connect(
-                &port,
-                "einst-clock",
-                move |stamp, bytes, _| {
-                    if bytes.first().is_some_and(|b| *b >= 0xf8 || *b == 0xf2) {
-                        let mut m = [0u8; 3];
-                        let n = bytes.len().min(3);
-                        m[..n].copy_from_slice(&bytes[..n]);
-                        let _ = tx.try_send((stamp, m, n));
-                    }
-                },
-                (),
-            )
-            .ok()?;
+        let conn = dreist_host::midi::connect_input("Einst clock", "einst-clock", &want, move |stamp, bytes| {
+            if bytes.first().is_some_and(|b| *b >= 0xf8 || *b == 0xf2) {
+                let mut m = [0u8; 3];
+                let n = bytes.len().min(3);
+                m[..n].copy_from_slice(&bytes[..n]);
+                let _ = tx.try_send((stamp, m, n));
+            }
+        })?;
         einst_editor::CLOCK_SYNC.store(true, std::sync::atomic::Ordering::Relaxed);
         Some(ClockInput { _conn: conn, rx, clock: Clock::default() })
     }

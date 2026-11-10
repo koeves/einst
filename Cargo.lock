@@ -818,7 +818,7 @@ checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
 name = "dreist-dsp"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "rustfft",
  "signalsmith-stretch",
@@ -826,7 +826,7 @@ dependencies = [
 
 [[package]]
 name = "dreist-engine"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "dreist-dsp",
  "dreist-formats",
@@ -836,7 +836,7 @@ dependencies = [
 
 [[package]]
 name = "dreist-formats"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "roxmltree",
  "thiserror 2.0.21",
@@ -844,7 +844,7 @@ dependencies = [
 
 [[package]]
 name = "dreist-gui"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "baseview",
  "dreist-formats",
@@ -858,8 +858,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "dreist-host"
+version = "0.2.2"
+dependencies = [
+ "clap-sys",
+ "cpal",
+ "libc",
+ "midir",
+ "rfd",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "dreist-testkit"
-version = "0.2.1"
+version = "0.2.2"
 
 [[package]]
 name = "einst"
@@ -890,11 +903,11 @@ dependencies = [
  "dreist-engine",
  "dreist-formats",
  "dreist-gui",
+ "dreist-host",
  "dreist-testkit",
  "einst",
  "einst-dsp",
  "einst-formats",
- "rfd",
 ]
 
 [[package]]
@@ -904,26 +917,21 @@ dependencies = [
  "dreist-dsp",
  "dreist-engine",
  "dreist-formats",
- "thiserror 2.0.21",
 ]
 
 [[package]]
 name = "einst-plugin"
 version = "0.2.0"
 dependencies = [
- "clap-sys",
- "cpal",
  "dreist-dsp",
  "dreist-engine",
  "dreist-formats",
  "dreist-gui",
+ "dreist-host",
  "einst",
  "einst-editor",
  "einst-formats",
- "midir",
  "nih_plug",
- "serde",
- "serde_json",
 ]
 
 [[package]]

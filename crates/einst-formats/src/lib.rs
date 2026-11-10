@@ -15,14 +15,44 @@ pub mod v2;
 
 pub use kind::FileKind;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Error {
-    #[error(transparent)]
-    Formats(#[from] dreist_formats::Error),
-    #[error("io: {0}")]
-    Io(#[from] std::io::Error),
-    #[error("not a v1 {0} file: {1}")]
+    Formats(dreist_formats::Error),
+    Io(std::io::Error),
     Shape(&'static str, String),
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Error::Formats(e) => std::fmt::Display::fmt(e, f),
+            Error::Io(e) => write!(f, "io: {e}"),
+            Error::Shape(kind, why) => write!(f, "not a v1 {kind} file: {why}"),
+        }
+    }
+}
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            // Transparent: the inner error's source.
+            Error::Formats(e) => std::error::Error::source(e),
+            Error::Io(e) => Some(e),
+            Error::Shape(..) => None,
+        }
+    }
+}
+
+impl From<dreist_formats::Error> for Error {
+    fn from(e: dreist_formats::Error) -> Self {
+        Error::Formats(e)
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Error::Io(e)
+    }
 }
 
 /// Parse any v1 XML file into the generic tree.

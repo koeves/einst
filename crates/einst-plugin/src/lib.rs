@@ -60,7 +60,8 @@ pub struct DreistParams {
 
 /// Host session state: the document (`.geist` XML) and where its relative
 /// sample paths resolve.
-#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, dreist_host::serde::Serialize, dreist_host::serde::Deserialize)]
+#[serde(crate = "dreist_host::serde")]
 pub struct Session {
     pub doc: String,
     pub samples: Option<String>,
