@@ -30,11 +30,12 @@ struct V1 {
 }
 
 impl V1 {
-    fn new() -> V1 {
-        // Ring size / max delay as the node's stream setup computes them.
-        let m = 384000.0f32 * 0.01;
-        let m = ((m + -2.0).abs() + m + 2.0) * 0.5;
-        let n = (m + m + 4.0).round() as i64;
+    fn new(sr: f32) -> V1 {
+        // Ring size / max delay as v1's stream setup (0x564020) computes
+        // them from the current rate.
+        let m = sr * 0.01;
+        let m = ((m + 2.0) + (m - 2.0).abs()) * 0.5;
+        let n = (m + m + 4.0 + 0.5) as i64;
         let size = (n as usize).next_power_of_two();
         V1 {
             idx: 0,
@@ -244,7 +245,7 @@ fn compare(node_order: [bool; 3]) -> (usize, usize, f32, Vec<String>) {
             for (si, s) in settings().iter().enumerate() {
                 for block in [64usize, 512] {
                     cases += 1;
-                    let mut v1 = V1::new();
+                    let mut v1 = V1::new(sr);
                     v1.node_order = node_order;
                     v1.update_sample_rate(isr);
                     let mut node = Flanger::new();
