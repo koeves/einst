@@ -14,7 +14,7 @@ dreist-gui.workspace = true
 einst = { path = "../einst" }
 einst-dsp = { path = "../einst-dsp" }
 einst-formats = { path = "../einst-formats" }
-rfd = { version = "0.16", optional = true }
+rfd = { version = "0.18", optional = true }
 
 [features]
 window = ["dreist-gui/window", "dep:rfd"]
