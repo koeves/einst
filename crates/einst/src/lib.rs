@@ -61,8 +61,9 @@ pub fn effect_menu(category: usize) -> Vec<usize> {
 /// source and destination BPM ([re:d8985e]); and the pattern MIDI export
 /// ([re:aa2636]); and v1's default MIDI map ([re:7ac22b] [re:167f2c]);
 /// and the project's sampler modes ([re:378f24]); the sequencer window from
-/// one sample before the sub-block ([re:01fcac]); and 8 timestretch voices
-/// ([re:70951b]).
+/// one sample before the sub-block ([re:01fcac]); 8 timestretch voices
+/// ([re:70951b]); and the graph record rewriting the current step until
+/// the pattern wraps ([re:c0679e]).
 pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules {
     sampler_auto_stop_seconds: 1.0,
     envelope_v1_ends: true,
@@ -80,6 +81,7 @@ pub const RULES: dreist_dsp::rules::Rules = dreist_dsp::rules::Rules {
     sampler_modes_v1: true,
     sequencer_window_v1: true,
     timestretch_voices: 8,
+    graph_record_v1: true,
 };
 
 /// Install Einst's profile, effect nodes, v1's fast 2^x, rules and voice
