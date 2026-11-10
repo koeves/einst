@@ -262,7 +262,9 @@ fn comb_differs_only_by_fast_exp2_and_rounding() {
             peak = peak.max(a.0[k].abs());
         }
     }
-    assert!(worst < peak * 1e-3, "worst {worst}, peak {peak}");
+    // v1's smaller ring (0.05·sr) reads the delay at a finer float
+    // position than v2's 384 kHz ring: rounding up to ~1e-3 of the peak.
+    assert!(worst < peak * 2e-3, "worst {worst}, peak {peak}");
     assert!(worst_exact > worst * 10.0, "exact {worst_exact} vs {worst}");
 }
 
