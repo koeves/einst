@@ -334,6 +334,8 @@ impl Node for Urei1176 {
         if p(8) >= 0.5 {
             c.process(ctx.sample_rate, inp, out);
         } else {
+            // v1 also writes 0 to the meter output while switched off.
+            c.meter[2] = 0.0;
             let [ol, or] = out;
             ol.copy_from_slice(inp[0]);
             or.copy_from_slice(inp[1]);
