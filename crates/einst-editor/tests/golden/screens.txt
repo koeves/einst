@@ -1,5 +1,5 @@
 chromatic-pads b547805ac9452c66
-fx-newer-types bcb03135ef317824
+fx-newer-types 602210efef13c5dc
 main 20137f401a4b2120
 main-menu d76fab1cff35367e
 mapping aa0bdc7ad598d7e9
@@ -10,11 +10,11 @@ modal-export b60d328d0990fb95
 modal-filefind e738f52dcccd34b7
 modal-midi 623291cfeb8ff284
 modal-preferences a8f3cdedcfb5e164
-page-enginemixer daa0b76f61477c76
+page-enginemixer 424ff8072075ae52
 page-globalmixer 816f33fb608425d7
-page-layermixer 6d56da25c00aed2b
+page-layermixer dd34bc048afe0709
 page-padlayers 11954e435677896c
-page-padmixer e800fc68e83ba42d
+page-padmixer c45414aaab04aa15
 page-pattern 20137f401a4b2120
 page-sampler dbb5e56d8df41bee
 page-scene 4a536cfe37b05f64

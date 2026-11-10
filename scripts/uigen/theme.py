@@ -530,8 +530,10 @@ def base_styles():
     st("LcdBigButtonStyle", "LcdButtonStyle", colFoot="Transparent", colFootShade="Transparent", font=text_font(11, True), realCornerRounding="3")
     # (v1's mixer view tabs: a grey face with ink letters, ink with grey
     # letters when on, merging into the ink spine on their right)
-    st("LcdSideTabStyle", "LcdBigButtonStyle", colFill="LcdDim", colText="Ink", colAltFill="Ink", colAltText="LcdDim",
-       optDrawBorder="false", realGradientShade="0", font=text_font(10, True), realTextSlant="14", realTextScaleX="0.9", optRoundTopRight="false",
+    # (v1's reference: white text on the selected tab, a faint light edge
+    # round the unselected ones)
+    st("LcdSideTabStyle", "LcdBigButtonStyle", colFill="LcdDim", colText="Ink", colAltFill="Ink", colAltText="255, 255, 255",
+       optDrawBorder="true", colBorder="LcdLight", colAltBorder="Ink", realGradientShade="0", font=text_font(10, True), realTextSlant="14", realTextScaleX="0.9", optRoundTopRight="false",
        optRoundBottomRight="false")
     st("LcdSideTabSpineStyle", "BasePanelStyle", colFill="Ink")
     # (v1's round buttons: Phase, Reverse, Find Src / Track 24 x 24, a light

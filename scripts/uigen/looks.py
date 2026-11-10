@@ -133,7 +133,9 @@ MIDI_ICON = [("inside", 7, 5, 16, 16, "MidiDiscStyle")] + [
 
 # The layer / pad mixers' MIX / SEND tabs: each with its part of the ink
 # spine right of its face (behind it: the face is inset off the spine).
-SIDE_TAB_SPINE = [("behind", 34, 0, 12, 0, "LcdSideTabSpineStyle")]
+# (flush with the tab faces: they are inset 2 px from the top, so the spine
+# starts there too and runs on into the next tab, no notch)
+SIDE_TAB_SPINE = [("behind", 34, 2, 12, 0, "LcdSideTabSpineStyle")]
 SAMPLER_KEY = dict(font=text_font(14, True), realCornerRounding="1", colFill="LcdLight", colBorder="InkMid", realGradientShade="0",
                    colText="BigButtonText", colAltFill="Ink", colAltBorder="Ink", colAltText="LcdLight")
 

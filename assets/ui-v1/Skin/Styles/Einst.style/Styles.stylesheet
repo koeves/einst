@@ -71,7 +71,7 @@
     <CtrlStyle name="LcdSoloButtonStyle" parentStyle0="LcdMuteButtonStyle" />
     <CtrlStyle name="LcdMenuButtonStyle" colPopupArrow="MenuArrow" enumTextHorizontalAlign="left" optPopupDivider="false" parentStyle0="LcdButtonStyle" realPopupArrowBoxWidth="12" realPopupArrowSize="0.35" realTextOffset="5" />
     <CtrlStyle name="LcdBigButtonStyle" colFoot="Transparent" colFootShade="Transparent" font="Sans11Bold" parentStyle0="LcdButtonStyle" realCornerRounding="3" />
-    <CtrlStyle name="LcdSideTabStyle" colAltFill="Ink" colAltText="LcdDim" colFill="LcdDim" colText="Ink" font="Sans10Bold" optDrawBorder="false" optRoundBottomRight="false" optRoundTopRight="false" parentStyle0="LcdBigButtonStyle" realGradientShade="0" realTextScaleX="0.9" realTextSlant="14" />
+    <CtrlStyle name="LcdSideTabStyle" colAltBorder="Ink" colAltFill="Ink" colAltText="255, 255, 255" colBorder="LcdLight" colFill="LcdDim" colText="Ink" font="Sans10Bold" optDrawBorder="true" optRoundBottomRight="false" optRoundTopRight="false" parentStyle0="LcdBigButtonStyle" realGradientShade="0" realTextScaleX="0.9" realTextSlant="14" />
     <CtrlStyle name="LcdSideTabSpineStyle" colFill="Ink" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="LcdRoundButtonStyle" colAltBorder="Ink" colAltFill="Ink" colAltText="LcdLight" colBorder="RowEdge" colFill="Lcd" colFoot="Transparent" colFootShade="Transparent" colText="RowEdge" parentStyle0="LcdButtonStyle" realCornerRounding="100" realGradientShade="0" />
     <CtrlStyle name="LcdPowerButtonStyle" colAltFill="Amber" colAltText="Ink" font="Icons14" parentStyle0="LcdIconButtonStyle" realCornerRounding="3" />

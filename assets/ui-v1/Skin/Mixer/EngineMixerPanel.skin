@@ -9,7 +9,7 @@
         <CtrlPanel name="Channel5" rect="526, 232, 97, 161" id="5" overloadClass="EditorEngineMixerChannel" />
         <CtrlPanel name="Channel6" rect="621, 232, 97, 161" id="6" overloadClass="EditorEngineMixerChannel" />
         <CtrlPanel name="Channel7" rect="716, 232, 97, 161" id="7" overloadClass="EditorEngineMixerChannel" />
-        <CtrlPanel rect="38, 248, 12, 150" style="LcdSideTabSpineStyle" />
+        <CtrlPanel rect="38, 250, 12, 146" style="LcdSideTabSpineStyle" />
         <CtrlButtonGroup name="ModeGroup" rect="4, 248, 46, 150" id="100001" style="BasePanelStyle">
             <CtrlButton name="MixButton" rect="0, 2, 34, 45" displayName="View mixer" id="100001" optIsMomentary="false" style="LEDMMixButton" text="MIX" />
             <CtrlButton name="SendButton" rect="0, 50, 34, 45" displayName="View Sends" id="100002" optIsMomentary="false" style="LEDMSendButton" text="SEND" />

@@ -145,7 +145,7 @@ PANEL_DECOR = {
 # tab bitmaps: 34 px faces, then 10 px of ink the full height; behind the
 # group, as the group's children are its buttons).
 NAMED_DECOR = {
-    ("MIxer/EngineMixerPanel.skin", "ModeGroup"): [("behind", 34, 0, 12, 0, "LcdSideTabSpineStyle")],
+    ("MIxer/EngineMixerPanel.skin", "ModeGroup"): [("behind", 34, 2, 12, -4, "LcdSideTabSpineStyle")],
 }
 
 # Labels grow to fit their font (v1 drew label text unclipped; dreist-gui
