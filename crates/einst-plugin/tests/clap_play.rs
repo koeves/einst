@@ -20,6 +20,7 @@ use clap_sys::host::clap_host;
 use clap_sys::plugin::clap_plugin;
 use clap_sys::process::clap_process;
 use clap_sys::version::CLAP_VERSION;
+use dreist_host::clap_sys;
 
 unsafe extern "C" fn get_extension(_: *const clap_host, _: *const c_char) -> *const c_void {
     null()

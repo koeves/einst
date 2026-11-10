@@ -1,0 +1,11 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2" IsActive="true">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.330448" Parameter1="0" Parameter2="0.574468" Parameter3="0.494354" Parameter4="0.137931" Parameter5="0.288237" EffectType="Breverb Hall">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="0.5" Level="1" Parameter0="0.333484" Parameter1="1" Parameter2="0.4" Parameter3="0.3" Parameter4="0.019798" Parameter5="1" EffectType="Phaser">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="Phased Verb" />
+    </EffectChain>
+</root>

@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.87" Parameter0="0.669409" Parameter1="0.81" Parameter2="0.105" Parameter3="0.5" Parameter4="0.646761" Parameter5="0" EffectType="Channel Compressor">
+        <FixedString name="PresetName" string="Kick - More Presence" />
+    </Effect>
+</root>

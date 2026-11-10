@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.64" Parameter0="0.387" Parameter1="0.956522" Parameter2="0.54" Parameter3="0.47" Parameter4="0.50996" Parameter5="1" EffectType="Hoover Filter">
+        <FixedString name="PresetName" string="$U$\Super Resonant" />
+    </Effect>
+</root>

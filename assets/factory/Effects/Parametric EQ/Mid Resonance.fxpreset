@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.99" Level="0.28" Parameter0="0.1" Parameter1="0.6" Parameter2="0.91" Parameter3="0.75" Parameter4="0.08" Parameter5="0.81" EffectType="Parametric EQ">
+        <FixedString name="PresetName" string="$U$/Mid Resonance" />
+    </Effect>
+</root>

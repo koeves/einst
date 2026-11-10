@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.36" Parameter0="0.417024" Parameter1="0.6" Parameter2="0.4" Parameter3="0.35" Parameter4="0.08" Parameter5="0.608565" EffectType="Bit Crusher">
+        <FixedString name="PresetName" string="$U$/Gabbamator" />
+    </Effect>
+</root>

@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.21" Level="1" Parameter0="0.54" Parameter1="0.428571" Parameter2="0.19" Parameter3="0.23" Parameter4="0.3" Parameter5="0.68" EffectType="Phaser">
+        <FixedString name="PresetName" string="Regular" />
+    </Effect>
+</root>

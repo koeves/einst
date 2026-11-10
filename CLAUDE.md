@@ -10,7 +10,12 @@ dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::pr
   (`einst/evidence-tags.tsv`), the RE ledger (`einst/docs/re/`), the progress log up to the move,
   and the RE scripts (`einst/re/scripts/`, including `rea_drive.py`) are in the private
   `dreist-re` repository (`../dreist-re`). Original binaries for RE stay in `original/`
-  (gitignored).
+  (gitignored); v1's install files are in dreist-re `einst/v1` (tests that need them read
+  `EINST_V1_ASSETS`, default `../dreist-re/einst/v1`, and skip without). This repository keeps
+  only v1's factory presets and templates (`assets/factory`).
+- UI: `scripts/uigen/skins` is Einst's own layout source for the v1-layout set; edit it (or
+  theme.py / authored.py), then `python3 scripts/uigen/uigen.py` writes `assets/ui-v1`
+  (`--check` fails when it is stale).
 - Goldens (`crates/einst/tests/golden`) must stay identical unless a change is meant to alter
   them; explain every change. Porting bugs found in dreist-commons get their own commit there.
 - Out of scope: licensing / copy protection, updates and registration, RTAS, inter-plugin audio.

@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.25" Parameter1="0.13" Parameter2="0.36" Parameter3="0.43" Parameter4="0.19" Parameter5="0.88" EffectType="Modulated Filter">
+        <FixedString name="PresetName" string="$U$\Mid Band Wiggle" />
+    </Effect>
+</root>

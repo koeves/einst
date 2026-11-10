@@ -1,0 +1,11 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2.1" IsActive="true" ChainMix="1">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="0.319811" Level="1" Parameter0="0.229971" Parameter1="0.160303" Parameter2="0.847143" Parameter3="0.119957" Parameter4="0.655334" Parameter5="0.431602" EffectType="Breverb Plate">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.333409" Parameter1="0.64" Parameter2="0.855" Parameter3="1" Parameter4="0.666761" Parameter5="0" EffectType="Channel Compressor">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="$U$/Snare Bigverb" />
+    </EffectChain>
+</root>

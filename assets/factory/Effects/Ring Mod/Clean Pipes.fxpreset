@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.8" Parameter0="0.47" Parameter1="0" Parameter2="0.64" Parameter3="0.535938" Parameter4="0.53631" Parameter5="0" EffectType="Ring Mod">
+        <FixedString name="PresetName" string="$U$/Clean Pipes" />
+    </Effect>
+</root>

@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.3" Level="1" Parameter0="0.070922" Parameter1="0" Parameter2="1" Parameter3="0.195256" Parameter4="0.191489" Parameter5="0.532453" EffectType="Breverb Room">
+        <FixedString name="PresetName" string="Ambience 02" />
+    </Effect>
+</root>

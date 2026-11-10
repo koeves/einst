@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.75" Parameter1="0.82" Parameter2="1" Parameter3="0" Parameter4="0" Parameter5="0" EffectType="Vari-EQ">
+        <FixedString name="PresetName" string="Earphone Bleed" />
+    </Effect>
+</root>

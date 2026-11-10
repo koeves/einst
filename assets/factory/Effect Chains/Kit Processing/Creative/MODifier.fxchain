@@ -1,0 +1,20 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2.1" IsActive="true" ChainMix="1">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0" Parameter1="0.67" Parameter2="0" Parameter3="0.11" Parameter4="0.367785" Parameter5="0.582" EffectType="Modulated Filter">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0" Parameter1="0.05" Parameter2="1" Parameter3="0" Parameter4="0.48" Parameter5="0" EffectType="Distortion">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="0.79" Level="1" Parameter0="0.73377" Parameter1="0" Parameter2="0.424908" Parameter3="0.535938" Parameter4="0.53631" Parameter5="0" EffectType="Ring Mod">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect3" EffectVersion="2" IsActive="false" Mix="1" Level="1" Parameter0="0.683409" Parameter1="0.62" Parameter2="0.655" Parameter3="0.75" Parameter4="0.666761" Parameter5="0" EffectType="Channel Compressor">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect4" EffectVersion="2" IsActive="true" Mix="1" Level="0.8" Parameter0="0" Parameter1="0.08" Parameter2="0.05" Parameter3="0.63" Parameter4="0.64" Parameter5="0.78" EffectType="Parametric EQ">
+            <FixedString name="PresetName" string="$S$/Bass Cut" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="$U$/-MODifier" />
+    </EffectChain>
+</root>

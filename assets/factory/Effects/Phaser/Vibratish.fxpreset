@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.63" Level="1" Parameter0="0.41" Parameter1="0.571429" Parameter2="0.78" Parameter3="0.1" Parameter4="1" Parameter5="0.38" EffectType="Phaser">
+        <FixedString name="PresetName" string="Vibratish" />
+    </Effect>
+</root>

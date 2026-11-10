@@ -1,0 +1,5 @@
+<root>
+    <SwingTemplate name="SwingTemplate" SwingTemplateVersion="4" NumberOfSteps="2" Step0="0" Step1="0.5">
+        <FixedString name="SwingTemplateName" string="Default" />
+    </SwingTemplate>
+</root>

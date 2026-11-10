@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.670787" Parameter1="0.666667" Parameter2="0.36" Parameter3="0.67" Parameter4="0.50996" Parameter5="1" EffectType="Japan Filter">
+        <FixedString name="PresetName" string="$U$/Bass Tightener" />
+    </Effect>
+</root>

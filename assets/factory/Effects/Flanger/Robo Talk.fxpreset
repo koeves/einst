@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.54" Level="1" Parameter0="0.16" Parameter1="1" Parameter2="1" Parameter3="0.39" Parameter4="1" Parameter5="0.044" EffectType="Flanger">
+        <FixedString name="PresetName" string="Robo Talk" />
+    </Effect>
+</root>

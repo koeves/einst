@@ -43,24 +43,8 @@ pub const DEFAULT_BUFFER: u32 = 512;
 /// The input popup's "no input" item (nih-plug connects no input then).
 pub const NO_INPUT: &str = "None";
 
-/// Devices the standalone can open.
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct AudioSetup {
-    pub outputs: Vec<String>,
-    pub inputs: Vec<String>,
-    pub default_output: String,
-    /// Rates the chosen output supports, and its own rate.
-    pub rates: Vec<u32>,
-    pub default_rate: u32,
-    pub out_channels: u16,
-    pub in_channels: u16,
-}
-
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct MidiSetup {
-    pub inputs: Vec<String>,
-    pub outputs: Vec<String>,
-}
+/// Devices the standalone can open, and its MIDI ports (`dreist-host`).
+pub use dreist_host::devices::{AudioSetup, MidiSetup};
 
 /// The standalone app's side ([re:0f7c8c]).
 pub trait DeviceHost: Send {

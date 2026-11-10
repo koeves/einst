@@ -1,0 +1,17 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2" IsActive="true">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.666661" Parameter1="1" Parameter2="0.159476" Parameter3="0.188614" Parameter4="0.684106" Parameter5="1" EffectType="Stereo Width">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.75" Parameter1="0" Parameter2="0" Parameter3="0.5" Parameter4="0" Parameter5="0" EffectType="Vari-EQ">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect2" EffectVersion="2" IsActive="true" Mix="0.5" Level="1" Parameter0="1" Parameter1="0.336" Parameter2="0" Parameter3="0.488" Parameter4="0.25" Parameter5="0" EffectType="Bus Compressor">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect3" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.570148" Parameter1="0.4782" Parameter2="0.500207" Parameter3="0.56994" Parameter4="0.822106" Parameter5="0.5" EffectType="Parametric EQ">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="Blank Channel Strip" />
+    </EffectChain>
+</root>

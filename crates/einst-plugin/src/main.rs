@@ -23,7 +23,7 @@ fn args() -> Vec<String> {
     } else {
         "alsa"
     };
-    let rate = if s.rate > 0 { Some(s.rate) } else { device_sample_rate(&s.output) };
+    let rate = if s.rate > 0 { Some(s.rate) } else { dreist_host::audio::output_sample_rate(&s.output) };
     for (flag, v) in [
         ("--backend", Some(backend.to_string())),
         ("--midi-input", Some(s.midi_in.clone())),
@@ -45,15 +45,6 @@ fn args() -> Vec<String> {
         }
     }
     args
-}
-
-/// The nominal sample rate of the named (or default) output device.
-fn device_sample_rate(name: &str) -> Option<u32> {
-    use cpal::traits::{DeviceTrait, HostTrait};
-    let host = cpal::default_host();
-    let dev = if name.is_empty() { None } else { host.output_devices().ok()?.find(|d| d.name().is_ok_and(|n| n == name)) };
-    let dev = dev.or_else(|| host.default_output_device())?;
-    Some(dev.default_output_config().ok()?.sample_rate().0)
 }
 
 fn main() {

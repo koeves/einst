@@ -70,16 +70,14 @@ PLIST
 cp assets/ui-v1/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
 
 # Resources: Einst's UI graphics (assets/ui-v1, the v1-layout set: skin, fonts, cursors,
-# metronomes) in Contents/Resources/Einst and v1's factory data (effect
-# presets, effect chains, pattern and swing templates, which einst-formats
-# reads 1:1) in Contents/Resources/Factory, where Einst's profile looks.
+# metronomes) in Contents/Resources/Einst and the factory data (assets/factory:
+# v1's effect presets, effect chains, pattern and swing templates, which
+# einst-formats reads 1:1) in Contents/Resources/Factory, where Einst's profile looks.
 echo "==> Resources"
 for b in "$app" "$out/Einst.vst3" "$out/Einst.clap"; do
     mkdir -p "$b/Contents/Resources/Factory"
     rm -rf "$b/Contents/Resources/Einst" "$b/Contents/Resources/Factory"/*
-    for d in "Effects" "Effect Chains" "Pattern Templates" "Swing Templates"; do
-        cp -R "assets/v1/System/$d" "$b/Contents/Resources/Factory/$d"
-    done
+    cp -R assets/factory/ "$b/Contents/Resources/Factory/"
     cp -R assets/ui-v1 "$b/Contents/Resources/Einst"
     rm -f "$b/Contents/Resources/Einst/AppIcon.png" "$b/Contents/Resources/Einst/AppIcon.icns"
 done

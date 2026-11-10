@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="1" Parameter0="0.875" Parameter1="0.304" Parameter2="0.24" Parameter3="0.5" Parameter4="0" Parameter5="0" EffectType="Vari-EQ">
+        <FixedString name="PresetName" string="Notch @ 300Hz" />
+    </Effect>
+</root>

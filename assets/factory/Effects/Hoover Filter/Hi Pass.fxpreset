@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.82" Parameter0="0.437" Parameter1="0.913043" Parameter2="0.85" Parameter3="0.27" Parameter4="0.50996" Parameter5="1" EffectType="Hoover Filter">
+        <FixedString name="PresetName" string="$U$\Hi Pass" />
+    </Effect>
+</root>

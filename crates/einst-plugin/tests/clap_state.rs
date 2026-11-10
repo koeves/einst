@@ -16,6 +16,7 @@ use clap_sys::id::clap_id;
 use clap_sys::plugin::clap_plugin;
 use clap_sys::stream::{clap_istream, clap_ostream};
 use clap_sys::version::CLAP_VERSION;
+use dreist_host::clap_sys;
 
 unsafe extern "C" fn rescan(host: *const clap_host, flags: clap_param_rescan_flags) {
     if flags & CLAP_PARAM_RESCAN_VALUES != 0 {

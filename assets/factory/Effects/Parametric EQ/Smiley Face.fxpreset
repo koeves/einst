@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.9" Parameter0="1" Parameter1="0" Parameter2="0.83" Parameter3="1" Parameter4="1" Parameter5="0.82" EffectType="Parametric EQ">
+        <FixedString name="PresetName" string="$U$/Smiley Face" />
+    </Effect>
+</root>

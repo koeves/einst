@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.35" Level="1" Parameter0="0.22451" Parameter1="0" Parameter2="0.851064" Parameter3="0.18939" Parameter4="0.735192" Parameter5="0.849548" EffectType="Breverb Plate">
+        <FixedString name="PresetName" string="Medium Plate" />
+    </Effect>
+</root>

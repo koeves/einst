@@ -1,0 +1,11 @@
+<root>
+    <EffectChain name="EffectChain" FXVer="2" IsActive="true">
+        <Effect name="Effect0" EffectVersion="2" IsActive="true" Mix="0.169811" Level="1" Parameter0="0.0401123" Parameter1="0.030303" Parameter2="0.911753" Parameter3="0.0830067" Parameter4="1" Parameter5="0.431602" EffectType="Breverb Plate">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <Effect name="Effect1" EffectVersion="2" IsActive="true" Mix="0.5" Level="1" Parameter0="0.500578" Parameter1="0.235" Parameter2="0.4" Parameter3="0.17" Parameter4="0.53" Parameter5="0" EffectType="Bus Compressor">
+            <FixedString name="PresetName" string="Default" />
+        </Effect>
+        <FixedString name="ChainPresetName" string="Squashed Room" />
+    </EffectChain>
+</root>

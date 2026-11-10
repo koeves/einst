@@ -11,7 +11,7 @@ on:
       tag:
         description: "Release tag (names the zips; the upload target)"
         required: true
-        default: "v0.2.0"
+        default: "v0.1.0"
       upload:
         description: "Upload the zips to the release"
         type: boolean
@@ -31,7 +31,7 @@ jobs:
   build:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
@@ -45,7 +45,7 @@ jobs:
           ditto -c -k --keepParent Einst.vst3 "Einst-$TAG-macOS-VST3.zip"
           ditto -c -k --keepParent Einst.clap "Einst-$TAG-macOS-CLAP.zip"
           ditto -c -k --keepParent Einst.app "Einst-$TAG-macOS-App.zip"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Einst-${{ env.TAG }}-macOS
           path: target/bundled/Einst-*.zip
@@ -58,10 +58,10 @@ jobs:
     if: github.event_name == 'push' || inputs.upload
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true

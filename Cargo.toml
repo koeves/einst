@@ -6,7 +6,7 @@ exclude = ["commons"]
 
 [workspace.package]
 edition = "2024"
-version = "0.2.0"
+version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
 # Same lint policy as Dreist: DSP and parsers follow the decompiled original.
@@ -31,8 +31,9 @@ dreist-engine = { path = "commons/crates/dreist-engine" }
 dreist-gui = { path = "commons/crates/dreist-gui" }
 einst-editor = { path = "crates/einst-editor" }
 dreist-testkit = { path = "commons/crates/dreist-testkit" }
-roxmltree = "0.20"
-thiserror = "2"
+# The system side (audio, MIDI, dialogs, session file, time): it owns the
+# third-party versions, so none are declared here.
+dreist-host = { path = "commons/crates/dreist-host" }
 
 [profile.release]
 strip = false

@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.27" Level="0.63" Parameter0="0.3" Parameter1="1" Parameter2="0.01" Parameter3="1" Parameter4="0.26" Parameter5="0.87" EffectType="Bit Crusher">
+        <FixedString name="PresetName" string="$U$/Civilised" />
+    </Effect>
+</root>

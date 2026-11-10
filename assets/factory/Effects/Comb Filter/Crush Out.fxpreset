@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="0.81" Level="0.8" Parameter0="0.49" Parameter1="1" Parameter2="0.58" Parameter3="0.3" Parameter4="0.50996" Parameter5="1" EffectType="Comb Filter">
+        <FixedString name="PresetName" string="$U$/Crush Out" />
+    </Effect>
+</root>

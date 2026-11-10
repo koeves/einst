@@ -1,0 +1,5 @@
+<root>
+    <Effect name="Effect" EffectVersion="2" IsActive="true" Mix="1" Level="0.729" Parameter0="0.192024" Parameter1="0.95" Parameter2="0" Parameter3="1" Parameter4="0" Parameter5="1" EffectType="Bit Crusher">
+        <FixedString name="PresetName" string="16Bit Sampler" />
+    </Effect>
+</root>
