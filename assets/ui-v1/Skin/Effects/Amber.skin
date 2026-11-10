@@ -5,9 +5,9 @@
         <CtrlLabel name="CtrlLabel" rect="21, 24, 83, 15" style="StandardLabelCenteredStyle" text="Mode" />
         <CtrlButton name="Control4" rect="138, 5, 16, 17" displayName="Bright" optIsMomentary="false" style="LEDSmallLatchingButtonStyle" text="" />
         <CtrlLabel name="CtrlLabel" rect="120, 24, 52, 15" style="StandardLabelCenteredStyle" text="Bright" />
-        <CtrlKnob name="Control2" rect="23, 61, 50, 46" displayName="Speed" realDialThickness="0.14" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control2" rect="23, 61, 50, 46" displayName="Speed" realDialThickness="0.08" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="15, 111, 66, 15" style="StandardLabelCenteredStyle" text="Speed" />
-        <CtrlKnob name="Control3" rect="120, 61, 50, 46" displayName="Spread" realDialThickness="0.14" style="LEDKnobLargeLR" />
+        <CtrlKnob name="Control3" rect="120, 61, 50, 46" displayName="Spread" realDialThickness="0.08" style="LEDKnobLargeLR" />
         <CtrlLabel name="CtrlLabel" rect="112, 111, 66, 15" style="StandardLabelCenteredStyle" text="Spread" />
     </CtrlPanel>
 </root>

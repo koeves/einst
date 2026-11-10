@@ -7,6 +7,13 @@
     <VColour name="KnobLcdTrack" colour="#A9B0BF" />
     <VColour name="KnobLcdValue" colour="#474D6A" />
     <VColour name="KnobLcdEdge" colour="#39415F" />
+    <VColour name="KnobLcdInnerEdge" colour="#6E758C" />
+    <VColour name="KnobLcdShadow" colour="#4C536F" />
+    <VColour name="KnobTrack" colour="#5D5D5D" />
+    <VColour name="KnobArcLit" colour="#7DB6F1" />
+    <VColour name="KnobFaceEdge" colour="#5A5A5A" />
+    <VColour name="SpinnerRing" colour="#7FB4DC" />
+    <VColour name="SpinnerArrow" colour="#3E6A92" />
     <VColour name="RadioOn" colour="#959CAD" />
     <VColour name="Lcd" colour="#D2D9E3" />
     <VColour name="LcdLight" colour="#DEE5ED" />
@@ -96,10 +103,10 @@
     <VColour name="KeyFaceSelected" colour="#F0EED6" />
     <VColour name="KeyFrame" colour="#8C8E8D" />
     <VColour name="KeyAmber" colour="#F0D232" />
-    <VColour name="KnobFace" colour="#FAF9FA" />
-    <VColour name="KnobFaceLow" colour="#B8BBBA" />
+    <VColour name="KnobFace" colour="#EFEFEF" />
+    <VColour name="KnobFaceLow" colour="#BCBCBC" />
     <VColour name="KnobRing" colour="#16191A" />
-    <VColour name="KnobRingTop" colour="#80807E" />
+    <VColour name="KnobRingTop" colour="#181818" />
     <VColour name="KnobRingLow" colour="#040405" />
     <VColour name="KnobHalo" colour="#EEEEED" />
     <VColour name="KnobHaloLow" colour="#DCDDDC" />
@@ -109,7 +116,7 @@
     <VColour name="KnobShadowOut" colour="200, 202, 201, 0" />
     <VColour name="KnobArc" colour="#2C4678" />
     <VColour name="KnobDot" colour="#4696E6" />
-    <VColour name="KnobPointer" colour="#545658" />
+    <VColour name="KnobPointer" colour="#838383" />
     <VColour name="SmallKnobFace" colour="#424342" />
     <VColour name="SmallKnobFaceLow" colour="#1A1C1B" />
     <VColour name="SmallKnobRim" colour="#696D6E" />

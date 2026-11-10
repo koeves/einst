@@ -34,7 +34,7 @@
         <CtrlPopupButton name="Output" rect="25, 229, 75, 17" displayName="Output" id="100000" legacyClass="CtrlComboBox" optSingleClickEdit="true" style="LEDComboBoxStyle" />
         <CtrlPanel name="Split5" rect="138, 257, 508, 40" displayName="Layer 6 Velocity range" id="100007" overloadClass="EditorSplitControl" />
         <CtrlLabel name="CtrlLabel" rect="30, 274, 66, 15" id="100002" style="StandardLabelCenteredStyle" text="Vel-Amp" />
-        <CtrlKnob name="V2A" rect="38, 291, 50, 46" displayName="Velocity to Amplitude" id="100015" realDialThickness="0.09" style="LEDKnobLargeLR" />
+        <CtrlKnob name="V2A" rect="38, 291, 50, 46" displayName="Velocity to Amplitude" id="100015" realDialThickness="0.08" style="LEDKnobLargeLR" />
         <CtrlPanel name="Split6" rect="138, 296, 508, 40" displayName="Layer 7 Velocity range" id="100006" overloadClass="EditorSplitControl" />
         <CtrlPanel name="Split7" rect="138, 335, 508, 40" displayName="Layer 8 Velocity range" id="100004" overloadClass="EditorSplitControl" />
     </CtrlPanel>

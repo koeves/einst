@@ -6,7 +6,7 @@
     <CtrlStyle name="BaseLabelStyle" enumTextHorizontalAlign="left" optDrawBorder="false" parentStyle0="BaseStyle" />
     <CtrlStyle name="BaseTextBoxStyle" colBorder="LcdEdge" colFill="LcdFace" enumTextHorizontalAlign="left" parentStyle0="BaseStyle" realCornerRounding="2" realGradientShade="0.05" realTextOffset="3" />
     <CtrlStyle name="BaseButtonStyle" colAltBorder="Ink" colAltFill="Ink" colAltText="LcdLight" colBorder="Ink" colFill="LcdLight" enumTextShortenAlgorithm="end" parentStyle0="BaseStyle" realCornerRounding="2" />
-    <CtrlStyle name="BaseKnobStyle" colAltBorder="Ink" colAltFill="LcdLight" colFace="LcdFace" colFaceGradientTo="LcdFaceLow" colFill="InkSoft" colFillHighlight="Ink" colPointer="Ink" optPointer="true" parentStyle0="BaseStyle" realFaceInset="1" realPointerInset="2" realPointerWidth="2" />
+    <CtrlStyle name="BaseKnobStyle" colAltBorder="Ink" colAltFill="LcdLight" colFace="LcdFace" colFaceGradientTo="LcdFaceLow" colFill="InkSoft" colFillHighlight="Ink" colPointer="Ink" optPointer="true" parentStyle0="BaseStyle" realArcStart="135" realArcSweep="270" realFaceInset="1" realPointerInset="2" realPointerWidth="2" />
     <CtrlStyle name="BaseSliderStyle" colAltBorder="Ink" colAltFill="LcdLight" colFill="InkSoft" colFillHighlight="Ink" parentStyle0="BaseStyle" realCornerRounding="2" />
     <CtrlStyle name="BaseImageStyle" parentStyle0="BasePanelStyle" />
     <CtrlStyle name="BaseMeterStyle" colAltBorder="VuLit" colAltFill="VuLit" colFill="VuTrack" optDrawBorder="false" parentStyle0="BaseStyle" />
@@ -125,7 +125,7 @@
     <CtrlStyle name="PadLed2Style" colFill="PadColour2" parentStyle0="PadLedStyle" />
     <CtrlStyle name="PadLed3Style" colFill="PadColour3" parentStyle0="PadLedStyle" />
     <CtrlStyle name="PadLed4Style" colFill="PadColour4" parentStyle0="PadLedStyle" />
-    <CtrlStyle name="HardKnobStyle" colAltBorder="KnobDot" colAltFill="KnobDot" colFace="KnobFace" colFaceGradientTo="KnobFaceLow" colFill="Transparent" colFillHighlight="Readout" colPointer="KnobPointer" enumGradientDirection="Radial" optPointerDot="false" parentStyle0="BaseKnobStyle" realFaceInset="2" realGradientCentreX="0.42" realGradientCentreY="0.18" realGradientRadius="0.95" realPointerInset="3.3" realPointerStart="0.3" />
+    <CtrlStyle name="HardKnobStyle" colAltBorder="KnobDot" colAltFill="KnobDot" colFace="KnobFace" colFaceBorder="KnobFaceEdge" colFaceGradientTo="KnobFaceLow" colFill="KnobTrack" colFillHighlight="KnobArcLit" colPointer="KnobPointer" optPointerDot="false" parentStyle0="BaseKnobStyle" realArcInset="0.5" realFaceBorderWidth="1" realFaceInset="3.5" realPointerInset="8.5" realPointerStart="0.3" />
     <CtrlStyle name="HardKnobHaloStyle" colFill="KnobHalo" colFillGradientTo="KnobHaloLow" enumGradientDirection="Radial" parentStyle0="BasePanelStyle" realCornerRounding="100" realGradientRadius="0.5" />
     <CtrlStyle name="HardKnobMarkStyle" colFill="KnobMark" parentStyle0="BasePanelStyle" realCornerRounding="100" />
     <CtrlStyle name="HardKnobRingStyle" colFill="KnobRingTop" colFillGradientTo="KnobRingLow" parentStyle0="BasePanelStyle" realCornerRounding="100" />
@@ -133,12 +133,12 @@
     <CtrlStyle name="HardKnobBodyStyle" colBorder="HwFrame" colFill="KnobFace" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="100" />
     <CtrlStyle name="HardKnobSmallStyle" colAltBorder="HwFace" colAltFill="KnobRing" colFace="SmallKnobFace" colFaceGradientTo="SmallKnobFaceLow" colFill="SmallKnobRim" colFillHighlight="SmallKnobRim" colPointer="HwFace" parentStyle0="BaseKnobStyle" realFaceInset="0" realPointerInset="1" realPointerWidth="1.5" />
     <CtrlStyle name="LcdKnobStyle" colFill="InkMid" colFillHighlight="InkMid" parentStyle0="BaseKnobStyle" />
-    <CtrlStyle name="LcdKnobLargeStyle" colFace="LcdLight" colFaceBorder="InkSoft" colFaceGradientTo="LcdLight" colFill="KnobLcdTrack" colFillHighlight="KnobLcdValue" colPointer="Ink" parentStyle0="BaseKnobStyle" realFaceBorderWidth="3" realFaceInset="3" realPointerInset="6" realPointerStart="0.1" realPointerWidth="2.5" />
-    <CtrlStyle name="LcdKnobSmallStyle" colFace="LcdLight" colFaceBorder="InkSoft" colFaceGradientTo="LcdLight" colFill="Transparent" colFillHighlight="Transparent" colPointer="Ink" parentStyle0="BaseKnobStyle" realFaceBorderWidth="3" realFaceInset="-1" realPointerInset="3" realPointerWidth="2" />
-    <CtrlStyle name="LcdKnobMicroStyle" parentStyle0="LcdKnobSmallStyle" realFaceBorderWidth="2" realPointerInset="2" />
+    <CtrlStyle name="LcdKnobLargeStyle" colArcBorder="Ink" colFace="LcdLight" colFaceBorder="InkSoft" colFaceEdge="Ink" colFaceGradientTo="LcdLight" colFaceInnerEdge="KnobLcdInnerEdge" colFill="KnobLcdTrack" colFillHighlight="KnobLcdValue" colPointer="Ink" parentStyle0="BaseKnobStyle" realArcInset="1" realFaceBorderWidth="4" realFaceInset="5.5" realPointerInset="12" realPointerStart="0" realPointerWidth="2" />
+    <CtrlStyle name="LcdKnobSmallStyle" colDialShadow="KnobLcdShadow" colFace="LcdLight" colFaceBorder="InkSoft" colFaceEdge="KnobLcdEdge" colFaceGradientTo="LcdLight" colFaceInnerEdge="KnobLcdInnerEdge" colFill="Transparent" colFillHighlight="Transparent" colPointer="Ink" parentStyle0="BaseKnobStyle" realFaceBorderWidth="3" realFaceInset="-1" realPointerInset="3" realPointerStart="0.2" realPointerWidth="2" />
+    <CtrlStyle name="LcdKnobMicroStyle" colDialShadow="Transparent" parentStyle0="LcdKnobSmallStyle" realFaceBorderWidth="2" realPointerInset="2.5" realPointerStart="0.2" realPointerWidth="1.5" />
     <CtrlStyle name="SpinnerFaceStyle" parentStyle0="BaseKnobStyle" />
     <CtrlStyle name="LcdKnobBodyStyle" colBorder="InkSoft" colFill="LcdLight" optDrawBorder="true" parentStyle0="BasePanelStyle" realCornerRounding="100" />
-    <CtrlStyle name="SpinnerStyle" colFace="Transparent" colFill="Transparent" colFillHighlight="InkSoft" optPointer="false" parentStyle0="BaseKnobStyle" />
+    <CtrlStyle name="SpinnerStyle" colFace="Transparent" colFill="SpinnerRing" colPointer="SpinnerArrow" optPointer="false" optSpinner="true" parentStyle0="BaseKnobStyle" />
     <CtrlStyle name="LcdFaderStyle" colAltBorder="LcdCapLow" colAltFill="LcdCap" colAltFillGradientTo="LcdCapLow" colFill="LcdFace" colFillHighlight="Transparent" colGrip="LcdGrip" colGroove="LcdGroove" colTrackBorder="LcdEdge" enumGradientDirection="Radial" enumGripShape="Squares" enumHandleShape="Rect" intGripLines="2" parentStyle0="BaseSliderStyle" realCornerRounding="3" realGradientRadius="0.62" realGripSize="2" realHandleInset="2" />
     <CtrlStyle name="LcdPanStyle" colBorder="Transparent" enumGripShape="Along" intGripLines="1" parentStyle0="LcdFaderStyle" realHandleInset="1" realHandleLength="9" realHandleRounding="3" />
     <CtrlStyle name="LcdRangeStyle" colAltBorder="Ink" colAltFill="LcdLight" colFill="LcdDim" colFillHighlight="255, 255, 255, 255" colGroove="SplitGroove" colRangeBorder="SplitZoneEdge" colTrackBorder="Ink" enumHandleShape="Triangles" parentStyle0="LcdFaderStyle" realCornerRounding="5" realGrooveInset="3" realGrooveWidth="3" realHandleLength="11" realRangeHeight="6" realTrackBorderWidth="2" />
@@ -233,10 +233,10 @@
     <CtrlStyle name="HardKnobSmallLR" enumDialAlign="Top" parentStyle0="HardKnobSmallStyle" />
     <CtrlStyle name="HardKnobLargeLR" enumDialAlign="Top" parentStyle0="HardKnobStyle" />
     <CtrlStyle name="HardKnobLargeC" enumDialAlign="Top" parentStyle0="HardKnobStyle" />
-    <CtrlStyle name="LEDKnobMicroLR" enumDialAlign="Center" parentStyle0="LcdKnobMicroStyle" />
-    <CtrlStyle name="LEDKnobSmallLR" enumDialAlign="Center" parentStyle0="LcdKnobSmallStyle" />
-    <CtrlStyle name="LEDKnobLargeLR" enumDialAlign="Center" parentStyle0="LcdKnobLargeStyle" />
-    <CtrlStyle name="LEDKnobLargeC" enumDialAlign="Center" parentStyle0="LcdKnobLargeStyle" />
+    <CtrlStyle name="LEDKnobMicroLR" enumDialAlign="Top" parentStyle0="LcdKnobMicroStyle" />
+    <CtrlStyle name="LEDKnobSmallLR" enumDialAlign="Top" parentStyle0="LcdKnobSmallStyle" />
+    <CtrlStyle name="LEDKnobLargeLR" enumDialAlign="Width" parentStyle0="LcdKnobLargeStyle" />
+    <CtrlStyle name="LEDKnobLargeC" enumDialAlign="Width" parentStyle0="LcdKnobLargeStyle" />
     <CtrlStyle name="LargeSpinnerStyle" enumDialAlign="Center" parentStyle0="SpinnerStyle" />
     <CtrlStyle name="ZoomInButtonStyle" colBorder="Ink" colFill="LcdLight" font="Icons8" parentStyle0="LcdIconButtonStyle" realCornerRounding="0" realGradientShade="0" />
     <CtrlStyle name="ZoomOutButtonStyle" colBorder="Ink" colFill="LcdLight" font="Icons8" parentStyle0="LcdIconButtonStyle" realCornerRounding="0" realGradientShade="0" />
