@@ -136,7 +136,18 @@
     <VColour name="StepEdge" colour="#33375C" />
     <VColour name="FxSlotLit" colour="#CCD2DC" />
     <VColour name="FxSlotDim" colour="#7A7F8E" />
-    <VColour name="FxCardEdge" colour="#343B5A" />
+    <VColour name="FxCardOuter" colour="#293050" />
+    <VColour name="FxCardInner" colour="#5E657E" />
+    <VColour name="FxCardInnerEmpty" colour="#4E5570" />
+    <VColour name="FxCardHeadLine" colour="#BDC4D1" />
+    <VColour name="ReverbCase" colour="#2A2A2A" />
+    <VColour name="ReverbScreen" colour="#CBC0A9" />
+    <VColour name="ReverbScreenLow" colour="#EAE5DC" />
+    <VColour name="ReverbScreenEdge" colour="#1E1F25" />
+    <VColour name="SplitGroove" colour="#2E3554" />
+    <VColour name="SplitZoneEdge" colour="#5D647D" />
+    <VColour name="PlotStripe" colour="18, 25, 60, 8" />
+    <VColour name="PlotMidLine" colour="#BEC4D1" />
     <VColour name="FxSlotLitTop" colour="#B5B9C4" />
     <VColour name="FxSlotLitLow" colour="#DCE5EE" />
     <VColour name="Lane" colour="#C3CAD4" />
