@@ -167,7 +167,8 @@ fn v1_voice_scenario(doc: &mut dreist_formats::Node) {
 fn v1_voice_paths_match_einsts_goldens() {
     setup();
     use dreist_engine::harness::{doc_for, name, presets, render, sane};
-    let mut golden = dreist_testkit::Golden::open("v1voice");
+    // The renders' bits depend on the maths library: compared on macOS.
+    let mut golden = dreist_testkit::Golden::open_macos("v1voice");
     let mut failures = Vec::new();
     for p in presets() {
         let samples = dreist_formats::model::samples_dir(&p);
