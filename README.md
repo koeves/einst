@@ -46,7 +46,7 @@ Needs a Rust toolchain.
 
 ```bash
 scripts/build.sh            # target/bundled/Einst.{app,vst3,clap}
-scripts/build.sh --install  # also copies them to ~/Library and ~/Applications
+scripts/build.sh --install  # also copies them to ~/Library and /Applications
 cargo test --workspace
 ```
 

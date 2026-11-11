@@ -19,7 +19,7 @@ dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::pr
 - Goldens (`crates/einst/tests/golden`) must stay identical unless a change is meant to alter
   them; explain every change. Porting bugs found in dreist-commons get their own commit there.
 - Out of scope: licensing / copy protection, updates and registration, RTAS, inter-plugin audio.
-- Keep the repository private. Git (Conventional Commits, changelog, releases, branches,
+- Git (Conventional Commits, changelog, releases, branches,
   submodule bumps): `CONTRIBUTING.md`; agent workflow notes: dreist-re `agents.md`.
 
 ## Build
@@ -36,9 +36,9 @@ Nothing may come to the front while the desktop is in use: tests and harnesses s
 `DREIST_BACKGROUND_GUI=1` (commons `vendor/baseview`), the standalone app is not run for
 tests, pluginval runs with `--skip-gui-tests`, and apps start with `open -g`.
 
-Branches: work on local feature branches or local `dev` (parallel threads: one worktree each,
-outside the checkout); push nothing while working. At a release, clean up `dev`'s commits, push `dev`,
-merge into `main` (`--no-ff`) and release.
+Branches: `feature/<name>` (one worktree each, outside the checkout) -> pull request into
+`dev` (merge commit, checks green) -> release pull request `dev` -> `main` (merge commit) -> tag
+`vX.Y.Z` (CONTRIBUTING.md).
 
 After any code change here or in commons, rebuild and reinstall the VST3 (`scripts/build.sh`, then
 `target/bundled/Einst.vst3` into `~/Library/Audio/Plug-Ins/VST3`) and say which commit is installed.
