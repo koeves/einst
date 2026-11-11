@@ -699,11 +699,19 @@ pub fn v1_content_dirs() -> Vec<PathBuf> {
 /// database's element names are not known, only that it holds the packs'
 /// paths).
 fn content_pack_paths(xml: &str) -> Vec<PathBuf> {
+    // Quoted values inside tags and the text between tags (a closing tag
+    // such as `</root>` is no path, though `/root` may be a folder).
+    let mut parts: Vec<&str> = vec![xml.split('<').next().unwrap_or("")];
+    for seg in xml.split('<').skip(1) {
+        let (tag, text) = seg.split_once('>').unwrap_or((seg, ""));
+        parts.extend(tag.split('"').skip(1).step_by(2));
+        parts.push(text);
+    }
     let mut v: Vec<PathBuf> = Vec::new();
-    for part in xml.split(['"', '<', '>']) {
+    for part in parts {
         let t = part.trim().replace("&amp;", "&").replace("&apos;", "'");
-        if t.starts_with('/') && Path::new(&t).is_dir() {
-            let p = PathBuf::from(t.trim_end_matches('/'));
+        if Path::new(&t).is_absolute() && Path::new(&t).is_dir() {
+            let p = PathBuf::from(t.trim_end_matches(['/', '\\']));
             if !v.contains(&p) && !hidden(&p) {
                 v.push(p);
             }
@@ -2851,7 +2859,8 @@ mod search_tests {
         let pack = tmp.join("Old Factory");
         std::fs::create_dir_all(&pack).unwrap();
         // A database naming the pack (and a file, which is no folder).
-        let xml = format!("<root><ContentPack path=\"{}\" /><X>{}/none.txt</X></root>", pack.display(), tmp.display());
+        // The closing tags name folders too (`</tmp>`, `/root` on Linux).
+        let xml = format!("<root><ContentPack path=\"{}\" /><X>{}/none.txt</X><tmp/></root></tmp>", pack.display(), tmp.display());
         assert_eq!(content_pack_paths(&xml), vec![pack.clone()]);
         let v = sources_with(&[], &[], &[], &subdirs(&tmp));
         let item = v.iter().find(|s| s.path.as_deref() == Some(pack.as_path())).expect("v1 pack listed");
