@@ -21,6 +21,10 @@ dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::pr
 - Out of scope: licensing / copy protection, updates and registration, RTAS, inter-plugin audio.
 - Git (Conventional Commits, changelog, releases, branches,
   submodule bumps): `CONTRIBUTING.md`; agent workflow notes: dreist-re `agents.md`.
+- Security alerts: check the open code scanning and Dependabot alerts at the start and end of any
+  work here (`gh api repos/koeves/einst/code-scanning/alerts?state=open`, same for
+  `dependabot/alerts`); fix real findings through an issue and a PR, dismiss false positives
+  with the reason.
 
 ## Build
 
