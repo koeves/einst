@@ -37,7 +37,7 @@ Nothing may come to the front while the desktop is in use: tests and harnesses s
 tests, pluginval runs with `--skip-gui-tests`, and apps start with `open -g`.
 
 Branches: `feature/<name>` (one worktree each, outside the checkout) -> pull request into
-`dev` (merge commit, checks green) -> release pull request `dev` -> `main` (merge commit). The
+`dev` (squash only; the PR title is the Conventional Commit; checks green) -> release pull request `dev` -> `main` (merge commit). The
 merge releases: version from the commits (`Release-As: X.Y.Z` overrides), tag, build, GitHub
 release and a follow-up changelog / version pull request into `dev` happen on their own; never
 tag or bump by hand. `commons` must be at a dreist-commons release tag (CONTRIBUTING.md).
