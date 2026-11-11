@@ -26,6 +26,8 @@ fn collect(n: &mut Node, src_samples: Option<&Path>, dest_samples: &Path, embed:
         let abs = if path.is_absolute() { path.to_path_buf() } else { src_samples.map(|s| dreist_formats::model::resolve_sample(s, &rel)).unwrap_or_else(|| path.to_path_buf()) };
         let new_rel: PathBuf = match abs.strip_prefix(dest_samples) {
             Ok(r) if embed => r.to_path_buf(),
+            // A full path stays as written (Windows: its backslashes).
+            _ if !embed && path.is_absolute() => PathBuf::from(&*v),
             _ if !embed => abs.clone(),
             _ => {
                 // v1 copies into the folder by file name.
