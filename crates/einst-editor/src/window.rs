@@ -49,7 +49,7 @@ impl Drop for Hosted {
 /// ([re:44230b] [re:bdda3c]), from the documents folder.
 pub fn native_files_dialogs() -> crate::FilesDialogFn {
     Box::new(|d| {
-        let d0 = rfd::FileDialog::new().set_title("Please choose the file(s) you wish to import").set_directory(crate::options::documents_dir());
+        let d0 = rfd::FileDialog::new().set_title("Please choose the file(s) you wish to import").set_directory(start_dir(crate::options::documents_dir()));
         match d {
             crate::Dialog::OpenGuruSwing => d0.add_filter("GURU swing template files", &["txt"]).pick_files(),
             crate::Dialog::OpenMidiTemplate => d0.add_filter("MIDI files", &["mid"]).pick_files(),
@@ -57,6 +57,14 @@ pub fn native_files_dialogs() -> crate::FilesDialogFn {
         }
         .unwrap_or_default()
     })
+}
+
+/// The folder a dialog opens in: `p`, else its nearest existing parent.
+/// Without a desktop portal the dialogs fall back to zenity, which does not
+/// open at all in a missing folder (a missing content or Desktop folder).
+fn start_dir(p: impl Into<std::path::PathBuf>) -> std::path::PathBuf {
+    let p = p.into();
+    p.ancestors().find(|a| a.is_dir()).map(std::path::Path::to_path_buf).unwrap_or(p)
 }
 
 /// Native open/save dialogs (rfd).
@@ -67,19 +75,19 @@ pub fn native_dialogs() -> crate::DialogFn {
         crate::Dialog::OpenProject => rfd::FileDialog::new()
             .add_filter(format!("{} project", crate::product()), &crate::app::open_extensions())
             .add_filter("Guru preset files", &["GRU", "gru"])
-            .set_directory(crate::browser::content_dir())
+            .set_directory(start_dir(crate::browser::content_dir()))
             .pick_file(),
         crate::Dialog::SaveProject => {
             let ext = dreist_formats::profile::get().save.project;
             rfd::FileDialog::new().add_filter(format!("{} project", crate::product()), &[ext]).set_file_name(format!("Untitled.{ext}")).save_file()
         }
         crate::Dialog::ExportAudio { name, folder: true, start } => {
-            rfd::FileDialog::new().set_title("Please select the location to export the audio to").set_directory(start).pick_folder().map(|d| d.join(name))
+            rfd::FileDialog::new().set_title("Please select the location to export the audio to").set_directory(start_dir(start)).pick_folder().map(|d| d.join(name))
         }
         crate::Dialog::ExportAudio { name, folder: false, start } => rfd::FileDialog::new()
             .set_title("Please select the location to export to")
             .add_filter(format!("{} sample files", crate::product()), &["wav"])
-            .set_directory(start)
+            .set_directory(start_dir(start))
             .set_file_name(format!("{name}.wav"))
             .save_file(),
         // [re:697e72]: from the documents folder.
@@ -87,13 +95,13 @@ pub fn native_dialogs() -> crate::DialogFn {
             .set_title("Please select the location to save to")
             .add_filter(format!("{} sample files", crate::product()), &["wav"])
             .set_file_name(name)
-            .set_directory(crate::options::documents_dir())
+            .set_directory(start_dir(crate::options::documents_dir()))
             .save_file(),
         crate::Dialog::SaveChainPreset => {
             let mut d = rfd::FileDialog::new().set_title("Please select the location to save to").add_filter("FX chain preset files", &["fxchain"]).set_file_name("New Preset.fxchain");
             if let Some(u) = Some(crate::options::documents_dir().join("Effect Chains")) {
                 let _ = std::fs::create_dir_all(&u);
-                d = d.set_directory(u);
+                d = d.set_directory(start_dir(u));
             }
             d.save_file()
         }
@@ -101,7 +109,7 @@ pub fn native_dialogs() -> crate::DialogFn {
             let mut d = rfd::FileDialog::new().set_title("Please select the location to save to").add_filter("Effect preset files", &["fxpreset"]).set_file_name("New Preset.fxpreset");
             if let Some(u) = Some(crate::options::documents_dir().join("Effects").join(dreist_formats::params::EFFECT_TYPES.get(kind).copied().unwrap_or(""))) {
                 let _ = std::fs::create_dir_all(&u);
-                d = d.set_directory(u);
+                d = d.set_directory(start_dir(u));
             }
             d.save_file()
         }
@@ -137,20 +145,20 @@ pub fn native_dialogs() -> crate::DialogFn {
         crate::Dialog::ChooseFolder(start) => {
             let d = rfd::FileDialog::new().set_title("Please choose a search location");
             match start {
-                Some(s) => d.set_directory(s),
+                Some(s) => d.set_directory(start_dir(s)),
                 None => d,
             }
             .pick_folder()
         }
         crate::Dialog::ExportFolder => {
             let desktop = dreist_formats::paths::home().join("Desktop");
-            rfd::FileDialog::new().set_title("Please choose a location to export to").set_directory(desktop).pick_folder()
+            rfd::FileDialog::new().set_title("Please choose a location to export to").set_directory(start_dir(desktop)).pick_folder()
         }
-        crate::Dialog::ChooseDocuments(start) => rfd::FileDialog::new().set_title(crate::modal::docs_browse_title()).set_directory(start).pick_folder(),
+        crate::Dialog::ChooseDocuments(start) => rfd::FileDialog::new().set_title(crate::modal::docs_browse_title()).set_directory(start_dir(start)).pick_folder(),
         crate::Dialog::LocateFile { title, start } => {
             let d = rfd::FileDialog::new().set_title(title).add_filter("Audio", &["wav", "aif", "aiff"]);
             match start {
-                Some(s) => d.set_directory(s),
+                Some(s) => d.set_directory(start_dir(s)),
                 None => d,
             }
             .pick_file()
@@ -159,7 +167,7 @@ pub fn native_dialogs() -> crate::DialogFn {
             let mut d = rfd::FileDialog::new().set_title("Please select the location to save to").add_filter("Swing template files", &["swingtemplate"]).set_file_name("Groove.swingtemplate");
             if let Some(u) = crate::swing::user_dir() {
                 let _ = std::fs::create_dir_all(&u);
-                d = d.set_directory(u);
+                d = d.set_directory(start_dir(u));
             }
             d.save_file()
         }
@@ -184,12 +192,14 @@ pub fn open_blocking(mut ed: Editor, mut on_commands: impl FnMut(Vec<Command>) +
     );
 }
 
-pub fn open_parented<P: dreist_gui::window::RawHandle>(parent: &P, mut ed: Editor, link: Link) -> dreist_gui::window::WindowHandle {
+/// Open the editor in a host's view; `scale` is the host's scale factor
+/// (1 when it gave none; see `dreist_gui::window::open_parented_scaled`).
+pub fn open_parented<P: dreist_gui::window::RawHandle>(parent: &P, mut ed: Editor, link: Link, scale: f64) -> dreist_gui::window::WindowHandle {
     if ed.dialogs.is_none() {
         ed.dialogs = Some(native_dialogs());
         ed.files_dialogs = Some(native_files_dialogs());
     }
-    dreist_gui::window::open_parented(parent, Hosted(ed, link))
+    dreist_gui::window::open_parented_scaled(parent, Hosted(ed, link), scale)
 }
 
 #[cfg(test)]
