@@ -2,8 +2,8 @@ name: Release
 
 # Releases a tag `vX.Y.Z`: checks that commons is a dreist-commons release,
 # checks the commit subjects, tests and builds Einst (VST3, CLAP, standalone)
-# on macOS with the tag's version written into Cargo.toml and publishes the
-# GitHub release with the zips. Called by release-on-main.yml once it has
+# on macOS, Windows and Linux with the tag's version written into Cargo.toml
+# and publishes the GitHub release with the zips (tarballs on Linux). Called by release-on-main.yml once it has
 # tagged the merge of a release pull request; also runs on a tag pushed by
 # hand (a tag pushed by release-on-main.yml with GITHUB_TOKEN starts no
 # second run) and by hand (`workflow_dispatch`: builds the checked-out ref,
@@ -55,7 +55,20 @@ jobs:
 
   build:
     needs: [commons, commits]
-    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            name: macOS
+          - os: windows-latest
+            name: Windows
+          - os: ubuntu-24.04
+            name: Linux
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v7
         with:
@@ -69,19 +82,46 @@ jobs:
           if [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             .github/release/stamp-version.sh "$TAG"
           fi
+      - name: System packages (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config libasound2-dev libjack-jackd2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcb-icccm4-dev libxcb-dri2-0-dev libxcursor-dev libgl1-mesa-dev xvfb
       - name: Test
-        run: cargo test --locked --workspace
-      - name: Build
+        # The effect fingerprints match on macOS only (float output differs).
+        run: ${{ runner.os == 'Linux' && 'xvfb-run -a ' || '' }}cargo test --locked --workspace ${{ runner.os != 'macOS' && '-- --skip effects_match_fingerprints' || '' }}
+      - name: Build (macOS)
+        if: runner.os == 'macOS'
         run: |
           scripts/build.sh
           cd target/bundled
-          ditto -c -k --keepParent Einst.vst3 "Einst-$TAG-macOS-VST3.zip"
-          ditto -c -k --keepParent Einst.clap "Einst-$TAG-macOS-CLAP.zip"
-          ditto -c -k --keepParent Einst.app "Einst-$TAG-macOS-App.zip"
+          ditto -c -k --keepParent Einst.vst3 "Einst-$TAG-${{ matrix.name }}-VST3.zip"
+          ditto -c -k --keepParent Einst.clap "Einst-$TAG-${{ matrix.name }}-CLAP.zip"
+          ditto -c -k --keepParent Einst.app "Einst-$TAG-${{ matrix.name }}-App.zip"
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          scripts/build-windows.sh
+          cd target/bundled
+          mv Einst-CLAP Einst && 7z a -tzip "Einst-$TAG-${{ matrix.name }}-CLAP.zip" Einst && mv Einst Einst-CLAP
+          mv Einst-App Einst && 7z a -tzip "Einst-$TAG-${{ matrix.name }}-App.zip" Einst && mv Einst Einst-App
+          7z a -tzip "Einst-$TAG-${{ matrix.name }}-VST3.zip" Einst.vst3
+      - name: Build (Linux)
+        # tar keeps the executable bits; the CLAP and the app unpack into an
+        # Einst/ folder each (README: Linux).
+        if: runner.os == 'Linux'
+        run: |
+          scripts/build-linux.sh
+          cd target/bundled
+          tar -czf "Einst-$TAG-${{ matrix.name }}-VST3.tar.gz" Einst.vst3
+          tar -czf "Einst-$TAG-${{ matrix.name }}-CLAP.tar.gz" --transform 's,^Einst-CLAP,Einst,' Einst-CLAP
+          tar -czf "Einst-$TAG-${{ matrix.name }}-App.tar.gz" --transform 's,^Einst-App,Einst,' Einst-App
       - uses: actions/upload-artifact@v7
         with:
-          name: Einst-${{ env.TAG }}-macOS
-          path: target/bundled/Einst-*.zip
+          name: Einst-${{ env.TAG }}-${{ matrix.name }}
+          path: |
+            target/bundled/Einst-*.zip
+            target/bundled/Einst-*.tar.gz
           retention-days: 7
 
   release:
@@ -113,4 +153,4 @@ jobs:
           else
             gh release create "$TAG" --verify-tag --title "$TITLE" --notes-file notes.md
           fi
-          gh release upload "$TAG" dist/*.zip --clobber
+          gh release upload "$TAG" dist/*.zip dist/*.tar.gz --clobber

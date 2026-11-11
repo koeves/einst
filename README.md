@@ -6,8 +6,10 @@
   the predecessor of Geist2, with v1's look, effects and sound.
 - Opens Geist v1 projects, kits, pads, engines and patterns (and Geist2 and Dreist files);
   saves its own `.einst` family (`.einst`, `.einstkit`, ...).
-- VST3, CLAP and a standalone app for macOS (Apple Silicon).
-- Settings: `~/Library/Application Support/Einst`.
+- VST3, CLAP and a standalone app for macOS (Apple Silicon), Windows (x64) and Linux (x86_64,
+  X11).
+- Settings: `~/Library/Application Support/Einst` (Windows: `%APPDATA%\Einst`, Linux:
+  `~/.config/Einst`, or `$XDG_CONFIG_HOME/Einst`).
 - Plugin IDs: CLAP `rs.einst.einst`, VST3 class `EinstRsDrumSmplr`.
 
 | | |
@@ -18,9 +20,12 @@
 
 ## Installation
 
-Download `Einst-<version>-macOS-VST3.zip`, `-CLAP.zip` and `-App.zip` from the
-[releases page](https://github.com/koeves/einst/releases) (latest:
-[v0.1.1](https://github.com/koeves/einst/releases/tag/v0.1.1)).
+Download `Einst-<version>-<os>-VST3.zip`, `-CLAP.zip` and `-App.zip` (`.tar.gz` on Linux) from
+the [releases page](https://github.com/koeves/einst/releases) (latest:
+[v0.1.1](https://github.com/koeves/einst/releases/tag/v0.1.1), macOS only; Windows and Linux
+builds come with the next release).
+
+**macOS**
 
 - VST3: unzip and move `Einst.vst3` to `~/Library/Audio/Plug-Ins/VST3/`.
 - CLAP: move `Einst.clap` to `~/Library/Audio/Plug-Ins/CLAP/`.
@@ -32,6 +37,29 @@ Control-click) › Open › Open. If a host refuses to load the plugins, clear t
 ```bash
 xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Library/Audio/Plug-Ins/CLAP/Einst.clap
 ```
+
+**Windows**
+
+- VST3: unzip and move the `Einst.vst3` folder to `C:\Program Files\Common Files\VST3\`.
+- CLAP: move the `Einst` folder (holding `Einst.clap` and its `Resources`) to
+  `C:\Program Files\Common Files\CLAP\`.
+- App: unzip the `Einst` folder anywhere and run `Einst.exe`. Keep the `Resources` folder next
+  to it. SmartScreen may warn on first launch, because the build is unsigned: More info › Run
+  anyway.
+
+**Linux** (x86_64, X11; Wayland desktops run it through XWayland)
+
+- VST3: unpack and move `Einst.vst3` to `~/.vst3/` (or `/usr/lib/vst3/`).
+- CLAP: unpack and move the `Einst` folder (holding `Einst.clap` and its `Resources`) to
+  `~/.clap/` (or `/usr/lib/clap/`).
+- App: unpack the `Einst` folder anywhere (say `~/.local/share/Einst`) and run `Einst`; keep
+  `Resources` next to it. A symlink to it (`ln -s ~/.local/share/Einst/Einst ~/.local/bin/einst`)
+  works, and `einst.desktop` / `einst.png` are a desktop entry and icon for
+  `~/.local/share/applications` and `~/.local/share/icons/hicolor/256x256/apps`.
+- Runtime needs: ALSA (`libasound2`), X11 / XCB (`libx11-6`, `libx11-xcb1`, `libxcb1`,
+  `libxcursor1`) and OpenGL (`libgl1`), present on desktop systems. The standalone app plays
+  through ALSA (with PipeWire or PulseAudio, through their ALSA plugin); file dialogs use the XDG
+  desktop portal (`xdg-desktop-portal`, or `zenity` without one).
 
 **Content**
 
@@ -45,14 +73,24 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 Needs a Rust toolchain.
 
 ```bash
-scripts/build.sh            # target/bundled/Einst.{app,vst3,clap}
+scripts/build.sh            # macOS: target/bundled/Einst.{app,vst3,clap}
 scripts/build.sh --install  # also copies them to ~/Library and /Applications
+scripts/build-windows.sh    # Windows (Git Bash): target/bundled/Einst.vst3, Einst-CLAP/, Einst-App/
+scripts/build-linux.sh      # Linux: target/bundled/Einst.vst3, Einst-CLAP/, Einst-App/
+scripts/build-linux.sh --install  # also into ~/.vst3, ~/.clap/Einst, ~/.local/share/Einst (+ ~/.local/bin/einst)
 cargo test --workspace
 ```
 
+On Linux the build needs (Debian / Ubuntu names; Fedora: `alsa-lib-devel libX11-devel
+libxcb-devel libXcursor-devel mesa-libGL-devel`):
+
+```bash
+sudo apt-get install pkg-config libasound2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcursor-dev libgl1-mesa-dev
+```
+
 Merging a release pull request (`dev` -> `main`) releases: `.github/workflows/release-on-main.yml`
-takes the version from the commits, tags the merge `vX.Y.Z`, tests and builds on macOS, publishes
-the GitHub release with the zips and opens the changelog pull request into `dev`
+takes the version from the commits, tags the merge `vX.Y.Z`, tests and builds on macOS, Windows and
+Linux, publishes the GitHub release with the zips (Linux: tarballs) and opens the changelog pull request into `dev`
 ([CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Layout

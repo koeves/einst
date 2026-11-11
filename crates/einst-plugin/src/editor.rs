@@ -500,7 +500,7 @@ impl Editor for DreistEditor {
                                     // Pattern export: show the file (the original offers it for dragging).
                                     if reveal {
                                         if let Some(f) = r.files.first() {
-                                            let _ = std::process::Command::new("open").arg("-R").arg(f).spawn();
+                                            dreist_host::shell::reveal(&[f]);
                                         }
                                     }
                                 }

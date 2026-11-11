@@ -666,7 +666,8 @@ pub fn content_dir() -> PathBuf {
 
 /// v1's content, beside the current format's: the packs in v1's content
 /// pack database (`ContentPacks.xml` in the `System` folder of v1's user
-/// support folder, `~/Library/Application Support/<vendor>/<v1>`) and the
+/// support folder, `~/Library/Application Support/<vendor>/<v1>`, under
+/// `dreist_formats::paths::settings_base` elsewhere) and the
 /// folders in the `Content` folder of v1's documents folder
 /// (`~/Documents/<vendor>/<v1>`), as v1's path builders make them (static
 /// reading of v1's engine; v1's installer chose the packs' folder, so the
@@ -682,8 +683,8 @@ pub fn v1_content_dirs() -> Vec<PathBuf> {
     let vendor = Path::new(dreist_formats::legacy::DOCUMENTS_DIR).parent().map(Path::to_path_buf).unwrap_or_default();
     let v1 = dreist_formats::legacy::ROOT_ELEMENT;
     let mut v = subdirs(&home.join(&vendor).join(v1).join("Content"));
-    let db = home.join("Library/Application Support").join(vendor.file_name().unwrap_or_default()).join(v1).join("System/ContentPacks.xml");
-    if let Ok(text) = std::fs::read_to_string(db) {
+    let db = dreist_formats::paths::settings_base().map(|b| b.join(vendor.file_name().unwrap_or_default()).join(v1).join("System/ContentPacks.xml"));
+    if let Some(text) = db.and_then(|db| std::fs::read_to_string(db).ok()) {
         for p in content_pack_paths(&text) {
             if !v.contains(&p) {
                 v.push(p);
@@ -698,11 +699,19 @@ pub fn v1_content_dirs() -> Vec<PathBuf> {
 /// database's element names are not known, only that it holds the packs'
 /// paths).
 fn content_pack_paths(xml: &str) -> Vec<PathBuf> {
+    // Quoted values inside tags and the text between tags (a closing tag
+    // such as `</root>` is no path, though `/root` may be a folder).
+    let mut parts: Vec<&str> = vec![xml.split('<').next().unwrap_or("")];
+    for seg in xml.split('<').skip(1) {
+        let (tag, text) = seg.split_once('>').unwrap_or((seg, ""));
+        parts.extend(tag.split('"').skip(1).step_by(2));
+        parts.push(text);
+    }
     let mut v: Vec<PathBuf> = Vec::new();
-    for part in xml.split(['"', '<', '>']) {
+    for part in parts {
         let t = part.trim().replace("&amp;", "&").replace("&apos;", "'");
-        if t.starts_with('/') && Path::new(&t).is_dir() {
-            let p = PathBuf::from(t.trim_end_matches('/'));
+        if Path::new(&t).is_absolute() && Path::new(&t).is_dir() {
+            let p = PathBuf::from(t.trim_end_matches(['/', '\\']));
             if !v.contains(&p) && !hidden(&p) {
                 v.push(p);
             }
@@ -1343,17 +1352,11 @@ impl Browser {
                 true
             }
             NavAction::CopyPath => {
-                if let Ok(mut c) = std::process::Command::new("pbcopy").stdin(std::process::Stdio::piped()).spawn() {
-                    use std::io::Write;
-                    if let Some(i) = c.stdin.as_mut() {
-                        let _ = i.write_all(dir.to_string_lossy().as_bytes());
-                    }
-                    let _ = c.wait();
-                }
+                dreist_host::shell::copy_text(&dir.to_string_lossy());
                 false
             }
             NavAction::Reveal => {
-                let _ = std::process::Command::new("open").arg("-R").arg(&dir).spawn();
+                dreist_host::shell::reveal(&[&dir]);
                 false
             }
             NavAction::Favourite => {
@@ -1456,7 +1459,7 @@ impl Browser {
                 true
             }
             SourceAction::Reveal => {
-                let _ = std::process::Command::new("open").arg("-R").arg(&path).spawn();
+                dreist_host::shell::reveal(&[&path]);
                 false
             }
             // [re:a2fc7f]: an edit box over the row.
@@ -1751,7 +1754,7 @@ impl Browser {
             FileAction::Reveal | FileAction::RevealFolder => {
                 let ts: Vec<PathBuf> = if a == FileAction::Reveal { self.menu_targets().into_iter().map(|e| e.path).collect() } else { self.dir.clone().into_iter().collect() };
                 if !ts.is_empty() {
-                    let _ = std::process::Command::new("open").arg("-R").args(ts).spawn();
+                    dreist_host::shell::reveal(&ts);
                 }
                 false
             }
@@ -2856,7 +2859,8 @@ mod search_tests {
         let pack = tmp.join("Old Factory");
         std::fs::create_dir_all(&pack).unwrap();
         // A database naming the pack (and a file, which is no folder).
-        let xml = format!("<root><ContentPack path=\"{}\" /><X>{}/none.txt</X></root>", pack.display(), tmp.display());
+        // The closing tags name folders too (`</tmp>`, `/root` on Linux).
+        let xml = format!("<root><ContentPack path=\"{}\" /><X>{}/none.txt</X><tmp/></root></tmp>", pack.display(), tmp.display());
         assert_eq!(content_pack_paths(&xml), vec![pack.clone()]);
         let v = sources_with(&[], &[], &[], &subdirs(&tmp));
         let item = v.iter().find(|s| s.path.as_deref() == Some(pack.as_path())).expect("v1 pack listed");

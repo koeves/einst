@@ -108,7 +108,8 @@ pub fn metronome_sound() -> String {
 }
 
 /// The app's settings folder (the profile's: `~/Library/Application
-/// Support/<settings_dir>`, `%APPDATA%\\<settings_dir>`). On first use a
+/// Support/<settings_dir>`, `%APPDATA%\\<settings_dir>`,
+/// `~/.config/<settings_dir>`; `dreist_formats::paths::settings_base`). On first use a
 /// folder under one of the profile's earlier names is moved there.
 pub fn settings_dir() -> Option<PathBuf> {
     // Unit tests get a scratch folder instead of the user's.
@@ -119,7 +120,7 @@ pub fn settings_dir() -> Option<PathBuf> {
     if let Some(d) = std::env::var_os(crate::app::SETTINGS_ENV) {
         return Some(PathBuf::from(d));
     }
-    let base = if cfg!(windows) { std::env::var_os("APPDATA").map(PathBuf::from) } else { std::env::var_os("HOME").map(|h| PathBuf::from(h).join("Library/Application Support")) }?;
+    let base = dreist_formats::paths::settings_base()?;
     static MIGRATED: std::sync::Once = std::sync::Once::new();
     MIGRATED.call_once(|| {
         migrate_settings(&base, crate::app::SETTINGS_DIR, crate::app::LEGACY_SETTINGS_DIRS);

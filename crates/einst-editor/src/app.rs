@@ -9,7 +9,8 @@ use dreist_formats::Node;
 /// The About text (three lines).
 pub const ABOUT: &str = "Einst: drum sampler, sequencer and performance instrument,\na rebuild of the original v1 instrument.\nNative for macOS, written in Rust.";
 
-/// Settings folder name (`~/Library/Application Support/<name>`).
+/// Settings folder name (`~/Library/Application Support/<name>`,
+/// `%APPDATA%\<name>`, `$XDG_CONFIG_HOME/<name>`).
 pub const SETTINGS_DIR: &str = "Einst";
 
 /// Earlier settings folder names, moved to [`SETTINGS_DIR`] on first use.

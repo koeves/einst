@@ -467,13 +467,7 @@ impl PadMenu {
             }
             PadAction::CopyPath(l) => {
                 if let Some(f) = sample(model, l) {
-                    if let Ok(mut c) = std::process::Command::new("pbcopy").stdin(std::process::Stdio::piped()).spawn() {
-                        use std::io::Write;
-                        if let Some(s) = c.stdin.as_mut() {
-                            let _ = s.write_all(f.to_string_lossy().as_bytes());
-                        }
-                        let _ = c.wait();
-                    }
+                    dreist_host::shell::copy_text(&f.to_string_lossy());
                 }
                 Outcome::default()
             }
@@ -481,7 +475,7 @@ impl PadMenu {
             PadAction::SaveSample(l) => Outcome { changed: false, browse: None, save: sample(model, l).map(|_| l) },
             PadAction::Reveal(l) => {
                 if let Some(f) = sample(model, l) {
-                    let _ = std::process::Command::new("open").arg("-R").arg(f).spawn();
+                    dreist_host::shell::reveal(&[f]);
                 }
                 Outcome::default()
             } // 0x49 `e_setPadColour`; `PadColour` = "r, g, b, a" (none when transparent).
