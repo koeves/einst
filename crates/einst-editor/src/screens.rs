@@ -16,6 +16,8 @@ pub fn editor() -> Option<Editor> {
     model.samples = Some(dreist_formats::model::samples_dir(&p));
     model.name = Some("Hollow".into());
     let mut ed = Editor::new(dreist_gui::skin::default_theme(), model).ok()?;
+    // The About panel's version line stays the same across releases.
+    ed.modals.version = "0.0.0";
     ed.sync();
     Some(ed)
 }

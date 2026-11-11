@@ -141,6 +141,9 @@ pub struct Modals {
     /// Preferences were confirmed: the editor tells the engine
     /// (`e_registryOptionsChanged`).
     pub options_confirmed: bool,
+    /// The version the About panel shows: the build's; a fixed one in the
+    /// screen goldens (`screens::editor`), so a release leaves them alone.
+    pub version: &'static str,
     about: Option<Vec<usize>>,
     prefs: Option<Vec<usize>>,
     export: Option<Vec<usize>>,
@@ -329,6 +332,7 @@ impl Modals {
         Ok(Modals {
             style_changed: None,
             options_confirmed: false,
+            version: env!("CARGO_PKG_VERSION"),
             about,
             prefs,
             export,
@@ -377,6 +381,7 @@ impl Modals {
         self.open = Some(k);
         self.dirty = false;
         if k == Kind::About {
+            let version = self.version;
             if let Some(o) = self.about.clone().and_then(|p| app.ctrl_mut(&p)) {
                 // v1's panel leaves the text to code: a label in `AboutView`.
                 if o.find("AboutLabel").is_none() {
@@ -413,7 +418,7 @@ impl Modals {
                     }
                 });
                 o.walk_mut(&mut |c: &mut Ctrl| match c.name.as_str() {
-                    "Version" | "VersionLabel" => c.text = format!("Version {}", env!("CARGO_PKG_VERSION")),
+                    "Version" | "VersionLabel" => c.text = format!("Version {version}"),
                     "DateLabel" => c.text = String::new(),
                     "AboutLabel" => c.text = about().into(),
                     _ => {}
