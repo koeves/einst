@@ -1,51 +1,50 @@
 # Contributing
 
-Commit subjects follow [Conventional Commits](https://www.conventionalcommits.org/):
-`type(scope): summary`, with type one of `feat`, `fix`, `perf`, `refactor`, `docs`, `test`,
-`build`, `ci`, `chore`, `style` or `revert`, and `!` after the type for a breaking change. CI
-checks every new commit (`.github/workflows/commits.yml`); the changelog is generated from them.
+## Commits
 
-Releases: merging the release pull request (`dev` -> `main`, merge commit) releases; there is no
-manual tagging, bumping or changelog commit. `.github/workflows/release-on-main.yml` computes the
-version from the commits since the last `v*` tag (`git cliff --bumped-version`, rules in
-`cliff.toml`: fix and the rest -> patch, feat -> minor, breaking -> major, and breaking -> minor
-while on 0.x), checks that `commons` points at a dreist-commons release tag, tags the merge commit
-`vX.Y.Z` and runs `release.yml`: the commit check, tests and the macOS, Windows and Linux
-builds (VST3, CLAP, app zips; tarballs on Linux) with the version written into `Cargo.toml` in its own checkout (plugins, app and About show
-it), and the GitHub release with notes generated from the commits. It then opens the follow-up
-pull request `docs(release): changelog and version for vX.Y.Z` into `dev` (CHANGELOG.md, the
-`Cargo.toml` / `Cargo.lock` version), which merges itself once its checks pass. Only feat, fix,
-perf, refactor, revert, breaking and dependency (`build(deps)`, `chore(deps)`, `build:
-dreist-commons ...`) commits are releasable: without one nothing is released and the run says so.
-A line `Release-As: X.Y.Z` in the release pull request's body (or in a commit message since the
-last tag) sets the version instead, and releases even without a releasable commit. Release
-dreist-commons first and point `commons` at its tag (a pull request into `dev`) when Einst needs
-the change. `release.yml` also runs on a tag pushed by hand; to rebuild a release's assets: `gh
-workflow run release.yml --ref <tag> -f tag=<tag> -f upload=true`.
+- **Format**: [Conventional Commits](https://www.conventionalcommits.org/), `type(scope): summary`, with `!` after the type for a breaking change.
+- **Types**: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `style`, `revert`.
+- **Checked**: by the `conventional` check; the changelog and release notes are generated from the commits.
 
-Branches and CI: work happens on `feature/<name>` branches (parallel threads: one worktree each,
-outside the checkout), pushed and merged into `dev` through a pull request by squash only: the pull request title is
-a Conventional Commit subject and becomes the commit (checked by `conventional`). Merge once its
-checks pass (CI, `conventional`, CodeQL). Dependabot targets `dev`: patch
-and minor updates, GitHub Actions and submodule bumps merge on their own when the checks pass,
-major updates wait for a review. A release is a pull request from `dev` into `main`, merged with a
-merge commit only, never squashed (it keeps `dev`'s commits, which give the version and the
-changelog; see Releases). Rules: `dev` and `main` require a pull request (no approvals) and the
-checks; `dev` allows squash only, `main` merge commits only. GitHub Actions run on pull requests into `dev` and `main`, on pushes
-to `main` (the release), on release tags and by hand (`workflow_dispatch`, also how the follow-up
-pull request gets its checks), never on other branch pushes. Run the checks locally before
-pushing: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets --features
-einst-plugin/standalone -- -D warnings` and `cargo test --workspace --no-fail-fast` (and `python3
-scripts/uigen/uigen.py --check` after changing `scripts/uigen`).
+## Branches and pull requests
 
-Platforms: CI's `macos` job (required) checks everything on macOS; `windows` and `linux-build`
-(not required) lint, test and bundle with `scripts/build-windows.sh` (Git Bash) and
-`scripts/build-linux.sh` (the system packages in the README; tests under `xvfb-run`). Windows and
-Linux binaries are unsigned.
+- **Work**: on `feature/<name>`, one worktree per branch outside the checkout.
+- **Into `dev`**: a pull request, squash-merged; its title is the Conventional Commit.
+- **Issues**: one per task; the pull request body says `Closes #N`.
+- **Rules**: `dev` and `main` take changes only through pull requests with green checks.
+- **Dependabot**: targets `dev`; patch, minor, Actions and submodule updates merge on their own when green.
 
-dreist-commons: the shared crates are the submodule at `commons` (clone with `--recursive`). To
-change them, commit and push in `commons/` first, then commit the new pointer here as `build:
-dreist-commons <short sha or vX.Y.Z>`; goldens must stay identical unless the change means to
-alter them (say why in the commit). A release needs `commons` at a dreist-commons release tag (the
-release run checks it): release dreist-commons first, then bump the pointer to its tag (`build:
-dreist-commons vX.Y.Z`, or Dependabot's pull request).
+## Checks
+
+Run them before pushing:
+
+```bash
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --features einst-plugin/standalone -- -D warnings
+cargo test --workspace --no-fail-fast
+python3 scripts/uigen/uigen.py --check   # after changing scripts/uigen
+```
+
+- **CI**: `macos` (required) checks everything; `windows` and `linux-build` lint, test and bundle.
+- **CodeQL**: runs on every pull request into `dev` and `main`.
+- **Goldens**: stay identical unless a change means to alter them; say why in the commit.
+
+## Releases
+
+- **Release**: a pull request from `dev` into `main`, merged with a merge commit.
+- **Automatic**: the merge computes the version from the commits, tags `vX.Y.Z`, builds macOS, Windows and Linux and publishes the GitHub release.
+- **Follow-up**: a changelog and version pull request into `dev` merges itself once green.
+- **Version**: fix → patch, feat → minor, breaking → major (minor while on 0.x); `Release-As: X.Y.Z` in the release pull request overrides it.
+- **Releasable**: feat, fix, perf, refactor, revert, breaking and dependency commits; without one nothing is released.
+- **Rebuild assets**: `gh workflow run release.yml --ref <tag> -f tag=<tag> -f upload=true`.
+
+## dreist-commons
+
+- **Submodule**: the shared crates are at `commons`; clone with `--recursive`.
+- **Changes**: land in dreist-commons first, then bump the pointer here as `build: dreist-commons <sha or vX.Y.Z>`.
+- **Releases**: `commons` must be at a dreist-commons release tag; release dreist-commons first.
+
+## Builds
+
+- **Signing**: `scripts/build.sh` signs ad hoc on macOS; `EINST_SIGN_IDENTITY` (Developer ID) signs with the hardened runtime, `EINST_NOTARY_PROFILE` also notarises.
+- **Release builds**: unsigned on every system.
