@@ -37,8 +37,10 @@ Nothing may come to the front while the desktop is in use: tests and harnesses s
 tests, pluginval runs with `--skip-gui-tests`, and apps start with `open -g`.
 
 Branches: `feature/<name>` (one worktree each, outside the checkout) -> pull request into
-`dev` (merge commit, checks green) -> release pull request `dev` -> `main` (merge commit) -> tag
-`vX.Y.Z` (CONTRIBUTING.md).
+`dev` (merge commit, checks green) -> release pull request `dev` -> `main` (merge commit). The
+merge releases: version from the commits (`Release-As: X.Y.Z` overrides), tag, build, GitHub
+release and a follow-up changelog / version pull request into `dev` happen on their own; never
+tag or bump by hand. `commons` must be at a dreist-commons release tag (CONTRIBUTING.md).
 
 After any code change here or in commons, rebuild and reinstall the VST3 (`scripts/build.sh`, then
 `target/bundled/Einst.vst3` into `~/Library/Audio/Plug-Ins/VST3`) and say which commit is installed.

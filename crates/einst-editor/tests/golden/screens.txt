@@ -12,7 +12,7 @@ hidden-page-song e2966e7e3c8511c1
 main 20137f401a4b2120
 main-menu d76fab1cff35367e
 mapping aa0bdc7ad598d7e9
-modal-about 8423c60e587a1a1b
+modal-about 9f6c32b8d5de5ea6
 modal-audio 5910df5f0b9b6ea9
 modal-console 32ea61fddb8be7a3
 modal-export b60d328d0990fb95

@@ -1,17 +1,32 @@
 name: Release
 
-# Pushing a tag `vX.Y.Z` tests and builds Einst (VST3, CLAP, standalone) on
-# macOS and publishes the GitHub release with the zips. A manual run builds
-# the checked-out ref and publishes to `tag` only when `upload` is set.
+# Releases a tag `vX.Y.Z`: checks that commons is a dreist-commons release,
+# checks the commit subjects, tests and builds Einst (VST3, CLAP, standalone)
+# on macOS with the tag's version written into Cargo.toml and publishes the
+# GitHub release with the zips. Called by release-on-main.yml once it has
+# tagged the merge of a release pull request; also runs on a tag pushed by
+# hand (a tag pushed by release-on-main.yml with GITHUB_TOKEN starts no
+# second run) and by hand (`workflow_dispatch`: builds the checked-out ref,
+# uploads to `tag` only when `upload` is set). No workflow runs on other
+# branch pushes (CONTRIBUTING.md).
 on:
   push:
     tags: ["v*"]
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag"
+        type: string
+        required: true
+      upload:
+        description: "Upload the zips to the release"
+        type: boolean
+        default: true
   workflow_dispatch:
     inputs:
       tag:
         description: "Release tag (names the zips; the upload target)"
         required: true
-        default: "v0.1.0"
       upload:
         description: "Upload the zips to the release"
         type: boolean
@@ -22,13 +37,24 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag || 'dev' }}
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
+  commons:
+    # The submodule must be the commit of a dreist-commons release tag.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: commons is a dreist-commons release
+        run: .github/release/check-commons.sh
+
   commits:
     uses: ./.github/workflows/commits.yml
 
   build:
+    needs: [commons, commits]
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v7
@@ -36,6 +62,13 @@ jobs:
           submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - name: Version from the tag
+        # Only in this checkout: the plugins, the app's Info.plist and the
+        # About panel show it.
+        run: |
+          if [[ $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            .github/release/stamp-version.sh "$TAG"
+          fi
       - name: Test
         run: cargo test --locked --workspace
       - name: Build
@@ -52,39 +85,32 @@ jobs:
           retention-days: 7
 
   release:
-    # The tag's CHANGELOG.md section is the release notes; without one,
-    # git-cliff generates them from the commits since the previous tag.
-    needs: [commits, build]
-    if: github.event_name == 'push' || inputs.upload
+    # The notes are the tag's changelog section, generated from the commits
+    # since the previous tag (.github/release/notes.sh, cliff.toml).
+    needs: build
+    if: inputs.upload || (github.event_name == 'push' && github.ref_type == 'tag')
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
       - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
-      - name: Release notes from CHANGELOG.md
-        id: notes
-        run: |
-          awk -v v="${TAG#v}" '/^## \[/ { p = index($0, "## [" v "]") == 1; next } p' CHANGELOG.md > notes.md || true
-          if [ -s notes.md ]; then echo "found=true" >> "$GITHUB_OUTPUT"; fi
-      - name: Release notes from the commits
-        if: steps.notes.outputs.found != 'true'
-        uses: orhun/git-cliff-action@v4
-        with:
-          config: cliff.toml
-          args: --latest --strip all
-        env:
-          OUTPUT: notes.md
+      - name: Release notes
+        run: .github/release/notes.sh "$TAG" > notes.md
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
+          TITLE: ${{ github.event.repository.name }} ${{ env.TAG }}
         run: |
           if gh release view "$TAG" > /dev/null 2>&1; then
             gh release edit "$TAG" --notes-file notes.md
           else
-            gh release create "$TAG" --verify-tag --title "${{ github.event.repository.name }} $TAG" --notes-file notes.md
+            gh release create "$TAG" --verify-tag --title "$TITLE" --notes-file notes.md
           fi
           gh release upload "$TAG" dist/*.zip --clobber

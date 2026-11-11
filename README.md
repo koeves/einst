@@ -50,8 +50,10 @@ scripts/build.sh --install  # also copies them to ~/Library and /Applications
 cargo test --workspace
 ```
 
-Pushing a tag `vX.Y.Z` runs `.github/workflows/release.yml`: it tests and builds on macOS and
-publishes the GitHub release with the zips.
+Merging a release pull request (`dev` -> `main`) releases: `.github/workflows/release-on-main.yml`
+takes the version from the commits, tags the merge `vX.Y.Z`, tests and builds on macOS, publishes
+the GitHub release with the zips and opens the changelog pull request into `dev`
+([CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Layout
 
