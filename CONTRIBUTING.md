@@ -10,8 +10,8 @@ manual tagging, bumping or changelog commit. `.github/workflows/release-on-main.
 version from the commits since the last `v*` tag (`git cliff --bumped-version`, rules in
 `cliff.toml`: fix and the rest -> patch, feat -> minor, breaking -> major, and breaking -> minor
 while on 0.x), checks that `commons` points at a dreist-commons release tag, tags the merge commit
-`vX.Y.Z` and runs `release.yml`: the commit check, tests and the macOS build (VST3, CLAP, app
-zips) with the version written into `Cargo.toml` in its own checkout (plugins, app and About show
+`vX.Y.Z` and runs `release.yml`: the commit check, tests and the macOS, Windows and Linux
+builds (VST3, CLAP, app zips; tarballs on Linux) with the version written into `Cargo.toml` in its own checkout (plugins, app and About show
 it), and the GitHub release with notes generated from the commits. It then opens the follow-up
 pull request `docs(release): changelog and version for vX.Y.Z` into `dev` (CHANGELOG.md, the
 `Cargo.toml` / `Cargo.lock` version), which merges itself once its checks pass. Only feat, fix,
@@ -34,6 +34,11 @@ pull request gets its checks), never on other branch pushes. Run the checks loca
 pushing: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets --features
 einst-plugin/standalone -- -D warnings` and `cargo test --workspace --no-fail-fast` (and `python3
 scripts/uigen/uigen.py --check` after changing `scripts/uigen`).
+
+Platforms: CI's `macos` job (required) checks everything on macOS; `windows` and `linux-build`
+(not required) lint, test and bundle with `scripts/build-windows.sh` (Git Bash) and
+`scripts/build-linux.sh` (the system packages in the README; tests under `xvfb-run`). Windows and
+Linux binaries are unsigned.
 
 dreist-commons: the shared crates are the submodule at `commons` (clone with `--recursive`). To
 change them, commit and push in `commons/` first, then commit the new pointer here as `build:
