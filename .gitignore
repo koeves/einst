@@ -7,3 +7,5 @@ __pycache__/
 /docs/screens/*
 !/docs/screens/readme/
 /test-songs/
+# Agent worktrees and local settings
+.claude/
