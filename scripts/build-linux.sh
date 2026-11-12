@@ -78,8 +78,13 @@ if [ "$install" = 1 ]; then
     cp -R "$clap" "$HOME/.clap/Einst"
     cp -R "$app" "$share/Einst"
     ln -sf "$share/Einst/Einst" "$HOME/.local/bin/einst"
-    cp "$app/einst.desktop" "$share/applications/einst.desktop"
+    # Absolute paths: ~/.local/bin is only on PATH if it existed at login,
+    # and launchers hide entries whose program they cannot find.
+    sed -e "s|^Exec=.*|Exec=$share/Einst/Einst|" -e "s|^Icon=.*|Icon=$share/Einst/einst.png|" \
+        -e "/^Exec=/i TryExec=$share/Einst/Einst" "$app/einst.desktop" > "$share/applications/einst.desktop"
     cp "$app/einst.png" "$share/icons/hicolor/256x256/apps/einst.png"
+    command -v update-desktop-database >/dev/null && update-desktop-database -q "$share/applications" || true
+    command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$share/icons/hicolor" 2>/dev/null || true
 fi
 
 echo "==> Done"
