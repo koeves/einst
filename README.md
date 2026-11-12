@@ -55,6 +55,7 @@ Download the archives for your system from the [latest release](https://github.c
 - **App**: move `Einst.app` to `/Applications`.
 - **First launch**: the builds are unsigned, so open the app with right-click › Open › Open.
 - **Plugins blocked by a host**: clear the quarantine flag.
+- **Uninstall**: delete `Einst.vst3`, `Einst.clap` and `Einst.app` from those folders.
 
 ```bash
 xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Library/Audio/Plug-Ins/CLAP/Einst.clap
@@ -66,6 +67,7 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 - **CLAP**: move the `Einst` folder (`Einst.clap` and `Resources`) to `C:\Program Files\Common Files\CLAP\`.
 - **App**: unzip the `Einst` folder anywhere and run `Einst.exe`; keep `Resources` next to it.
 - **First launch**: the builds are unsigned; if SmartScreen warns, choose More info › Run anyway.
+- **Uninstall**: delete the `Einst.vst3` and `Einst` folders from those places, and the app folder.
 
 ### Linux
 
@@ -75,12 +77,14 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 - **Launcher**: `einst.desktop` goes in `~/.local/share/applications`, `einst.png` in `~/.local/share/icons/hicolor/256x256/apps`.
 - **Runtime**: ALSA, X11 / XCB and OpenGL, present on desktop systems.
 - **File dialogs**: through the XDG desktop portal, or `zenity` without one.
+- **Uninstall**: delete those files, or run `scripts/build-linux.sh --uninstall` after a source install.
 
 ### Settings
 
 - **macOS**: `~/Library/Application Support/Einst`.
 - **Windows**: `%APPDATA%\Einst`.
 - **Linux**: `~/.config/Einst` (or `$XDG_CONFIG_HOME/Einst`).
+- **Uninstalling** leaves this folder and your content in place; delete them by hand to remove everything.
 
 ### Limitations
 
@@ -105,6 +109,7 @@ scripts/build.sh --install        # macOS: also into ~/Library/Audio/Plug-Ins an
 scripts/build-windows.sh          # Windows, in Git Bash
 scripts/build-linux.sh            # Linux
 scripts/build-linux.sh --install  # Linux: also into ~/.vst3, ~/.clap and ~/.local
+scripts/build-linux.sh --uninstall  # Linux: remove that install
 cargo test --workspace
 ```
 

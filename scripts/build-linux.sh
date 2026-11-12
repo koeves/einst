@@ -4,6 +4,7 @@
 #   scripts/build-linux.sh            release build into target/bundled/
 #   scripts/build-linux.sh --debug    debug build
 #   scripts/build-linux.sh --install  also install for this user (below)
+#   scripts/build-linux.sh --uninstall  remove what --install put in place
 #
 # Output: target/bundled/Einst.vst3 (Contents/x86_64-linux/Einst.so,
 # resources in Contents/Resources), target/bundled/Einst-CLAP/
@@ -14,6 +15,8 @@
 # --install: ~/.vst3/Einst.vst3, ~/.clap/Einst/ (hosts search ~/.clap
 # recursively), the app in ~/.local/share/Einst/ with ~/.local/bin/einst
 # linking to it, and a desktop entry and icon under ~/.local/share.
+# --uninstall removes those and nothing else: settings (~/.config/Einst)
+# and content stay.
 #
 # Needs pkg-config and the ALSA, X11, XCB and OpenGL headers (README).
 set -euo pipefail
@@ -22,14 +25,30 @@ cd "$(dirname "$0")/.."
 
 profile=release
 install=0
+uninstall=0
 for a in "$@"; do
     case "$a" in
         --debug) profile=debug ;;
         --install) install=1 ;;
-        -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
+        --uninstall) uninstall=1 ;;
+        -h|--help) sed -n '2,21p' "$0"; exit 0 ;;
         *) echo "unknown option: $a" >&2; exit 2 ;;
     esac
 done
+share="${XDG_DATA_HOME:-$HOME/.local/share}"
+
+refresh_launchers() {
+    command -v update-desktop-database >/dev/null && update-desktop-database -q "$share/applications" || true
+    command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$share/icons/hicolor" 2>/dev/null || true
+}
+
+if [ "$uninstall" = 1 ]; then
+    echo "==> Uninstalling"
+    rm -rf "$HOME/.vst3/Einst.vst3" "$HOME/.clap/Einst" "$share/Einst"
+    rm -f "$HOME/.local/bin/einst" "$share/applications/einst.desktop" "$share/icons/hicolor/256x256/apps/einst.png"
+    refresh_launchers
+    exit 0
+fi
 flag=$([ "$profile" = release ] && echo --release || true)
 out=target/bundled
 mkdir -p "$out"
@@ -71,7 +90,6 @@ done
 
 if [ "$install" = 1 ]; then
     echo "==> Installing"
-    share="${XDG_DATA_HOME:-$HOME/.local/share}"
     mkdir -p "$HOME/.vst3" "$HOME/.clap" "$share" "$HOME/.local/bin" "$share/applications" "$share/icons/hicolor/256x256/apps"
     rm -rf "$HOME/.vst3/Einst.vst3" "$HOME/.clap/Einst" "$share/Einst"
     cp -R "$out/Einst.vst3" "$HOME/.vst3/"
@@ -83,8 +101,7 @@ if [ "$install" = 1 ]; then
     sed -e "s|^Exec=.*|Exec=$share/Einst/Einst|" -e "s|^Icon=.*|Icon=$share/Einst/einst.png|" \
         -e "/^Exec=/i TryExec=$share/Einst/Einst" "$app/einst.desktop" > "$share/applications/einst.desktop"
     cp "$app/einst.png" "$share/icons/hicolor/256x256/apps/einst.png"
-    command -v update-desktop-database >/dev/null && update-desktop-database -q "$share/applications" || true
-    command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$share/icons/hicolor" 2>/dev/null || true
+    refresh_launchers
 fi
 
 echo "==> Done"
