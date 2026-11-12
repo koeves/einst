@@ -8,15 +8,13 @@
 #
 # Output: target/bundled/Einst.vst3 (Contents/x86_64-linux/Einst.so,
 # resources in Contents/Resources), target/bundled/Einst-CLAP/
-# (Einst.clap + Resources/) and target/bundled/Einst-App/ (Einst +
-# Resources/ + einst.desktop). The .clap and the app are bare files, so
-# Einst's profile looks for `Resources/` next to them (as on Windows).
+# (Einst.clap + Resources/), target/bundled/Einst-App/ (Einst +
+# Resources/ + einst.desktop + icons/) and target/bundled/install.sh. The
+# .clap and the app are bare files, so Einst's profile looks for
+# `Resources/` next to them (as on Windows).
 #
-# --install: ~/.vst3/Einst.vst3, ~/.clap/Einst/ (hosts search ~/.clap
-# recursively), the app in ~/.local/share/Einst/ with ~/.local/bin/einst
-# linking to it, and a desktop entry and icon under ~/.local/share.
-# --uninstall removes those and nothing else: settings (~/.config/Einst)
-# and content stay.
+# --install and --uninstall run that install.sh (scripts/linux-install.sh,
+# which the release tarball also carries; it lists what goes where).
 #
 # Needs pkg-config and the ALSA, X11, XCB and OpenGL headers (README).
 set -euo pipefail
@@ -31,23 +29,13 @@ for a in "$@"; do
         --debug) profile=debug ;;
         --install) install=1 ;;
         --uninstall) uninstall=1 ;;
-        -h|--help) sed -n '2,21p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,19p' "$0"; exit 0 ;;
         *) echo "unknown option: $a" >&2; exit 2 ;;
     esac
 done
-share="${XDG_DATA_HOME:-$HOME/.local/share}"
-
-refresh_launchers() {
-    command -v update-desktop-database >/dev/null && update-desktop-database -q "$share/applications" || true
-    command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$share/icons/hicolor" 2>/dev/null || true
-}
 
 if [ "$uninstall" = 1 ]; then
-    echo "==> Uninstalling"
-    rm -rf "$HOME/.vst3/Einst.vst3" "$HOME/.clap/Einst" "$share/Einst"
-    rm -f "$HOME/.local/bin/einst" "$share/applications/einst.desktop" "$share/icons/hicolor/256x256/apps/einst.png"
-    refresh_launchers
-    exit 0
+    exec sh scripts/linux-install.sh --uninstall
 fi
 flag=$([ "$profile" = release ] && echo --release || true)
 out=target/bundled
@@ -66,6 +54,9 @@ mkdir -p "$clap/Resources" "$app/Resources" "$out/Einst.vst3/Contents/Resources"
 mv "$out/Einst.clap" "$clap/Einst.clap"
 cp "target/$profile/einst-standalone" "$app/Einst"
 cp assets/ui-v1/AppIcon.png "$app/einst.png"
+cp -R assets/linux/icons "$app/icons"
+cp scripts/linux-install.sh "$out/install.sh"
+chmod +x "$out/install.sh"
 cat > "$app/einst.desktop" <<DESKTOP
 [Desktop Entry]
 Type=Application
@@ -90,18 +81,7 @@ done
 
 if [ "$install" = 1 ]; then
     echo "==> Installing"
-    mkdir -p "$HOME/.vst3" "$HOME/.clap" "$share" "$HOME/.local/bin" "$share/applications" "$share/icons/hicolor/256x256/apps"
-    rm -rf "$HOME/.vst3/Einst.vst3" "$HOME/.clap/Einst" "$share/Einst"
-    cp -R "$out/Einst.vst3" "$HOME/.vst3/"
-    cp -R "$clap" "$HOME/.clap/Einst"
-    cp -R "$app" "$share/Einst"
-    ln -sf "$share/Einst/Einst" "$HOME/.local/bin/einst"
-    # Absolute paths: ~/.local/bin is only on PATH if it existed at login,
-    # and launchers hide entries whose program they cannot find.
-    sed -e "s|^Exec=.*|Exec=$share/Einst/Einst|" -e "s|^Icon=.*|Icon=$share/Einst/einst.png|" \
-        -e "/^Exec=/i TryExec=$share/Einst/Einst" "$app/einst.desktop" > "$share/applications/einst.desktop"
-    cp "$app/einst.png" "$share/icons/hicolor/256x256/apps/einst.png"
-    refresh_launchers
+    sh "$out/install.sh"
 fi
 
 echo "==> Done"
