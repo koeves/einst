@@ -111,7 +111,7 @@ cargo test --workspace
 Linux build packages (Debian / Ubuntu names):
 
 ```bash
-sudo apt-get install pkg-config libasound2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcursor-dev libgl1-mesa-dev
+sudo apt-get install build-essential clang libclang-dev pkg-config libasound2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcursor-dev libgl1-mesa-dev
 ```
 
 ## Layout
