@@ -12,7 +12,16 @@ use nih_plug::prelude::*;
 fn args() -> Vec<String> {
     let mut args: Vec<String> = std::env::args().collect();
     let o = einst_editor::options::Options::load();
-    let given = |args: &[String], flag: &str| args.iter().any(|a| a == flag || a.starts_with(&format!("{flag}=")));
+    let given = |args: &[String], flag: &str| {
+        // nih-plug's one-letter forms of the flags set here.
+        let short = match flag {
+            "--backend" => Some("-b"),
+            "--sample-rate" => Some("-r"),
+            "--period-size" => Some("-p"),
+            _ => None,
+        };
+        args.iter().any(|a| a == flag || a.starts_with(&format!("{flag}=")) || short.is_some_and(|s| a.starts_with(s)))
+    };
     let s = einst_editor::devices::Settings::load(&o);
     // The system backend even when JACK is installed (nih-plug's "auto"
     // prefers JACK).
@@ -35,7 +44,9 @@ fn args() -> Vec<String> {
         // period size (558 for 512 at 44.1 kHz), which the wrapper
         // rejects. Default to the output device's own rate.
         ("--sample-rate", rate.map(|r| r.to_string())),
-        ("--period-size", (s.buffer > 0).then(|| s.buffer.to_string())),
+        // The default buffer is nih-plug's choice: 512, or 1024 when PulseAudio
+        // is the sound server (its ALSA plugin underruns at 512).
+        ("--period-size", (s.buffer > 0 && s.buffer != einst_editor::devices::DEFAULT_BUFFER).then(|| s.buffer.to_string())),
     ] {
         if let Some(v) = v.filter(|v| !v.is_empty()) {
             if !given(&args, flag) {

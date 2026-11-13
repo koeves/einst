@@ -76,6 +76,7 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 - **By hand**: `Einst.vst3` goes in `~/.vst3/`, the `Einst` CLAP folder in `~/.clap/`, and the `Einst` app folder anywhere (run `Einst`, keep `Resources` next to it).
 - **Runtime**: ALSA, X11 / XCB and OpenGL, present on desktop systems.
 - **File dialogs**: through the XDG desktop portal, or `zenity` without one.
+- **Standalone audio**: smoothest on PipeWire (Ubuntu 24.04+); on PulseAudio, raise the buffer in the audio settings or run `Einst --backend jack` with JACK.
 
 ### Settings
 
