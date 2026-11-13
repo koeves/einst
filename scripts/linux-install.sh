@@ -54,21 +54,39 @@ case "${1:-}" in
         ;;
 esac
 
+# Each part's binary must be a complete ELF file before anything installed is touched.
+elf() {
+    [ -s "$1" ] && [ "$(head -c 4 "$1" | od -An -c | tr -d ' \n')" = "177ELF" ] || {
+        echo "Not a complete build, nothing changed: $1" >&2
+        exit 1
+    }
+}
+[ -d "$here/$app.vst3" ] && elf "$here/$app.vst3/Contents/x86_64-linux/$app.so"
+[ -d "$here/$app-CLAP" ] && elf "$here/$app-CLAP/$app.clap"
+[ -d "$here/$app-App" ] && elf "$here/$app-App/$app"
+
+# Copy next to the destination, then swap it in, so an interrupted copy leaves no half install.
+place() {
+    mkdir -p "$(dirname "$2")"
+    rm -rf "$2.new"
+    cp -R "$1" "$2.new"
+    rm -rf "$2"
+    mv "$2.new" "$2"
+}
+
 # A reinstall replaces everything, so files of an older version do not stay.
 remove
 if [ -d "$here/$app.vst3" ]; then
-    mkdir -p "$HOME/.vst3"
-    cp -R "$here/$app.vst3" "$HOME/.vst3/"
+    place "$here/$app.vst3" "$HOME/.vst3/$app.vst3"
     echo "VST3: ~/.vst3/$app.vst3"
 fi
 if [ -d "$here/$app-CLAP" ]; then
-    mkdir -p "$HOME/.clap"
-    cp -R "$here/$app-CLAP" "$HOME/.clap/$app"
+    place "$here/$app-CLAP" "$HOME/.clap/$app"
     echo "CLAP: ~/.clap/$app"
 fi
 if [ -d "$here/$app-App" ]; then
-    mkdir -p "$share" "$HOME/.local/bin" "$share/applications"
-    cp -R "$here/$app-App" "$share/$app"
+    mkdir -p "$HOME/.local/bin" "$share/applications"
+    place "$here/$app-App" "$share/$app"
     ln -sf "$share/$app/$app" "$HOME/.local/bin/$bin"
     # Absolute paths: ~/.local/bin is only on PATH if it existed at login,
     # and launchers hide entries whose program they cannot find.
