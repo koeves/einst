@@ -66,6 +66,7 @@ Exec=einst
 Icon=einst
 Terminal=false
 Categories=AudioVideo;Audio;Music;
+StartupWMClass=Einst
 DESKTOP
 
 echo "==> Resources"
