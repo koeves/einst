@@ -54,42 +54,66 @@ pub fn velocity_pitch(s: f64, a: f32, vel: f32) -> f64 {
     (s as f64).clamp(-12.0, 12.0)
 }
 
+/// Routed envelopes of a parameter: up to four (depth 0..1, buffer) pairs,
+/// kept in place (this runs per voice every sub-block on the audio thread).
+struct Routed<'a> {
+    depths: [f32; 4],
+    bufs: [&'a [f32]; 4],
+    n: usize,
+}
+
+impl<'a> Routed<'a> {
+    fn new() -> Routed<'a> {
+        Routed { depths: [0.0; 4], bufs: [&[]; 4], n: 0 }
+    }
+
+    fn push(&mut self, depth: f32, buf: &'a [f32]) {
+        self.depths[self.n] = depth;
+        self.bufs[self.n] = buf;
+        self.n += 1;
+    }
+
+    fn depths(&self) -> &[f32] {
+        &self.depths[..self.n]
+    }
+
+    fn bufs(&self) -> &[&'a [f32]] {
+        &self.bufs[..self.n]
+    }
+}
+
 /// v1's routings to `dest` (0 pitch, 1 cutoff, 2 resonance, 3 drive) with
 /// the routing-depth `lanes`: the counted depths (0..1) and their slots'
 /// envelopes; `None` for a layer without v1 routings.
-fn slot_routed<'a>(input: &'a ModelInput, dest: u8, lanes: &[f32]) -> Option<(Vec<f32>, Vec<&'a [f32]>)> {
+fn slot_routed<'a>(input: &'a ModelInput, dest: u8, lanes: &[f32]) -> Option<Routed<'a>> {
     let slots = input.routings?;
-    let mut depths = Vec::new();
-    let mut bufs = Vec::new();
+    let mut out = Routed::new();
     for (r, slot) in slots.iter().enumerate() {
         let Some((d, depth)) = *slot else { continue };
         let v = modulate_pos_neg(depth, lanes[r]);
         if d == dest && (v - 0.5).abs() >= 1e-6 {
-            depths.push(v);
-            bufs.push(if r < 2 { input.amp_env } else { input.free_env });
+            out.push(v, if r < 2 { input.amp_env } else { input.free_env });
         }
     }
-    Some((depths, bufs))
+    Some(out)
 }
 
 /// The routed envelopes of a parameter: (raw depths 0..1, buffers), from the
 /// v1 routings when the layer has them (`dest`, `lanes`), else from the
 /// envelope columns.
-fn routed<'a>(input: &'a ModelInput, param: usize, dest: u8, lanes: &[f32]) -> (Vec<f32>, Vec<&'a [f32]>) {
+fn routed<'a>(input: &'a ModelInput, param: usize, dest: u8, lanes: &[f32]) -> Routed<'a> {
     if let Some(r) = slot_routed(input, dest, lanes) {
         return r;
     }
-    let mut depths = Vec::new();
-    let mut bufs = Vec::new();
+    let mut out = Routed::new();
     for (src, buf) in [(AMP_ENV, input.amp_env), (FREE_ENV, input.free_env)] {
         let col = input.layer[param][src];
         let d = (col + 1.0) * 0.5;
         if (d - 0.5).abs() >= 1e-6 {
-            depths.push(d);
-            bufs.push(buf);
+            out.push(d, buf);
         }
     }
-    (depths, bufs)
+    out
 }
 
 fn mean(v: &[f32]) -> f32 {
@@ -116,10 +140,11 @@ impl VoiceModel for V1Voice {
         // Pitch envelope, per sample.
         out.steps.clear();
         let variants = &lanes[lane::ROUTING_DEPTH..lane::ROUTING_DEPTH + 4];
-        let (depths, bufs) = routed(input, lp::COARSE, 0, variants);
+        let rt = routed(input, lp::COARSE, 0, variants);
+        let (depths, bufs) = (rt.depths(), rt.bufs());
         let n = input.amp_env.len();
         if !depths.is_empty() && n > 0 {
-            let d = semitones(mean(&depths), true) as f32;
+            let d = semitones(mean(depths), true) as f32;
             if d.abs() >= 1e-6 {
                 let k = 1.0 / bufs.len() as f32;
                 for i in 0..n {
@@ -135,14 +160,15 @@ impl VoiceModel for V1Voice {
         let r = modulate_pos_neg(l[lp::RESONANCE][0], lanes[lane::RESONANCE]);
         let dr = modulate_pos_neg(l[lp::DRIVE][0], lanes[lane::DRIVE]);
         let env_mod = |x: f32, param: usize, dest: u8| -> f32 {
-            let (depths, bufs) = routed(input, param, dest, input.routing_raw);
+            let rt = routed(input, param, dest, input.routing_raw);
+            let (depths, bufs) = (rt.depths(), rt.bufs());
             if depths.is_empty() || n < 2 {
                 return x;
             }
             let k = 1.0 / bufs.len() as f32;
             // v1's maximum covers all but the block's last sample.
             let m = (0..n - 1).map(|i| bufs.iter().map(|b| b[i]).sum::<f32>() * k).fold(0.0f32, f32::max);
-            modulate_pos_neg(x, ((mean(&depths) * 2.0 - 1.0) * m + 1.0) * 0.5)
+            modulate_pos_neg(x, ((mean(depths) * 2.0 - 1.0) * m + 1.0) * 0.5)
         };
         out.cutoff = env_mod(c, lp::CUTOFF, 1);
         out.resonance = env_mod(r, lp::RESONANCE, 2);

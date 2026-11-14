@@ -111,7 +111,8 @@ jobs:
           7z a -tzip "Einst-$TAG-${{ matrix.name }}-VST3.zip" Einst.vst3
       - name: Build (Linux)
         # tar keeps the executable bits; the CLAP and the app unpack into an
-        # Einst/ folder each (README: Linux).
+        # Einst/ folder each, the full archive into Einst-<tag>-Linux/ with
+        # install.sh (README: Linux).
         if: runner.os == 'Linux'
         run: |
           scripts/build-linux.sh
@@ -119,6 +120,8 @@ jobs:
           tar -czf "Einst-$TAG-${{ matrix.name }}-VST3.tar.gz" Einst.vst3
           tar -czf "Einst-$TAG-${{ matrix.name }}-CLAP.tar.gz" --transform 's,^Einst-CLAP,Einst,' Einst-CLAP
           tar -czf "Einst-$TAG-${{ matrix.name }}-App.tar.gz" --transform 's,^Einst-App,Einst,' Einst-App
+          # Everything with install.sh (scripts/linux-install.sh) in one folder.
+          tar -czf "Einst-$TAG-${{ matrix.name }}.tar.gz" --transform "s,^,Einst-$TAG-${{ matrix.name }}/," install.sh Einst.vst3 Einst-CLAP Einst-App
       - uses: actions/upload-artifact@v7
         with:
           name: Einst-${{ env.TAG }}-${{ matrix.name }}

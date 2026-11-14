@@ -205,6 +205,12 @@ impl Transmod {
     }
 
     /// Advance the flashes; whether anything changed.
+    /// The modulator panel's path (what its flashes and mini-sequencer
+    /// steps repaint).
+    pub fn panel_path(&self) -> Option<&[usize]> {
+        self.select.as_deref()
+    }
+
     pub fn animate_flashes(&mut self, app: &mut App) -> bool {
         if self.flashes.is_empty() {
             return false;

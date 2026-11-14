@@ -55,6 +55,7 @@ Download the archives for your system from the [latest release](https://github.c
 - **App**: move `Einst.app` to `/Applications`.
 - **First launch**: the builds are unsigned, so open the app with right-click › Open › Open.
 - **Plugins blocked by a host**: clear the quarantine flag.
+- **Uninstall**: delete `Einst.vst3`, `Einst.clap` and `Einst.app` from those folders.
 
 ```bash
 xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Library/Audio/Plug-Ins/CLAP/Einst.clap
@@ -66,21 +67,23 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 - **CLAP**: move the `Einst` folder (`Einst.clap` and `Resources`) to `C:\Program Files\Common Files\CLAP\`.
 - **App**: unzip the `Einst` folder anywhere and run `Einst.exe`; keep `Resources` next to it.
 - **First launch**: the builds are unsigned; if SmartScreen warns, choose More info › Run anyway.
+- **Uninstall**: delete the `Einst.vst3` and `Einst` folders from those places, and the app folder.
 
 ### Linux
 
-- **VST3**: move `Einst.vst3` to `~/.vst3/` (or `/usr/lib/vst3/`).
-- **CLAP**: move the `Einst` folder (`Einst.clap` and `Resources`) to `~/.clap/` (or `/usr/lib/clap/`).
-- **App**: unpack the `Einst` folder anywhere (say `~/.local/share/Einst`) and run `Einst`; keep `Resources` next to it.
-- **Launcher**: `einst.desktop` goes in `~/.local/share/applications`, `einst.png` in `~/.local/share/icons/hicolor/256x256/apps`.
+- **Install**: unpack `Einst-<tag>-Linux.tar.gz` and run `./install.sh` in its folder; it sets up the VST3, CLAP, app, launcher and icon for your user.
+- **Uninstall**: run `./install.sh --uninstall`; settings and content stay.
+- **By hand**: `Einst.vst3` goes in `~/.vst3/`, the `Einst` CLAP folder in `~/.clap/`, and the `Einst` app folder anywhere (run `Einst`, keep `Resources` next to it).
 - **Runtime**: ALSA, X11 / XCB and OpenGL, present on desktop systems.
 - **File dialogs**: through the XDG desktop portal, or `zenity` without one.
+- **Standalone audio**: smoothest on PipeWire (Ubuntu 24.04+); on PulseAudio, raise the buffer in the audio settings or run `Einst --backend jack` with JACK.
 
 ### Settings
 
 - **macOS**: `~/Library/Application Support/Einst`.
 - **Windows**: `%APPDATA%\Einst`.
 - **Linux**: `~/.config/Einst` (or `$XDG_CONFIG_HOME/Einst`).
+- **Uninstalling** leaves this folder and your content in place; delete them by hand to remove everything.
 
 ### Limitations
 
@@ -104,14 +107,15 @@ scripts/build.sh                  # macOS: target/bundled/Einst.{app,vst3,clap}
 scripts/build.sh --install        # macOS: also into ~/Library/Audio/Plug-Ins and /Applications
 scripts/build-windows.sh          # Windows, in Git Bash
 scripts/build-linux.sh            # Linux
-scripts/build-linux.sh --install  # Linux: also into ~/.vst3, ~/.clap and ~/.local
+scripts/build-linux.sh --install  # Linux: also install for this user (target/bundled/install.sh)
+scripts/build-linux.sh --uninstall  # Linux: remove that install
 cargo test --workspace
 ```
 
 Linux build packages (Debian / Ubuntu names):
 
 ```bash
-sudo apt-get install pkg-config libasound2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcursor-dev libgl1-mesa-dev
+sudo apt-get install build-essential clang libclang-dev pkg-config libasound2-dev libjack-jackd2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcursor-dev libgl1-mesa-dev
 ```
 
 ## Layout

@@ -242,6 +242,11 @@ impl Pads {
         self.shown = (usize::MAX, 0);
     }
 
+    /// The pad matrix control's path (what the flashes repaint).
+    pub fn matrix_path(&self) -> &[usize] {
+        &self.matrix
+    }
+
     fn matrix_mut<'a>(&self, root: &'a mut Ctrl) -> Option<&'a mut Ctrl> {
         let mut c = root;
         for &i in &self.matrix {

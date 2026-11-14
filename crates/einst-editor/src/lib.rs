@@ -490,16 +490,38 @@ impl Editor {
         Some(self.pads.matrix().to_vec())
     }
 
+    /// The engine's mini-sequencer steps (drawn in the modulator panel).
+    pub fn set_seq_steps(&mut self, steps: [i32; 16]) {
+        if self.model.seq_steps != steps {
+            self.model.seq_steps = steps;
+            self.repaint_transmod();
+        }
+    }
+
+    /// Repaint the modulator panel (the whole window when there is none).
+    fn repaint_transmod(&mut self) {
+        match self.transmod.panel_path() {
+            Some(p) => {
+                let r = self.app.abs_rect(p);
+                self.app.invalidate_rect(r);
+            }
+            None => self.app.dirty = true,
+        }
+    }
+
     /// Per-frame animations.
     pub fn animate(&mut self) {
         for ev in self.app.animate() {
             self.handle(&ev);
         }
+        // Flashes repaint their panels, not the window: they run on every
+        // step while a song plays.
         if self.transmod.animate_flashes(&mut self.app) {
-            self.app.dirty = true;
+            self.repaint_transmod();
         }
         if self.pads.animate(&mut self.app, &self.model) {
-            self.app.dirty = true;
+            let r = self.app.abs_rect(self.pads.matrix_path());
+            self.app.invalidate_rect(r);
         }
         self.animate_drop_highlights();
         if self.animate_drag_dwell() {
