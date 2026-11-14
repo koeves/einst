@@ -28,7 +28,7 @@ refresh() {
         update-desktop-database -q "$share/applications" || true
     fi
     if command -v gtk-update-icon-cache >/dev/null 2>&1; then
-        gtk-update-icon-cache -q -t "$share/icons/hicolor" 2>/dev/null || true
+        gtk-update-icon-cache -q -f -t "$share/icons/hicolor" 2>/dev/null || true
     fi
 }
 
