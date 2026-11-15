@@ -4921,7 +4921,7 @@ fn the_performance_readout_repaints_only_itself() {
         ed.performance(&r);
         assert!(!ed.app.dirty && ed.app.needs_redraw());
         let partial = ed.render_frame(1.0).clone();
-        assert!(ed.app.frame_damage.as_ref().is_some_and(|d| d.iter().all(|r| r.h <= 16)), "{:?}", ed.app.frame_damage);
+        assert!(ed.app.frame_damage.as_ref().is_some_and(|d| d.iter().all(|r| r.h <= 32)), "{:?}", ed.app.frame_damage);
         let full = ed.render(1.0);
         let off = partial.data().chunks(4).zip(full.data().chunks(4)).filter(|(x, y)| x.iter().zip(y.iter()).take(3).any(|(p, q)| p.abs_diff(*q) > 1)).count();
         assert!(off * 1000 <= partial.data().len() / 4, "tick {k}: {off} pixels differ");

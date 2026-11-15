@@ -26,8 +26,8 @@ pub(crate) enum MainAction {
 /// Options key: the CPU and memory readout is on (off by default).
 pub(crate) const PERF_OPTION: &str = "ShowPerformance";
 
-/// The readout's place: over the bottom of the browser column.
-const PERF_PLACE: dreist_gui::perf::Place = dreist_gui::perf::Place { x: 8, y: -48, w: 290 };
+/// The readout's place: over the bottom of the browser column, in two rows.
+const PERF_PLACE: dreist_gui::perf::Place = dreist_gui::perf::Place { x: 8, y: -48, w: 160, rows: 2 };
 
 impl Editor {
     /// The CPU and memory readout is on.
