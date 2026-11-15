@@ -4927,3 +4927,48 @@ fn the_performance_readout_repaints_only_itself() {
         assert!(off * 1000 <= partial.data().len() / 4, "tick {k}: {off} pixels differ");
     }
 }
+
+/// The readout covers no control: two rows at the bottom of the browser's
+/// list area, at each window size (the UI scale only scales the window).
+#[test]
+fn the_performance_readout_covers_no_control() {
+    crate::app::test_setup();
+    let p = demo("Presets/Hollow.geist");
+    let Ok(proj) = dreist_formats::Project::load(&p) else { return };
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(proj.raw)) else { return };
+    ed.modals.options.set(crate::editor::tools_menu::PERF_OPTION, true);
+    let sizes: [Option<(i32, i32)>; 1] = [None];
+    for size in sizes {
+        if let Some((w, h)) = size {
+            ed.app.resize(w, h);
+        }
+        let _ = ed.render(1.0);
+        ed.place_perf();
+        dreist_gui::perf::update(&mut ed.app, &dreist_gui::perf::Reading { dsp: Some(0.31), peak: Some(0.58), ui: Some(0.14), memory: Some(351 << 20), late: Some(0) });
+        let i = ed.app.root.children.iter().position(|c| c.name == dreist_gui::perf::NAME).expect("readout");
+        let r = ed.app.root.children[i].rect;
+        assert!(r.w > 0 && r.h == 32, "{size:?}: placed {r:?}");
+        fn walk(app: &dreist_gui::app::App, path: &mut Vec<usize>, r: dreist_gui::Rect, skip: usize, out: &mut Vec<String>) {
+            let Some(c) = app.ctrl(path) else { return };
+            if !c.visible {
+                return;
+            }
+            let leaf = c.children.is_empty() && !c.class.ends_with("Panel") && path.len() > 1;
+            let a = app.abs_rect(path);
+            if leaf && a.w > 0 && a.h > 0 && a.x < r.x + r.w && r.x < a.x + a.w && a.y < r.y + r.h && r.y < a.y + a.h {
+                out.push(format!("{} '{}' {a:?}", c.class, c.name));
+            }
+            for k in 0..c.children.len() {
+                if path.is_empty() && k == skip {
+                    continue;
+                }
+                path.push(k);
+                walk(app, path, r, skip, out);
+                path.pop();
+            }
+        }
+        let mut hits = Vec::new();
+        walk(&ed.app, &mut Vec::new(), r, i, &mut hits);
+        assert!(hits.is_empty(), "{size:?}: the readout {r:?} covers {hits:?}");
+    }
+}

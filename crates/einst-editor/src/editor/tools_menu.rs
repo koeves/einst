@@ -26,9 +26,6 @@ pub(crate) enum MainAction {
 /// Options key: the CPU and memory readout is on (off by default).
 pub(crate) const PERF_OPTION: &str = "ShowPerformance";
 
-/// The readout's place: over the bottom of the browser column, in two rows.
-const PERF_PLACE: dreist_gui::perf::Place = dreist_gui::perf::Place { x: 8, y: -48, w: 160, rows: 2 };
-
 impl Editor {
     /// The CPU and memory readout is on.
     pub fn perf_shown(&self) -> bool {
@@ -38,11 +35,28 @@ impl Editor {
     /// Show `r` in the readout, adding or removing it to match the option
     /// (the app calls this about once a second).
     pub fn performance(&mut self, r: &dreist_gui::perf::Reading) {
-        let on = self.perf_shown();
-        dreist_gui::perf::show(&mut self.app, on, PERF_PLACE);
-        if on {
+        self.place_perf();
+        if self.perf_shown() {
             dreist_gui::perf::update(&mut self.app, r);
         }
+    }
+
+    /// Add or remove the readout to match the option and keep it at the
+    /// bottom of the browser's list area (every frame: splitters and window
+    /// sizes move it); hidden while that area is not shown.
+    pub fn place_perf(&mut self) {
+        let on = self.perf_shown();
+        dreist_gui::perf::show(&mut self.app, on);
+        if !on {
+            return;
+        }
+        let area = self.browser.as_ref().map(|b| b.page().to_vec()).and_then(|page| {
+            let sub = self.app.ctrl(&page)?.path_of("SplitView")?;
+            let path = [&page[..], &sub[..]].concat();
+            let (r, root) = (self.app.abs_rect(&path), self.app.root.rect);
+            self.app.shown(&path).then(|| dreist_gui::Rect::new(r.x - root.x, r.y - root.y, r.w, r.h))
+        });
+        dreist_gui::perf::place(&mut self.app, area.unwrap_or_default());
     }
 
     fn main_items(&self) -> Vec<(String, MainAction)> {
@@ -157,7 +171,7 @@ impl Editor {
                         if !cfg!(test) {
                             self.modals.options.save();
                         }
-                        dreist_gui::perf::show(&mut self.app, on, PERF_PLACE);
+                        self.place_perf();
                         return false;
                     }
                     MainAction::ResetScale => {

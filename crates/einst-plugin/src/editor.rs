@@ -707,6 +707,7 @@ impl Default for PerfFeed {
 
 impl PerfFeed {
     fn tick(&mut self, ed: &mut DreistGui, bridge: &Bridge) {
+        ed.place_perf();
         if self.at.elapsed() < std::time::Duration::from_secs(1) {
             return;
         }
