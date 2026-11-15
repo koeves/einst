@@ -458,7 +458,9 @@ impl Editor for DreistEditor {
         // The last previews' samples: the audio thread may still be playing
         // one, and must not be the one to free it.
         let mut previews: std::collections::VecDeque<Arc<dreist_dsp::voice::SampleData>> = Default::default();
+        let mut trace = DirtyTrace::new();
         let link = Box::new(move |ed: &mut DreistGui, cmds: Vec<Command>| {
+            trace.begin(ed);
             // A new UI scale: ask the host for the new size (`size()` reads it).
             if ed.app.resize_request {
                 let (w, h) = ed.app.size();
@@ -529,6 +531,7 @@ impl Editor for DreistEditor {
             // The standalone's menu bar.
             for tag in dreist_gui::menubar::take() {
                 ed.menu_command(tag);
+                trace.check(ed, "menu_command");
             }
             // A document from the plugin side (session restore, reload).
             let doc_gen = bridge.doc_gen.load(std::sync::atomic::Ordering::Acquire);
@@ -537,6 +540,7 @@ impl Editor for DreistEditor {
                     seen_gen = doc_gen;
                     ed.model.samples = bridge.samples.lock().ok().and_then(|s| s.clone());
                     ed.set_document(doc);
+                    trace.check(ed, "set_document");
                 }
             }
             // About twice a second: hand the edited document back, for the
@@ -562,22 +566,29 @@ impl Editor for DreistEditor {
             }
             if inbox.mods_triggered != 0 {
                 ed.modulators_triggered(std::mem::take(&mut inbox.mods_triggered));
+                trace.check(ed, "modulators_triggered");
             }
             if let Some(st) = inbox.seq_steps.take() {
                 ed.set_seq_steps(st);
+                trace.check(ed, "set_seq_steps");
             }
             ed.set_host_loop(inbox.host_loop);
+            trace.check(ed, "set_host_loop");
             if inbox.tempo > 0.0 {
                 ed.engine_tempo(inbox.tempo);
+                trace.check(ed, "engine_tempo");
             }
             if !inbox.automation.is_empty() {
                 ed.automation(&inbox.automation);
+                trace.check(ed, "automation");
             }
             if !inbox.editor_messages.is_empty() {
                 ed.binding_messages(&inbox.editor_messages);
+                trace.check(ed, "binding_messages");
             }
             if let Some(f) = lock(&bridge.load_progress).take() {
                 ed.load_progress(f);
+                trace.check(ed, "load_progress");
             }
             ed.model.memory = Some(bridge.sample_bytes.load(Ordering::Acquire));
             let sr = f32::from_bits(bridge.sample_rate.load(Ordering::Relaxed));
@@ -585,8 +596,10 @@ impl Editor for DreistEditor {
                 // The effect plots follow the rate.
                 ed.model.sample_rate = Some(sr);
                 ed.sync();
+                trace.check(ed, "sync");
             }
             ed.set_playback(inbox.playing, inbox.steps, inbox.song_pos);
+            trace.check(ed, "set_playback");
             // The preview volume is editor-side.
             if let Some(view) = inbox.sampler.take() {
                 let sampler = einst_editor::model::SamplerView { preview_volume: ed.model.sampler.preview_volume, ..view };
@@ -598,34 +611,47 @@ impl Editor for DreistEditor {
                 ed.model.sampler = sampler;
                 if changed {
                     ed.app.dirty = true;
+                    trace.check(ed, "dirty set in link");
                 }
             }
             ed.update_meters(&inbox.meters);
+            trace.check(ed, "update_meters");
             let (n, ch, cc) = inbox.last_cc;
             ed.midi_cc(n, ch, cc);
+            trace.check(ed, "midi_cc");
             if !inbox.midi_log.is_empty() {
                 ed.midi_in(&inbox.midi_log);
+                trace.check(ed, "midi_in");
             }
             if inbox.live_reset || !inbox.live.is_empty() {
                 ed.sampler_live(inbox.live_reset, &inbox.live);
+                trace.check(ed, "sampler_live");
             }
             if !inbox.scene_events.is_empty() {
                 ed.scene_events(&inbox.scene_events);
+                trace.check(ed, "scene_events");
             } else {
                 ed.animate();
+                trace.check(ed, "animate");
             }
             if !inbox.retro_events.is_empty() {
                 ed.retro_events(&inbox.retro_events);
+                trace.check(ed, "retro_events");
             }
             if !inbox.step_writes.is_empty() {
                 ed.step_writes(&inbox.step_writes);
+                trace.check(ed, "step_writes");
             }
             if !inbox.song_events.is_empty() {
                 ed.song_events(&inbox.song_events);
+                trace.check(ed, "song_events");
             }
             for (t, sr) in inbox.takes.drain(..) {
                 ed.sampler_take(&t.left, &t.right, sr);
+                trace.check(ed, "sampler_take");
             }
+            trace.check(ed, "link");
+            trace.report();
             inbox.clear();
         });
         let scale = f32::from_bits(self.host_scale.load(std::sync::atomic::Ordering::Relaxed)) as f64;
@@ -655,6 +681,47 @@ impl Editor for DreistEditor {
     fn param_modulation_changed(&self, _id: &str, _modulation_offset: f32) {}
 
     fn param_values_changed(&self) {}
+}
+
+/// `DREIST_GUI_STATS=1`: which of the link's inputs made the whole window
+/// redraw, counted per second (next to the window's frame counts).
+struct DirtyTrace {
+    on: bool,
+    was: bool,
+    since: std::time::Instant,
+    counts: Vec<(&'static str, u32)>,
+}
+
+impl DirtyTrace {
+    fn new() -> DirtyTrace {
+        DirtyTrace { on: std::env::var_os("DREIST_GUI_STATS").is_some(), was: false, since: std::time::Instant::now(), counts: Vec::new() }
+    }
+
+    fn begin(&mut self, ed: &DreistGui) {
+        self.was = ed.app.dirty;
+    }
+
+    fn check(&mut self, ed: &DreistGui, what: &'static str) {
+        if self.on && !self.was && ed.app.dirty {
+            match self.counts.iter_mut().find(|(w, _)| *w == what) {
+                Some((_, n)) => *n += 1,
+                None => self.counts.push((what, 1)),
+            }
+        }
+        self.was = ed.app.dirty;
+    }
+
+    fn report(&mut self) {
+        if !self.on || self.since.elapsed().as_secs_f64() < 1.0 {
+            return;
+        }
+        if !self.counts.is_empty() {
+            let list: Vec<String> = self.counts.iter().map(|(w, n)| format!("{w} x{n}")).collect();
+            eprintln!("gui: whole-window redraws from {}", list.join(", "));
+            self.counts.clear();
+        }
+        self.since = std::time::Instant::now();
+    }
 }
 
 #[cfg(test)]
