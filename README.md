@@ -77,6 +77,7 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 - **Runtime**: ALSA, X11 / XCB and OpenGL, present on desktop systems.
 - **File dialogs**: through the XDG desktop portal, or `zenity` without one.
 - **Standalone audio**: smoothest on PipeWire (Ubuntu 24.04+); on PulseAudio, raise the buffer in the audio settings or run `Einst --backend jack` with JACK.
+- **Crackles**: if playback crackles on a slow machine, start with a bigger buffer: `einst --period-size 2048`.
 
 ### Settings
 
