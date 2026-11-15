@@ -48,8 +48,9 @@ impl Editor {
                 }
             }
         }
-        for m in dirty {
-            let r = self.app.abs_rect(&m);
+        // A meter on a hidden page keeps its value without a repaint.
+        let rects: Vec<_> = dirty.iter().filter(|m| self.app.shown(m)).map(|m| self.app.abs_rect(m)).collect();
+        for r in rects {
             self.app.invalidate_rect(r);
         }
     }
