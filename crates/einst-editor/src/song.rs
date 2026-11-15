@@ -352,14 +352,20 @@ fn song_of(model: &Model) -> Song {
     model.doc.children.iter().find(|c| c.class == "SongSequencer").map(Song::from_node).unwrap_or_else(|| Song::from_node(&dreist_formats::Node::new("SongSequencer", None)))
 }
 
+/// Whether `r` (control coordinates) reaches into the painter's clip.
+fn in_clip(p: &Painter, r: RectF) -> bool {
+    let (cx, cy, cw, ch) = p.clip;
+    let (x0, y0, x1, y1) = (r.x + p.tx, r.y + p.ty, r.x + r.w + p.tx, r.y + r.h + p.ty);
+    x1 > cx as f32 && x0 < (cx + cw) as f32 && y1 > cy as f32 && y0 < (cy + ch) as f32
+}
+
 fn row_h(c: &Ctrl) -> f32 {
     ((c.rect.h as f32 - TIMELINE_H) / ENGINES as f32).floor().max(12.0)
 }
 
 /// Pattern length in quarter notes (steps at its resolution).
 fn pattern_qn(model: &Model, e: usize, p: usize) -> f64 {
-    let pat = model.pattern(e, p);
-    pat.steps as f64 * 0.25 / dreist_engine::pattern::steps_per_16th(pat.resolution).max(1e-6)
+    model.pattern_steps(e, p) as f64 * 0.25 / dreist_engine::pattern::steps_per_16th(model.pattern_resolution(e, p)).max(1e-6)
 }
 
 impl SongPanel {
@@ -1704,6 +1710,10 @@ impl SongPanel {
                     continue;
                 }
                 let rect = RectF::new(x0.round(), y, (x1 - x0).round(), rh - FOOT_H);
+                // Partial frames (the playhead) clip most parts away.
+                if !in_clip(p, RectF::new(rect.x - 1.0, y, rect.w + 2.0, rh)) {
+                    continue;
+                }
                 let selected = self.selected.contains(&(e, key(part.start)));
                 let base = if selected { sel_col } else { fill };
                 let col = if part.mute { base.with_alpha(base.f_alpha() * 0.5) } else { base };

@@ -430,6 +430,11 @@ impl Model {
         self.pattern_node(e, p).and_then(|n| n.attr("Resolution")).map(dreist_engine::pattern::resolution_index).unwrap_or(8)
     }
 
+    /// The pattern's step count without parsing its steps.
+    pub fn pattern_steps(&self, e: usize, p: usize) -> u32 {
+        self.pattern_node(e, p).and_then(|n| n.u32("PatternSteps")).unwrap_or(16).max(1)
+    }
+
     /// The pattern as the sequencer reads it (defaults filled in).
     pub fn pattern(&self, e: usize, p: usize) -> dreist_engine::pattern::PatternData {
         self.pattern_node(e, p).map(dreist_engine::pattern::PatternData::from_node).unwrap_or_else(dreist_engine::pattern::PatternData::empty)

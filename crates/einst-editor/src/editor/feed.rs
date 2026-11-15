@@ -62,7 +62,10 @@ impl Editor {
             self.model.playing = playing;
             self.app.dirty = true;
         }
-        let grid = self.model.steps != steps;
+        let e = self.model.engine;
+        let (old_step, new_step) = (self.model.steps[e], steps[e]);
+        // Only the shown engine's position is drawn (the pattern grid).
+        let grid = old_step != new_step;
         let song = self.model.song_pos != song_pos;
         let (old_pos, new_pos) = (self.model.song_pos, song_pos);
         self.model.steps = steps;
@@ -88,13 +91,23 @@ impl Editor {
         // The song body: the old and new position lines only.
         let lines: Option<Vec<f32>> = self.song.as_ref().and_then(|sg| [old_pos, new_pos].iter().flatten().map(|&p| sg.playhead_x(p)).collect());
         let mut rects = Vec::new();
-        fn walk(c: &Ctrl, ox: i32, oy: i32, grid: bool, song: bool, lines: &Option<Vec<f32>>, out: &mut Vec<dreist_gui::Rect>) {
+        let cols = |c: &Ctrl| self.pattern.as_ref().map(|pp| pp.position_columns(&self.model, c, old_step, new_step));
+        type Cols<'a> = &'a dyn Fn(&Ctrl) -> Option<Vec<(f32, f32)>>;
+        #[allow(clippy::too_many_arguments)]
+        fn walk(c: &Ctrl, ox: i32, oy: i32, grid: bool, song: bool, lines: &Option<Vec<f32>>, cols: Cols, out: &mut Vec<dreist_gui::Rect>) {
             if !c.visible {
                 return;
             }
             let (x, y) = (ox + c.rect.x, oy + c.rect.y);
             if grid && c.overload == "PatternGrid" {
-                out.push(dreist_gui::Rect::new(x, y, c.rect.w, c.rect.h));
+                match cols(c) {
+                    // A step's cell and the hit drawn 1 px past it.
+                    Some(cs) => out.extend(cs.iter().map(|&(cx, cw)| {
+                        let x0 = (cx.floor() as i32 - 2).max(0);
+                        dreist_gui::Rect::new(x + x0, y, ((cx + cw).ceil() as i32 + 2).min(c.rect.w) - x0, c.rect.h)
+                    })),
+                    None => out.push(dreist_gui::Rect::new(x, y, c.rect.w, c.rect.h)),
+                }
             }
             if song && c.overload == "SongBody" {
                 match lines {
@@ -103,10 +116,10 @@ impl Editor {
                 }
             }
             for k in &c.children {
-                walk(k, x, y, grid, song, lines, out);
+                walk(k, x, y, grid, song, lines, cols, out);
             }
         }
-        walk(&self.app.root, -self.app.root.rect.x, -self.app.root.rect.y, grid, song, &lines, &mut rects);
+        walk(&self.app.root, -self.app.root.rect.x, -self.app.root.rect.y, grid, song, &lines, &cols, &mut rects);
         for r in rects {
             self.app.invalidate_rect(r);
         }

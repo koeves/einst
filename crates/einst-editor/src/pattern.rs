@@ -2649,15 +2649,35 @@ impl PatternPanel {
         }
     }
 
+    /// The grid control's layout of `pat`.
+    fn grid_layout(&self, model: &Model, pat: &PatternData, c: &Ctrl) -> GridLayout {
+        let e = model.engine;
+        if self.multi {
+            GridLayout::compute_multi(model, pat, c.rect.w, c.rect.h, &|t| self.lanes(e, t))
+        } else {
+            GridLayout::compute_graphs(model, pat, c.rect.w, c.rect.h, model.pad[e], &self.graph_lane_list(c.rect.h))
+        }
+    }
+
+    /// The grid's step columns (x, width in `c`'s coordinates) that show
+    /// the playback position at `old` or `new`, on every track length: a
+    /// step moves the position drawing only there.
+    pub fn position_columns(&self, model: &Model, c: &Ctrl, old: Option<u32>, new: Option<u32>) -> Vec<(f32, f32)> {
+        let pat = self.drawn_pattern(model);
+        let lay = self.grid_layout(model, &pat, c);
+        let mut cols = std::collections::BTreeSet::new();
+        for row in 0..lay.tracks {
+            let tl = pat.tracks.get(lay.track(row)).map(|t| t.length.max(1)).unwrap_or(pat.steps) as usize;
+            cols.extend([old, new].into_iter().flatten().map(|pos| pos as usize % tl.max(1)));
+        }
+        cols.into_iter().filter(|st| lay.step_range().contains(st)).map(|st| (lay.step_x(st), lay.step_w)).collect()
+    }
+
     fn draw_grid(&self, model: &Model, r: &Renderer, p: &mut Painter, c: &Ctrl) {
         let s = r.styles;
         let e = model.engine;
         let pat = self.drawn_pattern(model);
-        let lay = if self.multi {
-            GridLayout::compute_multi(model, &pat, c.rect.w, c.rect.h, &|t| self.lanes(e, t))
-        } else {
-            GridLayout::compute_graphs(model, &pat, c.rect.w, c.rect.h, model.pad[e], &self.graph_lane_list(c.rect.h))
-        };
+        let lay = self.grid_layout(model, &pat, c);
         let (w, h) = ((lay.step_range().end as f32 - lay.first_step as f32) * lay.step_w, c.rect.h as f32);
         let fill = grid_colour(s, "colFill");
         let alt = grid_colour(s, "colAltFill");
@@ -2756,7 +2776,19 @@ impl PatternPanel {
         let dashed = |p: &mut Painter, x0: f32, y0: f32, x1: f32, y1: f32| {
             let horizontal = y0 == y1;
             let len = if horizontal { x1 - x0 } else { y1 - y0 };
-            let mut t = 0.0;
+            // Only the dashes in the clip (a partial repaint covers a few
+            // steps): whole periods skipped keep the dash phase.
+            let (cx, cy, cw, ch) = p.clip;
+            let (lo, hi, across, (alo, ahi)) = if horizontal {
+                (cx as f32 - p.tx - x0, (cx + cw) as f32 - p.tx - x0, y0, (cy as f32 - p.ty, (cy + ch) as f32 - p.ty))
+            } else {
+                (cy as f32 - p.ty - y0, (cy + ch) as f32 - p.ty - y0, x0, (cx as f32 - p.tx, (cx + cw) as f32 - p.tx))
+            };
+            if across + 0.5 <= alo || across - 0.5 >= ahi {
+                return;
+            }
+            let len = len.min(hi);
+            let mut t = ((lo / 4.0).floor() * 4.0).max(0.0);
             while t < len {
                 let r = if horizontal { RectF::new(x0 + t, y0 - 0.5, 2.0f32.min(len - t), 1.0) } else { RectF::new(x0 - 0.5, y0 + t, 1.0, 2.0f32.min(len - t)) };
                 p.fill_rect(r, dash);
