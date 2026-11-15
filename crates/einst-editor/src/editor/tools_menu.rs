@@ -41,22 +41,17 @@ impl Editor {
         }
     }
 
-    /// Add or remove the readout to match the option and keep it at the
-    /// bottom of the browser's list area (every frame: splitters and window
-    /// sizes move it); hidden while that area is not shown.
+    /// Add or remove the readout to match the option, in a strip taken
+    /// from the bottom of the browser's list area (kept every frame through
+    /// splitters and window sizes); hidden while that area is not shown.
     pub fn place_perf(&mut self) {
         let on = self.perf_shown();
+        let list = self.browser.as_ref().map(|b| b.page().to_vec()).and_then(|page| Some([&page[..], &self.app.ctrl(&page)?.path_of("SplitView")?[..]].concat()));
+        let strip = list.and_then(|p| dreist_gui::perf::reserve_below(&mut self.app, &p, on));
         dreist_gui::perf::show(&mut self.app, on);
-        if !on {
-            return;
+        if on {
+            dreist_gui::perf::place(&mut self.app, strip.unwrap_or_default());
         }
-        let area = self.browser.as_ref().map(|b| b.page().to_vec()).and_then(|page| {
-            let sub = self.app.ctrl(&page)?.path_of("SplitView")?;
-            let path = [&page[..], &sub[..]].concat();
-            let (r, root) = (self.app.abs_rect(&path), self.app.root.rect);
-            self.app.shown(&path).then(|| dreist_gui::Rect::new(r.x - root.x, r.y - root.y, r.w, r.h))
-        });
-        dreist_gui::perf::place(&mut self.app, area.unwrap_or_default());
     }
 
     fn main_items(&self) -> Vec<(String, MainAction)> {

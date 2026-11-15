@@ -4970,5 +4970,18 @@ fn the_performance_readout_covers_no_control() {
         let mut hits = Vec::new();
         walk(&ed.app, &mut Vec::new(), r, i, &mut hits);
         assert!(hits.is_empty(), "{size:?}: the readout {r:?} covers {hits:?}");
+        // Nothing of the list area under it either.
+        let page = ed.browser.as_ref().unwrap().page().to_vec();
+        let list = [&page[..], &ed.app.ctrl(&page).unwrap().path_of("SplitView").unwrap()[..]].concat();
+        let l = ed.app.abs_rect(&list);
+        assert!(r.y >= l.y + l.h, "{size:?}: the readout {r:?} overlaps the list area {l:?}");
     }
+    // Off: the list area gets its height back.
+    let page = ed.browser.as_ref().unwrap().page().to_vec();
+    let list = [&page[..], &ed.app.ctrl(&page).unwrap().path_of("SplitView").unwrap()[..]].concat();
+    let h = ed.app.abs_rect(&list).h;
+    ed.modals.options.set(crate::editor::tools_menu::PERF_OPTION, false);
+    ed.place_perf();
+    assert_eq!(ed.app.abs_rect(&list).h, h + dreist_gui::perf::STRIP);
+    assert!(ed.app.root.children.iter().all(|c| c.name != dreist_gui::perf::NAME));
 }
