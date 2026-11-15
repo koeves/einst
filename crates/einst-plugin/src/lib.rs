@@ -376,10 +376,17 @@ impl Plugin for EinstPlugin {
     fn process(&mut self, buffer: &mut Buffer, aux: &mut AuxiliaryBuffers, context: &mut impl ProcessContext<Self>) -> ProcessStatus {
         // The readout's audio load: this block's time against its duration.
         let bridge = self.bridge.clone();
-        let _load = bridge.load.scope(buffer.samples(), f32::from_bits(bridge.sample_rate.load(std::sync::atomic::Ordering::Relaxed)));
+        let rate = f32::from_bits(bridge.sample_rate.load(std::sync::atomic::Ordering::Relaxed));
+        let _load = bridge.load.scope(buffer.samples(), rate);
+        // A debug run's monitor (`dreist_engine::diag`), when on.
+        let diag = dreist_engine::diag::monitor();
+        let _diag = diag.map(|m| m.block(buffer.samples(), rate));
         bridge.standalone.store(context.plugin_api() == nih_plug::prelude::PluginApi::Standalone, std::sync::atomic::Ordering::Relaxed);
         self.swap_in_rebuilt();
         let Some(engine) = self.engine.as_mut() else { return ProcessStatus::Normal };
+        if diag.is_some_and(|m| m.take_play()) {
+            engine.start();
+        }
         // The standalone has no host transport: nih-plug's backend reports
         // "playing at 120 BPM" every block, so the original runs its own (Play /
         // Stop, the project tempo), as the original standalone shell does.
@@ -427,6 +434,9 @@ impl Plugin for EinstPlugin {
                     spent.append(&mut self.applied);
                 }
             }
+        }
+        if let Some(m) = diag {
+            m.set_transport(engine.song_position(), engine.is_playing());
         }
         if let Ok(mut s) = self.bridge.state.try_lock() {
             s.playing = engine.is_playing();

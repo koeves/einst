@@ -44,6 +44,13 @@ dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::pr
     python3 tools/plugincheck.py target/bundled/Einst.clap/Contents/MacOS/Einst target/bundled/Einst.vst3/Contents/MacOS/Einst
     tools/editorhost.sh target/bundled/Einst.clap target/bundled/Einst.vst3 ../dreist/target/bundled/Dreist.clap
 
+Debug runs of the standalone (`dreist_engine::diag`; README "Debug runs") drive playback tests
+without clicking: `einst --debug --debug-json --play <project> --until-end --fail-on-late 0`.
+Each line is one JSON object (`kind`: `start`, `stats` once a second, `late` per late block with
+`pos` bar.beat, `summary` last); the exit status is 3 when late blocks exceed the limit. On a test
+machine run it with the busy load the test asks for, and report the summary line and the `late`
+lines.
+
 Nothing may come to the front while the desktop is in use: tests and harnesses set
 `DREIST_BACKGROUND_GUI=1` (commons `vendor/baseview`), the standalone app is not run for
 tests, pluginval runs with `--skip-gui-tests`, and apps start with `open -g`.

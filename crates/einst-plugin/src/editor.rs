@@ -708,6 +708,9 @@ impl Default for PerfFeed {
 impl PerfFeed {
     fn tick(&mut self, ed: &mut DreistGui, bridge: &Bridge) {
         ed.place_perf();
+        if let (Some(m), Some(ui)) = (dreist_engine::diag::monitor(), ed.app.ui_load) {
+            m.set_ui_load(ui);
+        }
         if self.at.elapsed() < std::time::Duration::from_secs(1) {
             return;
         }
