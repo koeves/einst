@@ -498,14 +498,12 @@ impl Editor {
         }
     }
 
-    /// Repaint the modulator panel (the whole window when there is none).
+    /// Repaint the modulator panel; without one (another page) nothing
+    /// shows its flashes or steps.
     fn repaint_transmod(&mut self) {
-        match self.transmod.panel_path() {
-            Some(p) => {
-                let r = self.app.abs_rect(p);
-                self.app.invalidate_rect(r);
-            }
-            None => self.app.dirty = true,
+        if let Some(p) = self.transmod.panel_path() {
+            let r = self.app.abs_rect(p);
+            self.app.invalidate_rect(r);
         }
     }
 
