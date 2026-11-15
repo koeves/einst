@@ -15,6 +15,7 @@ pub(crate) enum MainAction {
     FindMissing,
     Export,
     MidiConsole,
+    Performance,
     TransportOptions,
     ResetScale,
     /// Reset, confirmed.
@@ -22,7 +23,28 @@ pub(crate) enum MainAction {
     None,
 }
 
+/// Options key: the CPU and memory readout is on (off by default).
+pub(crate) const PERF_OPTION: &str = "ShowPerformance";
+
+/// The readout's place: over the bottom of the browser column.
+const PERF_PLACE: dreist_gui::perf::Place = dreist_gui::perf::Place { x: 8, y: -48, w: 290 };
+
 impl Editor {
+    /// The CPU and memory readout is on.
+    pub fn perf_shown(&self) -> bool {
+        self.modals.options.bool(PERF_OPTION, false)
+    }
+
+    /// Show `r` in the readout, adding or removing it to match the option
+    /// (the app calls this about once a second).
+    pub fn performance(&mut self, r: &dreist_gui::perf::Reading) {
+        let on = self.perf_shown();
+        dreist_gui::perf::show(&mut self.app, on, PERF_PLACE);
+        if on {
+            dreist_gui::perf::update(&mut self.app, r);
+        }
+    }
+
     fn main_items(&self) -> Vec<(String, MainAction)> {
         use MainAction::*;
         // v1's Grid menu ([re:3695e4]): About, Preferences, Reset, the
@@ -42,6 +64,7 @@ impl Editor {
             ("Find missing files...".into(), FindMissing),
             ("Export as audio...".into(), Export),
             ("Show MIDI console".into(), MidiConsole),
+            (if self.perf_shown() { "Hide CPU and memory" } else { "Show CPU and memory" }.into(), Performance),
             ("Reset UI scale to 100%".into(), ResetScale),
         ]
     }
@@ -128,6 +151,15 @@ impl Editor {
                     }
                     // Lambda #8: scale 1 (when not already);
                     // LastEditorScaleFactor 100.
+                    MainAction::Performance => {
+                        let on = !self.perf_shown();
+                        self.modals.options.set(PERF_OPTION, on);
+                        if !cfg!(test) {
+                            self.modals.options.save();
+                        }
+                        dreist_gui::perf::show(&mut self.app, on, PERF_PLACE);
+                        return false;
+                    }
                     MainAction::ResetScale => {
                         if (self.app.ui_scale - 1.0).abs() > 1e-6 {
                             self.modals.options.set("LastEditorScaleFactor", 100);

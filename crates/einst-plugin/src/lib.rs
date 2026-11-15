@@ -374,6 +374,10 @@ impl Plugin for EinstPlugin {
     }
 
     fn process(&mut self, buffer: &mut Buffer, aux: &mut AuxiliaryBuffers, context: &mut impl ProcessContext<Self>) -> ProcessStatus {
+        // The readout's audio load: this block's time against its duration.
+        let bridge = self.bridge.clone();
+        let _load = bridge.load.scope(buffer.samples(), f32::from_bits(bridge.sample_rate.load(std::sync::atomic::Ordering::Relaxed)));
+        bridge.standalone.store(context.plugin_api() == nih_plug::prelude::PluginApi::Standalone, std::sync::atomic::Ordering::Relaxed);
         self.swap_in_rebuilt();
         let Some(engine) = self.engine.as_mut() else { return ProcessStatus::Normal };
         // The standalone has no host transport: nih-plug's backend reports

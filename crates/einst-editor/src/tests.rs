@@ -4903,3 +4903,27 @@ fn preset_dropped_on_the_window_loads() {
     ed.handle(&UiEvent::Dropped { from: Vec::new(), to: Vec::new(), x: 1.0, y: 1.0 });
     assert_eq!(ed.model.name.as_deref(), Some("Hollow"));
 }
+
+#[test]
+fn the_performance_readout_repaints_only_itself() {
+    crate::app::test_setup();
+    let p = demo("Presets/Hollow.geist");
+    let Ok(proj) = dreist_formats::Project::load(&p) else { return };
+    let Ok(mut ed) = Editor::new(dreist_gui::skin::default_theme(), Model::new(proj.raw)) else { return };
+    assert!(!ed.perf_shown());
+    ed.performance(&dreist_gui::perf::Reading { dsp: Some(0.3), ..Default::default() });
+    assert!(ed.app.root.children.iter().all(|c| c.name != dreist_gui::perf::NAME), "off by default");
+    ed.modals.options.set(crate::editor::tools_menu::PERF_OPTION, true);
+    ed.performance(&dreist_gui::perf::Reading::default());
+    let _ = ed.render(1.0);
+    for k in 0..3 {
+        let r = dreist_gui::perf::Reading { dsp: Some(0.2 + 0.1 * k as f32), peak: Some(0.5 + 0.2 * k as f32), ui: Some(0.1), memory: Some(300 << 20), late: Some(k) };
+        ed.performance(&r);
+        assert!(!ed.app.dirty && ed.app.needs_redraw());
+        let partial = ed.render_frame(1.0).clone();
+        assert!(ed.app.frame_damage.as_ref().is_some_and(|d| d.iter().all(|r| r.h <= 16)), "{:?}", ed.app.frame_damage);
+        let full = ed.render(1.0);
+        let off = partial.data().chunks(4).zip(full.data().chunks(4)).filter(|(x, y)| x.iter().zip(y.iter()).take(3).any(|(p, q)| p.abs_diff(*q) > 1)).count();
+        assert!(off * 1000 <= partial.data().len() / 4, "tick {k}: {off} pixels differ");
+    }
+}
