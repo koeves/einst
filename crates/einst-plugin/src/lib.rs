@@ -546,6 +546,9 @@ impl Plugin for EinstPlugin {
         });
         let input = [&self.input_scratch[0][..n], &self.input_scratch[1][..n]];
         engine.process_with_input(left, right, &mut subs, Some(input));
+        if let Some(m) = diag {
+            m.output(left, right);
+        }
         for &(t, [st, d1, d2]) in &engine.midi_out {
             let (timing, channel) = (t.min(n.saturating_sub(1) as u32), st & 15);
             match st & 0xf0 {
