@@ -12,6 +12,10 @@ pub const SESSION_ENV: &str = "EINST_SESSION_FILE";
 pub struct Host;
 
 impl DeviceHost for Host {
+    fn power_hold(&self, on: bool) {
+        dreist_host::power::set_enabled(on);
+    }
+
     fn audio(&self, output: &str, input: &str) -> AudioSetup {
         dreist_host::audio::setup(output, input)
     }

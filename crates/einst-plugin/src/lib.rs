@@ -435,6 +435,11 @@ impl Plugin for EinstPlugin {
                 }
             }
         }
+        // The standalone holds the performance power profile while playing
+        // (`dreist_host::power`; a flag here, the D-Bus calls elsewhere).
+        if bridge.standalone.load(std::sync::atomic::Ordering::Relaxed) {
+            dreist_host::power::set_playing(engine.is_playing());
+        }
         if let Some(m) = diag {
             m.set_transport(engine.song_position(), engine.is_playing());
             let (voices, stretching) = engine.voice_counts();

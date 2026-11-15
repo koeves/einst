@@ -16,6 +16,7 @@ pub(crate) enum MainAction {
     Export,
     MidiConsole,
     Performance,
+    PowerHold,
     TransportOptions,
     ResetScale,
     /// Reset, confirmed.
@@ -26,7 +27,33 @@ pub(crate) enum MainAction {
 /// Options key: the CPU and memory readout is on (off by default).
 pub(crate) const PERF_OPTION: &str = "ShowPerformance";
 
+/// Options key: hold the performance power profile while the standalone
+/// plays (Linux; on by default).
+pub(crate) const POWER_OPTION: &str = "HoldPerformanceWhilePlaying";
+
 impl Editor {
+    /// The power-profile hold is offered: the Linux standalone.
+    fn power_hold_offered(&self) -> bool {
+        cfg!(target_os = "linux") && self.devices.host.is_some()
+    }
+
+    /// Its menu item, checked while on.
+    fn power_hold_item(&self) -> String {
+        let label = "Keep the CPU at full speed while playing";
+        if self.modals.options.bool(POWER_OPTION, true) { format!("{}{label}", dreist_gui::menu::CHECK) } else { label.into() }
+    }
+
+    fn toggle_power_hold(&mut self) {
+        let on = !self.modals.options.bool(POWER_OPTION, true);
+        self.modals.options.set(POWER_OPTION, on);
+        if !cfg!(test) {
+            self.modals.options.save();
+        }
+        if let Some(h) = &self.devices.host {
+            h.power_hold(on);
+        }
+    }
+
     /// The CPU and memory readout is on.
     pub fn perf_shown(&self) -> bool {
         self.modals.options.bool(PERF_OPTION, false)
@@ -60,7 +87,7 @@ impl Editor {
         // default preset items (Clear only when there is one); then the
         // port's own items.
         let has_default = crate::options::default_preset().is_some_and(|p| p.is_file());
-        vec![
+        let mut items = vec![
             (format!("About {}", crate::product()), About),
             (String::new(), None),
             ("Preferences".into(), Preferences),
@@ -75,7 +102,11 @@ impl Editor {
             ("Show MIDI console".into(), MidiConsole),
             (if self.perf_shown() { "Hide CPU and memory" } else { "Show CPU and memory" }.into(), Performance),
             ("Reset UI scale to 100%".into(), ResetScale),
-        ]
+        ];
+        if self.power_hold_offered() {
+            items.push((self.power_hold_item(), PowerHold));
+        }
+        items
     }
 
     /// The main menu (`GridButton`).
@@ -167,6 +198,10 @@ impl Editor {
                             self.modals.options.save();
                         }
                         self.place_perf();
+                        return false;
+                    }
+                    MainAction::PowerHold => {
+                        self.toggle_power_hold();
                         return false;
                     }
                     MainAction::ResetScale => {

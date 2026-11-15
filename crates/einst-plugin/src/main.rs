@@ -76,6 +76,16 @@ fn main() {
         }
     }
     let args = args(rest);
+    // While playing, hold the performance power profile (Linux; option
+    // `HoldPerformanceWhilePlaying`, on by default).
+    dreist_host::power::set_enabled(einst_editor::options::Options::load().bool("HoldPerformanceWhilePlaying", true));
+    dreist_host::power::start(
+        "Einst",
+        Box::new(|line: &str| {
+            eprintln!("{line}");
+            dreist_engine::diag::note("power", line);
+        }),
+    );
     if debug.debug {
         dreist_engine::diag::start_run("Einst", env!("CARGO_PKG_VERSION"), debug, &args);
     }
