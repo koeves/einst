@@ -141,13 +141,17 @@ impl Voice {
         self.pos_b = 0.0;
     }
 
-    fn process(&mut self, ctx: &Ctx, p: &[f32], x: &[f32], out: &mut [f32]) {
-        // `InitializeSongInfo`: 2 s at the current rate, cleared.
-        if self.sr != ctx.sample_rate {
-            self.sr = ctx.sample_rate;
+    /// `InitializeSongInfo`: 2 s at the rate, cleared.
+    fn prepare_rate(&mut self, sr: f32) {
+        if self.sr != sr {
+            self.sr = sr;
             self.set_max_delay(self.sr + self.sr);
             self.buf.fill(0.0);
         }
+    }
+
+    fn process(&mut self, ctx: &Ctx, p: &[f32], x: &[f32], out: &mut [f32]) {
+        self.prepare_rate(ctx.sample_rate);
         let gate = p[0];
         let beats = ((p[1] + 0.5) as i32).max(1);
         let sr = ctx.sample_rate;
@@ -285,6 +289,14 @@ impl Default for AudioFreeze {
 impl Node for AudioFreeze {
     fn ports(&mut self) -> &mut Vec<Port> {
         &mut self.ports
+    }
+
+    /// The delay lines at the rate when the effect is created, not on the
+    /// audio thread's first block.
+    fn prepare_rate(&mut self, sr: f32) {
+        for v in &mut self.voices {
+            v.prepare_rate(sr);
+        }
     }
 
     fn process(&mut self, ctx: &Ctx, inp: [&[f32]; 2], out: [&mut [f32]; 2]) {
