@@ -48,8 +48,9 @@ Download the archive for your system from the [latest release](https://github.co
 | Windows | 10+, x64 | `Einst-<tag>-Windows.zip` | `.\install.ps1` | `.\install.ps1 --uninstall` |
 | Linux | x86_64, glibc 2.39+, X11 or XWayland | `Einst-<tag>-Linux.tar.gz` | `./install.sh` | `./install.sh --uninstall` |
 
-- **What it installs**: the app, VST3 and CLAP for your user, in the standard folders ([locations](https://github.com/koeves/dreist-commons/blob/dev/packaging/README.md#locations)).
-- **All users**: add `--system` (`sudo` on macOS and Linux, an administrator PowerShell on Windows).
+- **What it installs**: the app, VST3 and CLAP in the standard folders, for your user on macOS and Linux and for all users on Windows ([locations](https://github.com/koeves/dreist-commons/blob/dev/packaging/README.md#locations)).
+- **All users on macOS and Linux**: add `--system` and run it with `sudo`.
+- **Windows**: run it in an administrator PowerShell, or add `--user` to install for your user only.
 - **Settings and content** stay on uninstall.
 - **Single parts**: the release also has one archive each for the VST3, CLAP and app, to place by hand.
 
@@ -65,7 +66,6 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 ### Windows
 
 - **Running the script**: in PowerShell, `powershell -ExecutionPolicy Bypass -File .\install.ps1` if scripts are blocked.
-- **Hosts that only scan `Common Files`**: install with `--system`.
 - **First launch**: the builds are unsigned; if SmartScreen warns, choose More info › Run anyway.
 
 ### Linux
