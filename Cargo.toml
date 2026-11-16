@@ -55,5 +55,6 @@ nih_plug = { path = "commons/vendor/nih-plug" }
 # softbuffer whose macOS observer class is unique to each plugin binary:
 # two plugins in one host aborted it (dreist-commons vendor/softbuffer).
 [patch.crates-io]
+cpal = { path = "commons/vendor/cpal" }
 signalsmith-stretch = { path = "commons/vendor/signalsmith-stretch" }
 softbuffer = { path = "commons/vendor/softbuffer" }
