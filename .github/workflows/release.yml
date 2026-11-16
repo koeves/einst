@@ -131,12 +131,20 @@ jobs:
           tar -czf "Einst-$TAG-${{ matrix.name }}-App.tar.gz" --transform 's,^Einst-App,Einst,' Einst-App
           # Everything with install.sh (commons/packaging) in one folder.
           tar -czf "Einst-$TAG-${{ matrix.name }}.tar.gz" --transform "s,^,Einst-$TAG-${{ matrix.name }}/," install.sh Einst.vst3 Einst-CLAP Einst-App
+          # The .deb for the apt repository (commons/packaging/deb.sh).
+          full="Einst-$TAG-${{ matrix.name }}"
+          mkdir "$full" && cp -R install.sh Einst.vst3 Einst-CLAP Einst-App "$full/"
+          DEB_MAINTAINER="${{ github.repository_owner }} <${{ github.repository_owner_id }}+${{ github.repository_owner }}@users.noreply.github.com>" \
+            DEB_DESCRIPTION="Drum sampler, sequencer and performance instrument (app, VST3, CLAP)" \
+            DEB_HOMEPAGE="https://github.com/${{ github.repository }}" \
+            sh ../../commons/packaging/deb.sh "$full" "$TAG" .
       - uses: actions/upload-artifact@v7
         with:
           name: Einst-${{ env.TAG }}-${{ matrix.name }}
           path: |
             target/bundled/Einst-*.zip
             target/bundled/Einst-*.tar.gz
+            target/bundled/einst_*.deb
           retention-days: 7
 
   release:
@@ -168,4 +176,59 @@ jobs:
           else
             gh release create "$TAG" --verify-tag --title "$TITLE" --notes-file notes.md
           fi
-          gh release upload "$TAG" dist/*.zip dist/*.tar.gz --clobber
+          gh release upload "$TAG" dist/*.zip dist/*.tar.gz dist/*.deb --clobber
+
+  packages:
+    # The Homebrew cask (koeves/homebrew-tap) and the signed apt repository
+    # (koeves/apt), from the release's archives; each step runs only when
+    # its secrets are set (commons/packaging/README.md: Packages).
+    needs: release
+    runs-on: ubuntu-24.04
+    env:
+      HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      APT_REPO_TOKEN: ${{ secrets.APT_REPO_TOKEN }}
+      APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Git identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Homebrew cask
+        if: env.HOMEBREW_TAP_TOKEN != ''
+        run: |
+          sha=$(sha256sum "dist/Einst-$TAG-macOS.zip" | cut -d' ' -f1)
+          for attempt in 1 2 3; do
+            rm -rf tap
+            git clone -q --depth 1 "https://x-access-token:$HOMEBREW_TAP_TOKEN@github.com/koeves/homebrew-tap" tap
+            mkdir -p tap/Casks
+            sh commons/packaging/cask.sh Einst "$TAG" "$sha" "${{ github.repository }}" \
+              "Drum sampler, sequencer and performance instrument" >tap/Casks/einst.rb
+            git -C tap add Casks/einst.rb
+            git -C tap diff --cached --quiet && break
+            git -C tap commit -q -m "einst ${TAG#v}"
+            git -C tap push -q origin HEAD:main && break
+            [ "$attempt" = 3 ] && exit 1
+          done
+      - name: apt repository
+        if: env.APT_REPO_TOKEN != '' && env.APT_GPG_PRIVATE_KEY != ''
+        run: |
+          printf '%s\n' "$APT_GPG_PRIVATE_KEY" | gpg --batch --quiet --import
+          APT_KEY_ID=$(gpg --batch --list-secret-keys --with-colons | awk -F: '/^fpr/ { print $10; exit }')
+          export APT_KEY_ID
+          for attempt in 1 2 3; do
+            rm -rf apt
+            git clone -q --depth 1 "https://x-access-token:$APT_REPO_TOKEN@github.com/koeves/apt" apt
+            sh commons/packaging/apt-publish.sh apt dist/einst_*.deb
+            git -C apt add -A
+            git -C apt diff --cached --quiet && break
+            git -C apt commit -q -m "einst ${TAG#v}"
+            git -C apt push -q origin HEAD:main && break
+            [ "$attempt" = 3 ] && exit 1
+          done

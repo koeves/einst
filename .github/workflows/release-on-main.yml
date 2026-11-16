@@ -65,6 +65,7 @@ jobs:
     with:
       tag: ${{ needs.version.outputs.tag }}
       upload: true
+    secrets: inherit
     permissions:
       contents: write
 
