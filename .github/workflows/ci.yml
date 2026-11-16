@@ -22,8 +22,37 @@ env:
   # Windows that tests open stay in the background (commons vendor/baseview).
   DREIST_BACKGROUND_GUI: "1"
 
+# Pull requests into dev run the fast checks (Linux); macOS and Windows run
+# on the release pull request (into main) and in the release. A skipped job
+# counts as passed for the branch rules.
 jobs:
+  changes:
+    # Whether a pull request changes more than Markdown: a docs-only pull
+    # request skips the build and test jobs. Anything but a pull request runs
+    # them all.
+    runs-on: ubuntu-24.04
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          code=true
+          if [ "$EVENT" = pull_request ] && files=$(git diff --name-only "$BASE" "$HEAD") && [ -n "$files" ] \
+            && ! printf '%s\n' "$files" | grep -qvE '\.md$'; then
+            code=false
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   macos:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || github.base_ref == 'main')
     # The plugin and app link AppKit: everything checks on macOS.
     runs-on: macos-15
     steps:
@@ -44,6 +73,8 @@ jobs:
         run: scripts/build.sh
 
   windows:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || github.base_ref == 'main')
     # The plugin and app on Windows (x64): lint, test and bundle them.
     runs-on: windows-latest
     defaults:
@@ -78,6 +109,8 @@ jobs:
           test -d target/bundled/Einst-App/Resources/Einst
 
   linux-build:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     # The plugin and app on Linux (x86_64, X11, ALSA): lint, test and
     # bundle them; the tests run under a virtual X server.
     runs-on: ubuntu-24.04
