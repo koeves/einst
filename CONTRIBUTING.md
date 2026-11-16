@@ -35,10 +35,11 @@ python3 scripts/uigen/uigen.py --check   # after changing scripts/uigen
 
 ## Releases
 
-- **Prepare**: `.github/release/prepare.sh` cuts `release/vX.Y.Z` from `dev` with the version and its CHANGELOG section in one commit and opens its pull request into `dev`; `--dry-run` tries it locally.
+- **Release pull request into `dev`**: after every push to `dev` with releasable commits, `release-pr.yml` opens or updates `chore(release): vX.Y.Z` with the version and its CHANGELOG section; approving and merging it decides the release.
+- **By hand**: `.github/release/prepare.sh` writes the same pull request (`--as X.Y.Z` sets the version, `--dry-run` tries it locally).
 - **Version**: from the commits since the last tag: fix → patch, feat → minor, breaking → major (minor while on 0.x); `--as X.Y.Z` or a `Release-As: X.Y.Z` line in a commit sets it.
 - **Releasable**: feat, fix, perf, refactor, revert, breaking and dependency commits; `ci`, `docs`, `test`, `style` and other commits alone release nothing.
-- **Release**: `prepare.sh --open` opens the pull request from `dev` into `main`, merged with a merge commit; its `release-version` check needs the prepared version and changelog and no releasable commit after them.
+- **Release**: once that is merged, `release-pr.yml` opens the pull request from `dev` into `main`, merged with a merge commit; its `release-version` check needs the prepared version and changelog and no releasable commit after them.
 - **Automatic**: the merge tags `vX.Y.Z`, builds macOS, Windows and Linux and publishes the GitHub release; the changelog and version are already in `dev`.
 - **Rebuild assets**: `gh workflow run release.yml --ref <tag> -f tag=<tag> -f upload=true`.
 
