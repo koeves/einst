@@ -54,6 +54,21 @@ Download the archive for your system from the [latest release](https://github.co
 - **Settings and content** stay on uninstall.
 - **Single parts**: the release also has one archive each for the VST3, CLAP and app, to place by hand.
 
+### Package managers
+
+- **Homebrew** (macOS): installs the app, VST3 and CLAP for your user.
+- **apt** (Debian, Ubuntu): installs for all users; updates come with `apt upgrade`.
+
+```bash
+brew install --cask koeves/tap/einst
+```
+
+```bash
+sudo curl -fsSL https://koeves.github.io/apt/key.asc -o /etc/apt/keyrings/koeves.asc
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/koeves.asc] https://koeves.github.io/apt stable main" | sudo tee /etc/apt/sources.list.d/koeves.list
+sudo apt update && sudo apt install einst
+```
+
 ### macOS
 
 - **First launch**: the builds are unsigned, so open the app with right-click › Open › Open.
