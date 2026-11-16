@@ -28,17 +28,18 @@ cargo test --workspace --no-fail-fast
 python3 scripts/uigen/uigen.py --check   # after changing scripts/uigen
 ```
 
-- **CI**: `macos` (required) checks everything; `windows` and `linux-build` lint, test and bundle.
+- **CI**: pull requests into `dev` run `linux-build` (lint, test, bundle); the release pull request and the release also run `macos` (everything, effect fingerprints included) and `windows`.
+- **Docs only**: a pull request that changes only Markdown skips the build and test jobs; a skipped job counts as passed.
 - **CodeQL**: runs on every pull request into `dev` and `main`.
 - **Goldens**: stay identical unless a change means to alter them; say why in the commit.
 
 ## Releases
 
-- **Release**: a pull request from `dev` into `main`, merged with a merge commit.
-- **Automatic**: the merge computes the version from the commits, tags `vX.Y.Z`, builds macOS, Windows and Linux and publishes the GitHub release.
-- **Follow-up**: a changelog and version pull request into `dev` merges itself once green.
-- **Version**: fix → patch, feat → minor, breaking → major (minor while on 0.x); `Release-As: X.Y.Z` in the release pull request overrides it.
-- **Releasable**: feat, fix, perf, refactor, revert, breaking and dependency commits; without one nothing is released.
+- **Prepare**: `.github/release/prepare.sh` cuts `release/vX.Y.Z` from `dev` with the version and its CHANGELOG section in one commit and opens its pull request into `dev`; `--dry-run` tries it locally.
+- **Version**: from the commits since the last tag: fix → patch, feat → minor, breaking → major (minor while on 0.x); `--as X.Y.Z` or a `Release-As: X.Y.Z` line in a commit sets it.
+- **Releasable**: feat, fix, perf, refactor, revert, breaking and dependency commits; `ci`, `docs`, `test`, `style` and other commits alone release nothing.
+- **Release**: `prepare.sh --open` opens the pull request from `dev` into `main`, merged with a merge commit; its `release-version` check needs the prepared version and changelog and no releasable commit after them.
+- **Automatic**: the merge tags `vX.Y.Z`, builds macOS, Windows and Linux and publishes the GitHub release; the changelog and version are already in `dev`.
 - **Rebuild assets**: `gh workflow run release.yml --ref <tag> -f tag=<tag> -f upload=true`.
 
 ## dreist-commons
