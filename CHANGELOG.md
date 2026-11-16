@@ -1,5 +1,51 @@
 # Changelog
 
+## [0.2.0] - 2026-11-16
+
+### Features
+
+- Windows and Linux builds (VST3, CLAP, standalone) (#11)
+- **editor:** CPU and memory readout (#37)
+- **plugin:** Debug runs of the standalone launcher (#39)
+- **standalone:** Keep the CPU at full speed while playing on Linux (#42)
+- **build:** Install scripts from dreist-commons on every platform (#44)
+
+### Fixes
+
+- **linux:** Editor at the host's scale, dialogs in an existing folder, render goldens on macOS (#27)
+- **linux:** Installer, window, standalone audio and editor performance (#31)
+
+### Performance
+
+- **editor:** Screens with controls kept as pixels between frames (#38)
+- **dsp:** AudioFreeze sets up its delay lines when it is created (#40)
+
+### Documentation
+
+- Feature branches into dev by pull request, releases by pull request into main
+- Releasing is merging the release pull request
+- MacOS, Windows and Linux in the About text and README (#18)
+- Check code scanning and Dependabot alerts on every piece of work (#23)
+- Drop the alert check from CONTRIBUTING (#24)
+- README and contributing guide as short bullet lists (#29)
+- Draft pull requests while work is in progress (#41)
+
+### Tests
+
+- **editor:** The screen goldens show a fixed version in About
+
+### Build and CI
+
+- CodeQL on pull requests into main (the release PR's required check)
+- Merge CodeQL on pull requests into main
+- **deps:** Bump github/codeql-action from 3 to 4
+- --install puts the standalone app in /Applications
+- Checks and CodeQL on pull requests into dev and main; Dependabot auto-merge
+- Release on merging the release pull request into main
+- Squash pull requests into dev, merge commits into main (#16)
+- Install Linux packages from the main Ubuntu archive (#26)
+- Dreist-commons v0.3.0 (#46)
+
 ## [0.1.0] - 2026-11-10
 
 First release: the original v1 (1.1.1.2) rebuilt natively for Apple Silicon (VST3, CLAP,
