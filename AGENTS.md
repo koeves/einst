@@ -54,5 +54,8 @@ merge releases: version from the commits (`Release-As: X.Y.Z` overrides), tag, b
 release and a follow-up changelog / version pull request into `dev` happen on their own; never
 tag or bump by hand. `commons` must be at a dreist-commons release tag (CONTRIBUTING.md).
 
+Pull requests: a draft while longer work is in progress, marked ready once its testing is done; short work
+goes from a local branch straight to a ready pull request.
+
 After any code change here or in commons, rebuild and reinstall the VST3 (`scripts/build.sh`, then
 `target/bundled/Einst.vst3` into `~/Library/Audio/Plug-Ins/VST3`) and say which commit is installed.
