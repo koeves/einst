@@ -101,6 +101,11 @@ jobs:
           ditto -c -k --keepParent Einst.vst3 "Einst-$TAG-${{ matrix.name }}-VST3.zip"
           ditto -c -k --keepParent Einst.clap "Einst-$TAG-${{ matrix.name }}-CLAP.zip"
           ditto -c -k --keepParent Einst.app "Einst-$TAG-${{ matrix.name }}-App.zip"
+          # Everything with install.sh (commons/packaging) in one folder.
+          full="Einst-$TAG-${{ matrix.name }}"
+          mkdir "$full"
+          for p in install.sh Einst.vst3 Einst.clap Einst.app; do ditto "$p" "$full/$p"; done
+          ditto -c -k --keepParent "$full" "$full.zip"
       - name: Build (Windows)
         if: runner.os == 'Windows'
         run: |
@@ -109,6 +114,10 @@ jobs:
           mv Einst-CLAP Einst && 7z a -tzip "Einst-$TAG-${{ matrix.name }}-CLAP.zip" Einst && mv Einst Einst-CLAP
           mv Einst-App Einst && 7z a -tzip "Einst-$TAG-${{ matrix.name }}-App.zip" Einst && mv Einst Einst-App
           7z a -tzip "Einst-$TAG-${{ matrix.name }}-VST3.zip" Einst.vst3
+          # Everything with install.ps1 (commons/packaging) in one folder.
+          full="Einst-$TAG-${{ matrix.name }}"
+          mkdir "$full" && cp -R install.ps1 Einst.vst3 Einst-CLAP Einst-App "$full/"
+          7z a -tzip "$full.zip" "$full"
       - name: Build (Linux)
         # tar keeps the executable bits; the CLAP and the app unpack into an
         # Einst/ folder each, the full archive into Einst-<tag>-Linux/ with
@@ -120,7 +129,7 @@ jobs:
           tar -czf "Einst-$TAG-${{ matrix.name }}-VST3.tar.gz" Einst.vst3
           tar -czf "Einst-$TAG-${{ matrix.name }}-CLAP.tar.gz" --transform 's,^Einst-CLAP,Einst,' Einst-CLAP
           tar -czf "Einst-$TAG-${{ matrix.name }}-App.tar.gz" --transform 's,^Einst-App,Einst,' Einst-App
-          # Everything with install.sh (scripts/linux-install.sh) in one folder.
+          # Everything with install.sh (commons/packaging) in one folder.
           tar -czf "Einst-$TAG-${{ matrix.name }}.tar.gz" --transform "s,^,Einst-$TAG-${{ matrix.name }}/," install.sh Einst.vst3 Einst-CLAP Einst-App
       - uses: actions/upload-artifact@v7
         with:

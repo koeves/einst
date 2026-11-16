@@ -40,22 +40,23 @@ Einst is a drum sampler, step sequencer and performance instrument: a Rust rebui
 
 ## Installation
 
-Download the archives for your system from the [latest release](https://github.com/koeves/einst/releases/latest).
+Download the archive for your system from the [latest release](https://github.com/koeves/einst/releases/latest), unpack it and run its install script.
 
-| System | Requirements | VST3 | CLAP | App |
+| System | Requirements | Archive | Install | Uninstall |
 |---|---|---|---|---|
-| macOS | 11+, Apple Silicon | `Einst-<tag>-macOS-VST3.zip` | `Einst-<tag>-macOS-CLAP.zip` | `Einst-<tag>-macOS-App.zip` |
-| Windows | 10+, x64 | `Einst-<tag>-Windows-VST3.zip` | `Einst-<tag>-Windows-CLAP.zip` | `Einst-<tag>-Windows-App.zip` |
-| Linux | x86_64, glibc 2.39+, X11 or XWayland | `Einst-<tag>-Linux-VST3.tar.gz` | `Einst-<tag>-Linux-CLAP.tar.gz` | `Einst-<tag>-Linux-App.tar.gz` |
+| macOS | 11+, Apple Silicon | `Einst-<tag>-macOS.zip` | `./install.sh` | `./install.sh --uninstall` |
+| Windows | 10+, x64 | `Einst-<tag>-Windows.zip` | `.\install.ps1` | `.\install.ps1 --uninstall` |
+| Linux | x86_64, glibc 2.39+, X11 or XWayland | `Einst-<tag>-Linux.tar.gz` | `./install.sh` | `./install.sh --uninstall` |
+
+- **What it installs**: the app, VST3 and CLAP for your user, in the standard folders ([locations](https://github.com/koeves/dreist-commons/blob/dev/packaging/README.md#locations)).
+- **All users**: add `--system` (`sudo` on macOS and Linux, an administrator PowerShell on Windows).
+- **Settings and content** stay on uninstall.
+- **Single parts**: the release also has one archive each for the VST3, CLAP and app, to place by hand.
 
 ### macOS
 
-- **VST3**: move `Einst.vst3` to `~/Library/Audio/Plug-Ins/VST3/`.
-- **CLAP**: move `Einst.clap` to `~/Library/Audio/Plug-Ins/CLAP/`.
-- **App**: move `Einst.app` to `/Applications`.
 - **First launch**: the builds are unsigned, so open the app with right-click › Open › Open.
 - **Plugins blocked by a host**: clear the quarantine flag.
-- **Uninstall**: delete `Einst.vst3`, `Einst.clap` and `Einst.app` from those folders.
 
 ```bash
 xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Library/Audio/Plug-Ins/CLAP/Einst.clap
@@ -63,17 +64,13 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 
 ### Windows
 
-- **VST3**: move the `Einst.vst3` folder to `C:\Program Files\Common Files\VST3\`.
-- **CLAP**: move the `Einst` folder (`Einst.clap` and `Resources`) to `C:\Program Files\Common Files\CLAP\`.
-- **App**: unzip the `Einst` folder anywhere and run `Einst.exe`; keep `Resources` next to it.
+- **Running the script**: in PowerShell, `powershell -ExecutionPolicy Bypass -File .\install.ps1` if scripts are blocked.
+- **Hosts that only scan `Common Files`**: install with `--system`.
 - **First launch**: the builds are unsigned; if SmartScreen warns, choose More info › Run anyway.
-- **Uninstall**: delete the `Einst.vst3` and `Einst` folders from those places, and the app folder.
 
 ### Linux
 
-- **Install**: unpack `Einst-<tag>-Linux.tar.gz` and run `./install.sh` in its folder; it sets up the VST3, CLAP, app, launcher and icon for your user.
-- **Uninstall**: run `./install.sh --uninstall`; settings and content stay.
-- **By hand**: `Einst.vst3` goes in `~/.vst3/`, the `Einst` CLAP folder in `~/.clap/`, and the `Einst` app folder anywhere (run `Einst`, keep `Resources` next to it).
+- **Launcher**: the install adds the app to the desktop's app list and an `einst` command.
 - **Runtime**: ALSA, X11 / XCB and OpenGL, present on desktop systems.
 - **File dialogs**: through the XDG desktop portal, or `zenity` without one.
 - **Standalone audio**: smoothest on PipeWire (Ubuntu 24.04+); on PulseAudio, raise the buffer in the audio settings or run `Einst --backend jack` with JACK.
@@ -111,7 +108,8 @@ Needs a Rust toolchain.
 ```bash
 git clone --recursive https://github.com/koeves/einst
 scripts/build.sh                  # macOS: target/bundled/Einst.{app,vst3,clap}
-scripts/build.sh --install        # macOS: also into ~/Library/Audio/Plug-Ins and /Applications
+scripts/build.sh --install        # macOS: also install for this user (target/bundled/install.sh)
+scripts/build.sh --uninstall      # macOS: remove that install
 scripts/build-windows.sh          # Windows, in Git Bash
 scripts/build-linux.sh            # Linux
 scripts/build-linux.sh --install  # Linux: also install for this user (target/bundled/install.sh)
