@@ -249,7 +249,10 @@ impl Plugin for EinstPlugin {
     const VENDOR: &'static str = "Dreist";
     const URL: &'static str = "";
     const EMAIL: &'static str = "";
-    const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+    const VERSION: &'static str = match option_env!("BUILD_VERSION") {
+        Some(v) => v,
+        None => env!("CARGO_PKG_VERSION"),
+    };
 
     const AUDIO_IO_LAYOUTS: &'static [AudioIOLayout] = &[AudioIOLayout {
         main_input_channels: NonZeroU32::new(2),

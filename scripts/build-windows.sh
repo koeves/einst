@@ -23,6 +23,8 @@ for a in "$@"; do
     esac
 done
 flag=$([ "$profile" = release ] && echo --release || true)
+# The version the bundles and the About panel show (scripts/version.sh).
+export BUILD_VERSION=$(scripts/version.sh)
 out=target/bundled
 mkdir -p "$out"
 

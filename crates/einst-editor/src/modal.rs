@@ -332,7 +332,10 @@ impl Modals {
         Ok(Modals {
             style_changed: None,
             options_confirmed: false,
-            version: env!("CARGO_PKG_VERSION"),
+            version: match option_env!("BUILD_VERSION") {
+                Some(v) => v,
+                None => env!("CARGO_PKG_VERSION"),
+            },
             about,
             prefs,
             export,

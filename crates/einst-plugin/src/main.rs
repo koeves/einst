@@ -87,7 +87,15 @@ fn main() {
         }),
     );
     if debug.debug {
-        dreist_engine::diag::start_run("Einst", env!("CARGO_PKG_VERSION"), debug, &args);
+        dreist_engine::diag::start_run(
+            "Einst",
+            match option_env!("BUILD_VERSION") {
+                Some(v) => v,
+                None => env!("CARGO_PKG_VERSION"),
+            },
+            debug,
+            &args,
+        );
     }
     nih_export_standalone_with_args::<EinstPlugin, _>(args);
     if let Some(status) = dreist_engine::diag::end_run() {

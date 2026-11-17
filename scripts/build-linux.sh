@@ -39,6 +39,8 @@ if [ "$uninstall" = 1 ]; then
     exec sh commons/packaging/install.sh --app Einst --uninstall
 fi
 flag=$([ "$profile" = release ] && echo --release || true)
+# The version the bundles and the About panel show (scripts/version.sh).
+export BUILD_VERSION=$(scripts/version.sh)
 out=target/bundled
 mkdir -p "$out"
 
