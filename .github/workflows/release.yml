@@ -203,12 +203,13 @@ jobs:
       - name: Homebrew cask
         if: env.HOMEBREW_TAP_TOKEN != ''
         run: |
-          sha=$(sha256sum "dist/Einst-$TAG-macOS.zip" | cut -d' ' -f1)
+          arm=$(sha256sum "dist/Einst-$TAG-macOS-AppleSilicon.zip" | cut -d' ' -f1)
+          intel=$(sha256sum "dist/Einst-$TAG-macOS-Intel.zip" | cut -d' ' -f1)
           for attempt in 1 2 3; do
             rm -rf tap
             git clone -q --depth 1 "https://x-access-token:$HOMEBREW_TAP_TOKEN@github.com/koeves/homebrew-tap" tap
             mkdir -p tap/Casks
-            sh commons/packaging/cask.sh Einst "$TAG" "$sha" "${{ github.repository }}" \
+            sh commons/packaging/cask.sh Einst "$TAG" "$arm" "$intel" "${{ github.repository }}" \
               "Drum sampler, sequencer and performance instrument" >tap/Casks/einst.rb
             git -C tap add Casks/einst.rb
             git -C tap diff --cached --quiet && break
