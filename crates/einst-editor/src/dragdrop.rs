@@ -299,8 +299,8 @@ impl Editor {
     /// `UiEvent::Dropped`.
     /// A drag left the window ([re:be4a8a] →
     /// [re:be7228]): a pattern key becomes
-    /// `<temp>/<pattern name>.mid` ('/', '\\', ':' → '_';
-    /// [re:c995b5]), browser files go
+    /// `<temp>/<pattern name>.mid` ([`file_name`]; [re:c995b5]), browser
+    /// files go
     /// as they are ([re:92d0d8] 0x4210); pads
     /// export nothing.
     pub(crate) fn drag_out(&mut self, ev: &UiEvent) -> bool {
@@ -310,8 +310,7 @@ impl Editor {
                 let e = self.model.engine;
                 let name = self.model.pattern_name(e, n);
                 let name = if name.is_empty() { format!("Pattern {}", n + 1) } else { name };
-                let name: String = name.chars().map(|c| if matches!(c, '/' | '\\' | ':') { '_' } else { c }).collect();
-                let path = std::env::temp_dir().join(format!("{name}.mid"));
+                let path = std::env::temp_dir().join(format!("{}.mid", file_name(&name)));
                 if !self.save_pattern_midi_of(&path, n) {
                     return false;
                 }
@@ -519,5 +518,23 @@ impl Editor {
             _ if x == "mid" || x == "midi" => self.open_pattern_midi_at(f, slot.unwrap_or(self.model.current_pattern(e))),
             _ => false,
         }
+    }
+}
+
+/// A pattern name as a dragged file's name: '/', '\\' and ':' become '_'
+/// ([re:c995b5]), and so do the other characters Windows refuses in a file
+/// name (`* ? " < > |` and control characters).
+fn file_name(name: &str) -> String {
+    name.chars().map(|c| if matches!(c, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|') || c.is_control() { '_' } else { c }).collect()
+}
+
+#[cfg(test)]
+mod file_name_tests {
+    /// Repro: a pattern dragged out on Windows must not carry the
+    /// characters Windows refuses in a file name.
+    #[test]
+    fn dragged_pattern_names_are_valid_file_names_everywhere() {
+        assert_eq!(super::file_name("A/B\\C:D*E?F\"G<H>I|J\tK\u{1}L"), "A_B_C_D_E_F_G_H_I_J_K_L");
+        assert_eq!(super::file_name("Groove 1 (Ä)"), "Groove 1 (Ä)");
     }
 }
