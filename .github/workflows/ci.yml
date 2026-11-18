@@ -70,8 +70,8 @@ jobs:
       - name: Test
         run: cargo test --locked --workspace
       - name: Build plugin and standalone
-        # Universal binaries (Apple Silicon and Intel).
-        run: scripts/build.sh
+        # Universal binaries: both slices build (releases ship one per Mac).
+        run: scripts/build.sh --arch universal
       - name: Universal binaries
         run: |
           for b in Einst.vst3/Contents/MacOS/Einst Einst.clap/Contents/MacOS/Einst Einst.app/Contents/MacOS/Einst; do

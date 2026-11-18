@@ -39,7 +39,7 @@ dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::pr
     cargo test --workspace
     cargo clippy --workspace --all-targets --features einst-plugin/standalone -- -D warnings
     cargo fmt --all --check
-    scripts/build.sh          # target/bundled/Einst.{vst3,clap,app}, universal (arm64 + x86_64)
+    scripts/build.sh          # target/bundled/Einst.{vst3,clap,app} for this Mac; --arch arm64|x86_64|universal
     python3 tools/plugincheck.py target/bundled/Einst.clap/Contents/MacOS/Einst target/bundled/Einst.vst3/Contents/MacOS/Einst
     tools/editorhost.sh target/bundled/Einst.clap target/bundled/Einst.vst3 ../dreist/target/bundled/Dreist.clap
 
