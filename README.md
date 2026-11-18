@@ -83,11 +83,19 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 - **Linux**: `~/.config/Einst` (or `$XDG_CONFIG_HOME/Einst`).
 - **Uninstalling** leaves this folder and your content in place; delete them by hand to remove everything.
 
+### Diagnostics
+
+- **Log**: the app and the plugins keep one log, `~/Library/Logs/Einst/einst.log`, `$XDG_STATE_HOME/Einst/einst.log` or `%LOCALAPPDATA%\Einst\Logs\einst.log`.
+- **Contents**: system and versions, audio setup (format, host, sample rate, block size), audio load, late blocks with their song position, memory.
+- **Sharing**: main menu › Export diagnostics writes one file and shows it; Copy diagnostics puts it on the clipboard.
+- **Privacy**: the export leaves out paths outside Einst's settings and log folders, and your user name.
+- **Format**: [dreist-commons Diagnostics](https://github.com/koeves/dreist-commons#diagnostics).
+
 ### Debug runs
 
 - **Start**: `einst --debug --play <project> --until-end` (or `--duration <seconds>`) opens the project, plays it and quits at the end.
-- **Log**: timestamped lines with the audio load, late blocks with their song position and memory, then a summary; on stderr and in `~/Library/Logs/Einst`, `$XDG_STATE_HOME/Einst` or `%LOCALAPPDATA%\Einst\Logs`.
-- **Options**: `--debug-json` for JSON lines, `--debug-log <file>` for another file, `--fail-on-late <n>` to exit with status 3 after more late blocks.
+- **Output**: the log on stderr with stats every second, then a summary.
+- **Options**: `--debug-json` for JSON lines, `--fail-on-late <n>` to exit with status 3 after more late blocks.
 
 ### Limitations
 
