@@ -44,7 +44,7 @@ Download the archive for your system from the [latest release](https://github.co
 
 | System | Requirements | Archive | Install | Uninstall |
 |---|---|---|---|---|
-| macOS | 11+, Apple Silicon | `Einst-<tag>-macOS.zip` | `./install.sh` | `./install.sh --uninstall` |
+| macOS | 11+, Apple Silicon or Intel | `Einst-<tag>-macOS.zip` | `./install.sh` | `./install.sh --uninstall` |
 | Windows | 10+, x64 | `Einst-<tag>-Windows.zip` | `.\install.ps1` | `.\install.ps1 --uninstall` |
 | Linux | x86_64, glibc 2.39+, X11 or XWayland | `Einst-<tag>-Linux.tar.gz` | `./install.sh` | `./install.sh --uninstall` |
 
@@ -97,13 +97,14 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 
 ## Content
 
+- **macOS builds**: universal binaries, native on Apple Silicon and Intel.
 - **Samples**: none included; Geist v1 and Geist2 kits, presets and expansions load as they are.
 - **Bundled**: v1's factory effect presets, effect chains, and pattern and swing templates.
 - **Project samples**: found next to the project in `<project>.samples/`, as in v1.
 
 ## Building
 
-Needs a Rust toolchain.
+Needs a Rust toolchain; on macOS `scripts/build.sh` adds the `aarch64-apple-darwin` and `x86_64-apple-darwin` targets.
 
 ```bash
 git clone --recursive https://github.com/koeves/einst

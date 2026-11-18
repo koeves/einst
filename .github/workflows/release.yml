@@ -79,6 +79,9 @@ jobs:
         with:
           submodules: recursive
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          # macOS builds universal binaries (Apple Silicon and Intel).
+          targets: ${{ runner.os == 'macOS' && 'aarch64-apple-darwin, x86_64-apple-darwin' || '' }}
       - uses: Swatinem/rust-cache@v2
       - name: Version from the tag
         # Only in this checkout: the plugins, the app's Info.plist and the
