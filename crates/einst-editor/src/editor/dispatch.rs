@@ -453,7 +453,51 @@ impl Editor {
         self.app.invalidate_changes_with(before, Some(&d));
     }
 
+    /// The app's menu closed without a pick: every panel forgets the menu
+    /// it kept open (see `handle`).
+    fn menus_dismissed(&mut self) {
+        self.history_menu = None;
+        self.engine_menu = None;
+        self.file_menu = None;
+        self.main_menu = false;
+        self.layer_menu = None;
+        self.pad_row_menu = None;
+        self.preview_out_menu = None;
+        self.reset_confirm = false;
+        self.padmenu.menu_dismissed();
+        self.patmenu.menu_dismissed();
+        self.pads.menu_dismissed();
+        self.header.menu_dismissed();
+        self.slicer.menu_dismissed();
+        self.trigger.menu_dismissed();
+        self.sampler.menu_dismissed();
+        self.inspector.menu_dismissed();
+        self.transmod.menu_dismissed();
+        self.mixers.iter_mut().for_each(mixer::Mixer::menu_dismissed);
+        if let Some(p) = self.pattern.as_mut() {
+            p.menu_dismissed();
+        }
+        if let Some(s) = self.scenes.as_mut() {
+            s.menu_dismissed();
+        }
+        if let Some(s) = self.song.as_mut() {
+            s.menu_dismissed();
+        }
+        if let Some(b) = self.browser.as_mut() {
+            b.menu_dismissed();
+        }
+        if let Some(m) = self.midimap.as_mut() {
+            m.menu_dismissed();
+        }
+    }
+
     pub fn handle(&mut self, ev: &UiEvent) {
+        // A menu closed without a pick sends no event of its own: any other
+        // event while no menu is open means what the panels kept for one
+        // goes, before it can take a later pick in another menu.
+        if self.app.menu.is_none() && !matches!(ev, UiEvent::MenuSelected { .. } | UiEvent::MenuSlider { .. }) {
+            self.menus_dismissed();
+        }
         if self.swing_import_event(ev) {
             self.app.dirty = true;
             return;

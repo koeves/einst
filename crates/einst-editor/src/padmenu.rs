@@ -108,6 +108,15 @@ pub struct PadMenu {
     open: Option<(usize, Vec<PadAction>, Vec<usize>)>,
 }
 
+impl PadMenu {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.open = None;
+    }
+}
+
 pub fn pad_locked(model: &Model, e: usize, p: usize) -> bool {
     model.pad_node(e, p).is_some_and(|n| n.locked())
 }

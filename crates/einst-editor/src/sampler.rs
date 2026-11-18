@@ -238,6 +238,15 @@ pub struct Sampler {
     timeline_beats: bool,
 }
 
+impl Sampler {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = None;
+    }
+}
+
 /// [re:e12a3e] [re:3fbef6]: takes are
 /// saved to `<record path>/<date>/` ([re:9c6245] +
 /// "Sampler Captures", unless `SamplerRecordPath` is set) when no file

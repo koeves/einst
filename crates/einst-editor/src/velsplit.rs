@@ -200,6 +200,15 @@ pub struct VelSplit {
     menu: Option<Menu>,
 }
 
+impl VelSplit {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = None;
+    }
+}
+
 fn layer_split(model: &Model, e: usize, p: usize, l: usize) -> Split {
     model.layer_node(e, p, l).map(dreist_engine::engine::doc::layer_split).unwrap_or(dreist_engine::velsplit::DEFAULT)
 }

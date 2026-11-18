@@ -331,6 +331,22 @@ pub struct Browser {
     show: [bool; 13],
 }
 
+impl Browser {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu_entry = None;
+        self.menu.clear();
+        self.header_menu = 0;
+        self.source_menu = None;
+        self.nav_menu = None;
+        self.short_menu.clear();
+        self.view_menu = 0;
+        self.pane.menu_dismissed();
+    }
+}
+
 /// [re:504f4e] /
 /// [re:b164ed]: lock everything unless everything is locked, then unlock.
 pub fn toggle_lock_all(model: &mut Model, class: &str, count: usize) {

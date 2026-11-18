@@ -345,6 +345,17 @@ pub struct MidiMap {
     host_panel: Option<Vec<usize>>,
 }
 
+impl MidiMap {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu_row = None;
+        self.row_menu = None;
+        self.confirm = false;
+    }
+}
+
 /// Host parameter buttons on the panel (`Param0`..`Param31`).
 pub const HOST_BUTTONS: usize = 32;
 

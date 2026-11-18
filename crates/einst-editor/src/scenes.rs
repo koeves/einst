@@ -60,6 +60,15 @@ pub struct Scenes {
     view_drag: Option<f32>,
 }
 
+impl Scenes {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = None;
+    }
+}
+
 const MENU: [&str; 3] = ["Cut", "Copy", "Paste"];
 
 fn find_path(root: &Ctrl, base: &[usize], name: &str) -> Option<Vec<usize>> {
