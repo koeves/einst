@@ -505,7 +505,6 @@ impl Plugin for EinstPlugin {
             hand_over(&mut s.song_events, &mut engine.songrec.events);
             let take = engine.sampler.current_take().map(|t| (t.left.as_slice(), t.right.as_slice()));
             if self.live_take.poll(take, &mut s.live) {
-                s.live.clear();
                 s.live_reset = true;
             }
             s.meters.merge(&engine.meters);
