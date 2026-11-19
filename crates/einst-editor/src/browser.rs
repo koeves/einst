@@ -331,6 +331,22 @@ pub struct Browser {
     show: [bool; 13],
 }
 
+impl Browser {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu_entry = None;
+        self.menu.clear();
+        self.header_menu = 0;
+        self.source_menu = None;
+        self.nav_menu = None;
+        self.short_menu.clear();
+        self.view_menu = 0;
+        self.pane.menu_dismissed();
+    }
+}
+
 /// [re:504f4e] /
 /// [re:b164ed]: lock everything unless everything is locked, then unlock.
 pub fn toggle_lock_all(model: &mut Model, class: &str, count: usize) {
@@ -738,6 +754,31 @@ fn subdirs(p: &Path) -> Vec<PathBuf> {
     v
 }
 
+/// The Drives category: the drive roots `A:` to `Z:` on Windows, else the
+/// mounted volumes under `/`.
+fn drives() -> Vec<(String, PathBuf)> {
+    if cfg!(windows) {
+        return (b'A'..=b'Z').map(|c| (format!("{}:", c as char), PathBuf::from(format!("{}:\\", c as char)))).filter(|(_, p)| p.is_dir()).collect();
+    }
+    mounts(Path::new("/"), &std::env::var("USER").unwrap_or_default())
+}
+
+/// The mounted volumes under `root`: macOS's `Volumes`, and Linux's
+/// `media/<user>`, `run/media/<user>`, `media` and `mnt` (each once, the
+/// user's own folder under `media` not as a volume).
+fn mounts(root: &Path, user: &str) -> Vec<(String, PathBuf)> {
+    let mut v: Vec<PathBuf> = Vec::new();
+    let user_media = root.join("media").join(user);
+    for dir in [root.join("Volumes"), user_media.clone(), root.join("run/media").join(user), root.join("media"), root.join("mnt")] {
+        for d in subdirs(&dir) {
+            if !v.contains(&d) && (user.is_empty() || d != user_media) {
+                v.push(d);
+            }
+        }
+    }
+    v.into_iter().filter_map(|p| Some((p.file_name()?.to_string_lossy().into_owned(), p))).collect()
+}
+
 fn hidden(p: &Path) -> bool {
     p.file_name().map(|n| n.to_string_lossy().starts_with('.')).unwrap_or(true)
 }
@@ -765,7 +806,7 @@ fn sources_with(favourites: &[PathBuf], searches: &[String], shortlists: &[(Stri
                 dirs.into_iter().map(|p| (p.file_name().unwrap().to_string_lossy().into_owned(), p)).collect()
             }
             "Places" => ["", "Desktop", "Documents", "Music"].iter().map(|d| (if d.is_empty() { "Home".to_string() } else { d.to_string() }, home.join(d))).filter(|(_, p)| p.is_dir()).collect(),
-            "Drives" => subdirs(Path::new("/Volumes")).into_iter().map(|p| (p.file_name().unwrap().to_string_lossy().into_owned(), p)).collect(),
+            "Drives" => drives(),
             "Favourites" => favourites.iter().map(|p| (p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), p.clone())).collect(),
             // Searches carry the terms in a pseudo path.
             // (saved ones "cache:<file>").
@@ -2822,6 +2863,27 @@ fn is_preset(p: &Path) -> bool {
 #[cfg(test)]
 mod search_tests {
     use super::*;
+
+    /// Repro: Drives listed macOS's `/Volumes` only, so it stayed empty on
+    /// Linux, where removable drives mount under `/media/<user>`,
+    /// `/run/media/<user>`, `/media` or `/mnt`.
+    #[test]
+    fn drives_list_the_linux_mounts() {
+        let root = std::env::temp_dir().join(format!("einst-drives-{}", std::process::id()));
+        for d in ["media/sam/USB", "run/media/sam/Disk", "media/cdrom", "mnt/data"] {
+            std::fs::create_dir_all(root.join(d)).unwrap();
+        }
+        let names: Vec<String> = mounts(&root, "sam").into_iter().map(|(n, _)| n).collect();
+        let _ = std::fs::remove_dir_all(&root);
+        assert_eq!(names, ["USB", "Disk", "cdrom", "data"]);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn drives_list_the_windows_drive_roots() {
+        let system = std::env::var("SystemDrive").unwrap_or_else(|_| "C:".into());
+        assert!(drives().iter().any(|(n, p)| *n == system && p == Path::new(&format!("{system}\\"))), "{:?}", drives());
+    }
 
     #[test]
     fn path_navigator_layout() {

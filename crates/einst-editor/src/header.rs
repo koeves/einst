@@ -70,6 +70,15 @@ pub struct Header {
     tempo_drag: Option<TempoDrag>,
 }
 
+impl Header {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = 0;
+    }
+}
+
 /// [re:863166]: a press on the tempo box's whole-number digits drags the
 /// whole number (20..1000 over 3000 px, 5000 with shift), elsewhere the
 /// decimals (0..0.99 over 200 px, 2000 with shift), keeping the other part.

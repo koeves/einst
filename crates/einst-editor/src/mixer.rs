@@ -202,6 +202,20 @@ pub struct Mixer {
     bus_view: Channel,
 }
 
+impl Mixer {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.output_menu = None;
+        self.route_all_menu = None;
+        self.swing_menu = None;
+        if let Some(fx) = self.fx.as_mut() {
+            fx.menu_dismissed();
+        }
+    }
+}
+
 const STRIP_PREFIX: [(&str, &str); 4] = [("Layer", "LayerChannelBackground"), ("Pad", "PadChannelBackground"), ("Engine", "EngineChannelBackground"), ("Aux", "AuxChannelBackground")];
 
 fn attr_f32(n: Option<&Node>, k: &str, d: f32) -> f32 {

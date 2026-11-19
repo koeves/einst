@@ -186,6 +186,19 @@ pub struct PatternPanel {
     splitter: Option<Vec<usize>>,
 }
 
+impl PatternPanel {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.lane_menu.clear();
+        self.graph_menu = None;
+        self.toolbar_menu = None;
+        self.swing_menu = None;
+        self.swing_knob_menu = false;
+    }
+}
+
 /// One MultiTrack graph row: lane `lane` (slot `slot`) of `track`.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct GraphRow {

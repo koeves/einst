@@ -12,7 +12,8 @@
 //!   replaces the reported tempo when they differ by more than 2.
 //! - Stop (0xFC) stops and goes back to 0; Song Position (0xF2) moves to
 //!   its sixteenth.
-//! - Between clocks the position runs on at the tempo, block by block.
+//! - Between clocks a playing transport's position runs on at the tempo,
+//!   block by block; a stopped one holds it.
 
 /// The clock tracker (audio thread).
 #[derive(Clone, Debug, Default)]
@@ -89,10 +90,11 @@ impl Clock {
         self.flags & 2 != 0
     }
 
-    /// After a block of `frames` at `sr`: the position runs on.
+    /// After a block of `frames` at `sr`: the position runs on while
+    /// playing (stopped, it holds for Continue).
     pub fn advance(&mut self, frames: usize, sr: f32) {
         self.flags &= !1;
-        if sr > 0.0 {
+        if sr > 0.0 && self.playing() {
             self.ppq += frames as f64 / sr as f64 * self.tempo / 60.0;
         }
     }
@@ -175,6 +177,27 @@ mod tests {
         assert!(!c.playing());
         assert_eq!(c.ppq, 0.0);
         c.message(&[0xf2, 0x10, 0x00], 4020);
+        assert_eq!(c.ppq, 4.0);
+    }
+
+    /// Repro: while stopped (after Stop and a Song Position) the blocks
+    /// until Continue must not move the position on, or the transport
+    /// resumes past where it was put.
+    #[test]
+    fn position_holds_while_stopped() {
+        let mut c = Clock::default();
+        c.realtime(0xfa, 0);
+        c.realtime(0xf8, 10);
+        c.realtime(0xfc, 20);
+        c.message(&[0xf2, 0x10, 0x00], 30);
+        assert_eq!(c.ppq, 4.0);
+        // Two seconds of 512-frame blocks at 48 kHz.
+        for _ in 0..188 {
+            c.advance(512, 48_000.0);
+        }
+        c.realtime(0xfb, 2030);
+        c.realtime(0xf8, 2040);
+        assert!(c.playing());
         assert_eq!(c.ppq, 4.0);
     }
 }

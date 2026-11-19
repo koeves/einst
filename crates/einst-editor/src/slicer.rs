@@ -147,6 +147,15 @@ pub struct Slicer {
     rex: bool,
 }
 
+impl Slicer {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = None;
+    }
+}
+
 /// Preference "Quantize REX" (`AllocatorQuantizeREX`): extracted steps get
 /// no timing offset (pattern extraction [re:5f0bcb] sets lane 3 to
 /// 0.5 instead of the slice's distance from the step) — for every slicing,
