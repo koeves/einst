@@ -9,7 +9,7 @@
 //! - an entry matches when the key matches and either both sides have no
 //!   modifiers or the modifier sets are equal;
 //! - entries without modifiers only respond with `RespondToExtendedKeyboard`
-//!   (default off), except the browser arrows 0x24–0x27.
+//!   (default off), except the browser's arrows and Return (0x13–0x17).
 //!
 //! The standalone app also carries the table as its menu bar's key
 //! equivalents ([re:c60fcb]; [re:ed265e] runs
@@ -154,7 +154,7 @@ pub fn lookup(key: &str, mods: Mods, keyboard: bool, extended: bool, menu_bar: b
     if !keyboard {
         return None;
     }
-    (e.mods.any() || extended || (0x13..=0x16).contains(&e.id)).then_some(e)
+    (e.mods.any() || extended || (0x13..=0x17).contains(&e.id)).then_some(e)
 }
 
 #[cfg(test)]
@@ -173,7 +173,8 @@ mod tests {
         assert_eq!(lookup("z", SC, true, false, false).map(|e| e.id), Some(0x09));
         assert!(lookup("z", SC, false, false, false).is_none());
         assert_eq!(lookup("down", N, true, false, false).map(|e| e.id), Some(0x13));
-        assert!(lookup("enter", N, true, false, false).is_none());
+        // The browser's Return responds like its arrows.
+        assert_eq!(lookup("enter", N, true, false, false).map(|e| e.id), Some(0x17));
         // Modifiers must match exactly.
         assert!(lookup("z", CA, true, true, true).is_none());
         assert_eq!(lookup("left", S, true, false, true).map(|e| e.id), Some(0x18));

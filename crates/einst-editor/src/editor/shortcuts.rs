@@ -74,7 +74,7 @@ impl Editor {
         let app = vec![
             Item { title: format!("About {}", crate::product()), tag: MENU_ABOUT, ..Item::default() },
             Item::separator(),
-            item(0x00),
+            Item { title: format!("{} Preferences", crate::product()), ..item(0x00) },
             Item { title: "Audio Settings...".into(), tag: MENU_AUDIO, ..Item::default() },
             Item { title: "MIDI Settings...".into(), tag: MENU_MIDI, ..Item::default() },
             Item::separator(),
