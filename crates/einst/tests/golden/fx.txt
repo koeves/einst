@@ -106,13 +106,13 @@ DJ_EQ-noise-low 9915728f424dcc09
 DJ_EQ-sweep-default c9680326206f0afd
 DJ_EQ-sweep-high 28dc53ab11321635
 DJ_EQ-sweep-low 80df1157a077d91d
-Delay-impulse-default 518e362012f9d591
+Delay-impulse-default bccf9f213073958c
 Delay-impulse-high ec379bf600755ce9
 Delay-impulse-low d12367b957c00798
-Delay-noise-default e2f918bce8d9f038
+Delay-noise-default 478d0cc5a6bdce01
 Delay-noise-high e9603a44235b4688
 Delay-noise-low 6ae5f873cd21c71f
-Delay-sweep-default cdb7746d824f129a
+Delay-sweep-default 1b247d243fa763be
 Delay-sweep-high 828cfd31d34f3460
 Delay-sweep-low 154af902500584ca
 Distortion-impulse-default 011ccd39722634dd

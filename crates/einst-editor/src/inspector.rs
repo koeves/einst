@@ -214,30 +214,155 @@ struct Peaks {
 /// Waveforms kept (most recently shown).
 const PEAKS_KEPT: usize = 16;
 
+/// How often a shown sample's file is checked for changes.
+const PEAKS_RECHECK: std::time::Duration = std::time::Duration::from_secs(1);
+
+/// How long a draw waits for a background decode before it goes on
+/// without the waveform (a one-shot is ready well within it).
+const PEAKS_WAIT: std::time::Duration = std::time::Duration::from_millis(50);
+
+/// Decode waveforms on a background thread (the editor windows); off,
+/// a decode finishes before the draw that asked for it (tests, shots).
+static DECODE_IN_BACKGROUND: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Let waveform decodes run off the UI thread from now on.
+fn decode_in_background() {
+    DECODE_IN_BACKGROUND.store(true, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// A sample's peaks, or the decode still running for them.
+enum PeaksSlot {
+    Ready(Option<Peaks>),
+    Loading(std::sync::mpsc::Receiver<Option<Peaks>>),
+}
+
+impl PeaksSlot {
+    fn start(path: &std::path::Path, background: bool) -> PeaksSlot {
+        if !background {
+            return PeaksSlot::Ready(load_peaks(path));
+        }
+        let (tx, rx) = std::sync::mpsc::channel();
+        let file = path.to_path_buf();
+        let spawned = std::thread::Builder::new().name("waveform".into()).spawn(move || {
+            let _ = tx.send(load_peaks(&file));
+        });
+        if spawned.is_err() {
+            return PeaksSlot::Ready(load_peaks(path));
+        }
+        match rx.recv_timeout(PEAKS_WAIT) {
+            Ok(p) => PeaksSlot::Ready(p),
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => PeaksSlot::Loading(rx),
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => PeaksSlot::Ready(None),
+        }
+    }
+
+    /// Take a finished decode; true when it just finished.
+    fn poll(&mut self) -> bool {
+        let PeaksSlot::Loading(rx) = self else { return false };
+        match rx.try_recv() {
+            Ok(p) => *self = PeaksSlot::Ready(p),
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => *self = PeaksSlot::Ready(None),
+            Err(std::sync::mpsc::TryRecvError::Empty) => return false,
+        }
+        true
+    }
+
+    fn peaks(&self) -> Option<&Peaks> {
+        match self {
+            PeaksSlot::Ready(p) => p.as_ref(),
+            PeaksSlot::Loading(_) => None,
+        }
+    }
+}
+
+struct PeaksEntry {
+    file: PathBuf,
+    /// Modification time when last checked.
+    stamp: Option<std::time::SystemTime>,
+    checked: std::time::Instant,
+    slot: PeaksSlot,
+}
+
 /// Peaks of the samples shown: reloaded when the file changes on disk (a
-/// layer sample saved over it, a missing file appearing), the least
-/// recently shown dropped past [`PEAKS_KEPT`].
+/// layer sample saved over it, a missing file appearing; checked at most
+/// once per [`PEAKS_RECHECK`]), the least recently shown dropped past
+/// [`PEAKS_KEPT`].
 #[derive(Default)]
 struct PeaksCache {
-    /// (file, modification time, peaks); most recent last.
-    entries: Vec<(PathBuf, Option<std::time::SystemTime>, Option<Peaks>)>,
+    /// Most recent last.
+    entries: Vec<PeaksEntry>,
+    /// Decode in the background whatever `decode_in_background` says.
+    background: bool,
 }
 
 impl PeaksCache {
     fn get(&mut self, path: &std::path::Path) -> Option<&Peaks> {
-        let stamp = std::fs::metadata(path).and_then(|m| m.modified()).ok();
-        let entry = match self.entries.iter().position(|e| e.0 == path) {
+        let now = std::time::Instant::now();
+        let background = self.background || DECODE_IN_BACKGROUND.load(std::sync::atomic::Ordering::Relaxed);
+        let stamp_of = |p: &std::path::Path| std::fs::metadata(p).and_then(|m| m.modified()).ok();
+        let mut entry = match self.entries.iter().position(|e| e.file == path) {
             Some(i) => {
-                let e = self.entries.remove(i);
-                if e.1 == stamp { e } else { (e.0, stamp, load_peaks(path)) }
+                let mut e = self.entries.remove(i);
+                if now.duration_since(e.checked) >= PEAKS_RECHECK {
+                    e.checked = now;
+                    let stamp = stamp_of(path);
+                    if stamp != e.stamp {
+                        e.stamp = stamp;
+                        e.slot = PeaksSlot::start(path, background);
+                    }
+                }
+                e
             }
-            None => (path.to_path_buf(), stamp, load_peaks(path)),
+            None => {
+                let stamp = stamp_of(path);
+                PeaksEntry { file: path.to_path_buf(), stamp, checked: now, slot: PeaksSlot::start(path, background) }
+            }
         };
+        entry.slot.poll();
         self.entries.push(entry);
         if self.entries.len() > PEAKS_KEPT {
             self.entries.remove(0);
         }
-        self.entries.last().and_then(|e| e.2.as_ref())
+        self.entries.last().and_then(|e| e.slot.peaks())
+    }
+
+    /// Take finished background decodes; true when any finished.
+    fn poll(&mut self) -> bool {
+        let mut any = false;
+        for e in &mut self.entries {
+            any |= e.slot.poll();
+        }
+        any
+    }
+}
+
+impl Inspector {
+    /// Show waveforms whose background decode finished: the zoom follows
+    /// the new sample's length and the inspector repaints. True when it
+    /// repainted.
+    pub(crate) fn poll_waveforms(&mut self, app: &mut App, model: &Model) -> bool {
+        if !self.peaks.get_mut().poll() {
+            return false;
+        }
+        self.sync(app, model);
+        if let Some(h) = self.host.clone() {
+            let r = app.abs_rect(&h);
+            app.invalidate_rect(r);
+        }
+        true
+    }
+}
+
+impl crate::Editor {
+    /// Per frame: repaint waveforms decoded in the background.
+    pub fn poll_waveforms(&mut self) -> bool {
+        self.inspector.poll_waveforms(&mut self.app, &self.model)
+    }
+
+    /// Decode waveforms off the UI thread from now on (a live window;
+    /// it calls [`Self::poll_waveforms`] every frame).
+    pub fn decode_waveforms_in_background(&self) {
+        decode_in_background();
     }
 }
 
@@ -326,6 +451,18 @@ pub struct Inspector {
     env_dests: HashMap<(usize, usize, usize, bool), [usize; 2]>,
     /// A typed destination tempo per layer (else the song tempo).
     dest_bpm: HashMap<(usize, usize, usize), f64>,
+}
+
+impl Inspector {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.env_lock_menu = None;
+        self.timeline_menu = None;
+        self.menu = None;
+        self.vsplit.menu_dismissed();
+    }
 }
 const PEAK_BUCKETS: usize = 2048;
 
@@ -1918,6 +2055,43 @@ fn wheel_thumb(view: (f32, f32), dy: f32, track_w: f32) -> (f32, f32) {
 
 #[cfg(test)]
 mod tests {
+    /// Waveforms decode off the drawing thread, and a shown file is
+    /// checked for changes at most once a second.
+    #[test]
+    fn peaks_decode_in_background_and_recheck_files_once_a_second() {
+        let dir = std::env::temp_dir().join(format!("einst-peaks-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("a.wav");
+        let write = |n: usize| {
+            let v = vec![0.25f32; n];
+            dreist_engine::write_wav(&file, 44100, &v, &v).unwrap();
+        };
+        write(300);
+        let mut cache = super::PeaksCache { background: true, ..Default::default() };
+        let frames = |cache: &mut super::PeaksCache| {
+            let until = std::time::Instant::now() + std::time::Duration::from_secs(10);
+            loop {
+                if let Some(pk) = cache.get(&file) {
+                    return pk.frames;
+                }
+                assert!(std::time::Instant::now() < until, "decode never finished");
+                std::thread::sleep(std::time::Duration::from_millis(5));
+                cache.poll();
+            }
+        };
+        assert_eq!(frames(&mut cache), 300);
+        // Saved over: not looked at again within the second...
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        write(500);
+        let mtime = std::fs::metadata(&file).unwrap().modified().unwrap() + std::time::Duration::from_secs(5);
+        std::fs::File::options().write(true).open(&file).unwrap().set_modified(mtime).unwrap();
+        assert_eq!(frames(&mut cache), 300);
+        // ...then reloaded.
+        cache.entries[0].checked -= super::PEAKS_RECHECK;
+        assert_eq!(frames(&mut cache), 500);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     #[test]
     fn guess_bpm_as_v1() {
         // 2 s: 1 bar → 120, plus v1's extra 0.5 rounding → 121.

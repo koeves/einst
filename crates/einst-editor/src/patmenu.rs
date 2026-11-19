@@ -128,6 +128,15 @@ pub struct PatMenu {
     pub steps_copied: bool,
 }
 
+impl PatMenu {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.open = None;
+    }
+}
+
 fn pattern_locked(model: &Model, e: usize, p: usize) -> bool {
     model.pattern_node(e, p).is_some_and(|n| n.locked())
 }

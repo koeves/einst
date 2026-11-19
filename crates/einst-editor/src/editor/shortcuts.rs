@@ -86,6 +86,7 @@ impl Editor {
 
     /// A menu bar item was chosen.
     pub fn menu_command(&mut self, tag: isize) {
+        let before = self.app.marks();
         match tag {
             MENU_ABOUT => {
                 self.main_action(&[], crate::editor::tools_menu::MainAction::About);
@@ -101,7 +102,7 @@ impl Editor {
             }
         }
         self.sync();
-        self.app.dirty = true;
+        self.invalidate_changes(&before);
     }
 
     /// The editor messages the shortcuts post ([re:695294]).

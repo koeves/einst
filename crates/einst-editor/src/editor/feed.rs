@@ -55,13 +55,13 @@ impl Editor {
         }
     }
 
-    /// Transport state from the engine. A play / stop changes the header
-    /// (full redraw); a new step or song position only moves the pattern
+    /// Transport state from the engine. A play / stop repaints the panels
+    /// that draw it; a new step or song position only moves the pattern
     /// grid's and song body's playheads, so only those repaint.
     pub fn set_playback(&mut self, playing: bool, steps: [Option<u32>; 8], song_pos: Option<f64>) {
         if self.model.playing != playing {
             self.model.playing = playing;
-            self.app.dirty = true;
+            self.repaint_drawn();
         }
         let e = self.model.engine;
         let (old_step, new_step) = (self.model.steps[e], steps[e]);
@@ -85,7 +85,6 @@ impl Editor {
             }
             if scrolled {
                 self.sync();
-                self.app.dirty = true;
                 return;
             }
         }
@@ -131,7 +130,7 @@ impl Editor {
     ///  [re:91a0d5] → 0x143).
     pub fn load_progress(&mut self, f: f32) {
         if self.browser.as_mut().is_some_and(|b| b.load_progress(f)) {
-            self.app.dirty = true;
+            self.repaint_drawn();
         }
     }
 
@@ -151,8 +150,9 @@ impl Editor {
     pub fn set_host_loop(&mut self, on: bool) {
         if self.model.host_loop != on {
             self.model.host_loop = on;
+            let before = self.app.marks();
             self.header.sync(&mut self.app, &self.model, self.learn.active);
-            self.app.dirty = true;
+            self.invalidate_changes(&before);
         }
     }
 
@@ -194,7 +194,8 @@ impl Editor {
             s.buckets.extend_from_slice(buckets);
             s.frames += buckets.len() * model::LIVE_BUCKET;
         }
-        self.app.dirty = true;
+        // Every frame while a take records: only the panels that draw it.
+        self.repaint_drawn();
     }
 
     /// Scene notifications from the engine (cued / active slots).
@@ -254,7 +255,7 @@ impl Editor {
     pub fn midi_in(&mut self, msgs: &[[u8; 3]]) {
         let mode = self.modals.options.int("MIDINumbering", 1).clamp(0, 2) as u8;
         if self.midiconsole.push(msgs, mode) {
-            self.app.dirty = true;
+            self.repaint_drawn();
         }
     }
 

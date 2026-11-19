@@ -33,6 +33,16 @@ pub fn load_project(p: &std::path::Path, sr: f32, options: dreist_engine::Render
     }
 }
 
+/// The default preset a new instance with no host session and no project
+/// starts from: the file Tools › Save as default preset writes
+/// (`options::default_preset`), with its samples folder as the editor's
+/// Reset opens it.
+pub fn default_preset_engine(sr: f32, options: dreist_engine::RenderOptions, cache: &mut dreist_engine::audio::SampleCache) -> Option<(Dreist, PathBuf)> {
+    let p = einst_editor::options::default_preset().filter(|p| p.is_file())?;
+    let g = load_project(&p, sr, options, cache).ok()?;
+    Some((g, dreist_formats::model::samples_dir(&p)))
+}
+
 /// Stereo sub outputs exposed to the host ("Sub output 1..16").
 pub const SUB_PORTS: usize = 16;
 /// Host automation parameters routed to [re:0ad0c9] host bindings.
@@ -347,11 +357,13 @@ impl Plugin for EinstPlugin {
             }),
             // [re:5cbd54] (from the constructor):
             // Tools › Save as default preset, when one was saved.
-            (None, None) => einst_editor::options::settings_dir()
-                .map(|d| d.join("DefaultPreset.geist"))
-                .filter(|p| p.is_file())
-                .and_then(|p| Dreist::load_cached(&p, sr, options, &mut cache).ok())
-                .unwrap_or_else(|| Dreist::empty(sr, options)),
+            (None, None) => match default_preset_engine(sr, options, &mut cache) {
+                Some((g, s)) => {
+                    samples = Some(s);
+                    g
+                }
+                None => Dreist::empty(sr, options),
+            },
         };
         drop(cache);
         let mut engine = engine;
@@ -520,7 +532,6 @@ impl Plugin for EinstPlugin {
             hand_over(&mut s.song_events, &mut engine.songrec.events);
             let take = engine.sampler.current_take().map(|t| (t.left.as_slice(), t.right.as_slice()));
             if self.live_take.poll(take, &mut s.live) {
-                s.live.clear();
                 s.live_reset = true;
             }
             s.meters.merge(&engine.meters);
