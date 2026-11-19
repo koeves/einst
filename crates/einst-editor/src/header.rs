@@ -185,13 +185,8 @@ pub fn carry_metronome(from: &dreist_formats::Node, to: &mut dreist_formats::Nod
 }
 
 /// v2 only: `PrerollTime` option values ([re:105287]).
-pub const PREROLL_NAMES: [&str; 4] = ["PrerollOff", "Preroll1Bar", "Preroll2Bars", "Preroll4Bars"];
+pub use crate::options::{PREROLL_NAMES, preroll_index};
 const PREROLL_ITEMS: [&str; 4] = ["No pre-roll", "1 bar", "2 bars", "4 bars"];
-
-/// [re:0c66d0]: unknown → off.
-pub fn preroll_index(name: &str) -> usize {
-    PREROLL_NAMES.iter().position(|n| *n == name).unwrap_or(0)
-}
 
 /// Options menu items (order as the original adds them; the slider is item 13, the
 /// sub menu 14).

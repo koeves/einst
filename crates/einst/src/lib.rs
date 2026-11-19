@@ -27,6 +27,9 @@ pub static PROFILE: Profile = Profile {
     ui: Resources { env: "EINST_UI", bundle_dir: "Einst", dev_dirs: &[concat!(env!("CARGO_MANIFEST_DIR"), "/../../assets/ui-v1")] },
     factory: Resources { env: "EINST_RESOURCES", bundle_dir: "Factory", dev_dirs: &[concat!(env!("CARGO_MANIFEST_DIR"), "/../../assets/factory")] },
     save: EINST,
+    settings_dir: "Einst",
+    legacy_settings_dirs: &[],
+    settings_env: "EINST_SETTINGS_DIR",
 };
 
 /// The extensions Einst's Open dialog offers besides projects: v1 parts

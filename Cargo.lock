@@ -806,6 +806,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "dreist-editor-core"
+version = "0.0.0"
+dependencies = [
+ "dreist-dsp",
+ "dreist-engine",
+ "dreist-formats",
+ "dreist-gui",
+]
+
+[[package]]
 name = "dreist-engine"
 version = "0.0.0"
 dependencies = [
@@ -888,6 +898,7 @@ name = "einst-editor"
 version = "0.0.0"
 dependencies = [
  "dreist-dsp",
+ "dreist-editor-core",
  "dreist-engine",
  "dreist-formats",
  "dreist-gui",

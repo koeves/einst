@@ -13,7 +13,7 @@ fn setup() {
         let dir = std::env::temp_dir().join(format!("einst-app-test-{}", std::process::id()));
         // SAFETY: every test calls `setup` first, so no thread reads the
         // environment until this has run.
-        unsafe { std::env::set_var(einst_editor::app::SETTINGS_ENV, dir) };
+        unsafe { std::env::set_var(einst::PROFILE.settings_env, dir) };
     });
     einst::install();
 }
