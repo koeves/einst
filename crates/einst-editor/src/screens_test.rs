@@ -80,6 +80,13 @@ fn partial_repaints_match_full_renders() {
     ed.set_host_loop(true);
     assert!(!ed.app.dirty);
     check(&mut ed, "host loop");
+    // Keyboard shortcuts repaint what they changed.
+    for (key, cmd) in [("down", false), ("z", true), ("z", true)] {
+        let _ = ed.render_frame(1.0);
+        ed.handle(&UiEvent::Shortcut { key: key.into(), cmd, shift: false, alt: false, ctrl: false });
+        assert!(!ed.app.dirty, "the shortcut {key} repaints the whole window");
+        check(&mut ed, &format!("shortcut {key}"));
+    }
 }
 
 /// Each page tab shows its own page on the LCD (and only that one), and
