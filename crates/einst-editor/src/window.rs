@@ -180,7 +180,7 @@ pub fn open_blocking(mut ed: Editor, mut on_commands: impl FnMut(Vec<Command>) +
         ed.dialogs = Some(native_dialogs());
         ed.files_dialogs = Some(native_files_dialogs());
     }
-    crate::inspector::decode_in_background();
+    ed.decode_waveforms_in_background();
     dreist_gui::window::open_blocking(
         Hosted(
             ed,
@@ -201,7 +201,7 @@ pub fn open_parented<P: dreist_gui::window::RawHandle>(parent: &P, mut ed: Edito
         ed.dialogs = Some(native_dialogs());
         ed.files_dialogs = Some(native_files_dialogs());
     }
-    crate::inspector::decode_in_background();
+    ed.decode_waveforms_in_background();
     dreist_gui::window::open_parented_scaled(parent, Hosted(ed, link), scale)
 }
 

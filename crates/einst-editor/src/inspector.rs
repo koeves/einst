@@ -226,7 +226,7 @@ const PEAKS_WAIT: std::time::Duration = std::time::Duration::from_millis(50);
 static DECODE_IN_BACKGROUND: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 /// Let waveform decodes run off the UI thread from now on.
-pub fn decode_in_background() {
+fn decode_in_background() {
     DECODE_IN_BACKGROUND.store(true, std::sync::atomic::Ordering::Relaxed);
 }
 
@@ -291,7 +291,7 @@ struct PeaksEntry {
 struct PeaksCache {
     /// Most recent last.
     entries: Vec<PeaksEntry>,
-    /// Decode in the background even before [`decode_in_background`].
+    /// Decode in the background whatever `decode_in_background` says.
     background: bool,
 }
 
@@ -355,8 +355,14 @@ impl Inspector {
 
 impl crate::Editor {
     /// Per frame: repaint waveforms decoded in the background.
-    pub(crate) fn poll_waveforms(&mut self) -> bool {
+    pub fn poll_waveforms(&mut self) -> bool {
         self.inspector.poll_waveforms(&mut self.app, &self.model)
+    }
+
+    /// Decode waveforms off the UI thread from now on (a live window;
+    /// it calls [`Self::poll_waveforms`] every frame).
+    pub fn decode_waveforms_in_background(&self) {
+        decode_in_background();
     }
 }
 
