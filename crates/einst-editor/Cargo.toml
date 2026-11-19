@@ -11,10 +11,15 @@ dreist-formats.workspace = true
 dreist-engine.workspace = true
 dreist-dsp.workspace = true
 dreist-gui.workspace = true
+dreist-editor-core.workspace = true
 einst = { path = "../einst" }
 einst-dsp = { path = "../einst-dsp" }
 einst-formats = { path = "../einst-formats" }
 dreist-host.workspace = true
+
+[dev-dependencies]
+# The tests keep options and settings out of the user's settings folder.
+dreist-editor-core = { workspace = true, features = ["test-settings"] }
 
 [features]
 window = ["dreist-gui/window", "dreist-host/dialog"]

@@ -1,5 +1,5 @@
 //! What this editor knows about Einst beyond the shared profile
-//! (`dreist_formats::profile`): the About text, the settings folder, the
+//! (`dreist_formats::profile`): the About text, the
 //! effect menu and how documents (v1 files among them) are read.
 
 use std::path::Path;
@@ -8,16 +8,6 @@ use dreist_formats::Node;
 
 /// The About text (three lines).
 pub const ABOUT: &str = "Einst: drum sampler, sequencer and performance instrument,\na rebuild of the original v1 instrument.\nNative for macOS, Windows and Linux, written in Rust.";
-
-/// Settings folder name (`~/Library/Application Support/<name>`,
-/// `%APPDATA%\<name>`, `$XDG_CONFIG_HOME/<name>`).
-pub const SETTINGS_DIR: &str = "Einst";
-
-/// Earlier settings folder names, moved to [`SETTINGS_DIR`] on first use.
-pub const LEGACY_SETTINGS_DIRS: &[&str] = &[];
-
-/// Environment variable naming a separate settings folder.
-pub const SETTINGS_ENV: &str = "EINST_SETTINGS_DIR";
 
 /// Further extensions the Open dialog offers besides projects.
 pub const OPEN_ALSO: &[&str] = einst::OPEN_ALSO;
@@ -45,8 +35,16 @@ pub fn open_extensions() -> Vec<&'static str> {
     v
 }
 
+/// What Einst adds to the shared editor parts: v1's own effect value texts
+/// (the beat repeater's length in whole beats 1..16, [re:8ea5d7]).
+pub(crate) fn install() {
+    use dreist_editor_core::fxtext::{C, Fx};
+    dreist_editor_core::fxtext::install_rows(&[(38, 1, 1.0, 16.0, Fx::Conv(C::Int))]);
+}
+
 /// Tests run under Einst's profile (and effect nodes, rules, voice model).
 #[cfg(test)]
 pub(crate) fn test_setup() {
     einst::install();
+    install();
 }

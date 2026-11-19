@@ -4,10 +4,11 @@
 //! the dreist-re GUI notes.
 
 mod accel;
+pub use dreist_editor_core::{command, options};
+use dreist_editor_core::{fxtext, swing, tabs, timeline, transmodvis, undo};
 pub mod app;
 pub mod browser;
 pub mod browsericons;
-pub mod command;
 mod conv;
 mod convertor;
 mod cursors;
@@ -20,7 +21,6 @@ mod front;
 mod fxchain;
 mod fxmove;
 mod fxplot;
-mod fxtext;
 pub mod guru;
 mod header;
 pub mod icons;
@@ -36,7 +36,6 @@ mod mixer;
 mod modal;
 pub mod model;
 mod multipad;
-pub mod options;
 mod padmenu;
 mod pads;
 mod patmenu;
@@ -49,14 +48,9 @@ mod scenes;
 mod search;
 mod slicer;
 mod song;
-mod swing;
-mod tabs;
-mod timeline;
 mod tooltips;
 mod transmod;
-mod transmodvis;
 mod trigger;
-mod undo;
 mod velsplit;
 mod zoomslider;
 
@@ -281,6 +275,7 @@ impl Editor {
     /// Build the editor from the installed resources (`theme`, e.g.
     /// "Einst"): the v1 layout (`front`) with its pages.
     pub fn new(theme: &str, model: Model) -> Result<Editor, EditorError> {
+        app::install();
         let mut skin = Skin::load(&Skin::resources_dir(), theme).map_err(err)?;
         let mut root = front::root(&mut skin)?;
         let header = header::Header::build(&root);

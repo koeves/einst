@@ -29,6 +29,7 @@ dreist-formats = { path = "commons/crates/dreist-formats" }
 dreist-dsp = { path = "commons/crates/dreist-dsp" }
 dreist-engine = { path = "commons/crates/dreist-engine" }
 dreist-gui = { path = "commons/crates/dreist-gui" }
+dreist-editor-core = { path = "commons/crates/dreist-editor-core" }
 einst-editor = { path = "crates/einst-editor" }
 dreist-testkit = { path = "commons/crates/dreist-testkit" }
 # The system side (audio, MIDI, dialogs, session file, time): it owns the
