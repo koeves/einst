@@ -525,9 +525,14 @@ impl Editor {
         if self.animate_drag_dwell() {
             self.app.dirty = true;
         }
-        if self.filefind.scanning() && self.filefind.tick(&mut self.app, &mut self.model) {
-            self.outbox.push(self.model.rebuild_command());
-            self.sync();
+        if self.filefind.scanning() {
+            // The scan label repaints, not the window.
+            let before = self.app.marks();
+            if self.filefind.tick(&mut self.app, &mut self.model) {
+                self.outbox.push(self.model.rebuild_command());
+                self.sync();
+            }
+            self.invalidate_changes(&before);
         }
         if self.modals.tick(&mut self.app) {
             self.app.dirty = true;
