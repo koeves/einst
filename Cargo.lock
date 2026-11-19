@@ -799,7 +799,7 @@ dependencies = [
 
 [[package]]
 name = "dreist-dsp"
-version = "0.2.3"
+version = "0.0.0"
 dependencies = [
  "rustfft",
  "signalsmith-stretch",
@@ -807,7 +807,7 @@ dependencies = [
 
 [[package]]
 name = "dreist-engine"
-version = "0.2.3"
+version = "0.0.0"
 dependencies = [
  "dreist-dsp",
  "dreist-formats",
@@ -818,7 +818,7 @@ dependencies = [
 
 [[package]]
 name = "dreist-formats"
-version = "0.2.3"
+version = "0.0.0"
 dependencies = [
  "roxmltree",
  "thiserror 2.0.21",
@@ -826,7 +826,7 @@ dependencies = [
 
 [[package]]
 name = "dreist-gui"
-version = "0.2.3"
+version = "0.0.0"
 dependencies = [
  "baseview",
  "dreist-formats",
@@ -841,7 +841,7 @@ dependencies = [
 
 [[package]]
 name = "dreist-host"
-version = "0.2.3"
+version = "0.0.0"
 dependencies = [
  "clap-sys",
  "cpal",
@@ -854,7 +854,7 @@ dependencies = [
 
 [[package]]
 name = "dreist-testkit"
-version = "0.2.3"
+version = "0.0.0"
 
 [[package]]
 name = "dtor"

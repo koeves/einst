@@ -19,6 +19,9 @@ pub(crate) enum MainAction {
     PowerHold,
     TransportOptions,
     ResetScale,
+    /// The diagnostics export to a file / to the clipboard.
+    ExportDiagnostics,
+    CopyDiagnostics,
     /// Reset, confirmed.
     ConfirmReset,
     None,
@@ -51,6 +54,23 @@ impl Editor {
         }
         if let Some(h) = &self.devices.host {
             h.power_hold(on);
+        }
+    }
+
+    /// The diagnostics export (`dreist_engine::diag::export`): the log's
+    /// report with the settings, to a file shown in the file manager or to
+    /// the clipboard. Paths outside the settings and log folders are left
+    /// out.
+    pub(crate) fn diagnostics(&self, copy: bool) {
+        let settings: Vec<(String, String)> = self.modals.options.entries().map(|(k, v)| (k.to_string(), v.to_string())).collect();
+        let keep: Vec<std::path::PathBuf> = options::settings_dir().into_iter().collect();
+        if cfg!(test) {
+            return;
+        }
+        if copy {
+            dreist_host::shell::copy_text(&dreist_engine::diag::report(&settings, &keep));
+        } else if let Ok(p) = dreist_engine::diag::export(&settings, &keep) {
+            dreist_host::shell::reveal(&[&p]);
         }
     }
 
@@ -102,6 +122,9 @@ impl Editor {
             ("Show MIDI console".into(), MidiConsole),
             (if self.perf_shown() { "Hide CPU and memory" } else { "Show CPU and memory" }.into(), Performance),
             ("Reset UI scale to 100%".into(), ResetScale),
+            (String::new(), None),
+            ("Export diagnostics...".into(), ExportDiagnostics),
+            ("Copy diagnostics".into(), CopyDiagnostics),
         ];
         if self.power_hold_offered() {
             items.push((self.power_hold_item(), PowerHold));
@@ -213,6 +236,14 @@ impl Editor {
                             self.app.ui_scale = 1.0;
                             self.app.resize_request = true;
                         }
+                    }
+                    MainAction::ExportDiagnostics => {
+                        self.diagnostics(false);
+                        return false;
+                    }
+                    MainAction::CopyDiagnostics => {
+                        self.diagnostics(true);
+                        return false;
                     }
                     MainAction::None => return false,
                 }
