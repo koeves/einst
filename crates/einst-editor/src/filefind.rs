@@ -243,7 +243,6 @@ impl FileFind {
             (g.current.clone(), g.done, g.found.clone())
         };
         self.set_child(app, "ScanLabel", |c| c.text = current);
-        app.dirty = true;
         if !done {
             return false;
         }

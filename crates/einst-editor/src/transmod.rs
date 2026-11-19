@@ -108,6 +108,19 @@ pub struct Transmod {
     pub trigger_request: Option<(usize, Vec<usize>)>,
 }
 
+impl Transmod {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = None;
+        self.popup = None;
+        self.confirm_remove = None;
+        self.src_menu = None;
+        self.src_confirm = None;
+    }
+}
+
 /// [re:0c608b]: the 16 step cells
 /// (x, width) across a `SeqGridRect` `w` pixels wide.
 pub fn seq_cells(w: i32) -> [(i32, i32); 16] {

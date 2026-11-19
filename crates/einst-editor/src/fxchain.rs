@@ -409,6 +409,15 @@ pub struct FxPanel {
 }
 
 impl FxPanel {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = None;
+    }
+}
+
+impl FxPanel {
     /// The chain shown and its six slot panels.
     pub(crate) fn shown(&self) -> Option<(Target, &[Vec<usize>])> {
         self.built.as_ref().map(|(t, _)| (*t, &self.slots[..]))

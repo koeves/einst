@@ -123,6 +123,7 @@ impl Editor {
     pub(crate) fn collapse_notification(&mut self, path: &[usize], iconic: bool, end: bool) {
         let parent_is = |app: &App, n: &str| path.split_last().and_then(|(_, p)| app.ctrl(p)).is_some_and(|c| c.name == n);
         let layer = parent_is(&self.app, "LayerParams");
+        let before = self.app.marks();
         let Some(c) = self.app.ctrl_mut(path) else { return };
         if c.attr("fxSlot").is_some() && (iconic != end) {
             fxchain::fold_controls(c, !iconic);
@@ -132,7 +133,7 @@ impl Editor {
                 k.enabled = !iconic;
             }
         }
-        self.app.dirty = true;
+        self.invalidate_changes(&before);
     }
 
     /// Committed text boxes: tempo, step count and the names kept in the
@@ -443,6 +444,15 @@ impl Editor {
         self.app.render_frame_with(scale, Some(&d))
     }
 
+    /// Repaint the code-drawn panels whose drawing changed (the model
+    /// moved, the controls did not): what a whole repaint would show anew.
+    pub(crate) fn repaint_drawn(&mut self) {
+        if !self.app.dirty {
+            let before = self.app.marks();
+            self.invalidate_changes(&before);
+        }
+    }
+
     /// Repaint what changed since `before`: the controls, and the
     /// code-drawn panels whose drawing changed.
     pub(crate) fn invalidate_changes(&mut self, before: &dreist_gui::app::Marks) {
@@ -453,7 +463,51 @@ impl Editor {
         self.app.invalidate_changes_with(before, Some(&d));
     }
 
+    /// The app's menu closed without a pick: every panel forgets the menu
+    /// it kept open (see `handle`).
+    fn menus_dismissed(&mut self) {
+        self.history_menu = None;
+        self.engine_menu = None;
+        self.file_menu = None;
+        self.main_menu = false;
+        self.layer_menu = None;
+        self.pad_row_menu = None;
+        self.preview_out_menu = None;
+        self.reset_confirm = false;
+        self.padmenu.menu_dismissed();
+        self.patmenu.menu_dismissed();
+        self.pads.menu_dismissed();
+        self.header.menu_dismissed();
+        self.slicer.menu_dismissed();
+        self.trigger.menu_dismissed();
+        self.sampler.menu_dismissed();
+        self.inspector.menu_dismissed();
+        self.transmod.menu_dismissed();
+        self.mixers.iter_mut().for_each(mixer::Mixer::menu_dismissed);
+        if let Some(p) = self.pattern.as_mut() {
+            p.menu_dismissed();
+        }
+        if let Some(s) = self.scenes.as_mut() {
+            s.menu_dismissed();
+        }
+        if let Some(s) = self.song.as_mut() {
+            s.menu_dismissed();
+        }
+        if let Some(b) = self.browser.as_mut() {
+            b.menu_dismissed();
+        }
+        if let Some(m) = self.midimap.as_mut() {
+            m.menu_dismissed();
+        }
+    }
+
     pub fn handle(&mut self, ev: &UiEvent) {
+        // A menu closed without a pick sends no event of its own: any other
+        // event while no menu is open means what the panels kept for one
+        // goes, before it can take a later pick in another menu.
+        if self.app.menu.is_none() && !matches!(ev, UiEvent::MenuSelected { .. } | UiEvent::MenuSlider { .. }) {
+            self.menus_dismissed();
+        }
         if self.swing_import_event(ev) {
             self.app.dirty = true;
             return;
@@ -476,14 +530,23 @@ impl Editor {
                 .as_ref()
                 .and_then(|p| self.inspector.modulation_mask(&self.app, &self.model, p).or_else(|| self.mixers.iter().find_map(|m| m.modulation_mask(&self.app, &self.model, p))))
                 .unwrap_or(0);
-            if self.transmod.highlight_sources(&mut self.app, mask) {
-                self.app.dirty = true;
+            // The buttons whose outline changed are invalidated there.
+            self.transmod.highlight_sources(&mut self.app, mask);
+            return;
+        }
+        // A hover only picks the cursor and leaves the controls as they
+        // are, so their marks are taken only once the cursor changed.
+        if matches!(ev, UiEvent::Hover { .. }) {
+            if self.pointer_feedback(ev) {
+                let before = self.app.marks();
+                self.invalidate_changes(&before);
             }
             return;
         }
-        if matches!(ev, UiEvent::Hover { .. } | UiEvent::DragOver { .. }) {
+        if matches!(ev, UiEvent::DragOver { .. }) {
+            let before = self.app.marks();
             if self.pointer_feedback(ev) {
-                self.app.dirty = true;
+                self.invalidate_changes(&before);
             }
             return;
         }
@@ -491,10 +554,11 @@ impl Editor {
         if let UiEvent::Files { to, files, x, y, dropped } = ev {
             self.external_drag = Some(files.clone());
             if !*dropped {
+                let before = self.app.marks();
                 self.app.cursor = self.drag_cursor(&[], to);
                 self.pad_drag_flash(&[], &to.clone(), *x, *y);
                 self.drop_highlights(&[], &to.clone());
-                self.app.dirty = true;
+                self.invalidate_changes(&before);
                 return;
             }
             let drop = UiEvent::Dropped { from: Vec::new(), to: to.clone(), x: *x, y: *y };
@@ -517,9 +581,10 @@ impl Editor {
             self.drag_dwell = None;
         }
         if let UiEvent::Shortcut { key, cmd, shift, alt, ctrl } = ev {
+            let before = self.app.marks();
             if self.accelerator(key, accel::Mods { shift: *shift, cmd: *cmd, alt: *alt, ctrl: *ctrl }) {
                 self.sync();
-                self.app.dirty = true;
+                self.invalidate_changes(&before);
                 return;
             }
         }

@@ -112,7 +112,8 @@ impl LiveTake {
     /// Append pairs for the frames recorded since the last call, within
     /// `out`'s reserved room (the audio thread calls this; the rest follows
     /// once the editor drained it); returns whether a new take started
-    /// (the display restarts).
+    /// (the display restarts). A new take first drops the previous take's
+    /// pairs still in `out`, then adds its own.
     pub fn poll(&mut self, take: Option<(&[f32], &[f32])>, out: &mut Vec<(f32, f32)>) -> bool {
         let Some((l, r)) = take else {
             self.active = false;
@@ -122,6 +123,7 @@ impl LiveTake {
         if reset {
             self.frames = 0;
             self.active = true;
+            out.clear();
         }
         while self.frames + LIVE_BUCKET <= l.len() && out.len() < out.capacity() {
             let (a, b) = (self.frames, self.frames + LIVE_BUCKET);
@@ -463,6 +465,20 @@ impl Model {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Repro: the call a new take starts in keeps that take's first pair;
+    /// only the previous take's go.
+    #[test]
+    fn new_take_keeps_its_first_pair() {
+        let mut lt = LiveTake::default();
+        let mut out = Vec::with_capacity(16);
+        let old = vec![-1.0f32; 600];
+        lt.poll(Some((&old, &[])), &mut out);
+        assert_eq!(out.len(), 2);
+        let new = vec![0.5f32; 300];
+        assert!(lt.poll(Some((&new, &[])), &mut out), "a new take restarts the display");
+        assert_eq!(out, vec![(0.0, 0.5)], "only the new take's first pair");
+    }
 
     #[test]
     fn live_take_appends_and_restarts() {

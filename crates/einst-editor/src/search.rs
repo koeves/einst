@@ -268,6 +268,15 @@ pub struct SearchPane {
     menu: Option<PaneMenu>,
 }
 
+impl SearchPane {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = None;
+    }
+}
+
 impl Default for SearchPane {
     fn default() -> Self {
         let o = crate::options::Options::load();

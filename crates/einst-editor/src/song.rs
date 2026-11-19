@@ -328,6 +328,15 @@ pub struct SongPanel {
     retro: [Vec<(SongPart, bool)>; ENGINES],
 }
 
+impl SongPanel {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = None;
+    }
+}
+
 fn key(start: f64) -> i64 {
     (start * 960.0).round() as i64
 }

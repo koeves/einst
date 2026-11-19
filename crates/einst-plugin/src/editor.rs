@@ -103,7 +103,11 @@ impl Inbox {
         s.sampler.meters = (0.0, 0.0);
         self.takes.append(&mut s.takes);
         self.midi_log.append(&mut s.midi_log);
-        self.live_reset |= std::mem::take(&mut s.live_reset);
+        // A new take: the previous take's pairs still here go too.
+        if std::mem::take(&mut s.live_reset) {
+            self.live_reset = true;
+            self.live.clear();
+        }
         self.live.append(&mut s.live);
         self.song_events.append(&mut s.song_events);
         self.retro_events.append(&mut s.retro_events);
