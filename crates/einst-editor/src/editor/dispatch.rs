@@ -443,6 +443,15 @@ impl Editor {
         self.app.render_frame_with(scale, Some(&d))
     }
 
+    /// Repaint the code-drawn panels whose drawing changed (the model
+    /// moved, the controls did not): what a whole repaint would show anew.
+    pub(crate) fn repaint_drawn(&mut self) {
+        if !self.app.dirty {
+            let before = self.app.marks();
+            self.invalidate_changes(&before);
+        }
+    }
+
     /// Repaint what changed since `before`: the controls, and the
     /// code-drawn panels whose drawing changed.
     pub(crate) fn invalidate_changes(&mut self, before: &dreist_gui::app::Marks) {
@@ -520,14 +529,16 @@ impl Editor {
                 .as_ref()
                 .and_then(|p| self.inspector.modulation_mask(&self.app, &self.model, p).or_else(|| self.mixers.iter().find_map(|m| m.modulation_mask(&self.app, &self.model, p))))
                 .unwrap_or(0);
+            let before = self.app.marks();
             if self.transmod.highlight_sources(&mut self.app, mask) {
-                self.app.dirty = true;
+                self.invalidate_changes(&before);
             }
             return;
         }
         if matches!(ev, UiEvent::Hover { .. } | UiEvent::DragOver { .. }) {
+            let before = self.app.marks();
             if self.pointer_feedback(ev) {
-                self.app.dirty = true;
+                self.invalidate_changes(&before);
             }
             return;
         }
@@ -535,10 +546,11 @@ impl Editor {
         if let UiEvent::Files { to, files, x, y, dropped } = ev {
             self.external_drag = Some(files.clone());
             if !*dropped {
+                let before = self.app.marks();
                 self.app.cursor = self.drag_cursor(&[], to);
                 self.pad_drag_flash(&[], &to.clone(), *x, *y);
                 self.drop_highlights(&[], &to.clone());
-                self.app.dirty = true;
+                self.invalidate_changes(&before);
                 return;
             }
             let drop = UiEvent::Dropped { from: Vec::new(), to: to.clone(), x: *x, y: *y };

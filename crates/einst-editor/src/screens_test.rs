@@ -58,6 +58,28 @@ fn partial_repaints_match_full_renders() {
     ed.model.editor_tab = crate::front::SONG_PAGE;
     ed.sync();
     check(&mut ed, "tab");
+    // What the audio thread feeds every frame repaints the panels that
+    // draw it, not the window.
+    ed.model.editor_tab = 0;
+    ed.sync();
+    check(&mut ed, "first tab");
+    ed.sampler_live(true, &[(-0.5, 0.5); 40]);
+    assert!(!ed.app.dirty, "a live take repaints the whole window");
+    check(&mut ed, "live take");
+    ed.sampler_live(false, &[(-0.25, 0.75); 40]);
+    assert!(!ed.app.dirty);
+    check(&mut ed, "live take growing");
+    ed.set_playback(true, [Some(0); 8], Some(0.0));
+    assert!(!ed.app.dirty, "starting playback repaints the whole window");
+    check(&mut ed, "playback started");
+    ed.set_playback(true, [Some(1); 8], Some(0.25));
+    check(&mut ed, "playback moved");
+    ed.set_playback(false, [None; 8], None);
+    assert!(!ed.app.dirty);
+    check(&mut ed, "playback stopped");
+    ed.set_host_loop(true);
+    assert!(!ed.app.dirty);
+    check(&mut ed, "host loop");
 }
 
 /// Each page tab shows its own page on the LCD (and only that one), and

@@ -228,6 +228,10 @@ impl Editor {
     }
 
     pub(crate) fn set_drop_highlights(&mut self, key: Option<Vec<usize>>, engine: Option<Vec<usize>>) {
+        if key == self.drop_hl.key && engine == self.drop_hl.engine {
+            return;
+        }
+        let before = self.app.marks();
         if key != self.drop_hl.key {
             if let Some(c) = self.drop_hl.key.take().and_then(|p| self.app.ctrl_mut(&p)) {
                 c.remove_attr("dragAlpha");
@@ -237,7 +241,6 @@ impl Editor {
             }
             self.drop_hl.tick = key.is_some().then(std::time::Instant::now);
             self.drop_hl.key = key;
-            self.app.dirty = true;
         }
         if engine != self.drop_hl.engine {
             if let Some(c) = self.drop_hl.engine.take().and_then(|p| self.app.ctrl_mut(&p)) {
@@ -247,8 +250,8 @@ impl Editor {
                 c.set_attr("dropHighlight", "1".into());
             }
             self.drop_hl.engine = engine;
-            self.app.dirty = true;
         }
+        self.invalidate_changes(&before);
     }
 
     /// The pattern key highlight pulse (1/30 s ticks).
@@ -267,10 +270,11 @@ impl Editor {
         for _ in 0..ticks.min(30) {
             self.drop_hl.alpha = if self.drop_hl.alpha + 25 < 121 { self.drop_hl.alpha + 25 } else { 0 };
         }
+        let before = self.app.marks();
         if let Some(c) = self.app.ctrl_mut(&path) {
             c.set_attr("dragAlpha", self.drop_hl.alpha.to_string());
         }
-        self.app.dirty = true;
+        self.invalidate_changes(&before);
     }
 
     /// Whether a drop from `from` on `to` would do something (for the drag
