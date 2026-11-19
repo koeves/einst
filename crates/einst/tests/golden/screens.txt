@@ -10,7 +10,7 @@ hidden-page-sampler 19134ca9e99a0a16
 hidden-page-scene 0e447e10bb003b1c
 hidden-page-song 345c0bce8628a436
 main c4d3884f491a4a2f
-main-menu 14becbe7429966e2
+main-menu 73b4394b876f15d9
 mapping 7fa688cdbcf5fa5f
 modal-about 44f3c25ea0670946
 modal-audio c777089e35d97910
