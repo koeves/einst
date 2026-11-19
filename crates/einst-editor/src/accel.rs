@@ -1,19 +1,17 @@
-//! Keyboard shortcuts ([re:e08d60], ev_16eeb3a7…, ev_ce262c09…,
-//! ev_68554242…).
+//! Keyboard shortcuts (ev_16eeb3a7…, ev_ce262c09…, ev_68554242…).
 //!
-//! [re:9db09e] hands each key to
-//! [re:ed265e], which looks the key up in
-//! the accelerator table (the menus' key equivalents) and
-//! runs the entry's function [re:e08d60]:
+//! v1 has its shortcuts as the standalone's menu key equivalents only
+//! ([re:e08d60] builds the menus, [re:ed265e] runs a chosen item); its
+//! plugin hands keys to the browser alone ([re:9db09e], [re:073bc5]:
+//! Return, the arrows and shift+left).
+//!
+//! Einst's plugin answers the same table, on its own rules:
 //! - nothing happens unless option `RespondToKeyboard` (default on) is set;
-//! - an entry matches when the key matches and either both sides have no
-//!   modifiers or the modifier sets are equal;
+//! - an entry matches when the key matches and the modifier sets are equal;
 //! - entries without modifiers only respond with `RespondToExtendedKeyboard`
-//!   (default off), except the browser arrows 0x24–0x27.
+//!   (default off), except the browser's arrows and Return (0x13–0x17).
 //!
-//! The standalone app also carries the table as its menu bar's key
-//! equivalents ([re:c60fcb]; [re:ed265e] runs
-//! the function regardless of the options), so there every entry works.
+//! In the standalone app every entry works, as from the menu bar.
 
 /// Modifier set of an entry (shift, command, option, control).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -154,7 +152,7 @@ pub fn lookup(key: &str, mods: Mods, keyboard: bool, extended: bool, menu_bar: b
     if !keyboard {
         return None;
     }
-    (e.mods.any() || extended || (0x13..=0x16).contains(&e.id)).then_some(e)
+    (e.mods.any() || extended || (0x13..=0x17).contains(&e.id)).then_some(e)
 }
 
 #[cfg(test)]
@@ -173,7 +171,8 @@ mod tests {
         assert_eq!(lookup("z", SC, true, false, false).map(|e| e.id), Some(0x09));
         assert!(lookup("z", SC, false, false, false).is_none());
         assert_eq!(lookup("down", N, true, false, false).map(|e| e.id), Some(0x13));
-        assert!(lookup("enter", N, true, false, false).is_none());
+        // The browser's Return responds like its arrows.
+        assert_eq!(lookup("enter", N, true, false, false).map(|e| e.id), Some(0x17));
         // Modifiers must match exactly.
         assert!(lookup("z", CA, true, true, true).is_none());
         assert_eq!(lookup("left", S, true, false, true).map(|e| e.id), Some(0x18));
