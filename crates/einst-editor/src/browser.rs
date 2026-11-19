@@ -95,12 +95,21 @@ pub fn size_label(path: &Path, dir: bool) -> String {
     if dir {
         return "--".into();
     }
-    std::fs::metadata(path).map(|m| dreist_engine::memory::bytes_label(m.len())).unwrap_or_else(|_| "--".into())
+    bytes_or_dashes(std::fs::metadata(path).ok().map(|m| m.len()))
+}
+
+/// A listed entry's Size text, from the size read when it was listed.
+fn entry_size_label(e: &Entry) -> String {
+    if e.dir { "--".into() } else { bytes_or_dashes(e.size) }
+}
+
+fn bytes_or_dashes(n: Option<u64>) -> String {
+    n.map(dreist_engine::memory::bytes_label).unwrap_or_else(|| "--".into())
 }
 
 /// Folders first, then by `col` (ascending or not); names break ties.
 fn sort_entries(v: &mut [Entry], col: Column, asc: bool) {
-    let size = |e: &Entry| if e.dir { 0 } else { std::fs::metadata(&e.path).map(|m| m.len()).unwrap_or(0) };
+    let size = |e: &Entry| e.size.unwrap_or(0);
     v.sort_by(|a, b| {
         let by = match col {
             Column::Name => std::cmp::Ordering::Equal,
@@ -224,6 +233,31 @@ pub struct Entry {
     name: String,
     path: PathBuf,
     dir: bool,
+    /// A file's size in bytes, read once when it is listed so the Size
+    /// column and its sort never touch the disk; `None` for a folder or
+    /// a file that cannot be read.
+    size: Option<u64>,
+}
+
+impl Entry {
+    /// One stat per listed path: folder or not, and a file's size.
+    fn new(path: PathBuf) -> Entry {
+        let meta = std::fs::metadata(&path).ok();
+        let dir = meta.as_ref().is_some_and(|m| m.is_dir());
+        Entry::with_meta(path, dir, meta)
+    }
+
+    /// A search hit, whose folder flag the scan already knows.
+    fn scanned(path: PathBuf, dir: bool) -> Entry {
+        let meta = if dir { None } else { std::fs::metadata(&path).ok() };
+        Entry::with_meta(path, dir, meta)
+    }
+
+    fn with_meta(path: PathBuf, dir: bool, meta: Option<std::fs::Metadata>) -> Entry {
+        let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        let size = if dir { None } else { meta.map(|m| m.len()) };
+        Entry { name, path, dir, size }
+    }
 }
 
 /// Back-button places kept.
@@ -849,7 +883,7 @@ fn list(dir: &Path) -> Vec<Entry> {
                 // Folders, `.samples` ones too (v1 lists them; its View
                 // menu's Sample Folders hides them, [re:ca74b1]).
                 .filter(|p| p.is_dir() || p.extension().is_some_and(listed))
-                .map(|p| Entry { name: p.file_name().unwrap().to_string_lossy().into_owned(), dir: p.is_dir(), path: p })
+                .map(Entry::new)
                 .collect()
         })
         .unwrap_or_default();
@@ -1220,12 +1254,7 @@ impl Browser {
         }
         if let Some(f) = dir.to_str().and_then(|s| s.strip_prefix("cache:")) {
             let text = std::fs::read_to_string(f).unwrap_or_default();
-            self.entries = text
-                .lines()
-                .filter(|l| !l.is_empty())
-                .map(PathBuf::from)
-                .map(|p| Entry { name: p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), dir: p.is_dir(), path: p })
-                .collect();
+            self.entries = text.lines().filter(|l| !l.is_empty()).map(PathBuf::from).map(Entry::new).collect();
             self.search = Path::new(f).file_stem().map(|s| s.to_string_lossy().into_owned());
             self.saved = true;
             self.selected = None;
@@ -1267,7 +1296,7 @@ impl Browser {
     /// The current shortlist's files, in the header's sort order.
     fn short_entries(&self) -> Vec<Entry> {
         let files = self.shortlist.as_ref().and_then(|n| self.shortlists.iter().find(|(s, _)| s == n)).map(|(_, f)| f.clone()).unwrap_or_default();
-        let mut v: Vec<Entry> = files.into_iter().map(|p| Entry { name: p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), dir: p.is_dir(), path: p }).collect();
+        let mut v: Vec<Entry> = files.into_iter().map(Entry::new).collect();
         sort_entries(&mut v, self.sort.0, self.sort.1);
         v
     }
@@ -1842,8 +1871,7 @@ impl Browser {
         if self.pane.favourites {
             locs.extend(self.favourites.iter().filter(|f| f.is_dir()).map(|f| (f.clone(), deep)));
         }
-        let mut v: Vec<Entry> =
-            crate::search::scan(&locs, opts, match_all).into_iter().map(|(p, dir)| Entry { name: p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), path: p, dir }).collect();
+        let mut v: Vec<Entry> = crate::search::scan(&locs, opts, match_all).into_iter().map(|(p, dir)| Entry::scanned(p, dir)).collect();
         v.sort_by(|a, b| b.dir.cmp(&a.dir).then(a.name.to_lowercase().cmp(&b.name.to_lowercase())));
         v
     }
@@ -2806,7 +2834,7 @@ impl Browser {
             }
             for &(c, x, cw) in cols.iter().skip(1) {
                 p.line(x + 0.5, y, x + 0.5, y + FILE_ROW, divider, 1.0);
-                let t = if c == Column::Type { type_label(&en.path, en.dir).to_string() } else { size_label(&en.path, en.dir) };
+                let t = if c == Column::Type { type_label(&en.path, en.dir).to_string() } else { entry_size_label(en) };
                 p.text(RectF::new(x + 3.0, y, cw - 4.0, FILE_ROW - 1.0), &t, col, &font, HAlign::Left, VAlign::Center);
             }
         }
@@ -2935,7 +2963,7 @@ mod search_tests {
     #[test]
     fn view_filter_types() {
         crate::app::test_setup();
-        let e = |n: &str, dir: bool| Entry { name: n.into(), path: PathBuf::from(format!("/x/{n}")), dir };
+        let e = |n: &str, dir: bool| Entry { name: n.into(), path: PathBuf::from(format!("/x/{n}")), dir, size: None };
         let mut show = [true; 13];
         assert!(visible(&show, &e("a.txt", false)), "all on: as listed");
         show[0] = false;
