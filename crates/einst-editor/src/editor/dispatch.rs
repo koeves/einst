@@ -529,13 +529,20 @@ impl Editor {
                 .as_ref()
                 .and_then(|p| self.inspector.modulation_mask(&self.app, &self.model, p).or_else(|| self.mixers.iter().find_map(|m| m.modulation_mask(&self.app, &self.model, p))))
                 .unwrap_or(0);
-            let before = self.app.marks();
-            if self.transmod.highlight_sources(&mut self.app, mask) {
+            // The buttons whose outline changed are invalidated there.
+            self.transmod.highlight_sources(&mut self.app, mask);
+            return;
+        }
+        // A hover only picks the cursor and leaves the controls as they
+        // are, so their marks are taken only once the cursor changed.
+        if matches!(ev, UiEvent::Hover { .. }) {
+            if self.pointer_feedback(ev) {
+                let before = self.app.marks();
                 self.invalidate_changes(&before);
             }
             return;
         }
-        if matches!(ev, UiEvent::Hover { .. } | UiEvent::DragOver { .. }) {
+        if matches!(ev, UiEvent::DragOver { .. }) {
             let before = self.app.marks();
             if self.pointer_feedback(ev) {
                 self.invalidate_changes(&before);
