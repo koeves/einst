@@ -19,12 +19,20 @@ dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::pr
 - Goldens (`crates/einst/tests/golden`) must stay identical unless a change is meant to alter
   them; explain every change. Porting bugs found in dreist-commons get their own commit there.
 - Out of scope: licensing / copy protection, updates and registration, RTAS, inter-plugin audio.
-- Git (Conventional Commits, changelog, releases, branches,
+- Git (Conventional Commits, releases, branches,
   submodule bumps): `CONTRIBUTING.md`; agent workflow notes: dreist-re `agents.md`.
 - Security alerts: check the open code scanning and Dependabot alerts at the start and end of any
   work here (`gh api repos/koeves/einst/code-scanning/alerts?state=open`, same for
   `dependabot/alerts`); fix real findings through an issue and a PR, dismiss false positives
   with the reason.
+
+## Agent rules
+
+- No Claude or AI attribution: no `Co-Authored-By` or `Claude-Session` trailers, "Generated with Claude Code" footers or claude.ai links in commits, pull requests, issues, comments or release notes.
+- Re-read a pull request, issue or comment body after writing it, because some tools append a footer.
+- Stage only the paths of the change (`git add <paths>`), never `git add -A`, `git add .` or `git commit -a`; use the global git identity.
+- The owner merges feature pull requests; agents open them.
+- `.claude/settings.json` and `.claude/hooks/guard.py` enforce these rules, no pushes to `dev` or `main`, and no edits to generated files; the `attribution` job in `commits.yml` checks pull requests. Keep both files identical in dreist-commons, dreist and einst.
 
 ## Docs
 
@@ -32,7 +40,7 @@ dreist-commons' hooks: `crates/einst` holds the app profile (`dreist_formats::pr
 - Short bullets of one sentence, two at most; no walls of text, and detail goes in its own section or file.
 - Describe the project as it is: no status updates, no "now", "previously", "since" or "next release" wording, and nothing the reader doesn't need.
 - This file is the agent instructions for every agent; `CLAUDE.md`, `GEMINI.md` and `.github/copilot-instructions.md` only point here, so edit this file.
-- Agent notes stay in this file or in dreist-re; CHANGELOG.md and THIRD_PARTY_NOTICES.md are left to their generators.
+- Agent notes stay in this file or in dreist-re; THIRD_PARTY_NOTICES.md is left to its generator; there is no CHANGELOG.md (the notes are on GitHub Releases).
 
 ## Build
 
@@ -57,7 +65,7 @@ tests, pluginval runs with `--skip-gui-tests`, and apps start with `open -g`.
 Branches: `feature/<name>` (one worktree each, in `.claude/worktrees/<name>`) -> pull request into
 `dev` (squash only; the PR title is the Conventional Commit; checks green) -> release pull request `dev` -> `main` (merge commit). The
 merge releases: version from the commits (`Release-As: X.Y.Z` overrides), tag, build, GitHub
-release and a follow-up changelog / version pull request into `dev` happen on their own; never
+release happen on their own, and `dev` then follows `main`; never
 tag or bump by hand. `commons` must be at a dreist-commons release tag (CONTRIBUTING.md).
 
 Pull requests: a draft while longer work is in progress, marked ready once its testing is done; short work
