@@ -202,6 +202,11 @@ impl Options {
         }
     }
 
+    /// Every key and value (the diagnostics export lists them).
+    pub fn entries(&self) -> impl Iterator<Item = (&str, &str)> {
+        self.values.iter().map(|(k, v)| (k.as_str(), v.as_str()))
+    }
+
     pub fn bool(&self, key: &str, default: bool) -> bool {
         self.values.get(key).map(|v| v == "true" || v == "1").unwrap_or(default)
     }
