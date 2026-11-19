@@ -64,8 +64,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # One archive per system; each Mac build runs on its own kind of Mac.
           - os: macos-15
-            name: macOS
+            name: macOS-AppleSilicon
+            arch: arm64
+          - os: macos-15-intel
+            name: macOS-Intel
+            arch: x86_64
           - os: windows-latest
             name: Windows
           - os: ubuntu-24.04
@@ -96,17 +101,14 @@ jobs:
           sudo apt-get -o Acquire::Retries=3 update
           sudo apt-get install -y --no-install-recommends pkg-config libasound2-dev libjack-jackd2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcb-icccm4-dev libxcb-dri2-0-dev libxcursor-dev libgl1-mesa-dev xvfb
       - name: Test
-        # The effect fingerprints match on macOS only (float output differs).
-        run: ${{ runner.os == 'Linux' && 'xvfb-run -a ' || '' }}cargo test --locked --workspace ${{ runner.os != 'macOS' && '-- --skip effects_match_fingerprints' || '' }}
+        # The effect fingerprints match on Apple Silicon only (float output differs).
+        run: ${{ runner.os == 'Linux' && 'xvfb-run -a ' || '' }}cargo test --locked --workspace ${{ matrix.arch != 'arm64' && '-- --skip effects_match_fingerprints' || '' }}
       - name: Build (macOS)
         if: runner.os == 'macOS'
         run: |
-          scripts/build.sh
+          scripts/build.sh --arch ${{ matrix.arch }}
           cd target/bundled
-          ditto -c -k --keepParent Einst.vst3 "Einst-$TAG-${{ matrix.name }}-VST3.zip"
-          ditto -c -k --keepParent Einst.clap "Einst-$TAG-${{ matrix.name }}-CLAP.zip"
-          ditto -c -k --keepParent Einst.app "Einst-$TAG-${{ matrix.name }}-App.zip"
-          # Everything with install.sh (commons/packaging) in one folder.
+          # install.sh (commons/packaging) and the three parts in one folder.
           full="Einst-$TAG-${{ matrix.name }}"
           mkdir "$full"
           for p in install.sh Einst.vst3 Einst.clap Einst.app; do ditto "$p" "$full/$p"; done
@@ -116,25 +118,17 @@ jobs:
         run: |
           scripts/build-windows.sh
           cd target/bundled
-          mv Einst-CLAP Einst && 7z a -tzip "Einst-$TAG-${{ matrix.name }}-CLAP.zip" Einst && mv Einst Einst-CLAP
-          mv Einst-App Einst && 7z a -tzip "Einst-$TAG-${{ matrix.name }}-App.zip" Einst && mv Einst Einst-App
-          7z a -tzip "Einst-$TAG-${{ matrix.name }}-VST3.zip" Einst.vst3
-          # Everything with install.ps1 (commons/packaging) in one folder.
+          # install.ps1 (commons/packaging) and the three parts in one folder.
           full="Einst-$TAG-${{ matrix.name }}"
           mkdir "$full" && cp -R install.ps1 Einst.vst3 Einst-CLAP Einst-App "$full/"
           7z a -tzip "$full.zip" "$full"
       - name: Build (Linux)
-        # tar keeps the executable bits; the CLAP and the app unpack into an
-        # Einst/ folder each, the full archive into Einst-<tag>-Linux/ with
-        # install.sh (README: Linux).
+        # tar keeps the executable bits; the archive unpacks into
+        # Einst-<tag>-Linux/ with install.sh (README: Linux).
         if: runner.os == 'Linux'
         run: |
           scripts/build-linux.sh
           cd target/bundled
-          tar -czf "Einst-$TAG-${{ matrix.name }}-VST3.tar.gz" Einst.vst3
-          tar -czf "Einst-$TAG-${{ matrix.name }}-CLAP.tar.gz" --transform 's,^Einst-CLAP,Einst,' Einst-CLAP
-          tar -czf "Einst-$TAG-${{ matrix.name }}-App.tar.gz" --transform 's,^Einst-App,Einst,' Einst-App
-          # Everything with install.sh (commons/packaging) in one folder.
           tar -czf "Einst-$TAG-${{ matrix.name }}.tar.gz" --transform "s,^,Einst-$TAG-${{ matrix.name }}/," install.sh Einst.vst3 Einst-CLAP Einst-App
       - uses: actions/upload-artifact@v7
         with:
