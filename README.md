@@ -57,8 +57,7 @@ Download the archive for your system from the [latest release](https://github.co
 
 ### macOS
 
-- **Runtime**: nothing beyond macOS 11; the Intel archive runs natively, without Rosetta.
-- **REX files**: need the REX Shared Library from Reason Studios installed; on Apple Silicon also Rosetta 2, as that library is Intel-only.
+- **REX files**: the REX Shared Library (Reason Studios); on Apple Silicon also Rosetta 2.
 - **First launch**: the builds are unsigned, so open the app with right-click › Open › Open.
 - **Plugins blocked by a host**: clear the quarantine flag.
 
@@ -68,15 +67,15 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 
 ### Windows
 
-- **Runtime**: the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) (2015–2022, x64), which most systems have; nothing else.
+- **Runtime**: the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) (2015–2022, x64).
 - **Running the script**: in PowerShell, `powershell -ExecutionPolicy Bypass -File .\install.ps1` if scripts are blocked.
 - **First launch**: the builds are unsigned; if SmartScreen warns, choose More info › Run anyway.
 
 ### Linux
 
 - **Launcher**: the install adds the app to the desktop's app list and an `einst` command.
-- **Runtime**: glibc 2.39+, libstdc++, ALSA (`libasound.so.2`, the app), OpenGL (`libGL.so.1`), X11 and XCB (`libX11.so.6`, `libX11-xcb.so.1`, `libxcb.so.1`), all present on desktop systems.
-- **Optional**: JACK (`libjack.so.0`, PipeWire's or JACK's) for `einst --backend jack`, D-Bus (`libdbus-1.so.3`) for the file dialogs' portal.
+- **Runtime**: glibc 2.39+, libstdc++, ALSA, OpenGL (libGL), X11 and XCB (libX11, libX11-xcb, libxcb).
+- **Optional**: JACK for `einst --backend jack`, D-Bus for the file dialogs.
 - **File dialogs**: through the XDG desktop portal, or `zenity` without one.
 - **Standalone audio**: smoothest on PipeWire (Ubuntu 24.04+); on PulseAudio, raise the buffer in the audio settings or run `Einst --backend jack` with JACK.
 - **Crackles**: if playback crackles on a slow machine, start with a bigger buffer: `einst --period-size 2048`.
