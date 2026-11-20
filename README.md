@@ -57,6 +57,8 @@ Download the archive for your system from the [latest release](https://github.co
 
 ### macOS
 
+- **Runtime**: nothing beyond macOS 11; the Intel archive runs natively, without Rosetta.
+- **REX files**: need the REX Shared Library from Reason Studios installed; on Apple Silicon also Rosetta 2, as that library is Intel-only.
 - **First launch**: the builds are unsigned, so open the app with right-click › Open › Open.
 - **Plugins blocked by a host**: clear the quarantine flag.
 
@@ -66,13 +68,15 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 
 ### Windows
 
+- **Runtime**: the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) (2015–2022, x64), which most systems have; nothing else.
 - **Running the script**: in PowerShell, `powershell -ExecutionPolicy Bypass -File .\install.ps1` if scripts are blocked.
 - **First launch**: the builds are unsigned; if SmartScreen warns, choose More info › Run anyway.
 
 ### Linux
 
 - **Launcher**: the install adds the app to the desktop's app list and an `einst` command.
-- **Runtime**: ALSA, X11 / XCB and OpenGL, present on desktop systems.
+- **Runtime**: glibc 2.39+, libstdc++, ALSA (`libasound.so.2`, the app), OpenGL (`libGL.so.1`), X11 and XCB (`libX11.so.6`, `libX11-xcb.so.1`, `libxcb.so.1`), all present on desktop systems.
+- **Optional**: JACK (`libjack.so.0`, PipeWire's or JACK's) for `einst --backend jack`, D-Bus (`libdbus-1.so.3`) for the file dialogs' portal.
 - **File dialogs**: through the XDG desktop portal, or `zenity` without one.
 - **Standalone audio**: smoothest on PipeWire (Ubuntu 24.04+); on PulseAudio, raise the buffer in the audio settings or run `Einst --backend jack` with JACK.
 - **Crackles**: if playback crackles on a slow machine, start with a bigger buffer: `einst --period-size 2048`.
@@ -113,7 +117,14 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 
 ## Building
 
-Needs a Rust toolchain.
+| System | Build setup |
+|---|---|
+| macOS | Xcode Command Line Tools (`xcode-select --install`), Rust through [rustup](https://rustup.rs) |
+| Windows | Rust through rustup (MSVC), Visual Studio Build Tools with "Desktop development with C++", LLVM (`winget install LLVM.LLVM`), Git for Windows |
+| Linux | Rust through rustup, the packages below |
+
+- **macOS**: no Homebrew packages; `brew install rust` lacks rustup, which `scripts/build.sh` uses to add the targets.
+- **Windows**: LLVM gives the time-stretch bindings libclang; `scripts/build-windows.sh` runs in Git Bash.
 
 ```bash
 git clone --recursive https://github.com/koeves/einst
@@ -132,7 +143,7 @@ cargo test --workspace
 Linux build packages (Debian / Ubuntu names):
 
 ```bash
-sudo apt-get install build-essential clang libclang-dev pkg-config libasound2-dev libjack-jackd2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcursor-dev libgl1-mesa-dev
+sudo apt-get install build-essential clang libclang-dev pkg-config libasound2-dev libjack-jackd2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcb-icccm4-dev libxcb-dri2-0-dev libxcursor-dev libgl1-mesa-dev
 ```
 
 ## Layout
