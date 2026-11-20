@@ -57,6 +57,7 @@ Download the archive for your system from the [latest release](https://github.co
 
 ### macOS
 
+- **REX files**: the REX Shared Library (Reason Studios); on Apple Silicon also Rosetta 2.
 - **First launch**: the builds are unsigned, so open the app with right-click › Open › Open.
 - **Plugins blocked by a host**: clear the quarantine flag.
 
@@ -66,13 +67,15 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 
 ### Windows
 
+- **Runtime**: the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) (2015–2022, x64).
 - **Running the script**: in PowerShell, `powershell -ExecutionPolicy Bypass -File .\install.ps1` if scripts are blocked.
 - **First launch**: the builds are unsigned; if SmartScreen warns, choose More info › Run anyway.
 
 ### Linux
 
 - **Launcher**: the install adds the app to the desktop's app list and an `einst` command.
-- **Runtime**: ALSA, X11 / XCB and OpenGL, present on desktop systems.
+- **Runtime**: glibc 2.39+, libstdc++, ALSA, OpenGL (libGL), X11 and XCB (libX11, libX11-xcb, libxcb).
+- **Optional**: JACK for `einst --backend jack`, D-Bus for the file dialogs.
 - **File dialogs**: through the XDG desktop portal, or `zenity` without one.
 - **Standalone audio**: smoothest on PipeWire (Ubuntu 24.04+); on PulseAudio, raise the buffer in the audio settings or run `Einst --backend jack` with JACK.
 - **Crackles**: if playback crackles on a slow machine, start with a bigger buffer: `einst --period-size 2048`.
@@ -113,7 +116,11 @@ xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Librar
 
 ## Building
 
-Needs a Rust toolchain.
+| System | Build setup |
+|---|---|
+| macOS | Xcode Command Line Tools (`xcode-select --install`), Rust through [rustup](https://rustup.rs) |
+| Windows | Rust through rustup (MSVC), Visual Studio Build Tools with "Desktop development with C++", LLVM (`winget install LLVM.LLVM`), Git for Windows |
+| Linux | Rust through rustup, the packages below |
 
 ```bash
 git clone --recursive https://github.com/koeves/einst
@@ -132,7 +139,7 @@ cargo test --workspace
 Linux build packages (Debian / Ubuntu names):
 
 ```bash
-sudo apt-get install build-essential clang libclang-dev pkg-config libasound2-dev libjack-jackd2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcursor-dev libgl1-mesa-dev
+sudo apt-get install build-essential clang libclang-dev pkg-config libasound2-dev libjack-jackd2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcb-icccm4-dev libxcb-dri2-0-dev libxcursor-dev libgl1-mesa-dev
 ```
 
 ## Layout

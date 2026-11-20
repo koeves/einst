@@ -27,6 +27,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 export PATH="$HOME/.cargo/bin:$PATH"
+# The oldest macOS the builds run on (Info.plist's LSMinimumSystemVersion):
+# rustc, the C/C++ code and the REX helper all target it.
+export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-11.0}"
 
 profile=release
 install=0
