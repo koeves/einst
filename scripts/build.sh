@@ -79,6 +79,12 @@ if [ "$arch" = universal ]; then
 else
     cargo run --package xtask --release -- bundle einst-plugin $flag --target "$targets"
 fi
+# The bundler writes 1.0.0 into the plug-ins' Info.plist; they carry the
+# release version like the app.
+for b in "$out/Einst.vst3" "$out/Einst.clap"; do
+    plutil -replace CFBundleShortVersionString -string "$version" "$b/Contents/Info.plist"
+    plutil -replace CFBundleVersion -string "$version" "$b/Contents/Info.plist"
+done
 
 echo "==> Standalone app ($profile, $arch)"
 slices=()
