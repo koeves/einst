@@ -1,8 +1,8 @@
 name: Release
 
 # Releases a tag `vX.Y.Z`: checks that commons is a dreist-commons release,
-# checks the commit subjects, tests and builds Einst (VST3, CLAP, standalone)
-# on macOS, Windows and Linux with the tag's version written into Cargo.toml
+# checks the commit subjects, tests and builds Einst (VST3, CLAP, Audio
+# Unit on macOS, standalone) on macOS, Windows and Linux with the tag's version written into Cargo.toml
 # and publishes the GitHub release with the zips (tarballs on Linux). Called by release-on-main.yml once it has
 # tagged the merge of a release pull request; also runs on a tag pushed by
 # hand (a tag pushed by release-on-main.yml with GITHUB_TOKEN starts no
@@ -107,11 +107,14 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           scripts/build.sh --arch ${{ matrix.arch }}
+          # The Audio Unit passes auval on this kind of Mac.
+          sh target/bundled/install.sh
+          auval -v aumu Enst Drst
           cd target/bundled
-          # install.sh (commons/packaging) and the three parts in one folder.
+          # install.sh (commons/packaging) and the four parts in one folder.
           full="Einst-$TAG-${{ matrix.name }}"
           mkdir "$full"
-          for p in install.sh Einst.vst3 Einst.clap Einst.app; do ditto "$p" "$full/$p"; done
+          for p in install.sh Einst.vst3 Einst.clap Einst.component Einst.app; do ditto "$p" "$full/$p"; done
           ditto -c -k --keepParent "$full" "$full.zip"
       - name: Build (Windows)
         if: runner.os == 'Windows'

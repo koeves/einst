@@ -8,7 +8,7 @@
 [![CodeQL](https://github.com/koeves/einst/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/koeves/einst/actions/workflows/codeql.yml?query=branch%3Amain)
 [![License](https://img.shields.io/badge/license-GPL--3.0%20%7C%20MIT%2FApache--2.0-blue)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](#install)
-[![Formats](https://img.shields.io/badge/formats-VST3%20%7C%20CLAP%20%7C%20standalone-lightgrey)](#install)
+[![Formats](https://img.shields.io/badge/formats-VST3%20%7C%20CLAP%20%7C%20AU%20%7C%20standalone-lightgrey)](#install)
 
 </div>
 
@@ -26,7 +26,7 @@ Einst is a drum sampler, step sequencer and performance instrument: a Rust rebui
 - **Instrument**: 8 engines of pads and layers, patterns, scenes, song mode, slicing and effects.
 - **Opens**: Geist v1 projects, kits, pads, engines and patterns, plus Geist2 and Dreist files.
 - **Saves**: its own `.einst` family (`.einst`, `.einstkit`, ...).
-- **Runs as**: VST3, CLAP and a standalone app on macOS, Windows and Linux.
+- **Runs as**: VST3, CLAP and a standalone app on macOS, Windows and Linux, plus an Audio Unit (AUv2) on macOS for Logic Pro.
 
 ## Install
 
@@ -47,7 +47,7 @@ sudo ./install.sh --system  # all users
 ```
 
 - **First launch**: the builds are unsigned, so open the app with right-click › Open › Open.
-- **Plugins blocked by a host**: `xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Library/Audio/Plug-Ins/CLAP/Einst.clap`.
+- **Plugins blocked by a host**: `xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Einst.vst3 ~/Library/Audio/Plug-Ins/CLAP/Einst.clap ~/Library/Audio/Plug-Ins/Components/Einst.component`.
 - **REX files**: need the REX Shared Library (Reason Studios), and Rosetta 2 on Apple Silicon.
 
 ### Windows
@@ -87,6 +87,7 @@ sudo ./install.sh --system  # all users
 | App | `/Applications/Einst.app` | `%ProgramFiles%\Einst\` | `~/.local/share/Einst/` |
 | VST3 | `~/Library/Audio/Plug-Ins/VST3/Einst.vst3` | `%CommonProgramFiles%\VST3\Einst.vst3` | `~/.vst3/Einst.vst3` |
 | CLAP | `~/Library/Audio/Plug-Ins/CLAP/Einst.clap` | `%CommonProgramFiles%\CLAP\Einst\` | `~/.clap/Einst/` |
+| Audio Unit | `~/Library/Audio/Plug-Ins/Components/Einst.component` | | |
 | Settings | `~/Library/Application Support/Einst` | `%APPDATA%\Einst` | `~/.config/Einst` |
 | Log | `~/Library/Logs/Einst/einst.log` | `%LOCALAPPDATA%\Einst\Logs\einst.log` | `~/.local/state/Einst/einst.log` |
 
@@ -99,6 +100,7 @@ sudo ./install.sh --system  # all users
 - **Drags out of the window**: macOS only.
 - **Drops into the window**: macOS and Windows only.
 - **REX files**: macOS only.
+- **Audio Unit**: macOS only. Send Note and Send CC do not reach Logic, which takes no MIDI out of an instrument.
 - **Wayland**: through XWayland.
 - **Unsigned builds**: macOS and Windows ask once before the first start.
 
@@ -111,7 +113,7 @@ scripts/build-linux.sh --install    # Linux
 scripts/build-windows.sh            # Windows, in Git Bash
 ```
 
-- **Tools**: Rust through [rustup](https://rustup.rs), plus the Xcode Command Line Tools on macOS and Visual Studio Build Tools (C++) with LLVM on Windows.
+- **Tools**: Rust through [rustup](https://rustup.rs), plus the Xcode Command Line Tools and CMake on macOS and Visual Studio Build Tools (C++) with LLVM on Windows.
 - **Linux packages** (Debian / Ubuntu): `sudo apt-get install build-essential clang libclang-dev pkg-config libasound2-dev libjack-jackd2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcb-icccm4-dev libxcb-dri2-0-dev libxcursor-dev libgl1-mesa-dev`.
 - **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md).
 
