@@ -74,9 +74,15 @@ jobs:
         run: scripts/build.sh --arch universal
       - name: Universal binaries
         run: |
-          for b in Einst.vst3/Contents/MacOS/Einst Einst.clap/Contents/MacOS/Einst Einst.app/Contents/MacOS/Einst; do
+          for b in Einst.vst3/Contents/MacOS/Einst Einst.clap/Contents/MacOS/Einst Einst.component/Contents/MacOS/Einst Einst.app/Contents/MacOS/Einst; do
             lipo "target/bundled/$b" -verify_arch arm64 x86_64
           done
+      - name: Audio Unit (auval)
+        # The installed .component, both halves (the Intel one under Rosetta).
+        run: |
+          sh target/bundled/install.sh
+          auval -v aumu Enst Drst
+          arch -x86_64 auval -v aumu Enst Drst
 
   macos-intel:
     needs: changes

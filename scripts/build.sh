@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build Einst: VST3 + CLAP bundles and the standalone macOS app.
+# Build Einst: VST3, CLAP and Audio Unit (AUv2) bundles and the standalone
+# macOS app.
 # A copy of Dreist's scripts/build.sh with Einst's names.
 #
 #   scripts/build.sh            release build into target/bundled/
@@ -9,7 +10,8 @@
 #   scripts/build.sh --install  also install for this user (target/bundled/install.sh)
 #   scripts/build.sh --uninstall  remove that install
 #
-# Output: target/bundled/Einst.vst3, Einst.clap, Einst.app and install.sh
+# Output: target/bundled/Einst.vst3, Einst.clap, Einst.component, Einst.app and
+# install.sh
 # (commons/packaging/install.sh, which the release archive also carries;
 # commons/packaging/README.md lists what goes where).
 #
@@ -18,6 +20,9 @@
 # with the hardened runtime and a timestamp; with EINST_NOTARY_PROFILE
 # also set (a `xcrun notarytool store-credentials` profile) they are
 # notarised and stapled.
+#
+# The Audio Unit wraps the CLAP (commons/packaging/auv2/build.sh: AU
+# instrument Enst, manufacturer Drst) and needs CMake.
 #
 # The shared crates come from dreist-commons (Cargo.toml; a local checkout
 # next to this repository overrides the pinned revision, see README).
@@ -42,7 +47,7 @@ while [ $# -gt 0 ]; do
         --arch=*) arch=${1#--arch=} ;;
         --install) install=1 ;;
         --uninstall) uninstall=1 ;;
-        -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
         *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
     shift
@@ -147,8 +152,14 @@ for b in "$app" "$out/Einst.vst3" "$out/Einst.clap"; do
         codesign --force --deep --sign - "$b" >/dev/null 2>&1 || echo "warning: ad-hoc codesign failed for $b" >&2
     fi
 done
+# The Audio Unit: the signed CLAP inside a clap-wrapper .component.
+au_sign=()
+[ -n "${EINST_SIGN_IDENTITY:-}" ] && au_sign=(--sign "$EINST_SIGN_IDENTITY")
+commons/packaging/auv2/build.sh --clap "$out/Einst.clap" --subtype Enst \
+    --bundle-id rs.einst.component --manufacturer-name Dreist --arch "$arch" \
+    --version "$version" ${au_sign[@]+"${au_sign[@]}"}
 if [ -n "${EINST_SIGN_IDENTITY:-}" ] && [ -n "${EINST_NOTARY_PROFILE:-}" ]; then
-    for b in "$app" "$out/Einst.vst3" "$out/Einst.clap"; do
+    for b in "$app" "$out/Einst.vst3" "$out/Einst.clap" "$out/Einst.component"; do
         echo "==> Notarising $b"
         zip="$out/$(basename "$b").zip"
         rm -f "$zip"
