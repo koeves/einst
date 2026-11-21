@@ -70,6 +70,15 @@ pub struct Header {
     tempo_drag: Option<TempoDrag>,
 }
 
+impl Header {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = 0;
+    }
+}
+
 /// [re:863166]: a press on the tempo box's whole-number digits drags the
 /// whole number (20..1000 over 3000 px, 5000 with shift), elsewhere the
 /// decimals (0..0.99 over 200 px, 2000 with shift), keeping the other part.
@@ -176,13 +185,8 @@ pub fn carry_metronome(from: &dreist_formats::Node, to: &mut dreist_formats::Nod
 }
 
 /// v2 only: `PrerollTime` option values ([re:105287]).
-pub const PREROLL_NAMES: [&str; 4] = ["PrerollOff", "Preroll1Bar", "Preroll2Bars", "Preroll4Bars"];
+pub use crate::options::{PREROLL_NAMES, preroll_index};
 const PREROLL_ITEMS: [&str; 4] = ["No pre-roll", "1 bar", "2 bars", "4 bars"];
-
-/// [re:0c66d0]: unknown → off.
-pub fn preroll_index(name: &str) -> usize {
-    PREROLL_NAMES.iter().position(|n| *n == name).unwrap_or(0)
-}
 
 /// Options menu items (order as the original adds them; the slider is item 13, the
 /// sub menu 14).

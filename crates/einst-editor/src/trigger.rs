@@ -30,6 +30,15 @@ pub struct TriggerPanel {
     menu: bool,
 }
 
+impl TriggerPanel {
+    /// The app's menu closed without a pick (Escape, a click elsewhere):
+    /// forget the menu kept open here, so a later pick in another menu is
+    /// not taken for it.
+    pub(crate) fn menu_dismissed(&mut self) {
+        self.menu = false;
+    }
+}
+
 fn modulator(model: &Model, slot: usize) -> Option<&dreist_formats::Node> {
     model.doc.children.iter().find(|c| c.class == "Modulator" && c.name.as_deref() == Some(&format!("Modulator{slot}")))
 }

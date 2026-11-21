@@ -21,9 +21,9 @@ env:
   # Windows that tests open stay in the background (commons vendor/baseview).
   DREIST_BACKGROUND_GUI: "1"
 
-# Pull requests into dev run the fast checks (Linux); macOS and Windows run
-# on the release pull request (into main) and in the release. A skipped job
-# counts as passed for the branch rules.
+# Pull requests into dev run the fast checks (Linux); macOS (Apple Silicon and
+# Intel) and Windows run on the release pull request (into main) and in the
+# release. A skipped job counts as passed for the branch rules.
 jobs:
   changes:
     # Whether a pull request changes more than Markdown: a docs-only pull
@@ -61,6 +61,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
       - uses: Swatinem/rust-cache@v2
       - name: Format
         run: cargo fmt --all --check
@@ -69,7 +70,31 @@ jobs:
       - name: Test
         run: cargo test --locked --workspace
       - name: Build plugin and standalone
-        run: scripts/build.sh
+        # Universal binaries: both slices build (releases ship one per Mac).
+        run: scripts/build.sh --arch universal
+      - name: Universal binaries
+        run: |
+          for b in Einst.vst3/Contents/MacOS/Einst Einst.clap/Contents/MacOS/Einst Einst.app/Contents/MacOS/Einst; do
+            lipo "target/bundled/$b" -verify_arch arm64 x86_64
+          done
+
+  macos-intel:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'pull_request' || github.base_ref == 'main')
+    # The suite on Intel (x86_64): the macOS builds are universal.
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Test
+        # Effect fingerprints: see the windows job.
+        run: cargo test --locked --workspace --no-fail-fast -- --skip effects_match_fingerprints
+      - name: Effect fingerprints (platform-dependent)
+        continue-on-error: true
+        run: cargo test --locked -p einst --test fx_renders effects_match_fingerprints
 
   windows:
     needs: changes
