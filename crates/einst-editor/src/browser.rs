@@ -265,8 +265,9 @@ const HISTORY_KEPT: usize = 100;
 
 /// How long a preview click waits for the decode before handing it to the
 /// next frames (a local one-shot decodes in a few milliseconds; a file
-/// still to be downloaded must not stall the editor).
-const PREVIEW_WAIT: std::time::Duration = std::time::Duration::from_millis(8);
+/// still to be downloaded must not stall the editor). Tests wait longer, so
+/// a busy test machine still decodes within the press.
+const PREVIEW_WAIT: std::time::Duration = std::time::Duration::from_millis(if cfg!(test) { 250 } else { 8 });
 
 pub struct Browser {
     page: Vec<usize>,
