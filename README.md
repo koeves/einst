@@ -27,7 +27,6 @@ Einst is a drum sampler, step sequencer and performance instrument: a Rust rebui
 - **Opens**: Geist v1 projects, kits, pads, engines and patterns, plus Geist2 and Dreist files.
 - **Saves**: its own `.einst` family (`.einst`, `.einstkit`, ...).
 - **Runs as**: VST3, CLAP and a standalone app on macOS, Windows and Linux.
-- **Built on**: [dreist-commons](https://github.com/koeves/dreist-commons), shared with [Dreist](https://github.com/koeves/dreist), the Geist2 rebuild.
 
 ## Install
 
@@ -115,6 +114,11 @@ scripts/build-windows.sh            # Windows, in Git Bash
 - **Tools**: Rust through [rustup](https://rustup.rs), plus the Xcode Command Line Tools on macOS and Visual Studio Build Tools (C++) with LLVM on Windows.
 - **Linux packages** (Debian / Ubuntu): `sudo apt-get install build-essential clang libclang-dev pkg-config libasound2-dev libjack-jackd2-dev libx11-dev libx11-xcb-dev libxcb1-dev libxcb-icccm4-dev libxcb-dri2-0-dev libxcursor-dev libgl1-mesa-dev`.
 - **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Related projects
+
+- [dreist-commons](https://github.com/koeves/dreist-commons): the shared formats, DSP, engine and GUI crates.
+- [Dreist](https://github.com/koeves/dreist): the Geist2 rebuild on the same crates.
 
 ## Licence
 
