@@ -5009,3 +5009,20 @@ fn the_performance_readout_covers_no_control() {
     assert_eq!(ed.app.abs_rect(&list).h, h + dreist_gui::perf::STRIP);
     assert!(ed.app.root.children.iter().all(|c| c.name != dreist_gui::perf::NAME));
 }
+
+/// A sample loaded into an unsaved project (no samples folder) is found,
+/// so the wave display shows it.
+#[test]
+fn unsaved_project_finds_layer_samples() {
+    crate::app::test_setup();
+    let mut model = Model::new(project::new_document());
+    assert!(model.samples.is_none());
+    let tmp = std::env::temp_dir().join(format!("einst-unsaved-{}", std::process::id()));
+    std::fs::create_dir_all(&tmp).unwrap();
+    let f = tmp.join("tone.wav");
+    let tone: Vec<f32> = (0..4410).map(|i| (i as f32 * 0.05).sin() * 0.5).collect();
+    dreist_engine::write_wav(&f, 44100, &tone, &tone).unwrap();
+    assert!(crate::browser::load_sample_into_layer(&mut model, 0, 0, 0, &f));
+    assert_eq!(model.layer_sample(0, 0, 0), Some(f));
+    let _ = std::fs::remove_dir_all(&tmp);
+}
