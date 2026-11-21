@@ -131,6 +131,13 @@ jobs:
           test -d target/bundled/Einst-CLAP/Resources/Factory
           test -f target/bundled/Einst-App/Einst.exe
           test -d target/bundled/Einst-App/Resources/Einst
+      - name: Test build (temporary)
+        run: cd target/bundled && 7z a -tzip Einst-windows-gui-test.zip install.ps1 Einst.vst3 Einst-CLAP Einst-App
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Einst-windows-gui-test
+          path: target/bundled/Einst-windows-gui-test.zip
+          retention-days: 7
 
   linux-build:
     needs: changes
