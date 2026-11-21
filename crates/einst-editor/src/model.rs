@@ -410,7 +410,10 @@ impl Model {
     /// Absolute path of the layer's sample.
     pub fn layer_sample(&self, e: usize, p: usize, l: usize) -> Option<std::path::PathBuf> {
         let f = self.layer_node(e, p, l)?.attr("AudioFileName")?;
-        Some(dreist_formats::model::resolve_sample(self.samples.as_ref()?, f))
+        // An unsaved project has no samples folder: resolve against the
+        // current folder, as the engine does.
+        let samples = self.samples.as_deref().unwrap_or(std::path::Path::new("."));
+        Some(dreist_formats::model::resolve_sample(samples, f))
     }
 
     pub fn layer(&self, e: usize, p: usize, l: usize) -> LayerFlags {
