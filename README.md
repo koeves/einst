@@ -96,7 +96,7 @@ sudo ./install.sh --system  # all users
 ## Limitations
 
 - **Samples**: none included. Einst plays Geist v1 and Geist2 content (kits, presets, expansions).
-- **Drags out of the window**: macOS only.
+- **Drags out of the window**: macOS and Windows.
 - **Drops into the window**: macOS and Windows only.
 - **REX files**: macOS only.
 - **Wayland**: through XWayland.
