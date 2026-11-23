@@ -4,7 +4,7 @@
 //! the dreist-re GUI notes.
 
 mod accel;
-pub use dreist_editor_core::{command, options};
+pub use dreist_editor_core::{command, options, uistate};
 use dreist_editor_core::{fxtext, swing, tabs, timeline, transmodvis, undo};
 pub mod app;
 pub mod browser;
