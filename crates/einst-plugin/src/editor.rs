@@ -251,6 +251,8 @@ pub struct DreistEditor {
     /// The host's scale factor (`f32` bits; Windows and Linux, see
     /// `set_scale_factor`).
     pub host_scale: std::sync::atomic::AtomicU32,
+    /// The open window's inbox for the keys the host passes the editor.
+    pub host_keys: std::sync::Mutex<Option<Arc<dreist_gui::hostkeys::HostKeys>>>,
 }
 
 /// The window's size: v1's fixed size × the UI scale
@@ -552,6 +554,7 @@ impl Editor for DreistEditor {
             inbox.clear();
         });
         let scale = f32::from_bits(self.host_scale.load(std::sync::atomic::Ordering::Relaxed)) as f64;
+        *lock(&self.host_keys) = Some(gui.app.host_keys.clone());
         Box::new(Handle(einst_editor::window::open_parented(&parent, gui, link, scale)))
     }
 
@@ -571,6 +574,11 @@ impl Editor for DreistEditor {
         // window takes it too.
         self.host_scale.store(factor.to_bits(), std::sync::atomic::Ordering::Relaxed);
         true
+    }
+
+    /// Live on Windows passes the keys for text boxes here.
+    fn host_key(&self, down: bool, character: u16, key_code: i16, modifiers: i16) -> bool {
+        lock(&self.host_keys).as_ref().is_some_and(|k| k.vst3(down, character, key_code, modifiers))
     }
 
     fn param_value_changed(&self, _id: &str, _normalized_value: f32) {}
