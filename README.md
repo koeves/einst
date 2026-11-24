@@ -58,7 +58,6 @@ sudo ./install.sh --system  # all users
 ```
 
 - **Blocked scripts**: `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
-- **Runtime**: the [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) (2015–2022, x64).
 - **First launch**: if SmartScreen warns about the unsigned build, choose More info › Run anyway.
 
 ### Linux

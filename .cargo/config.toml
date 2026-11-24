@@ -1,0 +1,4 @@
+# Windows builds link the C runtime statically, so the plugins and the app
+# need no Visual C++ Redistributable.
+[target.'cfg(all(windows, target_env = "msvc"))']
+rustflags = ["-C", "target-feature=+crt-static"]
